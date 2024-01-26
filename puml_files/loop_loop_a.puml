@@ -1,0 +1,15 @@
+@startuml
+partition "loop_loop_a" {
+    group "loop_loop_a"
+        #green:A;
+        repeat
+            :B;
+            repeat
+                :C;
+            repeat while
+            :D;
+        repeat while
+        #red:E;
+    end group
+}
+@enduml
