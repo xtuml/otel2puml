@@ -65,6 +65,7 @@ jobs:
       - name: Install Requirements (test-harness)
         run: |
           cd test-harness
+          git fetch  --all
           git checkout CDSTH-545-Create-testing-input-pipeline-PUML-to-test-data 
           pip install -r requirements.txt
           pip install .
