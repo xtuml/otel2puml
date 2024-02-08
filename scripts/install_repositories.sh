@@ -8,7 +8,7 @@ cd /tmp/
 git clone git@github.com:SmartDCSITlimited/test-event-generator.git
 cd test-event-generator
 git fetch --all --tags
-git checkout v1.0.0 
+git checkout tags/v1.0.0 -b latest 
 pip install -r requirements.txt
 pip install .
 cd ..
@@ -22,4 +22,4 @@ git checkout CDSTH-545-Create-testing-input-pipeline-PUML-to-test-data
 pip install -r requirements.txt
 pip install .
 cd ..
-rm -f -r test-event-generator/
+rm -f -r test-harness/
