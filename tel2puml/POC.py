@@ -9,12 +9,13 @@ from test_event_generator.solutions.graph_solution import (
 from test_event_generator.io.run import puml_file_to_test_events
 import pm4py as pm
 import pandas as pd
-
+test_events_templates = puml_file_to_test_events(
+        "puml_files/sequence_branch_counts.puml"
+    )
+test_events = test_events_templates[list(test_events_templates.keys())[0]]["ValidSols"][0]
 graph_solutions = [
     GraphSolution.from_event_list(event_list[0])
-    for event_list in puml_file_to_test_events(
-        "sequence_branch_counts.puml"
-    )["Branch_Counts"]["ValidSols"][0]
+    for event_list in test_events
 ]
 
 # event_lists = list(
@@ -50,16 +51,16 @@ df = pd.DataFrame.from_records(event_lists).drop(
 df.set_index("eventId", inplace=True)
 
 df = pm.format_dataframe(df, case_id='jobId', activity_key='eventType', timestamp_key='timestamp')
-batches = pm.discover_batches(df, resource_key='resource')
+# batches = pm.discover_batches(df, resource_key='resource')
 # dfg = pm.discover_heuristics_net(df)
 # powl = pm.discover_powl(df)
 # pm.vis.save_vis_powl(powl, 'trial.png')
 # pm.vis.save_vis_heuristics_net(dfg, 'trial.png')
-# process_tree = pm.discover_process_tree_inductive(df)
+process_tree = pm.discover_process_tree_inductive(df)
 # petri_net = pm.discover_petri_net_ilp(df)
 # bpmn_model = pm.convert_to_bpmn(petri_net)
 # pm.vis.save_vis_petri_net(*petri_net, 'trial.png')
-# bpmn_model = pm.convert_to_bpmn(process_tree)
+bpmn_model = pm.convert_to_bpmn(process_tree)
 # pm.vis.save_vis_process_tree(process_tree, 'trial.png')
 # pm.view_bpmn(bpmn_model)
-# pm.save_vis_bpmn(bpmn_model, 'trial.png')
+pm.save_vis_bpmn(bpmn_model, 'trial.png')
