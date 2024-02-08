@@ -27,14 +27,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: SmartDCSITlimited/test-event-generator
-          ssh-key: ${{ secrets.TESTKEY }}
+          ssh-key: ${{ secrets.GH_CDS_TEST_EVENT_GENERATOR_GITHUB_WORKFLOW_KEY }}
           path: test-event-generator
       
       - name: Setup Checkout (test-harness)
         uses: actions/checkout@v4
         with:
           repository: SmartDCSITlimited/test-harness
-          ssh-key: ${{ secrets.TESTKEY }}
+          ssh-key: ${{ secrets.GH_CDS_TEST_HARNESS_GITHUB_WORKFLOW_KEY }}
           path: test-harness
 
       - name: Setup Python
