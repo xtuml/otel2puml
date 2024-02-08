@@ -1,3 +1,5 @@
+"""Module to generate test data from a puml file.
+"""
 from typing import Generator, Any
 import random
 
