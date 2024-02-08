@@ -1,3 +1,0 @@
-[submodule "test-harness"]
-	path = test-harness
-	url = git@github.com:SmartDCSITlimited/test-harness.git
