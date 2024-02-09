@@ -1,6 +1,6 @@
 """Module to detect the logic in a sequence of PV events.
 """
-from itertools import permutations
+from itertools import product
 
 from numpy import ndarray
 import numpy as np
@@ -18,7 +18,7 @@ class Event:
             tuple[str, str], dict[str, int]
         ] = {}
         self.occured_edges: list[list[tuple[str, str]]] = []
-        self.conditional_count_matrix = np.array([[]], dtype=int)
+        self.conditional_count_matrix: ndarray | None = None
         self._condtional_probability_matrix: ndarray | None = None
         self._update_since_conditional_probability_matrix = False
 
@@ -56,9 +56,12 @@ class Event:
         }
 
     def add_new_edge_to_conditional_count_matrix(self) -> None:
+        if self.conditional_count_matrix is None:
+            self.conditional_count_matrix = np.array([[0]])
+            return
         self.conditional_count_matrix = np.pad(
             self.conditional_count_matrix,
-            ((1, 0), (1, 0)),
+            ((0, 1), (0, 1)),
             mode="constant",
             constant_values=0,
         )
@@ -82,7 +85,7 @@ class Event:
             for edge_tuple in data_point_edges
         ]
         self.conditional_count_matrix[
-            tuple(permutations(indexes, 2))
+            tuple(zip(*product(indexes, repeat=2)))
         ] += 1
 
     @property
