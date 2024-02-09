@@ -6,9 +6,6 @@ on:
       - synchronize
     branches:
       'main'
-  push:
-    branches:
-      - 'CDSTH-545-Create-testing-input-pipeline-PUML-to-test-data'
 jobs:
   sast:
     uses: SmartDCSITlimited/actions-store/.github/workflows/SAST.yml@main
