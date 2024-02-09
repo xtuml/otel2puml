@@ -18,7 +18,8 @@ rm -f -r test-event-generator/
 cd /tmp/
 git clone git@github.com:SmartDCSITlimited/test-harness.git
 cd test-harness
-git checkout CDSTH-545-Create-testing-input-pipeline-PUML-to-test-data 
+git fetch --all --tags
+git checkout tags/v1.0.0 -b latest 
 pip install -r requirements.txt
 pip install .
 cd ..
