@@ -1,19 +1,19 @@
 """
-This module provides functions to extract nodes and edges from input data, 
+This module provides functions to extract nodes and edges from input data,
 convert them into a NetworkX graph, and optionally write the graph to a file.
 
 Functions:
-- get_nodes: Extracts nodes from the given data and updates the node_reference, 
+- get_nodes: Extracts nodes from the given data and updates the node_reference,
     events_reference, and node_list.
-- get_edges: Extracts edges from the given data and populates the 
+- get_edges: Extracts edges from the given data and populates the
     edge_list dictionary.
-- convert_to_networkx: Converts the given events reference and edge list 
+- convert_to_networkx: Converts the given events reference and edge list
     into a NetworkX graph.
 
 Usage:
 1. Import the module: `import Jalergia2PUML`
 2. Call the functions as needed, providing the required arguments.
-3. Optionally, specify the `write` parameter in `convert_to_networkx` to write 
+3. Optionally, specify the `write` parameter in `convert_to_networkx` to write
     the graph to a file.
 
 """
@@ -26,7 +26,8 @@ def get_nodes(
     data: str, node_reference: dict, events_reference: dict, node_list: list
 ):
     """
-    Extracts nodes from the given data and updates the node_reference, events_reference, and node_list.
+    Extracts nodes from the given data and updates the node_reference,
+        events_reference, and node_list.
 
     Args:
         data (str): The input data containing node information.
@@ -35,7 +36,8 @@ def get_nodes(
         node_list (list): A list to store the node names.
 
     Returns:
-        tuple: A tuple containing the updated node_reference, events_reference, and node_list.
+        tuple: A tuple containing the updated node_reference, events_reference,
+            and node_list.
 
     These returns are formatted as following:
     node_reference   - {'event': 'node', ..}
@@ -65,7 +67,8 @@ def get_edges(data: str, edge_list: dict):
     Returns:
         dict: The updated edge_list dictionary.
 
-    edge_list has the following format; {("edgestart", "edgeend"): {"weight":5, ..}, ..}
+    edge_list has the following format;
+        {("edgestart", "edgeend"): {"weight":5, ..}, ..}
     """
     for edge in re.findall(r"(.*?)->(.*?) \[label=\"(.*?)\"", data):
         if edge[0] != "__start0 ":
@@ -84,7 +87,8 @@ def convert_to_networkx(events_reference: dict, edge_list: dict, write=False):
     Args:
         events_reference (dict): A dictionary containing the events reference.
         edge_list (dict): A dictionary containing the edge list.
-        write (bool, optional): Indicates whether to write the graph to a file. Defaults to False.
+        write (bool, optional): Indicates whether to write the graph to a file.
+            Defaults to False.
 
     Returns:
         graph (nx.MultiDiGraph): The converted NetworkX graph.
