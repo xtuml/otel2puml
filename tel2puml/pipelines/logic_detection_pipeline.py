@@ -1,9 +1,17 @@
 """Module to detect the logic in a sequence of PV events.
 """
-from itertools import product
+from itertools import product, permutations
+from uuid import uuid4
+from datetime import datetime, timedelta
+from typing import Any, Generator
 
 from numpy import ndarray
 import numpy as np
+import pandas as pd
+from pm4py import (
+    discover_process_tree_inductive, ProcessTree,
+    format_dataframe
+)
 
 from test_event_generator.solutions.graph_solution import GraphSolution
 
@@ -17,10 +25,78 @@ class Event:
         self.edge_counts_per_data_point: dict[
             tuple[str, str], dict[str, int]
         ] = {}
+        self.event_sets: set[frozenset[str]] = set()
         self.occured_edges: list[list[tuple[str, str]]] = []
         self.conditional_count_matrix: ndarray | None = None
         self._condtional_probability_matrix: ndarray | None = None
         self._update_since_conditional_probability_matrix = False
+
+    def calculate_logic_gates(
+        self
+    ):
+        pass
+
+    def update_event_sets(
+        self,
+        events: list[str],
+    ) -> None:
+        self.event_sets.add(frozenset(events))
+
+    def create_augmented_data_from_event_sets(
+        self,
+    ) -> Generator[dict[str, Any], Any, None]:
+        for event_set in self.event_sets:
+            yield from self.created_augemented_data_from_event_set(
+                event_set
+            )
+
+    def created_augemented_data_from_event_set(
+        self,
+        event_set: frozenset[str],
+    ) -> Generator[dict[str, Any], Any, None]:
+        for permutation in permutations(
+            event_set, len(event_set)
+        ):
+            case_id = str(uuid4())
+            yield from self.create_data_from_event_sequence(
+                [self.event_type, *permutation],
+                case_id,
+                start_time=datetime.now(),
+            )
+
+    @staticmethod
+    def create_data_from_event_sequence(
+        event_sequence: list[str],
+        case_id: str,
+        start_time: datetime = datetime.now(),
+    ) -> Generator[dict[str, Any], Any, None]:
+        for i, event in enumerate(event_sequence):
+            yield {
+                "case_id": case_id,
+                "activity": event,
+                "timestamp": start_time + timedelta(seconds=i),
+            }
+
+    def calculate_process_tree_from_event_sets(
+        self,
+    ) -> ProcessTree:
+        augmented_dataframe = pd.DataFrame(
+            self.create_augmented_data_from_event_sets()
+        )
+        event_log = format_dataframe(
+            augmented_dataframe, case_id='case_id', activity_key='activity',
+            timestamp_key='timestamp'
+        )
+        process_tree = discover_process_tree_inductive(
+            event_log
+        )
+        return process_tree
+
+    @staticmethod
+    def convert_process_tree_to_logic_gates(
+        process_tree: ProcessTree,
+    ):
+        pass
 
     def update_with_data_point(
         self,
