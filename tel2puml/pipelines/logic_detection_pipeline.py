@@ -12,6 +12,7 @@ from pm4py import (
     discover_process_tree_inductive, ProcessTree,
     format_dataframe
 )
+from pm4py.objects.process_tree.obj import Operator
 
 from test_event_generator.solutions.graph_solution import GraphSolution
 
@@ -30,17 +31,30 @@ class Event:
         self.conditional_count_matrix: ndarray | None = None
         self._condtional_probability_matrix: ndarray | None = None
         self._update_since_conditional_probability_matrix = False
+        self._logic_gate_tree: ProcessTree | None = None
+        self._update_since_logic_gate_tree = False
+
+    @property
+    def logic_gate_tree(self) -> ProcessTree:
+        if self._update_since_logic_gate_tree:
+            self._logic_gate_tree = self.calculate_logic_gates()
+        return self._logic_gate_tree
 
     def calculate_logic_gates(
         self
-    ):
-        pass
+    ) -> ProcessTree:
+        process_tree = self.calculate_process_tree_from_event_sets()
+        logic_gate_tree = self.reduce_process_tree_to_preferred_logic_gates(
+            process_tree
+        )
+        return logic_gate_tree
 
     def update_event_sets(
         self,
         events: list[str],
     ) -> None:
         self.event_sets.add(frozenset(events))
+        self._update_since_logic_gate_tree = True
 
     def create_augmented_data_from_event_sets(
         self,
@@ -93,10 +107,78 @@ class Event:
         return process_tree
 
     @staticmethod
-    def convert_process_tree_to_logic_gates(
+    def reduce_process_tree_to_preferred_logic_gates(
+        process_tree: ProcessTree,
+    ) -> ProcessTree:
+        # remove first event and get subsequent tree
+        logic_gate_tree: ProcessTree = process_tree.children[1]
+        # calculate OR gates
+        Event.process_or_gates(logic_gate_tree)
+        return logic_gate_tree
+
+    @staticmethod
+    def process_or_gates(
         process_tree: ProcessTree,
     ):
-        pass
+        Event.get_extended_or_gates_from_process_tree(process_tree)
+        Event.filter_defunct_or_gates(process_tree)
+
+    @staticmethod
+    def get_extended_or_gates_from_process_tree(
+        process_tree: ProcessTree,
+    ) -> None:
+        Event.infer_or_gate_from_node(process_tree)
+        for node in process_tree.children:
+            Event.get_extended_or_gates_from_process_tree(node)
+
+    @staticmethod
+    def infer_or_gate_from_node(
+        node: ProcessTree,
+    ) -> None:
+        if node.operator.name != "PARALLEL":
+            return
+        for counter, child in enumerate(node.children):
+            if child.operator is None:
+                continue
+            if child.operator.name == "XOR":
+                if any(
+                    str(child_of_child) == "tau"
+                    for child_of_child in child.children
+                ):
+                    node.operator == Operator.OR
+                    node_new_children = []
+                    for child_of_child in child.children:
+                        if str(child_of_child) != "tau":
+                            child_of_child.parent = node
+                            node_new_children.append(child_of_child)
+                    if len(node.children[counter + 1:]) > 1:
+                        end_children = [
+                            ProcessTree(
+                                Operator.PARALLEL,
+                                node,
+                                node.children[counter + 1:]
+                            )
+                        ]
+                    else:
+                        end_children = node.children[counter + 1:]
+                    node.children = [
+                        *node.children[:counter],
+                        *node_new_children,
+                        *end_children
+                    ]
+                    break
+
+    @staticmethod
+    def filter_defunct_or_gates(
+        process_tree: ProcessTree,
+    ) -> None:
+        for node in process_tree.children:
+            Event.filter_defunct_or_gates(node)
+            if node.operator is not None:
+                if node.operator.name == "OR":
+                    if node.parent.operator.name == "OR":
+                        node.parent.children.remove(node)
+                        node.parent.children.extend(node.children)
 
     def update_with_data_point(
         self,
