@@ -4,6 +4,7 @@ from itertools import product, permutations
 from uuid import uuid4
 from datetime import datetime, timedelta
 from typing import Any, Generator
+from copy import deepcopy
 
 from numpy import ndarray
 import numpy as np
@@ -15,6 +16,7 @@ from pm4py import (
 from pm4py.objects.process_tree.obj import Operator
 
 from test_event_generator.solutions.graph_solution import GraphSolution
+from test_event_generator.solutions.event_solution import EventSolution
 
 
 class Event:
@@ -34,10 +36,60 @@ class Event:
         self._logic_gate_tree: ProcessTree | None = None
         self._update_since_logic_gate_tree = False
 
+    def save_vis_logic_gate_tree(
+        self,
+        output_file_path: str,
+    ):
+        if self.logic_gate_tree is None:
+            raise ValueError(
+                "There has been no data to calculate logic gates."
+            )
+        logic_gate_tree = deepcopy(self.logic_gate_tree)
+        start_event = ProcessTree(
+            label=self.event_type,
+        )
+        start_event.children = [logic_gate_tree]
+        logic_gate_tree.parent = start_event
+        graph_solution = GraphSolution()
+        Event.update_graph_solution_with_event_solution_from_process_node(
+            start_event,
+            graph_solution,
+        )
+        network_x_graph = GraphSolution.create_networkx_graph_from_nodes(
+            list(graph_solution.events.values()),
+            link_func=lambda x: x.get_post_event_edge_tuples()
+        )
+        GraphSolution.get_graphviz_plot(network_x_graph).savefig(
+            output_file_path
+        )
+
+    @staticmethod
+    def update_graph_solution_with_event_solution_from_process_node(
+        node: ProcessTree,
+        graph_solution: GraphSolution,
+    ) -> EventSolution:
+        event_solution = EventSolution(
+            meta_data={
+                "EventType": node.label if node.label is not None
+                else node.operator.value
+            },
+        )
+        for child in node.children:
+            event_solution.add_post_event(
+                Event.
+                update_graph_solution_with_event_solution_from_process_node(
+                    child,
+                    graph_solution
+                )
+            )
+        graph_solution.add_event(event_solution)
+        return event_solution
+
     @property
     def logic_gate_tree(self) -> ProcessTree:
         if self._update_since_logic_gate_tree:
             self._logic_gate_tree = self.calculate_logic_gates()
+            self._update_since_logic_gate_tree = False
         return self._logic_gate_tree
 
     def calculate_logic_gates(
@@ -53,6 +105,8 @@ class Event:
         self,
         events: list[str],
     ) -> None:
+        if len(events) == 0:
+            return
         self.event_sets.add(frozenset(events))
         self._update_since_logic_gate_tree = True
 
@@ -102,7 +156,7 @@ class Event:
             timestamp_key='timestamp'
         )
         process_tree = discover_process_tree_inductive(
-            event_log
+            event_log,
         )
         return process_tree
 
@@ -135,6 +189,8 @@ class Event:
     def infer_or_gate_from_node(
         node: ProcessTree,
     ) -> None:
+        if node.operator is None:
+            return
         if node.operator.name != "PARALLEL":
             return
         for counter, child in enumerate(node.children):
@@ -145,13 +201,21 @@ class Event:
                     str(child_of_child) == "tau"
                     for child_of_child in child.children
                 ):
-                    node.operator == Operator.OR
+                    node.operator = Operator.OR
                     node_new_children = []
                     for child_of_child in child.children:
                         if str(child_of_child) != "tau":
                             child_of_child.parent = node
                             node_new_children.append(child_of_child)
-                    if len(node.children[counter + 1:]) > 1:
+                    if len(node_new_children) > 1:
+                        node_new_children = [
+                            ProcessTree(
+                                Operator.XOR,
+                                node,
+                                node_new_children
+                            )
+                        ]
+                    if len(node.children[counter + 1:]) > 0:
                         end_children = [
                             ProcessTree(
                                 Operator.PARALLEL,
@@ -261,13 +325,46 @@ class Event:
         )
 
 
-def detect_logic(events: list[dict]):
+def update_all_connections_from_data(events: list[dict]):
     """This function detects the logic in a sequence of PV events.
 
     :param events: A sequence of PV events.
     :type events: `list`[:class:`dict`]
     """
-    pass
+    graph_solutions = get_graph_solutions_from_events(events)
+    events_forward_logic: dict[str, Event] = {}
+    events_backward_logic: dict[str, Event] = {}
+    for graph_solution in graph_solutions:
+        for event in graph_solution.events.values():
+            event_type = event.meta_data["EventType"]
+            if event_type not in events_forward_logic:
+                events_forward_logic[event_type] = Event(
+                    event_type
+                )
+            if event_type not in events_backward_logic:
+                events_backward_logic[event_type] = Event(
+                    event_type
+                )
+            events_forward_logic[event_type].update_event_sets(
+                get_events_set_from_events_list(
+                    event.post_events
+                )
+            )
+            events_backward_logic[event_type].update_event_sets(
+                get_events_set_from_events_list(
+                    event.previous_events
+                )
+            )
+    return events_forward_logic, events_backward_logic
+
+
+def get_events_set_from_events_list(
+    events: list[EventSolution]
+) -> list[str]:
+    events_set = []
+    for event in events:
+        events_set.append(event.meta_data["EventType"])
+    return events_set
 
 
 def get_graph_solutions_from_events(events: list[dict]) -> list[GraphSolution]:
