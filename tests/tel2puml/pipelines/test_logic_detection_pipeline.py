@@ -1,9 +1,10 @@
-"""Test the logic detection pipeline.
-"""
+"""Test the logic detection pipeline."""
+
 from datetime import datetime, timedelta
 
 from tel2puml.pipelines.logic_detection_pipeline import (
-    Event, update_all_connections_from_data
+    Event,
+    update_all_connections_from_data,
 )
 from tel2puml.pipelines.data_creation import generate_test_data
 
@@ -37,14 +38,10 @@ class TestEvent:
     def test_add_new_edge_to_edge_counts_per_data_point():
         """Tests for method add_new_edge_to_edge_counts_per_data_point"""
         event = Event("A")
-        for i, edge_tuple in enumerate(
-            [("A", "B"), ("B", "C"), ("C", "D")]
-        ):
+        for i, edge_tuple in enumerate([("A", "B"), ("B", "C"), ("C", "D")]):
             event.add_new_edge_to_edge_counts_per_data_point(edge_tuple)
             assert edge_tuple in event.edge_counts_per_data_point
-            assert (
-                event.edge_counts_per_data_point[edge_tuple]
-            )["index"] == i
+            assert (event.edge_counts_per_data_point[edge_tuple])["index"] == i
 
     @staticmethod
     def test_update_conditional_count_matrix():
@@ -128,8 +125,8 @@ class TestEvent:
         event.update_with_data_point(edge_tuples[:1])
         assert event.conditional_probability_matrix.tolist() == [
             [1, 1, 1],
-            [2/3, 1, 1],
-            [1/3, 0.5, 1],
+            [2 / 3, 1, 1],
+            [1 / 3, 0.5, 1],
         ]
 
     @staticmethod
@@ -156,9 +153,7 @@ class TestEvent:
         case_id = "case_1"
         start_time = datetime(2021, 1, 1, 0, 0, 0)
         data = Event.create_data_from_event_sequence(
-            event_sequence,
-            case_id,
-            start_time
+            event_sequence, case_id, start_time
         )
         for i, event_data in enumerate(data):
             assert event_data["case_id"] == case_id
@@ -169,20 +164,22 @@ class TestEvent:
     def test_create_augmented_data_from_event_set():
         event = Event("A")
         event_set = frozenset(["B", "C"])
-        data = list(event.created_augemented_data_from_event_set(
-            event_set,
-        ))
+        data = list(
+            event.created_augemented_data_from_event_set(
+                event_set,
+            )
+        )
         assert len(data) == 6
         expected_sequences = [
             "ABC",
             "ACB",
         ]
-        expected_sequences.remove("".join(
-            [event_data["activity"] for event_data in data[:3]]
-        ))
-        expected_sequences.remove("".join(
-            [event_data["activity"] for event_data in data[3:]]
-        ))
+        expected_sequences.remove(
+            "".join([event_data["activity"] for event_data in data[:3]])
+        )
+        expected_sequences.remove(
+            "".join([event_data["activity"] for event_data in data[3:]])
+        )
         assert len(expected_sequences) == 0
         first_seq_case_ids = set(
             [event_data["case_id"] for event_data in data[:3]]
@@ -210,9 +207,12 @@ class TestEvent:
             "AED",
         ]
         for i in range(4):
-            expected_sequences.remove("".join(
-                [event_data["activity"] for event_data in data[i*3:i*3+3]]
-            ))
+            expected_sequences.remove(
+                "".join([
+                    event_data["activity"]
+                    for event_data in data[i*3: i*3 + 3]
+                ])
+            )
         assert len(expected_sequences) == 0
 
     @staticmethod
@@ -241,7 +241,8 @@ class TestEvent:
         assert len(second_operator_children) == 2
         children_labels = []
         for operator_children in [
-            first_operator_children, second_operator_children
+            first_operator_children,
+            second_operator_children,
         ]:
             operator_child_labels = []
             for child in operator_children:
@@ -250,7 +251,7 @@ class TestEvent:
             children_labels.append(frozenset(sorted(operator_child_labels)))
         for to_remove in [
             frozenset(sorted(["B", "C"])),
-            frozenset(sorted(["D", "E"]))
+            frozenset(sorted(["D", "E"])),
         ]:
             children_labels.remove(to_remove)
         assert len(children_labels) == 0
@@ -282,7 +283,8 @@ class TestEvent:
         assert len(second_operator_children) == 2
         children_labels = []
         for operator_children in [
-            first_operator_children, second_operator_children
+            first_operator_children,
+            second_operator_children,
         ]:
             operator_child_labels = []
             for child in operator_children:
@@ -511,7 +513,9 @@ def test_get_logic_from_nested_and_puml_file():
         update_all_connections_from_data(data)
     )
     # check A logic trees
-    assert events_forward_logic["A"].logic_gate_tree.operator.name == "PARALLEL"
+    assert (
+        events_forward_logic["A"].logic_gate_tree.operator.name == "PARALLEL"
+    )
     following_a_events = ["B", "C"]
     for child in events_forward_logic["A"].logic_gate_tree.children:
         assert child.label in following_a_events
@@ -519,7 +523,9 @@ def test_get_logic_from_nested_and_puml_file():
     assert len(following_a_events) == 0
     assert events_backward_logic["A"].logic_gate_tree is None
     # check B logic trees
-    assert events_forward_logic["B"].logic_gate_tree.operator.name == "PARALLEL"
+    assert (
+        events_forward_logic["B"].logic_gate_tree.operator.name == "PARALLEL"
+    )
     following_b_events = ["D", "E"]
     for child in events_forward_logic["B"].logic_gate_tree.children:
         assert child.label in following_b_events
@@ -535,9 +541,11 @@ def test_get_logic_from_nested_and_puml_file():
         assert events_backward_logic[event_type].logic_gate_tree.label == "B"
     # check F logic trees
     assert events_forward_logic["F"].logic_gate_tree is None
-    assert events_backward_logic["F"].logic_gate_tree.operator.name == "PARALLEL"
+    assert (
+        events_backward_logic["F"].logic_gate_tree.operator.name == "PARALLEL"
+    )
     preceding_f_events = ["C", "D", "E"]
     for child in events_backward_logic["F"].logic_gate_tree.children:
         assert child.label in preceding_f_events
         preceding_f_events.remove(child.label)
-    assert len(preceding_f_events) == 0 
+    assert len(preceding_f_events) == 0
