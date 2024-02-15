@@ -2,7 +2,10 @@
 """
 from datetime import datetime, timedelta
 
-from tel2puml.pipelines.logic_detection_pipeline import Event
+from tel2puml.pipelines.logic_detection_pipeline import (
+    Event, update_all_connections_from_data
+)
+from tel2puml.pipelines.data_creation import generate_test_data
 
 
 class TestEvent:
@@ -292,3 +295,249 @@ class TestEvent:
         ]:
             children_labels.remove(to_remove)
         assert len(children_labels) == 0
+
+    @staticmethod
+    def test_infer_or_gate_from_node():
+        event = Event("A")
+        event.event_sets = {
+            frozenset(["B", "C"]),
+            frozenset(["B"]),
+            frozenset(["C"]),
+        }
+        process_tree = event.calculate_process_tree_from_event_sets()
+        and_gate = process_tree.children[1]
+        assert and_gate.operator.name == "PARALLEL"
+        event.infer_or_gate_from_node(and_gate)
+        assert and_gate.operator.name == "OR"
+        and_gate_children = and_gate.children
+        assert len(and_gate_children) == 2
+        first_child = and_gate_children[0]
+        assert len(first_child.children) == 0
+        second_child = and_gate_children[1]
+        assert second_child.operator.name == "PARALLEL"
+
+    @staticmethod
+    def test_get_extended_or_gates_from_process_tree():
+        event = Event("A")
+        event.event_sets = {
+            frozenset(["B", "C"]),
+            frozenset(["B"]),
+            frozenset(["C"]),
+        }
+        process_tree = event.calculate_process_tree_from_event_sets()
+        logic_gates_tree = process_tree.children[1]
+        event.get_extended_or_gates_from_process_tree(logic_gates_tree)
+        assert logic_gates_tree.operator.name == "OR"
+        assert len(logic_gates_tree.children) == 2
+        assert logic_gates_tree.children[1].operator.name == "OR"
+        assert logic_gates_tree.children[0].label is not None
+        assert len(logic_gates_tree.children[1].children) == 1
+        assert logic_gates_tree.children[1].children[0].label is not None
+
+    @staticmethod
+    def test_filter_defunct_or_gates():
+        event = Event("A")
+        event.event_sets = {
+            frozenset(["B", "C"]),
+            frozenset(["B"]),
+            frozenset(["C"]),
+        }
+        process_tree = event.calculate_process_tree_from_event_sets()
+        logic_gates_tree = process_tree.children[1]
+        event.get_extended_or_gates_from_process_tree(logic_gates_tree)
+        event.filter_defunct_or_gates(logic_gates_tree)
+        assert logic_gates_tree.operator.name == "OR"
+        assert len(logic_gates_tree.children) == 2
+        labels = ["B", "C"]
+        for child in logic_gates_tree.children:
+            assert child.label in labels
+            labels.remove(child.label)
+        assert len(labels) == 0
+
+    @staticmethod
+    def test_process_or_gates():
+        event = Event("A")
+        event.event_sets = {
+            frozenset(["B", "C", "D"]),
+            frozenset(["B", "C"]),
+            frozenset(["C", "D"]),
+            frozenset(["B", "D"]),
+            frozenset(["B"]),
+            frozenset(["C"]),
+            frozenset(["D"]),
+        }
+        process_tree = event.calculate_process_tree_from_event_sets()
+        logic_gates_tree = process_tree.children[1]
+        event.process_or_gates(logic_gates_tree)
+        assert logic_gates_tree.operator.name == "OR"
+        assert len(logic_gates_tree.children) == 3
+        labels = ["B", "C", "D"]
+        for child in logic_gates_tree.children:
+            assert child.label in labels
+            labels.remove(child.label)
+        assert len(labels) == 0
+
+    @staticmethod
+    def test_reduce_process_tree_to_preffered_logic_gates():
+        event = Event("A")
+        event.event_sets = {
+            frozenset(["B", "C", "D"]),
+            frozenset(["B", "C"]),
+            frozenset(["C", "D"]),
+            frozenset(["B", "D"]),
+            frozenset(["B"]),
+            frozenset(["C"]),
+            frozenset(["D"]),
+        }
+        process_tree = event.calculate_process_tree_from_event_sets()
+        logic_gates_tree = event.reduce_process_tree_to_preferred_logic_gates(
+            process_tree
+        )
+        assert logic_gates_tree.operator.name == "OR"
+        assert len(logic_gates_tree.children) == 3
+        labels = ["B", "C", "D"]
+        for child in logic_gates_tree.children:
+            assert child.label in labels
+            labels.remove(child.label)
+        assert len(labels) == 0
+
+    @staticmethod
+    def test_calculate_logic_gates():
+        event = Event("A")
+        event.event_sets = {
+            frozenset(["B", "C", "D"]),
+            frozenset(["B", "C"]),
+            frozenset(["C", "D"]),
+            frozenset(["B", "D"]),
+            frozenset(["B"]),
+            frozenset(["C"]),
+            frozenset(["D"]),
+        }
+        logic_gates_tree = event.calculate_logic_gates()
+        assert logic_gates_tree.operator.name == "OR"
+        assert len(logic_gates_tree.children) == 3
+        labels = ["B", "C", "D"]
+        for child in logic_gates_tree.children:
+            assert child.label in labels
+            labels.remove(child.label)
+        assert len(labels) == 0
+
+
+def test_update_all_connections_from_data():
+    """Test for method detect_logic"""
+    puml_file = "puml_files/sequence_xor_fork.puml"
+    data = generate_test_data(puml_file)
+    events_forward_logic, events_backward_logic = (
+        update_all_connections_from_data(data)
+    )
+    assert len(events_forward_logic) == 6
+    assert len(events_backward_logic) == 6
+    assert all(
+        event_type in events_forward_logic
+        for event_type in ["A", "B", "C", "D", "E", "F"]
+    )
+    assert all(
+        event_type in events_backward_logic
+        for event_type in ["A", "B", "C", "D", "E", "F"]
+    )
+    # check A
+    assert events_forward_logic["A"].event_sets == {
+        frozenset(["B"]),
+    }
+    assert events_backward_logic["A"].event_sets == set()
+    # check B
+    assert events_forward_logic["B"].event_sets == {
+        frozenset(["C"]),
+        frozenset(["D"]),
+        frozenset(["E"]),
+    }
+    assert events_backward_logic["B"].event_sets == {
+        frozenset(["A"]),
+    }
+    # check C, D, E
+    for event_type in ["C", "D", "E"]:
+        assert events_forward_logic[event_type].event_sets == {
+            frozenset(["F"]),
+        }
+        assert events_backward_logic[event_type].event_sets == {
+            frozenset(["B"]),
+        }
+    # check F
+    assert events_forward_logic["F"].event_sets == set()
+    assert events_backward_logic["F"].event_sets == {
+        frozenset(["C"]),
+        frozenset(["D"]),
+        frozenset(["E"]),
+    }
+
+
+def test_get_logic_from_xor_puml_file():
+    """Test for method detect_logic"""
+    puml_file = "puml_files/sequence_xor_fork.puml"
+    data = generate_test_data(puml_file)
+    events_forward_logic, events_backward_logic = (
+        update_all_connections_from_data(data)
+    )
+    # check A logic trees
+    assert events_forward_logic["A"].logic_gate_tree.label == "B"
+    assert events_backward_logic["A"].logic_gate_tree is None
+    # check B logic trees
+    assert events_forward_logic["B"].logic_gate_tree.operator.name == "XOR"
+    following_b_events = ["C", "D", "E"]
+    for child in events_forward_logic["B"].logic_gate_tree.children:
+        assert child.label in following_b_events
+        following_b_events.remove(child.label)
+    assert len(following_b_events) == 0
+    assert events_backward_logic["B"].logic_gate_tree.label == "A"
+    # check C, D, E logic trees
+    for event_type in ["C", "D", "E"]:
+        assert events_forward_logic[event_type].logic_gate_tree.label == "F"
+        assert events_backward_logic[event_type].logic_gate_tree.label == "B"
+    # check F logic trees
+    assert events_forward_logic["F"].logic_gate_tree is None
+    assert events_backward_logic["F"].logic_gate_tree.operator.name == "XOR"
+    preceding_f_events = ["C", "D", "E"]
+    for child in events_backward_logic["F"].logic_gate_tree.children:
+        assert child.label in preceding_f_events
+        preceding_f_events.remove(child.label)
+    assert len(preceding_f_events) == 0
+
+
+def test_get_logic_from_nested_and_puml_file():
+    """Test for method detect_logic"""
+    puml_file = "puml_files/ANDFork_ANDFork_a.puml"
+    data = generate_test_data(puml_file)
+    events_forward_logic, events_backward_logic = (
+        update_all_connections_from_data(data)
+    )
+    # check A logic trees
+    assert events_forward_logic["A"].logic_gate_tree.operator.name == "PARALLEL"
+    following_a_events = ["B", "C"]
+    for child in events_forward_logic["A"].logic_gate_tree.children:
+        assert child.label in following_a_events
+        following_a_events.remove(child.label)
+    assert len(following_a_events) == 0
+    assert events_backward_logic["A"].logic_gate_tree is None
+    # check B logic trees
+    assert events_forward_logic["B"].logic_gate_tree.operator.name == "PARALLEL"
+    following_b_events = ["D", "E"]
+    for child in events_forward_logic["B"].logic_gate_tree.children:
+        assert child.label in following_b_events
+        following_b_events.remove(child.label)
+    assert len(following_b_events) == 0
+    assert events_backward_logic["B"].logic_gate_tree.label == "A"
+    # check C logic trees
+    assert events_forward_logic["C"].logic_gate_tree.label == "F"
+    assert events_backward_logic["C"].logic_gate_tree.label == "A"
+    # check D, E logic trees
+    for event_type in ["D", "E"]:
+        assert events_forward_logic[event_type].logic_gate_tree.label == "F"
+        assert events_backward_logic[event_type].logic_gate_tree.label == "B"
+    # check F logic trees
+    assert events_forward_logic["F"].logic_gate_tree is None
+    assert events_backward_logic["F"].logic_gate_tree.operator.name == "PARALLEL"
+    preceding_f_events = ["C", "D", "E"]
+    for child in events_backward_logic["F"].logic_gate_tree.children:
+        assert child.label in preceding_f_events
+        preceding_f_events.remove(child.label)
+    assert len(preceding_f_events) == 0 
