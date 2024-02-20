@@ -10,6 +10,7 @@ from tel2puml.pipelines.data_creation import generate_test_data
 
 
 class TestEvent:
+    """Tests for the Event class."""
     @staticmethod
     def test_add_new_edge_to_conditional_count_matrix():
         """Tests for method add_new_edge_to_conditional_count_matrix"""
