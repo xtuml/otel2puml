@@ -44,7 +44,6 @@ jobs:
       #     cache: 'pip'
       
       - name: Setup-conda
-        uses: actions/checkout@v3
         uses: s-weigand/setup-conda@v1
         with:
           update-conda: true
