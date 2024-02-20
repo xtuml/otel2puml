@@ -20,10 +20,17 @@ from test_event_generator.solutions.event_solution import EventSolution
 
 
 class Event:
+    """Class to detect the logic in a sequence of PV events.
+
+    :param event_type: The type of event.
+    :type event_type: `str`
+    """
     def __init__(
         self,
         event_type: str,
     ) -> None:
+        """Constructor method.
+        """
         self.event_type = event_type
         self.edge_counts_per_data_point: dict[
             tuple[str, str], dict[str, int]
@@ -39,7 +46,12 @@ class Event:
     def save_vis_logic_gate_tree(
         self,
         output_file_path: str,
-    ):
+    ) -> None:
+        """This method saves the logic gate tree as a visualisation.
+
+        :param output_file_path: The path to save the visualisation.
+        :type output_file_path: `str`
+        """
         if self.logic_gate_tree is None:
             raise ValueError(
                 "There has been no data to calculate logic gates."
@@ -68,6 +80,15 @@ class Event:
         node: ProcessTree,
         graph_solution: GraphSolution,
     ) -> EventSolution:
+        """Recursive method to create an event solution and update a graph
+        solution with the tree of event solutions from a process node.
+
+        :param node: The process node.
+        :type node: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+        :param graph_solution: The graph solution.
+        :type graph_solution:
+        :class:`test_event_generator.solutions.graph_solution.GraphSolution`
+        """
         event_solution = EventSolution(
             meta_data={
                 "EventType": node.label if node.label is not None
@@ -87,6 +108,11 @@ class Event:
 
     @property
     def logic_gate_tree(self) -> ProcessTree:
+        """This property gets the logic gate tree. If the logic gate tree has
+        not been calculated, it calculates it.
+
+        :return: The logic gate tree.
+        :rtype: :class:`pm4py.objects.process_tree.obj.ProcessTree`"""
         if self._update_since_logic_gate_tree:
             self._logic_gate_tree = self.calculate_logic_gates()
             self._update_since_logic_gate_tree = False
@@ -95,6 +121,11 @@ class Event:
     def calculate_logic_gates(
         self
     ) -> ProcessTree:
+        """This method calculates the logic gates from the event sets.
+
+        :return: The logic gate tree.
+        :rtype: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+        """
         process_tree = self.calculate_process_tree_from_event_sets()
         logic_gate_tree = self.reduce_process_tree_to_preferred_logic_gates(
             process_tree
@@ -105,6 +136,12 @@ class Event:
         self,
         events: list[str],
     ) -> None:
+        """This method updates the event sets for a given list of events as
+        strings.
+
+        :param events: A list of events as strings.
+        :type events: `list`[`str`]
+        """
         if len(events) == 0:
             return
         self.event_sets.add(frozenset(events))
@@ -113,6 +150,11 @@ class Event:
     def create_augmented_data_from_event_sets(
         self,
     ) -> Generator[dict[str, Any], Any, None]:
+        """Method to create augmented data from the event sets and yields
+        the data.
+
+        :return: The augmented data.
+        :rtype: `Generator`[`dict`[`str`, `Any`], `Any`, `None`]"""
         for event_set in self.event_sets:
             yield from self.created_augemented_data_from_event_set(
                 event_set
@@ -122,6 +164,14 @@ class Event:
         self,
         event_set: frozenset[str],
     ) -> Generator[dict[str, Any], Any, None]:
+        """Method to create augmented data from an event set and yields the
+        data.
+
+        :param event_set: The event set.
+        :type event_set: `frozenset`[`str`]
+        :return: The augmented data.
+        :rtype: `Generator`[`dict`[`str`, `Any`], `Any`, `None`]
+        """
         for permutation in permutations(
             event_set, len(event_set)
         ):
@@ -138,6 +188,18 @@ class Event:
         case_id: str,
         start_time: datetime = datetime.now(),
     ) -> Generator[dict[str, Any], Any, None]:
+        """Method to create data from an event sequence given a case id and
+        start time and yields the data.
+
+        :param event_sequence: The event sequence.
+        :type event_sequence: `list`[`str`]
+        :param case_id: The case id.
+        :type case_id: `str`
+        :param start_time: The start time.
+        :type start_time: `datetime.datetime`
+        :return: The data.
+        :rtype: `Generator`[`dict`[`str`, `Any`], `Any`, `None`]
+        """
         for i, event in enumerate(event_sequence):
             yield {
                 "case_id": case_id,
@@ -148,6 +210,11 @@ class Event:
     def calculate_process_tree_from_event_sets(
         self,
     ) -> ProcessTree:
+        """This method calculates the pm4py process tree from the event sets.
+
+        :return: The process tree.
+        :rtype: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+        """
         augmented_dataframe = pd.DataFrame(
             self.create_augmented_data_from_event_sets()
         )
@@ -164,6 +231,15 @@ class Event:
     def reduce_process_tree_to_preferred_logic_gates(
         process_tree: ProcessTree,
     ) -> ProcessTree:
+        """This method reduces a process tree to the preferred logic gates by
+        removing the first event and getting the subsequent tree and then
+        calculating the OR gates.
+
+        :param process_tree: The process tree.
+        :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+        :return: The logic gate tree.
+        :rtype: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+        """
         # remove first event and get subsequent tree
         logic_gate_tree: ProcessTree = process_tree.children[1]
         # calculate OR gates
@@ -173,7 +249,10 @@ class Event:
     @staticmethod
     def process_or_gates(
         process_tree: ProcessTree,
-    ):
+    ) -> None:
+        """Static method to process the OR gates in a process tree by extending
+        the OR gates and filtering the defunct OR gates.
+        """
         Event.get_extended_or_gates_from_process_tree(process_tree)
         Event.filter_defunct_or_gates(process_tree)
 
@@ -181,6 +260,12 @@ class Event:
     def get_extended_or_gates_from_process_tree(
         process_tree: ProcessTree,
     ) -> None:
+        """Static method to get the extended OR gates from a process tree by
+        inferring the OR gates from a node.
+
+        :param process_tree: The process tree.
+        :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+        """
         Event.infer_or_gate_from_node(process_tree)
         for node in process_tree.children:
             Event.get_extended_or_gates_from_process_tree(node)
@@ -189,6 +274,11 @@ class Event:
     def infer_or_gate_from_node(
         node: ProcessTree,
     ) -> None:
+        """Static method to infer the OR gates from a node.
+
+        :param node: The node.
+        :type node: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+        """
         if node.operator is None:
             return
         if node.operator.name != "PARALLEL":
@@ -236,6 +326,11 @@ class Event:
     def filter_defunct_or_gates(
         process_tree: ProcessTree,
     ) -> None:
+        """Static method to filter the defunct OR gates from a process tree.
+
+        :param process_tree: The process tree.
+        :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+        """
         for node in process_tree.children:
             Event.filter_defunct_or_gates(node)
             if node.operator is not None:
@@ -361,6 +456,17 @@ def update_all_connections_from_data(events: list[dict]):
 def get_events_set_from_events_list(
     events: list[EventSolution]
 ) -> list[str]:
+    """This function gets the events set as a list of event types from a list
+    of event solutions.
+
+    :param events: A list of event solutions.
+    :type events:
+    `list`[:class:`test_event_generator.solutions.event_solution.EventSolution`
+    ]
+    :return: The events set as a list of event types.
+    :rtype: `list`[`str`]
+    """
+
     events_set = []
     for event in events:
         events_set.append(event.meta_data["EventType"])
