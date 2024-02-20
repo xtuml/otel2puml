@@ -339,10 +339,22 @@ class Event:
                         node.parent.children.remove(node)
                         node.parent.children.extend(node.children)
 
+    # -----------------Conditional methods-----------------
+    """
+    NOTE: The following methods are for the conditional probability matrix and
+    are not used currently and may be removed but are kept for now for
+    potential future use.
+    """
+
     def update_with_data_point(
         self,
         edge_tuples: list[tuple[str, str]],
     ) -> None:
+        """Method to update the event with a data point.
+
+        :param edge_tuples: The edge tuples.
+        :type edge_tuples: `list`[`tuple`[`str`, `str`]]
+        """
         data_point_edges = set()
         for edge_tuple in edge_tuples:
             self.update_with_edge_tuple_and_data_point_edges(
@@ -357,6 +369,17 @@ class Event:
         edge_tuple: tuple[str, str],
         data_point_edges: set[tuple[str, str]],
     ) -> None:
+        """Method to update the event with an edge tuple and data point edges.
+        This method adds a new edge to the edge counts per data point
+        dictionary and a new edge to the conditional count matrix if it does
+        not exist and then updates the edge counts with the edge tuple and
+        data point edges and adds a new edge to the conditional count matrix.
+
+        :param edge_tuple: The edge tuple.
+        :type edge_tuple: `tuple`[`str`, `str`]
+        :param data_point_edges: The data point edges.
+        :type data_point_edges: `set`[`tuple`[`str`, `str`]]
+        """
         if edge_tuple not in self.edge_counts_per_data_point:
             self.add_new_edge_to_edge_counts_per_data_point(edge_tuple)
             self.add_new_edge_to_conditional_count_matrix()
@@ -366,6 +389,12 @@ class Event:
         self,
         edge_tuple: tuple[str, str],
     ) -> None:
+        """Method to add a new edge to the edge counts per data point
+        dictionary.
+
+        :param edge_tuple: The edge tuple.
+        :type edge_tuple: `tuple`[`str`, `str`]
+        """
         self.edge_counts_per_data_point[edge_tuple] = {
             "data_count": 0,
             "total_count": 0,
@@ -373,6 +402,11 @@ class Event:
         }
 
     def add_new_edge_to_conditional_count_matrix(self) -> None:
+        """Method to add a new edge to the conditional count matrix. This
+        method pads the conditional count matrix with a new row and column of
+        zeros. If the conditional count matrix is None, it creates a new
+        conditional count matrix with a single zero.
+        """
         if self.conditional_count_matrix is None:
             self.conditional_count_matrix = np.array([[0]])
             return
@@ -387,7 +421,15 @@ class Event:
         self,
         edge_tuple: tuple[str, str],
         data_point_edges: set[tuple[str, str]],
-    ):
+    ) -> None:
+        """Method to update the edge counts with an edge tuple and data point
+        edges.
+
+        :param edge_tuple: The edge tuple.
+        :type edge_tuple: `tuple`[`str`, `str`]
+        :param data_point_edges: The data point edges.
+        :type data_point_edges: `set`[`tuple`[`str`, `str`]]
+        """
         if edge_tuple not in data_point_edges:
             self.edge_counts_per_data_point[edge_tuple]["data_count"] += 1
             data_point_edges.add(edge_tuple)
@@ -396,7 +438,13 @@ class Event:
     def update_conditional_count_matrix(
         self,
         data_point_edges: set[tuple[str, str]],
-    ):
+    ) -> None:
+        """Method to update the conditional count matrix with a set of data
+        point edges.
+
+        :param data_point_edges: The data point edges.
+        :type data_point_edges: `set`[`tuple`[`str`, `str`]]
+        """
         indexes = [
             self.edge_counts_per_data_point[edge_tuple]["index"]
             for edge_tuple in data_point_edges
@@ -407,6 +455,13 @@ class Event:
 
     @property
     def conditional_probability_matrix(self) -> ndarray | None:
+        """This property gets the conditional probability matrix. If the
+        conditional probability matrix has not been calculated, it calculates
+        it.
+
+        :return: The conditional probability matrix.
+        :rtype: `ndarray` | `None`
+        """
         if self._update_since_conditional_probability_matrix:
             self._condtional_probability_matrix = (
                 self._calculate_conditional_probability_matrix()
@@ -415,9 +470,16 @@ class Event:
         return self._condtional_probability_matrix
 
     def _calculate_conditional_probability_matrix(self) -> ndarray:
+        """This method calculates the conditional probability matrix.
+
+        :return: The conditional probability matrix.
+        :rtype: `ndarray`
+        """
         return self.conditional_count_matrix / np.diag(
             self.conditional_count_matrix
         )
+
+    # -----------------End of conditional methods-----------------
 
 
 def update_all_connections_from_data(events: list[dict]):
