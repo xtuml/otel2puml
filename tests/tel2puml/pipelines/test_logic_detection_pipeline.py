@@ -549,3 +549,89 @@ def test_get_logic_from_nested_and_puml_file():
         assert child.label in preceding_f_events
         preceding_f_events.remove(child.label)
     assert len(preceding_f_events) == 0
+
+
+def test_get_logic_from_nested_or_puml_file():
+    """Test for method detect_logic"""
+    puml_file = "puml_files/ORFork_ORFork_a.puml"
+    data = generate_test_data(puml_file)
+    events_forward_logic, events_backward_logic = (
+        update_all_connections_from_data(data)
+    )
+    # check A logic trees
+    assert (
+        events_forward_logic["A"].logic_gate_tree.operator.name == "OR"
+    )
+    following_a_events = ["B", "C"]
+    for child in events_forward_logic["A"].logic_gate_tree.children:
+        assert child.label in following_a_events
+        following_a_events.remove(child.label)
+    # check B logic trees
+    assert events_forward_logic["B"].logic_gate_tree.operator.name == "OR"
+    following_b_events = ["D", "E"]
+    for child in events_forward_logic["B"].logic_gate_tree.children:
+        assert child.label in following_b_events
+        following_b_events.remove(child.label)
+    assert len(following_b_events) == 0
+    assert events_backward_logic["B"].logic_gate_tree.label == "A"
+    # check C logic trees
+    assert events_forward_logic["C"].logic_gate_tree.label == "F"
+    assert events_backward_logic["C"].logic_gate_tree.label == "A"
+    # check D, E logic trees
+    for event_type in ["D", "E"]:
+        assert events_forward_logic[event_type].logic_gate_tree.label == "F"
+        assert events_backward_logic[event_type].logic_gate_tree.label == "B"
+    # check F logic trees
+    assert events_forward_logic["F"].logic_gate_tree is None
+    assert events_backward_logic["F"].logic_gate_tree.operator.name == "OR"
+    preceding_f_events = ["C", "D", "E"]
+    for child in events_backward_logic["F"].logic_gate_tree.children:
+        assert child.label in preceding_f_events
+        preceding_f_events.remove(child.label)
+    assert len(preceding_f_events) == 0
+
+
+def test_get_logic_from_nested_xor_puml_file():
+    """Test for method detect_logic"""
+    puml_file = "puml_files/XORFork_XORFork_a.puml"
+    data = generate_test_data(puml_file)
+    events_forward_logic, events_backward_logic = (
+        update_all_connections_from_data(data)
+    )
+    # check A logic trees
+    assert (
+        events_forward_logic["A"].logic_gate_tree.operator.name == "XOR"
+    )
+    following_a_events = ["B", "C"]
+    for child in events_forward_logic["A"].logic_gate_tree.children:
+        assert child.label in following_a_events
+        following_a_events.remove(child.label)
+    assert len(following_a_events) == 0
+    assert events_backward_logic["A"].logic_gate_tree is None
+    # check B logic trees
+    assert (
+        events_forward_logic["B"].logic_gate_tree.operator.name == "XOR"
+    )
+    following_b_events = ["D", "E"]
+    for child in events_forward_logic["B"].logic_gate_tree.children:
+        assert child.label in following_b_events
+        following_b_events.remove(child.label)
+    assert len(following_b_events) == 0
+    assert events_backward_logic["B"].logic_gate_tree.label == "A"
+    # check C logic trees
+    assert events_forward_logic["C"].logic_gate_tree.label == "F"
+    assert events_backward_logic["C"].logic_gate_tree.label == "A"
+    # check D, E logic trees
+    for event_type in ["D", "E"]:
+        assert events_forward_logic[event_type].logic_gate_tree.label == "F"
+        assert events_backward_logic[event_type].logic_gate_tree.label == "B"
+    # check F logic trees
+    assert events_forward_logic["F"].logic_gate_tree is None
+    assert (
+        events_backward_logic["F"].logic_gate_tree.operator.name == "XOR"
+    )
+    preceding_f_events = ["C", "D", "E"]
+    for child in events_backward_logic["F"].logic_gate_tree.children:
+        assert child.label in preceding_f_events
+        preceding_f_events.remove(child.label)
+    assert len(preceding_f_events) == 0

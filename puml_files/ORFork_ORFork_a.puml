@@ -1,0 +1,18 @@
+@startuml
+partition "ORFork_ORFork_a" {
+    group "ORFork_ORFork_a"
+        #green:A;
+        split
+            :B;
+            split
+                :D;
+            split again
+                :E;
+            end split
+        split again
+            :C;
+        end split
+        #red:F;
+    end group
+}
+@enduml
