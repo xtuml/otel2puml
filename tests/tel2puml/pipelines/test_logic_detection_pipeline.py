@@ -131,7 +131,7 @@ class TestEvent:
 
     @staticmethod
     def test_update_event_sets():
-        """Tests for method update_edge_sets"""
+        """Tests for method update_event_sets"""
         event = Event("A")
         events = ["B", "C", "D"]
         # check that the event sets are updated
@@ -149,6 +149,7 @@ class TestEvent:
 
     @staticmethod
     def test_create_data_from_event_sequence():
+        """Tests for method create_data_from_event_sequence"""
         event_sequence = ["A", "B", "C", "D"]
         case_id = "case_1"
         start_time = datetime(2021, 1, 1, 0, 0, 0)
@@ -162,6 +163,7 @@ class TestEvent:
 
     @staticmethod
     def test_create_augmented_data_from_event_set():
+        """Tests for method created_augemented_data_from_event_set"""
         event = Event("A")
         event_set = frozenset(["B", "C"])
         data = list(
@@ -193,6 +195,7 @@ class TestEvent:
 
     @staticmethod
     def test_create_augmented_data_from_event_sets():
+        """Tests for method created_augemented_data_from_event_sets"""
         event = Event("A")
         event.event_sets = {
             frozenset(["B", "C"]),
@@ -217,6 +220,9 @@ class TestEvent:
 
     @staticmethod
     def test_calculate_process_tree_from_event_sets_xor_ands():
+        """Tests for method calculate_process_tree_from_event_sets for XOR and
+        AND gates
+        """
         event = Event("A")
         event.event_sets = {
             frozenset(["B", "C"]),
@@ -258,6 +264,8 @@ class TestEvent:
 
     @staticmethod
     def test_calculate_process_tree_from_event_sets_or():
+        """Tests for method calculate_process_tree_from_event_sets for OR gates
+        """
         event = Event("A")
         event.event_sets = {
             frozenset(["B", "C"]),
@@ -300,6 +308,7 @@ class TestEvent:
 
     @staticmethod
     def test_infer_or_gate_from_node():
+        """Tests for method infer_or_gate_from_node"""
         event = Event("A")
         event.event_sets = {
             frozenset(["B", "C"]),
@@ -320,6 +329,7 @@ class TestEvent:
 
     @staticmethod
     def test_get_extended_or_gates_from_process_tree():
+        """Tests for method get_extended_or_gates_from_process_tree"""
         event = Event("A")
         event.event_sets = {
             frozenset(["B", "C"]),
@@ -338,6 +348,7 @@ class TestEvent:
 
     @staticmethod
     def test_filter_defunct_or_gates():
+        """Tests for method filter_defunct_or_gates"""
         event = Event("A")
         event.event_sets = {
             frozenset(["B", "C"]),
@@ -358,6 +369,7 @@ class TestEvent:
 
     @staticmethod
     def test_process_or_gates():
+        """Tests for method process_or_gates"""
         event = Event("A")
         event.event_sets = {
             frozenset(["B", "C", "D"]),
@@ -381,6 +393,7 @@ class TestEvent:
 
     @staticmethod
     def test_reduce_process_tree_to_preffered_logic_gates():
+        """Tests for method reduce_process_tree_to_preffered_logic_gates"""
         event = Event("A")
         event.event_sets = {
             frozenset(["B", "C", "D"]),
@@ -405,6 +418,7 @@ class TestEvent:
 
     @staticmethod
     def test_calculate_logic_gates():
+        """Tests for method calculate_logic_gates"""
         event = Event("A")
         event.event_sets = {
             frozenset(["B", "C", "D"]),
@@ -426,7 +440,7 @@ class TestEvent:
 
 
 def test_update_all_connections_from_data():
-    """Test for method detect_logic"""
+    """Test for method update_all_connections_from_data"""
     puml_file = "puml_files/sequence_xor_fork.puml"
     data = generate_test_data(puml_file)
     events_forward_logic, events_backward_logic = (
@@ -474,7 +488,7 @@ def test_update_all_connections_from_data():
 
 
 def test_get_logic_from_xor_puml_file():
-    """Test for method detect_logic"""
+    """Test method for getting logic gates for a puml file with XOR gate"""
     puml_file = "puml_files/sequence_xor_fork.puml"
     data = generate_test_data(puml_file)
     events_forward_logic, events_backward_logic = (
@@ -506,7 +520,8 @@ def test_get_logic_from_xor_puml_file():
 
 
 def test_get_logic_from_nested_and_puml_file():
-    """Test for method detect_logic"""
+    """Test method for getting logic gates for a puml file with nested AND gate
+    """
     puml_file = "puml_files/ANDFork_ANDFork_a.puml"
     data = generate_test_data(puml_file)
     events_forward_logic, events_backward_logic = (
@@ -552,7 +567,8 @@ def test_get_logic_from_nested_and_puml_file():
 
 
 def test_get_logic_from_nested_or_puml_file():
-    """Test for method detect_logic"""
+    """Test method for getting logic gates for a puml file with nested OR gate
+    """
     puml_file = "puml_files/ORFork_ORFork_a.puml"
     data = generate_test_data(puml_file)
     events_forward_logic, events_backward_logic = (
@@ -592,7 +608,8 @@ def test_get_logic_from_nested_or_puml_file():
 
 
 def test_get_logic_from_nested_xor_puml_file():
-    """Test for method detect_logic"""
+    """Test method for getting logic gates for a puml file with nested XOR gate
+    """
     puml_file = "puml_files/XORFork_XORFork_a.puml"
     data = generate_test_data(puml_file)
     events_forward_logic, events_backward_logic = (
