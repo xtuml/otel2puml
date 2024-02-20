@@ -482,18 +482,23 @@ class Event:
     # -----------------End of conditional methods-----------------
 
 
-def update_all_connections_from_data(events: list[dict]):
+def update_all_connections_from_data(
+    events: list[dict]
+) -> tuple[dict[str, Event], dict[str, Event]]:
     """This function detects the logic in a sequence of PV events.
 
     :param events: A sequence of PV events.
     :type events: `list`[:class:`dict`]
+    :return: A tuple of the forward and backward logic dictionaries of events.
+    :rtype: `tuple`[`dict`[`str`, :class:`Event`],
+    `dict`[`str`, :class:`Event`]]
     """
     graph_solutions = get_graph_solutions_from_events(events)
     events_forward_logic: dict[str, Event] = {}
     events_backward_logic: dict[str, Event] = {}
     for graph_solution in graph_solutions:
         for event in graph_solution.events.values():
-            event_type = event.meta_data["EventType"]
+            event_type: str = event.meta_data["EventType"]
             if event_type not in events_forward_logic:
                 events_forward_logic[event_type] = Event(
                     event_type
