@@ -160,12 +160,12 @@ class Event:
                 event_set
             )
 
-    def created_augemented_data_from_event_set(
+    def create_augmented_data_from_event_set(
         self,
         event_set: frozenset[str],
     ) -> Generator[dict[str, Any], Any, None]:
-        """Method to create augmented data from an event set and yields the
-        data.
+        """Method to create augmented data from a single event set then 
+        yielding the augmented data.
 
         :param event_set: The event set.
         :type event_set: `frozenset`[`str`]

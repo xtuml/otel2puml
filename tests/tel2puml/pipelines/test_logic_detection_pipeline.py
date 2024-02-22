@@ -12,7 +12,7 @@ from tel2puml.pipelines.data_creation import generate_test_data
 class TestEvent:
     """Tests for the Event class."""
     @staticmethod
-    def test_add_new_edge_to_conditional_count_matrix():
+    def test_add_new_edge_to_conditional_count_matrix() -> None:
         """Tests for method add_new_edge_to_conditional_count_matrix"""
         event = Event("A")
         event.add_new_edge_to_conditional_count_matrix()
@@ -36,7 +36,7 @@ class TestEvent:
         ]
 
     @staticmethod
-    def test_add_new_edge_to_edge_counts_per_data_point():
+    def test_add_new_edge_to_edge_counts_per_data_point() -> None:
         """Tests for method add_new_edge_to_edge_counts_per_data_point"""
         event = Event("A")
         for i, edge_tuple in enumerate([("A", "B"), ("B", "C"), ("C", "D")]):
@@ -45,7 +45,7 @@ class TestEvent:
             assert (event.edge_counts_per_data_point[edge_tuple])["index"] == i
 
     @staticmethod
-    def test_update_conditional_count_matrix():
+    def test_update_conditional_count_matrix() -> None:
         """Tests for method update_conditional_count_matrix"""
         event = Event("A")
         data_point_edges = {("A", "B"), ("B", "C"), ("C", "D")}
@@ -74,7 +74,7 @@ class TestEvent:
         assert event.conditional_count_matrix.tolist() == to_check_list
 
     @staticmethod
-    def test_update_with_edge_tuple_and_data_point_edges():
+    def test_update_with_edge_tuple_and_data_point_edges() -> None:
         """Tests for method update_with_edge_tuple_and_data_point_edges"""
         event = Event("A")
         edge_tuple = ("A", "B")
@@ -89,7 +89,7 @@ class TestEvent:
         assert data_point_edges == {edge_tuple}
 
     @staticmethod
-    def test_update_with_data_point():
+    def test_update_with_data_point() -> None:
         """Tests for method update_with_data_point"""
         event = Event("A")
         assert event._update_since_conditional_probability_matrix is False
@@ -106,7 +106,7 @@ class TestEvent:
         assert event._update_since_conditional_probability_matrix is True
 
     @staticmethod
-    def test_conditional_probability_matrix():
+    def test_conditional_probability_matrix() -> None:
         """Tests for property conditional_probability_matrix"""
         event = Event("A")
         assert event.conditional_probability_matrix is None
@@ -131,7 +131,7 @@ class TestEvent:
         ]
 
     @staticmethod
-    def test_update_event_sets():
+    def test_update_event_sets() -> None:
         """Tests for method update_event_sets"""
         event = Event("A")
         events = ["B", "C", "D"]
@@ -149,7 +149,7 @@ class TestEvent:
         assert event.event_sets == {frozenset(events), frozenset(["B", "C"])}
 
     @staticmethod
-    def test_create_data_from_event_sequence():
+    def test_create_data_from_event_sequence() -> None:
         """Tests for method create_data_from_event_sequence"""
         event_sequence = ["A", "B", "C", "D"]
         case_id = "case_1"
@@ -163,7 +163,7 @@ class TestEvent:
             assert event_data["timestamp"] == start_time + timedelta(seconds=i)
 
     @staticmethod
-    def test_create_augmented_data_from_event_set():
+    def test_create_augmented_data_from_event_set() -> None:
         """Tests for method created_augemented_data_from_event_set"""
         event = Event("A")
         event_set = frozenset(["B", "C"])
@@ -195,7 +195,7 @@ class TestEvent:
         assert first_seq_case_ids != second_seq_case_ids
 
     @staticmethod
-    def test_create_augmented_data_from_event_sets():
+    def test_create_augmented_data_from_event_sets() -> None:
         """Tests for method created_augemented_data_from_event_sets"""
         event = Event("A")
         event.event_sets = {
@@ -220,7 +220,7 @@ class TestEvent:
         assert len(expected_sequences) == 0
 
     @staticmethod
-    def test_calculate_process_tree_from_event_sets_xor_ands():
+    def test_calculate_process_tree_from_event_sets_xor_ands() -> None:
         """Tests for method calculate_process_tree_from_event_sets for XOR and
         AND gates
         """
@@ -264,7 +264,7 @@ class TestEvent:
         assert len(children_labels) == 0
 
     @staticmethod
-    def test_calculate_process_tree_from_event_sets_or():
+    def test_calculate_process_tree_from_event_sets_or() -> None:
         """Tests for method calculate_process_tree_from_event_sets for OR gates
         """
         event = Event("A")
@@ -308,7 +308,7 @@ class TestEvent:
         assert len(children_labels) == 0
 
     @staticmethod
-    def test_infer_or_gate_from_node():
+    def test_infer_or_gate_from_node() -> None:
         """Tests for method infer_or_gate_from_node"""
         event = Event("A")
         event.event_sets = {
@@ -329,7 +329,7 @@ class TestEvent:
         assert second_child.operator.name == "PARALLEL"
 
     @staticmethod
-    def test_get_extended_or_gates_from_process_tree():
+    def test_get_extended_or_gates_from_process_tree() -> None:
         """Tests for method get_extended_or_gates_from_process_tree"""
         event = Event("A")
         event.event_sets = {
@@ -348,7 +348,7 @@ class TestEvent:
         assert logic_gates_tree.children[1].children[0].label is not None
 
     @staticmethod
-    def test_filter_defunct_or_gates():
+    def test_filter_defunct_or_gates() -> None:
         """Tests for method filter_defunct_or_gates"""
         event = Event("A")
         event.event_sets = {
@@ -369,7 +369,7 @@ class TestEvent:
         assert len(labels) == 0
 
     @staticmethod
-    def test_process_or_gates():
+    def test_process_or_gates() -> None:
         """Tests for method process_or_gates"""
         event = Event("A")
         event.event_sets = {
@@ -393,7 +393,7 @@ class TestEvent:
         assert len(labels) == 0
 
     @staticmethod
-    def test_reduce_process_tree_to_preffered_logic_gates():
+    def test_reduce_process_tree_to_preffered_logic_gates() -> None:
         """Tests for method reduce_process_tree_to_preffered_logic_gates"""
         event = Event("A")
         event.event_sets = {
@@ -418,7 +418,7 @@ class TestEvent:
         assert len(labels) == 0
 
     @staticmethod
-    def test_calculate_logic_gates():
+    def test_calculate_logic_gates() -> None:
         """Tests for method calculate_logic_gates"""
         event = Event("A")
         event.event_sets = {
@@ -440,7 +440,7 @@ class TestEvent:
         assert len(labels) == 0
 
 
-def test_update_all_connections_from_data():
+def test_update_all_connections_from_data() -> None:
     """Test for method update_all_connections_from_data"""
     puml_file = "puml_files/sequence_xor_fork.puml"
     data = generate_test_data(puml_file)
@@ -488,7 +488,7 @@ def test_update_all_connections_from_data():
     }
 
 
-def test_get_logic_from_xor_puml_file():
+def test_get_logic_from_xor_puml_file() -> None:
     """Test method for getting logic gates for a puml file with XOR gate"""
     puml_file = "puml_files/sequence_xor_fork.puml"
     data = generate_test_data(puml_file)
@@ -520,7 +520,7 @@ def test_get_logic_from_xor_puml_file():
     assert len(preceding_f_events) == 0
 
 
-def test_get_logic_from_nested_and_puml_file():
+def test_get_logic_from_nested_and_puml_file() -> None:
     """Test method for getting logic gates for a puml file with nested AND gate
     """
     puml_file = "puml_files/ANDFork_ANDFork_a.puml"
@@ -567,7 +567,7 @@ def test_get_logic_from_nested_and_puml_file():
     assert len(preceding_f_events) == 0
 
 
-def test_get_logic_from_nested_or_puml_file():
+def test_get_logic_from_nested_or_puml_file() -> None:
     """Test method for getting logic gates for a puml file with nested OR gate
     """
     puml_file = "puml_files/ORFork_ORFork_a.puml"
@@ -608,7 +608,7 @@ def test_get_logic_from_nested_or_puml_file():
     assert len(preceding_f_events) == 0
 
 
-def test_get_logic_from_nested_xor_puml_file():
+def test_get_logic_from_nested_xor_puml_file() -> None:
     """Test method for getting logic gates for a puml file with nested XOR gate
     """
     puml_file = "puml_files/XORFork_XORFork_a.puml"
