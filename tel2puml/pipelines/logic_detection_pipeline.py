@@ -19,7 +19,7 @@ from test_event_generator.solutions.graph_solution import GraphSolution
 from test_event_generator.solutions.event_solution import EventSolution
 
 
-class EventSet(dict):
+class EventSet(dict[str, int]):
     """Class to represent a set of unique events and their counts.
 
     :param events: The events.

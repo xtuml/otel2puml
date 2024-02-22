@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from tel2puml.pipelines.logic_detection_pipeline import (
     Event,
+    EventSet,
     update_all_connections_from_data,
 )
 from tel2puml.pipelines.data_creation import generate_test_data
@@ -137,16 +138,16 @@ class TestEvent:
         events = ["B", "C", "D"]
         # check that the event sets are updated
         event.update_event_sets(events)
-        assert event.event_sets == {frozenset(events)}
+        assert event.event_sets == {EventSet(events)}
         # check that the event sets are not updated
         event.update_event_sets(events)
-        assert event.event_sets == {frozenset(events)}
+        assert event.event_sets == {EventSet(events)}
         # check that the event sets are not updated if events are reversed
         event.update_event_sets(["D", "C", "B"])
-        assert event.event_sets == {frozenset(events)}
+        assert event.event_sets == {EventSet(events)}
         # check that the event sets are updated
         event.update_event_sets(["B", "C"])
-        assert event.event_sets == {frozenset(events), frozenset(["B", "C"])}
+        assert event.event_sets == {EventSet(events), EventSet(["B", "C"])}
 
     @staticmethod
     def test_create_data_from_event_sequence() -> None:
@@ -166,7 +167,7 @@ class TestEvent:
     def test_create_augmented_data_from_event_set() -> None:
         """Tests for method created_augemented_data_from_event_set"""
         event = Event("A")
-        event_set = frozenset(["B", "C"])
+        event_set = EventSet(["B", "C"])
         data = list(
             event.create_augmented_data_from_event_set(
                 event_set,
@@ -199,8 +200,8 @@ class TestEvent:
         """Tests for method created_augemented_data_from_event_sets"""
         event = Event("A")
         event.event_sets = {
-            frozenset(["B", "C"]),
-            frozenset(["D", "E"]),
+            EventSet(["B", "C"]),
+            EventSet(["D", "E"]),
         }
         data = list(event.create_augmented_data_from_event_sets())
         assert len(data) == 12
@@ -226,8 +227,8 @@ class TestEvent:
         """
         event = Event("A")
         event.event_sets = {
-            frozenset(["B", "C"]),
-            frozenset(["D", "E"]),
+            EventSet(["B", "C"]),
+            EventSet(["D", "E"]),
         }
         process_tree = event.calculate_process_tree_from_event_sets()
         first_children = process_tree.children
@@ -269,9 +270,9 @@ class TestEvent:
         """
         event = Event("A")
         event.event_sets = {
-            frozenset(["B", "C"]),
-            frozenset(["B"]),
-            frozenset(["C"]),
+            EventSet(["B", "C"]),
+            EventSet(["B"]),
+            EventSet(["C"]),
         }
         process_tree = event.calculate_process_tree_from_event_sets()
         first_children = process_tree.children
@@ -312,9 +313,9 @@ class TestEvent:
         """Tests for method infer_or_gate_from_node"""
         event = Event("A")
         event.event_sets = {
-            frozenset(["B", "C"]),
-            frozenset(["B"]),
-            frozenset(["C"]),
+            EventSet(["B", "C"]),
+            EventSet(["B"]),
+            EventSet(["C"]),
         }
         process_tree = event.calculate_process_tree_from_event_sets()
         and_gate = process_tree.children[1]
@@ -333,9 +334,9 @@ class TestEvent:
         """Tests for method get_extended_or_gates_from_process_tree"""
         event = Event("A")
         event.event_sets = {
-            frozenset(["B", "C"]),
-            frozenset(["B"]),
-            frozenset(["C"]),
+            EventSet(["B", "C"]),
+            EventSet(["B"]),
+            EventSet(["C"]),
         }
         process_tree = event.calculate_process_tree_from_event_sets()
         logic_gates_tree = process_tree.children[1]
@@ -352,9 +353,9 @@ class TestEvent:
         """Tests for method filter_defunct_or_gates"""
         event = Event("A")
         event.event_sets = {
-            frozenset(["B", "C"]),
-            frozenset(["B"]),
-            frozenset(["C"]),
+            EventSet(["B", "C"]),
+            EventSet(["B"]),
+            EventSet(["C"]),
         }
         process_tree = event.calculate_process_tree_from_event_sets()
         logic_gates_tree = process_tree.children[1]
@@ -373,13 +374,13 @@ class TestEvent:
         """Tests for method process_or_gates"""
         event = Event("A")
         event.event_sets = {
-            frozenset(["B", "C", "D"]),
-            frozenset(["B", "C"]),
-            frozenset(["C", "D"]),
-            frozenset(["B", "D"]),
-            frozenset(["B"]),
-            frozenset(["C"]),
-            frozenset(["D"]),
+            EventSet(["B", "C", "D"]),
+            EventSet(["B", "C"]),
+            EventSet(["C", "D"]),
+            EventSet(["B", "D"]),
+            EventSet(["B"]),
+            EventSet(["C"]),
+            EventSet(["D"]),
         }
         process_tree = event.calculate_process_tree_from_event_sets()
         logic_gates_tree = process_tree.children[1]
@@ -397,13 +398,13 @@ class TestEvent:
         """Tests for method reduce_process_tree_to_preffered_logic_gates"""
         event = Event("A")
         event.event_sets = {
-            frozenset(["B", "C", "D"]),
-            frozenset(["B", "C"]),
-            frozenset(["C", "D"]),
-            frozenset(["B", "D"]),
-            frozenset(["B"]),
-            frozenset(["C"]),
-            frozenset(["D"]),
+            EventSet(["B", "C", "D"]),
+            EventSet(["B", "C"]),
+            EventSet(["C", "D"]),
+            EventSet(["B", "D"]),
+            EventSet(["B"]),
+            EventSet(["C"]),
+            EventSet(["D"]),
         }
         process_tree = event.calculate_process_tree_from_event_sets()
         logic_gates_tree = event.reduce_process_tree_to_preferred_logic_gates(
@@ -422,13 +423,13 @@ class TestEvent:
         """Tests for method calculate_logic_gates"""
         event = Event("A")
         event.event_sets = {
-            frozenset(["B", "C", "D"]),
-            frozenset(["B", "C"]),
-            frozenset(["C", "D"]),
-            frozenset(["B", "D"]),
-            frozenset(["B"]),
-            frozenset(["C"]),
-            frozenset(["D"]),
+            EventSet(["B", "C", "D"]),
+            EventSet(["B", "C"]),
+            EventSet(["C", "D"]),
+            EventSet(["B", "D"]),
+            EventSet(["B"]),
+            EventSet(["C"]),
+            EventSet(["D"]),
         }
         logic_gates_tree = event.calculate_logic_gates()
         assert logic_gates_tree.operator.name == "OR"
@@ -459,32 +460,32 @@ def test_update_all_connections_from_data() -> None:
     )
     # check A
     assert events_forward_logic["A"].event_sets == {
-        frozenset(["B"]),
+        EventSet(["B"]),
     }
     assert events_backward_logic["A"].event_sets == set()
     # check B
     assert events_forward_logic["B"].event_sets == {
-        frozenset(["C"]),
-        frozenset(["D"]),
-        frozenset(["E"]),
+        EventSet(["C"]),
+        EventSet(["D"]),
+        EventSet(["E"]),
     }
     assert events_backward_logic["B"].event_sets == {
-        frozenset(["A"]),
+        EventSet(["A"]),
     }
     # check C, D, E
     for event_type in ["C", "D", "E"]:
         assert events_forward_logic[event_type].event_sets == {
-            frozenset(["F"]),
+            EventSet(["F"]),
         }
         assert events_backward_logic[event_type].event_sets == {
-            frozenset(["B"]),
+            EventSet(["B"]),
         }
     # check F
     assert events_forward_logic["F"].event_sets == set()
     assert events_backward_logic["F"].event_sets == {
-        frozenset(["C"]),
-        frozenset(["D"]),
-        frozenset(["E"]),
+        EventSet(["C"]),
+        EventSet(["D"]),
+        EventSet(["E"]),
     }
 
 
