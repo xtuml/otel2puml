@@ -6,7 +6,11 @@
 	"image": "mcr.microsoft.com/devcontainers/anaconda:3",
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
-	"features": {},
+	"features": {
+		"ghcr.io/rocker-org/devcontainer-features/apt-packages:1": {
+			"packages": "default-jre"
+	}
+},
 
 	"customizations": {
 		"vscode": {

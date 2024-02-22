@@ -1,5 +1,8 @@
 """tests for module test_data_creation.py"""
 
+from tel2puml.run_jAlergia import run
+from tel2puml.read_uml_file import get_event_list_from_puml
+
 from tel2puml.pipelines.data_creation import (
     generate_valid_jobs_from_puml_file,
     generate_event_jsons,
@@ -126,3 +129,45 @@ def test_generate_test_data_template_all_paths_false_large_num_paths():
     assert sum(event_types_count.values()) == num_templates
     for prob in count_prob.values():
         assert 0.32 < prob < 0.34
+
+
+def test_puml_conversion_to_markov_chain():
+    """
+    Test the conversion of a PlantUML file to a Markov chain representation.
+
+    This function tests a function that reads a PlantUML file, extracts the
+        event list, and runs the conversion process to obtain the Markov chain
+        representation. It then compares the obtained representation with the
+        expected output.
+
+    Raises:
+        AssertionError: If the obtained Markov chain representation does not
+        match the expected output.
+    """
+    puml_file_name = "simple_test"
+
+    event_list = get_event_list_from_puml(
+        puml_file="puml_files/" + puml_file_name + ".puml",
+        puml_key="ValidSols",
+        debug=False,
+    )
+    j_alergia_model = str(run(event_list))
+
+    expected_output_lines = [
+        "digraph learnedModel {\n"
+        'q0 [label="A"];\n'
+        'q1 [label="B"];\n'
+        'q2 [label="C"];\n'
+        'q3 [label="D"];\n'
+        'q0 -> q2  [label="0.5"];\n'
+        'q0 -> q1  [label="0.5"];\n'
+        'q1 -> q3  [label="1.0"];\n'
+        'q2 -> q3  [label="1.0"];\n'
+        '__start0 [label="", shape=none];\n'
+        '__start0 -> q0  [label=""];\n'
+        "}\n"
+    ]
+
+    expected_output = "".join(expected_output_lines)
+
+    assert j_alergia_model == expected_output
