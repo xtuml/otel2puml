@@ -6,6 +6,9 @@ on:
       - synchronize
     branches:
       'main'
+  push:
+    branches:
+      main
 jobs:
   sast:
     uses: SmartDCSITlimited/actions-store/.github/workflows/SAST.yml@main
@@ -26,21 +29,21 @@ jobs:
           repository: SmartDCSITlimited/test-event-generator
           ssh-key: ${{ secrets.GH_CDS_TEST_EVENT_GENERATOR_GITHUB_WORKFLOW_KEY }}
           path: test-event-generator
-      
+
       - name: Setup Checkout (test-harness)
         uses: actions/checkout@v4
         with:
           repository: SmartDCSITlimited/test-harness
           ssh-key: ${{ secrets.GH_CDS_TEST_HARNESS_GITHUB_WORKFLOW_KEY }}
           path: test-harness
-      
+
       - name: Setup-conda
         uses: s-weigand/setup-conda@v1
         with:
           update-conda: true
           python-version: 3.11
           conda-channels: conda-forge
-      
+
       - name: Install pre-requisites
         run: |
           conda install -y -c conda-forge cvxopt
@@ -59,17 +62,17 @@ jobs:
         run: |
           cd test-event-generator
           git fetch --all --tags
-          git checkout tags/v1.0.0 -b latest 
+          git checkout tags/v1.0.0 -b latest
           pip install -r requirements.txt
           pip install .
           cd ..
           rm -rf test-event-generator
-      
+
       - name: Install Requirements (test-harness)
         run: |
           cd test-harness
           git fetch --all --tags
-          git checkout tags/v1.0.0 -b latest 
+          git checkout tags/v1.0.0 -b latest
           pip install -r requirements.txt
           pip install .
           cd ..
@@ -78,4 +81,4 @@ jobs:
       - name: Run Tests
         run: |
           export PYTHONPATH=/workspaces/test-harness:$PYTHONPATH
-          pytest 
+          pytest
