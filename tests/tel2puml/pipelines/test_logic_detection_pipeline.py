@@ -148,6 +148,28 @@ class TestEvent:
         # check that the event sets are updated
         event.update_event_sets(["B", "C"])
         assert event.event_sets == {EventSet(events), EventSet(["B", "C"])}
+        # check that the event sets are updated
+        event.update_event_sets(["B", "B", "C"])
+        assert event.event_sets == {
+            EventSet(events), 
+            EventSet(["B", "C"]), 
+            EventSet(["B", "B", "C"])
+        }
+        # check that the event sets are not updated
+        event.update_event_sets(["B", "C", "B"])
+        assert event.event_sets == {
+            EventSet(events), 
+            EventSet(["B", "C"]), 
+            EventSet(["B", "B", "C"])
+        }
+        # check that the event sets are updated
+        event.update_event_sets(["C", "B", "C"])
+        assert event.event_sets == {
+            EventSet(events), 
+            EventSet(["B", "C"]), 
+            EventSet(["B", "B", "C"]),
+            EventSet(["B", "C", "C"])
+        }
 
     @staticmethod
     def test_create_data_from_event_sequence() -> None:
