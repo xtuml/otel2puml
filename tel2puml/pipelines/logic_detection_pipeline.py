@@ -19,6 +19,40 @@ from test_event_generator.solutions.graph_solution import GraphSolution
 from test_event_generator.solutions.event_solution import EventSolution
 
 
+class EventSet(dict):
+    """Class to represent a set of unique events and their counts.
+
+    :param events: The events.
+    :type events: `list`[`str`]
+    """
+    def __init__(
+        self,
+        events: list[str],
+    ) -> None:
+        """Constructor method.
+        """
+        super().__init__()
+        for event in events:
+            self[event] = self.get(event, 0) + 1
+
+    def __key(self):
+        return tuple((k,self[k]) for k in sorted(self))
+    
+    def __hash__(self):
+        return hash(self.__key())
+    
+    def __eq__(self, other):
+        return self.__key() == other.__key()
+
+    def to_list(self) -> list[str]:
+        """Method to get the events as a list.
+
+        :return: The events as a list.
+        :rtype: `list`[`str`]
+        """
+        return list(self.keys())
+
+
 class Event:
     """Class to detect the logic in a sequence of PV events.
 
@@ -35,7 +69,7 @@ class Event:
         self.edge_counts_per_data_point: dict[
             tuple[str, str], dict[str, int]
         ] = {}
-        self.event_sets: set[frozenset[str]] = set()
+        self.event_sets: set[EventSet] = set()
         self.occured_edges: list[list[tuple[str, str]]] = []
         self.conditional_count_matrix: ndarray | None = None
         self._condtional_probability_matrix: ndarray | None = None
@@ -144,7 +178,9 @@ class Event:
         """
         if len(events) == 0:
             return
-        self.event_sets.add(frozenset(events))
+
+        self.event_sets.add(EventSet(events))
+
         self._update_since_logic_gate_tree = True
 
     def create_augmented_data_from_event_sets(
@@ -162,7 +198,7 @@ class Event:
 
     def create_augmented_data_from_event_set(
         self,
-        event_set: frozenset[str],
+        event_set: EventSet,
     ) -> Generator[dict[str, Any], Any, None]:
         """Method to create augmented data from a single event set then
         yielding the augmented data.
@@ -173,7 +209,7 @@ class Event:
         :rtype: `Generator`[`dict`[`str`, `Any`], `Any`, `None`]
         """
         for permutation in permutations(
-            event_set, len(event_set)
+            event_set.to_list(), len(event_set)
         ):
             case_id = str(uuid4())
             yield from self.create_data_from_event_sequence(
