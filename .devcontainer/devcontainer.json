@@ -3,7 +3,7 @@
 {
 	"name": "Test Harness",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/python:0-3.11",
+	"image": "mcr.microsoft.com/devcontainers/anaconda:3",
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {},
@@ -39,9 +39,8 @@
 
 	// Use 'postCreateCommand' to run commands after the container is created.
 	"postCreateCommand": {
-        "1": "pip3 install --user -r requirements.txt",
-        "2": "echo 'export PYTHONPATH=/workspaces/test-harness:$PYTHONPATH' >> ~/.bashrc",
-        "3": "bash scripts/install_repositories.sh"
+        "1": "conda install -y python=3.11 && conda install -y -c conda-forge cvxopt && conda install -y -c conda-forge pygraphviz && pip3 install --user -r requirements.txt && bash scripts/install_repositories.sh",
+        "2": "echo 'export PYTHONPATH=/workspaces/test-harness:$PYTHONPATH' >> ~/.bashrc"
     },
 
     // Add repo to safe directories

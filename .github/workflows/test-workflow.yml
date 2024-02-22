@@ -33,12 +33,18 @@ jobs:
           repository: SmartDCSITlimited/test-harness
           ssh-key: ${{ secrets.GH_CDS_TEST_HARNESS_GITHUB_WORKFLOW_KEY }}
           path: test-harness
-
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      
+      - name: Setup-conda
+        uses: s-weigand/setup-conda@v1
         with:
-          python-version: '3.11'
-          cache: 'pip'
+          update-conda: true
+          python-version: 3.11
+          conda-channels: conda-forge
+      
+      - name: Install pre-requisites
+        run: |
+          conda install -y -c conda-forge cvxopt
+          conda install -y -c conda-forge pygraphviz
 
       - name: Install Requirements
         run: |
