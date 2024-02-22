@@ -156,7 +156,7 @@ class Event:
         :return: The augmented data.
         :rtype: `Generator`[`dict`[`str`, `Any`], `Any`, `None`]"""
         for event_set in self.event_sets:
-            yield from self.created_augemented_data_from_event_set(
+            yield from self.create_augmented_data_from_event_set(
                 event_set
             )
 

@@ -168,7 +168,7 @@ class TestEvent:
         event = Event("A")
         event_set = frozenset(["B", "C"])
         data = list(
-            event.created_augemented_data_from_event_set(
+            event.create_augmented_data_from_event_set(
                 event_set,
             )
         )
