@@ -53,14 +53,14 @@ class TestEventSet:
         assert event_set_1 != event_set_3
 
     @staticmethod
-    def test_to_list() -> None:
+    def test_to_frozenset() -> None:
         """Tests for the to_list method."""
         event_set = EventSet(["A", "B", "C"])
-        assert event_set.to_list() == ["A", "B", "C"]
+        assert event_set.to_frozenset() == frozenset(["A", "B", "C"])
         event_set = EventSet(["B", "A", "C"])
-        assert event_set.to_list() == ["A", "B", "C"]
+        assert event_set.to_frozenset() == frozenset(["A", "B", "C"])
         event_set = EventSet(["A", "B", "A", "C", "B", "A"])
-        assert event_set.to_list() == ["A", "B", "C"]
+        assert event_set.to_frozenset() == frozenset(["A", "B", "C"])
 
 
 class TestEvent:

@@ -44,13 +44,13 @@ class EventSet(dict[str, int]):
     def __eq__(self, other):
         return self.__key() == other.__key()
 
-    def to_list(self) -> list[str]:
+    def to_frozenset(self) -> frozenset[str]:
         """Method to get the events as a list.
 
         :return: The events as a list.
         :rtype: `list`[`str`]
         """
-        return sorted(list(self.keys()))
+        return frozenset(self.keys())
 
 
 class Event:
@@ -183,6 +183,17 @@ class Event:
 
         self._update_since_logic_gate_tree = True
 
+    def get_reduced_event_set(self) -> set[frozenset[str]]:
+        """This method reduces the event set to a list of unique events.
+
+        :return: The reduced event set.
+        :rtype: `list`[`str`]
+        """
+        return {
+            event_set.to_frozenset()
+            for event_set in self.event_sets
+        }
+
     def create_augmented_data_from_event_sets(
         self,
     ) -> Generator[dict[str, Any], Any, None]:
@@ -191,14 +202,14 @@ class Event:
 
         :return: The augmented data.
         :rtype: `Generator`[`dict`[`str`, `Any`], `Any`, `None`]"""
-        for event_set in self.event_sets:
+        for reduced_event_set in self.get_reduced_event_set():
             yield from self.create_augmented_data_from_event_set(
-                event_set
+                reduced_event_set
             )
 
     def create_augmented_data_from_event_set(
         self,
-        event_set: EventSet,
+        reduced_event_set: frozenset[str],
     ) -> Generator[dict[str, Any], Any, None]:
         """Method to create augmented data from a single event set then
         yielding the augmented data.
@@ -209,7 +220,7 @@ class Event:
         :rtype: `Generator`[`dict`[`str`, `Any`], `Any`, `None`]
         """
         for permutation in permutations(
-            event_set.to_list(), len(event_set)
+            reduced_event_set, len(reduced_event_set)
         ):
             case_id = str(uuid4())
             yield from self.create_data_from_event_sequence(
