@@ -10,6 +10,59 @@ from tel2puml.pipelines.logic_detection_pipeline import (
 from tel2puml.pipelines.data_creation import generate_test_data
 
 
+class TestEventSet:
+    """Tests for the EventSet class."""
+
+    @staticmethod
+    def test_init_single_entries() -> None:
+        """Tests for the __init__ method."""
+        event_set = EventSet(["A", "B", "C"])
+        assert event_set["A"] == 1
+        assert event_set["B"] == 1
+        assert event_set["C"] == 1
+
+    @staticmethod
+    def test_init_repeated_entries() -> None:
+        """Tests for the __init__ method for repeated entries."""
+        event_set = EventSet(["A", "B", "A", "C", "B", "A"])
+        assert event_set["A"] == 3
+        assert event_set["B"] == 2
+        assert event_set["C"] == 1
+
+    @staticmethod
+    def test_init_empty_entries() -> None:
+        """Tests for the __init__ method for empty entries."""
+        event_set = EventSet([])
+        assert len(event_set) == 0
+
+    @staticmethod
+    def test_hash() -> None:
+        """Tests for the __hash__ method."""
+        event_set_1 = EventSet(["A", "B", "C"])
+        assert hash(event_set_1) == hash((("A", 1), ("B", 1), ("C", 1)))
+        event_set_2 = EventSet(["A", "B", "A", "C", "B", "A"])
+        assert hash(event_set_2) == hash((("A", 3), ("B", 2), ("C", 1)))
+
+    @staticmethod
+    def test_eq() -> None:
+        """Tests for the __eq__ method."""
+        event_set_1 = EventSet(["A", "B", "C"])
+        event_set_2 = EventSet(["B", "A", "C"])
+        assert event_set_1 == event_set_2
+        event_set_3 = EventSet(["A", "B", "A", "C", "B", "A"])
+        assert event_set_1 != event_set_3
+
+    @staticmethod
+    def test_to_list() -> None:
+        """Tests for the to_list method."""
+        event_set = EventSet(["A", "B", "C"])
+        assert event_set.to_list() == ["A", "B", "C"]
+        event_set = EventSet(["B", "A", "C"])
+        assert event_set.to_list() == ["A", "B", "C"]
+        event_set = EventSet(["A", "B", "A", "C", "B", "A"])
+        assert event_set.to_list() == ["A", "B", "C"]
+
+
 class TestEvent:
     """Tests for the Event class."""
     @staticmethod

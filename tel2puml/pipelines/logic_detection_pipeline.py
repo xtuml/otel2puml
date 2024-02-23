@@ -50,7 +50,7 @@ class EventSet(dict[str, int]):
         :return: The events as a list.
         :rtype: `list`[`str`]
         """
-        return list(self.keys())
+        return sorted(list(self.keys()))
 
 
 class Event:
