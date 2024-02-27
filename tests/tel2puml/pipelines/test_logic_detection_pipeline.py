@@ -484,7 +484,7 @@ class TestEvent:
         assert len(labels) == 0
 
     @staticmethod
-    def test_reduce_process_tree_to_preffered_logic_gates() -> None:
+    def test_reduce_process_tree_to_preferred_logic_gates() -> None:
         """Tests for method reduce_process_tree_to_preffered_logic_gates"""
         event = Event("A")
         event.event_sets = {
@@ -507,6 +507,32 @@ class TestEvent:
             assert child.label in labels
             labels.remove(child.label)
         assert len(labels) == 0
+
+
+    @staticmethod
+    def test_calculate_branches_in_tree() -> None:
+        """Tests for method find_branches_in_process_tree"""
+        event = Event("A")
+        event.event_sets = {
+            EventSet(["B", "B", "B"]),
+            EventSet(["B", "B", "B"]),
+            EventSet(["B", "B", "B"]),
+        }
+        process_tree = event.calculate_process_tree_from_event_sets()
+        logic_gates_tree = event.reduce_process_tree_to_preferred_logic_gates(
+            process_tree
+        )
+        logic_gate_tree_with_branches = event.calculate_branches_in_tree(
+            logic_gates_tree
+        )
+        assert logic_gate_tree_with_branches.operator.name == "BR"
+        assert len(logic_gate_tree_with_branches.children) == 1
+        child_op, = logic_gate_tree_with_branches.children
+        assert child_op.operator.name == "+"
+        assert len(child_op.children) == 3
+        for child in child_op.children:
+            assert child.label == "B"
+
 
     @staticmethod
     def test_calculate_logic_gates() -> None:

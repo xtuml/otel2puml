@@ -35,7 +35,7 @@ class Operator(Enum):
     # partially-ordered operator
     PARTIALORDER = "PO"
     # branch operator
-    BRANCH = "B"
+    BRANCH = "BR"
 
     def __str__(self):
         """
@@ -201,7 +201,10 @@ class Event:
         logic_gate_tree = self.reduce_process_tree_to_preferred_logic_gates(
             process_tree
         )
-        return logic_gate_tree
+        logic_gate_tree_with_branches = self.calculate_branches_in_tree(
+            logic_gate_tree
+        )
+        return logic_gate_tree_with_branches
 
     def update_event_sets(
         self,
@@ -422,6 +425,17 @@ class Event:
                     if node.parent.operator.name == "OR":
                         node.parent.children.remove(node)
                         node.parent.children.extend(node.children)
+
+    def calculate_branches_in_tree(
+            self, 
+            logic_gate_tree: ProcessTree
+    ) -> ProcessTree:
+        """Method to find the branches in a process tree.
+
+        :return: The process tree with branches.
+        :rtype: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+        """
+        return logic_gate_tree
 
     # -----------------Conditional methods-----------------
     """
