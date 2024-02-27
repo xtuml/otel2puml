@@ -77,6 +77,16 @@ class TestEventSet:
         event_set = EventSet(["A", "B", "A", "C", "B", "A"])
         assert event_set.to_frozenset() == frozenset(["A", "B", "C"])
 
+    @staticmethod
+    def test_get_branch_events() -> None:
+        """Tests for the get_branch_counts method."""
+        event_set = EventSet(["A", "B", "C"])
+        assert event_set.get_branch_events() == {}
+        event_set = EventSet(["A", "A"])
+        assert event_set.get_branch_events() == {"A": 2}
+        event_set = EventSet(["A", "B", "A", "C", "B", "A"])
+        assert event_set.get_branch_events() == {"A": 3, "B": 2}
+
 
 class TestEvent:
     """Tests for the Event class."""
@@ -525,9 +535,10 @@ class TestEvent:
         logic_gate_tree_with_branches = event.calculate_branches_in_tree(
             logic_gates_tree
         )
-        assert logic_gate_tree_with_branches.operator.name == "BR"
+        assert logic_gate_tree_with_branches.operator.name == "BRANCH"
         assert len(logic_gate_tree_with_branches.children) == 1
         child_op, = logic_gate_tree_with_branches.children
+        # with current logic: child_op.label == "B"
         assert child_op.operator.name == "+"
         assert len(child_op.children) == 3
         for child in child_op.children:

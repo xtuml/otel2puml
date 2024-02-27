@@ -88,6 +88,18 @@ class EventSet(dict[str, int]):
         :rtype: `list`[`str`]
         """
         return frozenset(self.keys())
+    
+    def get_branch_events(self) -> dict[str, int]:
+        """Method to get the branch events.
+
+        :return: The branch events.
+        :rtype: `dict`[`str`, `int`]
+        """
+        return {
+            event: count
+            for event, count in self.items()
+            if count > 1
+        }
 
 
 class Event:
@@ -435,6 +447,15 @@ class Event:
         :return: The process tree with branches.
         :rtype: :class:`pm4py.objects.process_tree.obj.ProcessTree`
         """
+        for event_set in self.event_sets:
+            branch_events = event_set.get_branch_events()
+            if len(branch_events) != 0:
+                logic_gate_tree = ProcessTree(
+                    Operator.BRANCH,
+                    None,
+                    [logic_gate_tree],
+                )
+                    
         return logic_gate_tree
 
     # -----------------Conditional methods-----------------
