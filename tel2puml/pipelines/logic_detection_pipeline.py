@@ -5,6 +5,7 @@ from uuid import uuid4
 from datetime import datetime, timedelta
 from typing import Any, Generator
 from copy import deepcopy
+from enum import Enum
 
 from numpy import ndarray
 import numpy as np
@@ -13,11 +14,47 @@ from pm4py import (
     discover_process_tree_inductive, ProcessTree,
     format_dataframe
 )
-from pm4py.objects.process_tree.obj import Operator
 
 from test_event_generator.solutions.graph_solution import GraphSolution
 from test_event_generator.solutions.event_solution import EventSolution
 
+
+class Operator(Enum):
+    # sequence operator
+    SEQUENCE = '->'
+    # exclusive choice operator
+    XOR = 'X'
+    # parallel operator
+    PARALLEL = '+'
+    # loop operator
+    LOOP = '*'
+    # or operator
+    OR = 'O'
+    # interleaving operator
+    INTERLEAVING = "<>"
+    # partially-ordered operator
+    PARTIALORDER = "PO"
+    # branch operator
+    BRANCH = "B"
+
+    def __str__(self):
+        """
+        Provides a string representation of the current operator
+
+        :return: String representation of the process tree.
+        :rtype: `str`
+        """
+        return self.value
+
+    def __repr__(self):
+        """
+        Provides a string representation of the current operator
+
+        :return: String representation of the process tree.
+        :rtype: `str`
+        """
+        return self.value
+    
 
 class EventSet(dict[str, int]):
     """Class to represent a set of unique events and their counts.

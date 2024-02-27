@@ -5,9 +5,24 @@ from datetime import datetime, timedelta
 from tel2puml.pipelines.logic_detection_pipeline import (
     Event,
     EventSet,
+    Operator,
     update_all_connections_from_data,
 )
 from tel2puml.pipelines.data_creation import generate_test_data
+
+
+class TestOperator:
+    """Tests for the Operator class."""
+    def test_values(self):
+        """Tests for the values of the Operator class."""
+        assert Operator.SEQUENCE.value == '->'
+        assert Operator.PARALLEL.value == '+'
+        assert Operator.XOR.value == 'X'
+        assert Operator.OR.value == 'O'
+        assert Operator.LOOP.value == '*'
+        assert Operator.INTERLEAVING.value == "<>"
+        assert Operator.PARTIALORDER.value == "PO"
+        assert Operator.BRANCH.value == "B"
 
 
 class TestEventSet:
