@@ -447,20 +447,55 @@ class Event:
         :return: The process tree with branches.
         :rtype: :class:`pm4py.objects.process_tree.obj.ProcessTree`
         """
+        branch_occurs = False
         for event_set in self.event_sets:
-            branch_events = event_set.get_branch_events()
-            if len(branch_events) != 0:
-                parent = logic_gate_tree.parent
-                logic_gate_tree.parent = Operator.BRANCH
-                logic_gate_tree = ProcessTree(
-                    Operator.BRANCH,
-                    None,
-                    [logic_gate_tree],
-                )
-                logic_gate_tree.parent = parent
+            if len(event_set.get_branch_events()) != 0:
+                branch_occurs = True
                 break
-                    
+                
+        if branch_occurs:
+            logic_gate_tree = ProcessTree(
+                Operator.BRANCH,
+                logic_gate_tree.parent,
+                [logic_gate_tree],
+            )
+            logic_gate_tree = self.update_tree_with_branch_logic(
+                logic_gate_tree
+            ) 
+
+
         return logic_gate_tree
+    
+    def update_tree_with_branch_logic(self, node):
+        """Method to update a tree with branch logic.
+
+        :param node: The node.
+        :type node: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+        """
+        if node.operator is None:
+            counts = [
+                event_set[node.label] 
+                for event_set in self.event_sets 
+                if node.label in event_set and event_set[node.label] > 1
+            ]
+            if len(counts) == 0:
+                return node
+            elif len(counts) == 1:
+                return ProcessTree(
+                    Operator.PARALLEL,
+                    node.parent,
+                    [node] * counts[0]
+                )
+            else:
+                # NOTE: logic to be updated here
+                return node
+        else:
+            node.children = [
+                self.update_tree_with_branch_logic(child) 
+                for child in node.children
+            ]
+            return node
+            
 
     # -----------------Conditional methods-----------------
     """
