@@ -22,7 +22,7 @@ class TestOperator:
         assert Operator.LOOP.value == '*'
         assert Operator.INTERLEAVING.value == "<>"
         assert Operator.PARTIALORDER.value == "PO"
-        assert Operator.BRANCH.value == "B"
+        assert Operator.BRANCH.value == "BR"
 
 
 class TestEventSet:
@@ -525,7 +525,7 @@ class TestEvent:
         event = Event("A")
         event.event_sets = {
             EventSet(["B", "B"]),
-            EventSet(["D", "C"]),
+            EventSet(["C", "D"]),
         }
         process_tree = event.calculate_process_tree_from_event_sets()
         logic_gates_tree = event.reduce_process_tree_to_preferred_logic_gates(
@@ -541,7 +541,7 @@ class TestEvent:
         child_xor, = logic_gate_tree_with_branches.children
         assert child_xor.operator.name == "XOR"
         labels_b = ["B", "B"]
-        labels_cd = ["C", "D"]
+        labels_cd = ["D", "C"]
         for child_and in child_xor.children:
             assert child_and.operator.name == "PARALLEL"
             for child in child_and.children:
