@@ -478,17 +478,14 @@ class Event:
                 for event_set in self.event_sets 
                 if node.label in event_set and event_set[node.label] > 1
             ]
-            if len(counts) == 0:
+            if len(counts) != 1:
                 return node
-            elif len(counts) == 1:
+            else:
                 return ProcessTree(
                     Operator.PARALLEL,
                     node.parent,
                     [node] * counts[0]
                 )
-            else:
-                # NOTE: logic to be updated here
-                return node
         else:
             node.children = [
                 self.update_tree_with_branch_logic(child) 

@@ -2,6 +2,9 @@
 
 from datetime import datetime, timedelta
 
+from pm4py import ProcessTree
+
+
 from tel2puml.pipelines.logic_detection_pipeline import (
     Event,
     EventSet,
@@ -518,6 +521,56 @@ class TestEvent:
             labels.remove(child.label)
         assert len(labels) == 0
 
+    @staticmethod
+    def test_update_tree_with_branch_logic() -> None:
+        """Tests for method update_tree_with_branch_logic"""
+        event = Event("A")
+        event.event_sets = {
+            EventSet(["B"]),
+        }
+        node_1 = ProcessTree(
+            None,
+            None,
+            None,
+            "B"
+        )
+        updated_node_1 = event.update_tree_with_branch_logic(node_1)
+        assert updated_node_1.label == "B"
+        assert len(updated_node_1.children) == 0
+
+        event.event_sets = {
+            EventSet(["B", "B"]),
+        }
+        node_2 = ProcessTree(
+            None,
+            None,
+            None,
+            "B"
+        )
+        updated_node_2 = event.update_tree_with_branch_logic(node_2)
+
+        def _check_node_for_branch_and(node):
+            assert node.operator.name == "PARALLEL"
+            assert len(node.children) == 2
+            labels = ["B", "B"]
+            for child in node.children:
+                assert child.label in labels
+                labels.remove(child.label)
+            assert len(labels) == 0
+            
+        _check_node_for_branch_and(updated_node_2)
+
+        node_3 = ProcessTree(
+            Operator.SEQUENCE,
+            None,
+            [node_2],
+        )
+        updated_node_3 = event.update_tree_with_branch_logic(node_3)
+        assert updated_node_3.operator.name == "SEQUENCE"
+        assert len(updated_node_3.children) == 1
+        child_op, = updated_node_3.children
+        _check_node_for_branch_and(child_op)
+
 
     @staticmethod
     def test_calculate_branches_in_tree() -> None:
@@ -531,7 +584,6 @@ class TestEvent:
         logic_gates_tree = event.reduce_process_tree_to_preferred_logic_gates(
             process_tree
         )
-
         logic_gate_tree_with_branches = event.calculate_branches_in_tree(
             logic_gates_tree
         )
