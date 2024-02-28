@@ -525,13 +525,12 @@ class TestEvent:
         event = Event("A")
         event.event_sets = {
             EventSet(["B", "B", "B"]),
-            EventSet(["B", "B", "B"]),
-            EventSet(["B", "B", "B"]),
         }
         process_tree = event.calculate_process_tree_from_event_sets()
         logic_gates_tree = event.reduce_process_tree_to_preferred_logic_gates(
             process_tree
         )
+
         logic_gate_tree_with_branches = event.calculate_branches_in_tree(
             logic_gates_tree
         )

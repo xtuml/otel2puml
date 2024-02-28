@@ -450,11 +450,15 @@ class Event:
         for event_set in self.event_sets:
             branch_events = event_set.get_branch_events()
             if len(branch_events) != 0:
+                parent = logic_gate_tree.parent
+                logic_gate_tree.parent = Operator.BRANCH
                 logic_gate_tree = ProcessTree(
                     Operator.BRANCH,
                     None,
                     [logic_gate_tree],
                 )
+                logic_gate_tree.parent = parent
+                break
                     
         return logic_gate_tree
 
