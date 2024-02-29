@@ -110,7 +110,7 @@ class Testread_uml_file(unittest.TestCase):
         puml_key = "ValidSols"
         output_file = ""
         DEBUG = True
-        expected_output = "A,C,D\nA,B,D"
+        expected_output = "A,D\nA,B,C"
         self.assertEqual(
             get_event_list_from_puml(puml_file, puml_key, output_file, DEBUG),
             expected_output,

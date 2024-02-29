@@ -45,7 +45,9 @@ def get_nodes(data: str):
     node_list = []
 
     for node in re.findall(
-        r"^ *(q\d+) *\[(shape=\".*?\",)?label=\"(.*?)\"", data, re.M
+        r"^ *(q\d+) *\[(shape=\".*?\",)?label=\"(.*?)\"",
+        data,
+        re.M
     ):
 
         labelNode = node[2]
@@ -111,11 +113,18 @@ def convert_to_networkx(
         graph.add_node(item, label=events_reference[item])
     for item in edge_list:
         if "__start0" not in item:
-            graph.add_edge(
-                str(item[0]),
-                str(item[1]),
-                label=str(edge_list[item]["weight"]),
-            )
+            if "type" in edge_list[item]:
+                graph.add_edge(
+                    str(item[0]),
+                    str(item[1]),
+                    label=str(edge_list[item]["type"]),
+                )
+            else:
+                graph.add_edge(
+                    str(item[0]),
+                    str(item[1]),
+                    label=str(edge_list[item]["weight"]),
+                )
     if out_path != "":
         graph.edges(data=True)
         nx.nx_agraph.write_dot(graph, out_path)

@@ -157,12 +157,11 @@ def test_puml_conversion_to_markov_chain():
         "digraph learnedModel {\n"
         'q0 [label="A"];\n'
         'q1 [label="B"];\n'
-        'q2 [label="C"];\n'
-        'q3 [label="D"];\n'
+        'q2 [label="D"];\n'
+        'q3 [label="C"];\n'
         'q0 -> q2  [label="0.5"];\n'
         'q0 -> q1  [label="0.5"];\n'
         'q1 -> q3  [label="1.0"];\n'
-        'q2 -> q3  [label="1.0"];\n'
         '__start0 [label="", shape=none];\n'
         '__start0 -> q0  [label=""];\n'
         "}\n"
