@@ -135,7 +135,26 @@ def load_all_logic_trees_into_nodes(
     if direction not in ["incoming", "outgoing"]:
         raise ValueError(f"Invalid direction {direction}")
     for event_type, event in events.items():
-        for node in nodes[event_type]:
-            node.load_logic_into_list(
-                event.logic_gate_tree, direction
-            )
+        load_logic_tree_into_nodes(
+            event.logic_gate_tree, nodes[event_type], direction
+        )
+
+
+def load_logic_tree_into_nodes(
+    logic_gate_tree: ProcessTree,
+    nodes: list[Node],
+    direction: Literal["incoming", "outgoing"]
+) -> None:
+    """Loads a logic tree into the nodes of a list
+
+    :param logic_gate_tree: The logic gate tree to load into the nodes.
+    :type logic_gate_tree: :class:`ProcessTree`
+    :param nodes: The nodes to load the logic into.
+    :type nodes: `list`[:class:`Node`]
+    :param direction: The direction to load the logic.
+    :type direction: `Literal`[`"incoming"`, `"outgoing"`]
+    """
+    for node in nodes:
+        node.load_logic_into_list(
+            logic_gate_tree, direction
+        )
