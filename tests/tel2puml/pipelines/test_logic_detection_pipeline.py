@@ -825,3 +825,52 @@ def test_get_logic_from_nested_xor_puml_file() -> None:
         assert child.label in preceding_f_events
         preceding_f_events.remove(child.label)
     assert len(preceding_f_events) == 0
+
+
+def test_get_logic_from_branch_count_puml_file() -> None:
+    """Test method for getting logic gates for a puml file with branching
+    event"""
+    puml_file = "puml_files/repeated_same_event.puml"
+    data = generate_test_data(puml_file)
+    events_forward_logic, events_backward_logic = (
+        update_all_connections_from_data(data)
+    )
+    # check A logic trees
+    assert events_forward_logic["A"].logic_gate_tree.operator.name == "XOR"
+    following_a_events = ["B", "C"]
+    for child in events_forward_logic["A"].logic_gate_tree.children:
+        assert child.label in following_a_events
+        following_a_events.remove(child.label)
+    assert len(following_a_events) == 0
+    assert events_backward_logic["A"].logic_gate_tree is None
+    # check B logic trees
+    assert events_forward_logic["B"].logic_gate_tree.operator.name == "BRANCH"
+    following_b_events = ["D", "D", "D"]
+    child_operator_b, = events_forward_logic["B"].logic_gate_tree.children
+    assert child_operator_b.operator.name == "PARALLEL"
+    for child in child_operator_b.children:
+        assert child.label in following_b_events
+        following_b_events.remove(child.label)
+    assert len(following_b_events) == 0
+    assert events_backward_logic["B"].logic_gate_tree.label == "A"
+    # check C logic trees
+    assert events_forward_logic["C"].logic_gate_tree.label == "E"
+    assert events_backward_logic["C"].logic_gate_tree.label == "A"
+    # check D logic trees
+    assert events_forward_logic["D"].logic_gate_tree.label == "E"
+    assert events_backward_logic["D"].logic_gate_tree.label == "B"
+    # check E logic trees
+    assert events_forward_logic["E"].logic_gate_tree is None
+    assert events_backward_logic["E"].logic_gate_tree.operator.name == "BRANCH"
+    child_operator_e, = events_backward_logic["E"].logic_gate_tree.children
+    assert child_operator_e.operator.name == "XOR"
+    preceding_e_events = ["C", "D", "D", "D"]
+    for child in child_operator_e.children:
+        if child.label == "C":
+            preceding_e_events.remove(child.label)
+        else:
+            assert child.operator.name == "PARALLEL"
+            for grandchild in child.children:
+                assert grandchild.label in preceding_e_events
+                preceding_e_events.remove(grandchild.label)
+    assert len(preceding_e_events) == 0

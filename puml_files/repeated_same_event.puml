@@ -1,0 +1,20 @@
+@startuml
+partition "Repeated_same_event" {
+    group "Repeated_same_event"
+        #green:A;
+        if (XOR) then (true)
+            :B;
+            fork
+                :D;
+            fork again
+                :D;
+            fork again
+                :D;
+            end fork
+        else (false)
+            :C;
+        endif
+        #red:E;
+    end group
+}
+@enduml
