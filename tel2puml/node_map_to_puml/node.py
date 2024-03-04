@@ -2,8 +2,17 @@
 from typing import Literal
 
 from pm4py import ProcessTree
+from pm4py.objects.process_tree.obj import Operator
 
 from tel2puml.pipelines.logic_detection_pipeline import Event
+
+
+operator_name_map = {
+    "PARALLEL": "AND",
+    "XOR": "XOR",
+    "OR": "OR",
+    "BRANCH": "BRANCH",
+}
 
 
 class Node:
@@ -50,11 +59,40 @@ class Node:
         self.operator = operator
         self.event_type = event_type
 
-        self.branch_enum = ["AND", "OR", "XOR", "LOOP"]
-    
+        self.branch_enum = ["AND", "OR", "XOR", "LOOP", "BRANCH"]
+
+    def update_node_list_with_nodes(
+        self, nodes: list["Node"], direction: Literal["incoming", "outgoing"]
+    ) -> None:
+        """Updates the node list with nodes.
+
+        :param nodes: The nodes to add to the list.
+        :type nodes: `list`[:class:`Node`]
+        :param direction: The direction to update the list.
+        :type direction: `Literal`[`"incoming"`, `"outgoing"`]
+        """
+        for node in nodes:
+            self.update_node_list_with_node(node, direction)
+
+    def update_node_list_with_node(
+        self, node: "Node", direction: Literal["incoming", "outgoing"]
+    ) -> None:
+        """Updates the node list.
+
+        :param node: The node to add to the list.
+        :type node: :class:`Node`
+        :param direction: The direction to update the list.
+        :type direction: `Literal`[`"incoming"`, `"outgoing"`]
+        """
+        if direction not in ["incoming", "outgoing"]:
+            raise ValueError(f"Invalid direction {direction}")
+        if direction == "incoming":
+            self.incoming.append(node)
+        else:
+            self.outgoing.append(node)
 
     @property
-    def event_node_map(self) -> dict[str, "Node"]:
+    def event_node_map_incoming(self) -> dict[str, "Node"]:
         """Returns a map of event types to nodes.
         
         :return: A map of event types to nodes.
@@ -62,6 +100,20 @@ class Node:
         """
         event_node_map = {}
         for node in self.incoming:
+            if node.event_type is None:
+                raise ValueError(f"Node event type is not set for node with uid {self.uid}")
+            event_node_map[node.event_type] = node
+        return event_node_map
+
+    @property
+    def event_node_map_outgoing(self) -> dict[str, "Node"]:
+        """Returns a map of event types to nodes.
+        
+        :return: A map of event types to nodes.
+        :rtype: `dict`[`str`, `Node`]
+        """
+        event_node_map = {}
+        for node in self.outgoing:
             if node.event_type is None:
                 raise ValueError(f"Node event type is not set for node with uid {self.uid}")
             event_node_map[node.event_type] = node
@@ -81,7 +133,10 @@ class Node:
         """
         if direction not in ["incoming", "outgoing"]:
             raise ValueError(f"Invalid direction {direction}")
-        event_node_map = self.event_node_map
+        if direction == "incoming":
+            event_node_map = self.event_node_map_incoming
+        else:
+            event_node_map = self.event_node_map_outgoing
         self._load_logic_into_logic_list(logic_tree, event_node_map, direction)
     
     def _load_logic_into_logic_list(
@@ -103,19 +158,22 @@ class Node:
             logic_list = self.incoming_logic
         else:
             logic_list = self.outgoing_logic
-        for child in logic_tree.children:
-            if child.label is not None:
-                logic_list.append(event_node_map[child.label])
-            else:
-                logic_operator_node = Node(
-                    operator=child.operator.name,
-                )
+        if logic_tree.label is not None:
+            logic_list.append(event_node_map[logic_tree.label])
+        elif logic_tree.operator == Operator.SEQUENCE:
+            for child in logic_tree.children:
+                self._load_logic_into_logic_list(child, event_node_map, direction)
+        else:
+            logic_operator_node = Node(
+                operator=operator_name_map[logic_tree.operator.name],
+            )
+            for child in logic_tree.children:
                 logic_operator_node._load_logic_into_logic_list(
-                    logic_operator_node,
+                    child,
                     event_node_map,
                     direction
                 )
-                logic_list.append(logic_operator_node)
+            logic_list.append(logic_operator_node)
 
 
 def load_all_logic_trees_into_nodes(
