@@ -1,4 +1,6 @@
 numpy~=1.26.3
 pandas~=2.2.0
-pm4py~=2.7.9.4
 pytest~=7.4.4
+pm4py==2.7.9.4
+aalpy==1.4.0
+networkx==3.2.1

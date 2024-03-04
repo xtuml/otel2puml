@@ -1,0 +1,29 @@
+@startuml
+    partition "Branch_Counts" {
+        group "Branch_Counts"
+            :A;
+            if (XOR) then (true)
+                :B;
+                :D;
+                if (XOR) then (true)
+                    :E;
+                else (false)
+                    :F;
+                endif
+            else (false)
+                :C;
+                if (XOR) then (true)
+                    :D;
+                    if (XOR) then (true)
+                        :E;
+                    else (false)
+                        :F;
+                    endif
+                else (false)
+                    :F;
+                endif
+            endif
+            :G;
+        end group
+    }
+@enduml

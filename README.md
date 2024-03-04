@@ -6,6 +6,7 @@ The project can be installed on the machine by choosing the project root directo
 
 * anaconda (https://www.anaconda.com/) must be installed and managing the below python installation
 * the python version must be 3.11
+* a Java runtime environment must be available (can be installed via `apt install default-jre`)
 
 The installation instructions are then as follows
 
