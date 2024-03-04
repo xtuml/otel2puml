@@ -94,35 +94,39 @@ class Node:
     @property
     def event_node_map_incoming(self) -> dict[str, "Node"]:
         """Returns a map of event types to nodes.
-        
+
         :return: A map of event types to nodes.
         :rtype: `dict`[`str`, `Node`]
         """
         event_node_map = {}
         for node in self.incoming:
             if node.event_type is None:
-                raise ValueError(f"Node event type is not set for node with uid {self.uid}")
+                raise ValueError(
+                    f"Node event type is not set for node with uid {self.uid}"
+                )
             event_node_map[node.event_type] = node
         return event_node_map
 
     @property
     def event_node_map_outgoing(self) -> dict[str, "Node"]:
         """Returns a map of event types to nodes.
-        
+
         :return: A map of event types to nodes.
         :rtype: `dict`[`str`, `Node`]
         """
         event_node_map = {}
         for node in self.outgoing:
             if node.event_type is None:
-                raise ValueError(f"Node event type is not set for node with uid {self.uid}")
+                raise ValueError(
+                    f"Node event type is not set for node with uid {self.uid}"
+                )
             event_node_map[node.event_type] = node
         return event_node_map
 
     def load_logic_into_list(
         self,
         logic_tree: ProcessTree,
-        direction: Literal["incoming", "outgoing"]
+        direction: Literal["incoming", "outgoing"],
     ) -> None:
         """Loads logic into the logic list.
 
@@ -138,12 +142,12 @@ class Node:
         else:
             event_node_map = self.event_node_map_outgoing
         self._load_logic_into_logic_list(logic_tree, event_node_map, direction)
-    
+
     def _load_logic_into_logic_list(
         self,
         logic_tree: ProcessTree,
         event_node_map: dict[str, "Node"],
-        direction: Literal["incoming", "outgoing"]
+        direction: Literal["incoming", "outgoing"],
     ) -> None:
         """Loads logic into the logic list.
 
@@ -162,16 +166,16 @@ class Node:
             logic_list.append(event_node_map[logic_tree.label])
         elif logic_tree.operator == Operator.SEQUENCE:
             for child in logic_tree.children:
-                self._load_logic_into_logic_list(child, event_node_map, direction)
+                self._load_logic_into_logic_list(
+                    child, event_node_map, direction
+                )
         else:
             logic_operator_node = Node(
                 operator=operator_name_map[logic_tree.operator.name],
             )
             for child in logic_tree.children:
                 logic_operator_node._load_logic_into_logic_list(
-                    child,
-                    event_node_map,
-                    direction
+                    child, event_node_map, direction
                 )
             logic_list.append(logic_operator_node)
 
@@ -179,7 +183,7 @@ class Node:
 def load_all_logic_trees_into_nodes(
     events: dict[str, Event],
     nodes: dict[str, list[Node]],
-    direction: Literal["incoming", "outgoing"]
+    direction: Literal["incoming", "outgoing"],
 ) -> None:
     """Loads all logic trees into the nodes.
 
@@ -201,7 +205,7 @@ def load_all_logic_trees_into_nodes(
 def load_logic_tree_into_nodes(
     logic_gate_tree: ProcessTree,
     nodes: list[Node],
-    direction: Literal["incoming", "outgoing"]
+    direction: Literal["incoming", "outgoing"],
 ) -> None:
     """Loads a logic tree into the nodes of a list
 
@@ -213,6 +217,4 @@ def load_logic_tree_into_nodes(
     :type direction: `Literal`[`"incoming"`, `"outgoing"`]
     """
     for node in nodes:
-        node.load_logic_into_list(
-            logic_gate_tree, direction
-        )
+        node.load_logic_into_list(logic_gate_tree, direction)
