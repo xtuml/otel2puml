@@ -16,13 +16,14 @@ from tel2puml.pipelines.data_creation import generate_test_data
 
 class TestOperator:
     """Tests for the Operator class."""
+
     def test_values(self):
         """Tests for the values of the Operator class."""
-        assert Operator.SEQUENCE.value == '->'
-        assert Operator.PARALLEL.value == '+'
-        assert Operator.XOR.value == 'X'
-        assert Operator.OR.value == 'O'
-        assert Operator.LOOP.value == '*'
+        assert Operator.SEQUENCE.value == "->"
+        assert Operator.PARALLEL.value == "+"
+        assert Operator.XOR.value == "X"
+        assert Operator.OR.value == "O"
+        assert Operator.LOOP.value == "*"
         assert Operator.INTERLEAVING.value == "<>"
         assert Operator.PARTIALORDER.value == "PO"
         assert Operator.BRANCH.value == "BR"
@@ -93,6 +94,7 @@ class TestEventSet:
 
 class TestEvent:
     """Tests for the Event class."""
+
     @staticmethod
     def test_add_new_edge_to_conditional_count_matrix() -> None:
         """Tests for method add_new_edge_to_conditional_count_matrix"""
@@ -232,24 +234,24 @@ class TestEvent:
         # check that the event sets are updated
         event.update_event_sets(["B", "B", "C"])
         assert event.event_sets == {
-            EventSet(events), 
-            EventSet(["B", "C"]), 
-            EventSet(["B", "B", "C"])
+            EventSet(events),
+            EventSet(["B", "C"]),
+            EventSet(["B", "B", "C"]),
         }
         # check that the event sets are not updated
         event.update_event_sets(["B", "C", "B"])
         assert event.event_sets == {
-            EventSet(events), 
-            EventSet(["B", "C"]), 
-            EventSet(["B", "B", "C"])
+            EventSet(events),
+            EventSet(["B", "C"]),
+            EventSet(["B", "B", "C"]),
         }
         # check that the event sets are updated
         event.update_event_sets(["C", "B", "C"])
         assert event.event_sets == {
-            EventSet(events), 
-            EventSet(["B", "C"]), 
+            EventSet(events),
+            EventSet(["B", "C"]),
             EventSet(["B", "B", "C"]),
-            EventSet(["B", "C", "C"])
+            EventSet(["B", "C", "C"]),
         }
 
     @staticmethod
@@ -316,10 +318,12 @@ class TestEvent:
         ]
         for i in range(4):
             expected_sequences.remove(
-                "".join([
-                    event_data["activity"]
-                    for event_data in data[i*3: i*3 + 3]
-                ])
+                "".join(
+                    [
+                        event_data["activity"]
+                        for event_data in data[i * 3:i * 3 + 3]
+                    ]
+                )
             )
         assert len(expected_sequences) == 0
 
@@ -369,8 +373,8 @@ class TestEvent:
 
     @staticmethod
     def test_calculate_process_tree_from_event_sets_or() -> None:
-        """Tests for method calculate_process_tree_from_event_sets for OR gates
-        """
+        """Tests for method calculate_process_tree_from_event_sets for OR
+        gates"""
         event = Event("A")
         event.event_sets = {
             EventSet(["B", "C"]),
@@ -528,12 +532,7 @@ class TestEvent:
         event.event_sets = {
             EventSet(["B"]),
         }
-        node_1 = ProcessTree(
-            None,
-            None,
-            None,
-            "B"
-        )
+        node_1 = ProcessTree(None, None, None, "B")
         updated_node_1 = event.update_tree_with_branch_logic(node_1)
         assert updated_node_1.label == "B"
         assert len(updated_node_1.children) == 0
@@ -541,12 +540,7 @@ class TestEvent:
         event.event_sets = {
             EventSet(["B", "B"]),
         }
-        node_2 = ProcessTree(
-            None,
-            None,
-            None,
-            "B"
-        )
+        node_2 = ProcessTree(None, None, None, "B")
         updated_node_2 = event.update_tree_with_branch_logic(node_2)
 
         def _check_node_for_branch_and(node):
@@ -557,7 +551,7 @@ class TestEvent:
                 assert child.label in labels
                 labels.remove(child.label)
             assert len(labels) == 0
-            
+
         _check_node_for_branch_and(updated_node_2)
 
         node_3 = ProcessTree(
@@ -568,9 +562,8 @@ class TestEvent:
         updated_node_3 = event.update_tree_with_branch_logic(node_3)
         assert updated_node_3.operator.name == "SEQUENCE"
         assert len(updated_node_3.children) == 1
-        child_op, = updated_node_3.children
+        (child_op,) = updated_node_3.children
         _check_node_for_branch_and(child_op)
-
 
     @staticmethod
     def test_calculate_branches_in_tree() -> None:
@@ -590,7 +583,7 @@ class TestEvent:
         assert logic_gate_tree_with_branches.operator.name == "BRANCH"
         assert len(logic_gate_tree_with_branches.children) == 1
 
-        child_xor, = logic_gate_tree_with_branches.children
+        (child_xor,) = logic_gate_tree_with_branches.children
         assert child_xor.operator.name == "XOR"
         labels_b = ["B", "B"]
         labels_cd = ["D", "C"]
@@ -708,8 +701,8 @@ def test_get_logic_from_xor_puml_file() -> None:
 
 
 def test_get_logic_from_nested_and_puml_file() -> None:
-    """Test method for getting logic gates for a puml file with nested AND gate
-    """
+    """Test method for getting logic gates for a puml file with nested AND
+    gate"""
     puml_file = "puml_files/ANDFork_ANDFork_a.puml"
     data = generate_test_data(puml_file)
     events_forward_logic, events_backward_logic = (
@@ -755,17 +748,15 @@ def test_get_logic_from_nested_and_puml_file() -> None:
 
 
 def test_get_logic_from_nested_or_puml_file() -> None:
-    """Test method for getting logic gates for a puml file with nested OR gate
-    """
+    """Test method for getting logic gates for a puml file with nested OR
+    gate"""
     puml_file = "puml_files/ORFork_ORFork_a.puml"
     data = generate_test_data(puml_file)
     events_forward_logic, events_backward_logic = (
         update_all_connections_from_data(data)
     )
     # check A logic trees
-    assert (
-        events_forward_logic["A"].logic_gate_tree.operator.name == "OR"
-    )
+    assert events_forward_logic["A"].logic_gate_tree.operator.name == "OR"
     following_a_events = ["B", "C"]
     for child in events_forward_logic["A"].logic_gate_tree.children:
         assert child.label in following_a_events
@@ -796,17 +787,15 @@ def test_get_logic_from_nested_or_puml_file() -> None:
 
 
 def test_get_logic_from_nested_xor_puml_file() -> None:
-    """Test method for getting logic gates for a puml file with nested XOR gate
-    """
+    """Test method for getting logic gates for a puml file with nested XOR
+    gate"""
     puml_file = "puml_files/XORFork_XORFork_a.puml"
     data = generate_test_data(puml_file)
     events_forward_logic, events_backward_logic = (
         update_all_connections_from_data(data)
     )
     # check A logic trees
-    assert (
-        events_forward_logic["A"].logic_gate_tree.operator.name == "XOR"
-    )
+    assert events_forward_logic["A"].logic_gate_tree.operator.name == "XOR"
     following_a_events = ["B", "C"]
     for child in events_forward_logic["A"].logic_gate_tree.children:
         assert child.label in following_a_events
@@ -814,9 +803,7 @@ def test_get_logic_from_nested_xor_puml_file() -> None:
     assert len(following_a_events) == 0
     assert events_backward_logic["A"].logic_gate_tree is None
     # check B logic trees
-    assert (
-        events_forward_logic["B"].logic_gate_tree.operator.name == "XOR"
-    )
+    assert events_forward_logic["B"].logic_gate_tree.operator.name == "XOR"
     following_b_events = ["D", "E"]
     for child in events_forward_logic["B"].logic_gate_tree.children:
         assert child.label in following_b_events
@@ -832,9 +819,7 @@ def test_get_logic_from_nested_xor_puml_file() -> None:
         assert events_backward_logic[event_type].logic_gate_tree.label == "B"
     # check F logic trees
     assert events_forward_logic["F"].logic_gate_tree is None
-    assert (
-        events_backward_logic["F"].logic_gate_tree.operator.name == "XOR"
-    )
+    assert events_backward_logic["F"].logic_gate_tree.operator.name == "XOR"
     preceding_f_events = ["C", "D", "E"]
     for child in events_backward_logic["F"].logic_gate_tree.children:
         assert child.label in preceding_f_events
