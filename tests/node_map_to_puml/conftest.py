@@ -54,6 +54,21 @@ def node(nodes: list[Node]) -> Node:
 
 
 @pytest.fixture
+def node_with_child_to_stub(nodes: list[Node]) -> Node:
+    """Returns a node with a child missing from incoming and outgoing.
+
+    :param nodes: The child nodes to use.
+    :type nodes: `list`[:class:`Node`]
+    :return: The node with a child missing.
+    :rtype: :class:`Node`
+    """
+    return_node = Node("test_data", "test_event_type", is_stub=True)
+    return_node.update_node_list_with_nodes(deepcopy(nodes)[:-1], "incoming")
+    return_node.update_node_list_with_nodes(deepcopy(nodes)[:-1], "outgoing")
+    return return_node
+
+
+@pytest.fixture
 def process_tree_no_logic(
     uids_and_event_types: list[tuple[str, str]],
 ) -> ProcessTree:
