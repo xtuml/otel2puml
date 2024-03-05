@@ -85,11 +85,11 @@ class TestEventSet:
     def test_get_branch_events() -> None:
         """Tests for the get_branch_counts method."""
         event_set = EventSet(["A", "B", "C"])
-        assert event_set.get_branch_events() == {}
+        assert event_set.get_repeated_events() == {}
         event_set = EventSet(["A", "A"])
-        assert event_set.get_branch_events() == {"A": 2}
+        assert event_set.get_repeated_events() == {"A": 2}
         event_set = EventSet(["A", "B", "A", "C", "B", "A"])
-        assert event_set.get_branch_events() == {"A": 3, "B": 2}
+        assert event_set.get_repeated_events() == {"A": 3, "B": 2}
 
 
 class TestEvent:
@@ -269,12 +269,12 @@ class TestEvent:
             assert event_data["timestamp"] == start_time + timedelta(seconds=i)
 
     @staticmethod
-    def test_create_augmented_data_from_event_set() -> None:
+    def test_create_augmented_data_from_reduced_event_set() -> None:
         """Tests for method created_augemented_data_from_event_set"""
         event = Event("A")
         event_set = EventSet(["B", "C"])
         data = list(
-            event.create_augmented_data_from_event_set(
+            event.create_augmented_data_from_reduced_event_set(
                 event_set,
             )
         )
@@ -526,14 +526,14 @@ class TestEvent:
         assert len(labels) == 0
 
     @staticmethod
-    def test_update_tree_with_branch_logic() -> None:
+    def test_update_tree_with_repeat_logic() -> None:
         """Tests for method update_tree_with_branch_logic"""
         event = Event("A")
         event.event_sets = {
             EventSet(["B"]),
         }
         node_1 = ProcessTree(None, None, None, "B")
-        updated_node_1 = event.update_tree_with_branch_logic(node_1)
+        updated_node_1 = event.update_tree_with_repeat_logic(node_1)
         assert updated_node_1.label == "B"
         assert len(updated_node_1.children) == 0
 
@@ -541,9 +541,9 @@ class TestEvent:
             EventSet(["B", "B"]),
         }
         node_2 = ProcessTree(None, None, None, "B")
-        updated_node_2 = event.update_tree_with_branch_logic(node_2)
+        updated_node_2 = event.update_tree_with_repeat_logic(node_2)
 
-        def _check_node_for_branch_and(node):
+        def _check_node_for_repeat_and(node):
             assert node.operator.name == "PARALLEL"
             assert len(node.children) == 2
             labels = ["B", "B"]
@@ -552,21 +552,21 @@ class TestEvent:
                 labels.remove(child.label)
             assert len(labels) == 0
 
-        _check_node_for_branch_and(updated_node_2)
+        _check_node_for_repeat_and(updated_node_2)
 
         node_3 = ProcessTree(
             Operator.SEQUENCE,
             None,
             [node_2],
         )
-        updated_node_3 = event.update_tree_with_branch_logic(node_3)
+        updated_node_3 = event.update_tree_with_repeat_logic(node_3)
         assert updated_node_3.operator.name == "SEQUENCE"
         assert len(updated_node_3.children) == 1
         (child_op,) = updated_node_3.children
-        _check_node_for_branch_and(child_op)
+        _check_node_for_repeat_and(child_op)
 
     @staticmethod
-    def test_calculate_branches_in_tree() -> None:
+    def test_calculate_repeats_in_tree() -> None:
         """Tests for method find_branches_in_process_tree"""
         event = Event("A")
         event.event_sets = {
@@ -577,17 +577,14 @@ class TestEvent:
         logic_gates_tree = event.reduce_process_tree_to_preferred_logic_gates(
             process_tree
         )
-        logic_gate_tree_with_branches = event.calculate_branches_in_tree(
+        logic_gate_tree_with_branches = event.calculate_repeats_in_tree(
             logic_gates_tree
         )
-        assert logic_gate_tree_with_branches.operator.name == "BRANCH"
-        assert len(logic_gate_tree_with_branches.children) == 1
 
-        (child_xor,) = logic_gate_tree_with_branches.children
-        assert child_xor.operator.name == "XOR"
+        assert logic_gate_tree_with_branches.operator.name == "XOR"
         labels_b = ["B", "B"]
         labels_cd = ["D", "C"]
-        for child_and in child_xor.children:
+        for child_and in logic_gate_tree_with_branches.children:
             assert child_and.operator.name == "PARALLEL"
             for child in child_and.children:
                 if child.label == "B":
@@ -596,6 +593,25 @@ class TestEvent:
                     labels_cd.remove(child.label)
         assert len(labels_b) == 0
         assert len(labels_cd) == 0
+
+        event.event_sets = {
+            EventSet(["B", "B", "B"]),
+            EventSet(["B", "B"]),
+            EventSet(["B"]),
+        }
+
+        process_tree = event.calculate_process_tree_from_event_sets()
+        logic_gates_tree = event.reduce_process_tree_to_preferred_logic_gates(
+            process_tree
+        )
+        logic_gate_tree_with_branches = event.calculate_repeats_in_tree(
+            logic_gates_tree
+        )
+
+        assert logic_gate_tree_with_branches.operator.name == "BRANCH"
+        child, = logic_gate_tree_with_branches.children
+        assert child.label == "B"
+
 
     @staticmethod
     def test_calculate_logic_gates() -> None:
@@ -827,8 +843,8 @@ def test_get_logic_from_nested_xor_puml_file() -> None:
     assert len(preceding_f_events) == 0
 
 
-def test_get_logic_from_branch_count_puml_file() -> None:
-    """Test method for getting logic gates for a puml file with branching
+def test_get_logic_from_repeated_event_puml_file() -> None:
+    """Test method for getting logic gates for a puml file with repeated
     event"""
     puml_file = "puml_files/repeated_same_event.puml"
     data = generate_test_data(puml_file)
@@ -844,11 +860,9 @@ def test_get_logic_from_branch_count_puml_file() -> None:
     assert len(following_a_events) == 0
     assert events_backward_logic["A"].logic_gate_tree is None
     # check B logic trees
-    assert events_forward_logic["B"].logic_gate_tree.operator.name == "BRANCH"
+    assert events_forward_logic["B"].logic_gate_tree.operator.name == "PARALLEL"
     following_b_events = ["D", "D", "D"]
-    child_operator_b, = events_forward_logic["B"].logic_gate_tree.children
-    assert child_operator_b.operator.name == "PARALLEL"
-    for child in child_operator_b.children:
+    for child in events_forward_logic["B"].logic_gate_tree.children:
         assert child.label in following_b_events
         following_b_events.remove(child.label)
     assert len(following_b_events) == 0
@@ -861,11 +875,9 @@ def test_get_logic_from_branch_count_puml_file() -> None:
     assert events_backward_logic["D"].logic_gate_tree.label == "B"
     # check E logic trees
     assert events_forward_logic["E"].logic_gate_tree is None
-    assert events_backward_logic["E"].logic_gate_tree.operator.name == "BRANCH"
-    child_operator_e, = events_backward_logic["E"].logic_gate_tree.children
-    assert child_operator_e.operator.name == "XOR"
+    assert events_backward_logic["E"].logic_gate_tree.operator.name == "XOR"
     preceding_e_events = ["C", "D", "D", "D"]
-    for child in child_operator_e.children:
+    for child in events_backward_logic["E"].logic_gate_tree.children:
         if child.label == "C":
             preceding_e_events.remove(child.label)
         else:

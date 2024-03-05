@@ -94,10 +94,10 @@ class EventSet(dict[str, int]):
         """
         return frozenset(self.keys())
 
-    def get_branch_events(self) -> dict[str, int]:
-        """Method to get the branch events.
+    def get_repeated_events(self) -> dict[str, int]:
+        """Method to get the repeated events.
 
-        :return: The branch events.
+        :return: The repeated events.
         :rtype: `dict`[`str`, `int`]
         """
         return {event: count for event, count in self.items() if count > 1}
@@ -213,7 +213,7 @@ class Event:
         logic_gate_tree = self.reduce_process_tree_to_preferred_logic_gates(
             process_tree
         )
-        logic_gate_tree_with_branches = self.calculate_branches_in_tree(
+        logic_gate_tree_with_branches = self.calculate_repeats_in_tree(
             logic_gate_tree
         )
         return logic_gate_tree_with_branches
@@ -252,19 +252,19 @@ class Event:
         :return: The augmented data.
         :rtype: `Generator`[`dict`[`str`, `Any`], `Any`, `None`]"""
         for reduced_event_set in self.get_reduced_event_set():
-            yield from self.create_augmented_data_from_event_set(
+            yield from self.create_augmented_data_from_reduced_event_set(
                 reduced_event_set
             )
 
-    def create_augmented_data_from_event_set(
+    def create_augmented_data_from_reduced_event_set(
         self,
         reduced_event_set: frozenset[str],
     ) -> Generator[dict[str, Any], Any, None]:
         """Method to create augmented data from a single event set then
         yielding the augmented data.
 
-        :param event_set: The event set.
-        :type event_set: `frozenset`[`str`]
+        :param reduced_event_set: The reduced event set.
+        :type reduced_event_set: `frozenset`[`str`]
         :return: The augmented data.
         :rtype: `Generator`[`dict`[`str`, `Any`], `Any`, `None`]
         """
@@ -433,34 +433,37 @@ class Event:
                         node.parent.children.remove(node)
                         node.parent.children.extend(node.children)
 
-    def calculate_branches_in_tree(
+    def calculate_repeats_in_tree(
         self, logic_gate_tree: ProcessTree
     ) -> ProcessTree:
-        """Method to find the branches in a process tree.
+        """Method to find the repeats in a process tree.
 
-        :return: The process tree with branches.
+        :return: The process tree with repeats.
         :rtype: :class:`pm4py.objects.process_tree.obj.ProcessTree`
         """
-        branch_occurs = False
-        for event_set in self.event_sets:
-            if len(event_set.get_branch_events()) != 0:
-                branch_occurs = True
+        all_event_types = set().union(*self.get_reduced_event_set())
+        for event_type in all_event_types:
+            counts = [
+                event_set[event_type]
+                for event_set in self.event_sets
+                if event_type in event_set.get_repeated_events() 
+            ]
+            if len(counts) > 1:
+                logic_gate_tree = ProcessTree(
+                    Operator.BRANCH,
+                    logic_gate_tree.parent,
+                    [logic_gate_tree],
+                )
                 break
 
-        if branch_occurs:
-            logic_gate_tree = ProcessTree(
-                Operator.BRANCH,
-                logic_gate_tree.parent,
-                [logic_gate_tree],
-            )
-            logic_gate_tree = self.update_tree_with_branch_logic(
-                logic_gate_tree
-            )
+        logic_gate_tree = self.update_tree_with_repeat_logic(
+            logic_gate_tree
+        )
 
         return logic_gate_tree
 
-    def update_tree_with_branch_logic(self, node):
-        """Method to update a tree with branch logic.
+    def update_tree_with_repeat_logic(self, node: ProcessTree):
+        """Method to update a tree with repeat logic.
 
         :param node: The node.
         :type node: :class:`pm4py.objects.process_tree.obj.ProcessTree`
@@ -469,7 +472,7 @@ class Event:
             counts = [
                 event_set[node.label]
                 for event_set in self.event_sets
-                if node.label in event_set and event_set[node.label] > 1
+                if node.label in event_set.get_repeated_events()
             ]
             if len(counts) != 1:
                 return node
@@ -479,7 +482,7 @@ class Event:
                 )
         else:
             node.children = [
-                self.update_tree_with_branch_logic(child)
+                self.update_tree_with_repeat_logic(child)
                 for child in node.children
             ]
             return node
