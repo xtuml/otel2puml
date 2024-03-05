@@ -203,6 +203,16 @@ class Event:
             self._update_since_logic_gate_tree = False
         return self._logic_gate_tree
 
+    @logic_gate_tree.setter
+    def logic_gate_tree(self, value: ProcessTree) -> None:
+        """This property sets the logic gate tree.
+
+        :param value: The logic gate tree.
+        :type value: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+        """
+        self._logic_gate_tree = value
+        self._update_since_logic_gate_tree = False
+
     def calculate_logic_gates(self) -> ProcessTree:
         """This method calculates the logic gates from the event sets.
 
