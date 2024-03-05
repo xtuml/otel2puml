@@ -1,5 +1,6 @@
 """This module holds the 'node' class"""
 from typing import Literal
+from uuid import uuid4
 
 from pm4py import ProcessTree
 from pm4py.objects.process_tree.obj import Operator
@@ -47,6 +48,7 @@ class Node:
         outgoing: list["Node"] | None = None,
         incoming_logic: list["Node"] | None = None,
         outgoing_logic: list["Node"] | None = None,
+        is_stub: bool = False,
     ) -> None:
         """Constructor method.
         """
@@ -58,6 +60,7 @@ class Node:
         self.uid = uid if uid is not None else data
         self.operator = operator
         self.event_type = event_type
+        self.is_stub = is_stub
 
         self.branch_enum = ["AND", "OR", "XOR", "LOOP", "BRANCH"]
 
@@ -163,6 +166,18 @@ class Node:
         else:
             logic_list = self.outgoing_logic
         if logic_tree.label is not None:
+            if logic_tree.label not in event_node_map:
+                node_id = str(uuid4())
+                node_to_add = Node(
+                    data=node_id,
+                    uid=node_id,
+                    event_type=logic_tree.label,
+                    is_stub=True,
+                )
+                # Add the node to the appropriate node list
+                getattr(self, direction).append(node_to_add)
+                # Add the node to the event node map
+                event_node_map[logic_tree.label] = node_to_add
             logic_list.append(event_node_map[logic_tree.label])
         elif logic_tree.operator == Operator.SEQUENCE:
             for child in logic_tree.children:
