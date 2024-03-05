@@ -343,13 +343,13 @@ class TestEvent:
         start_event = first_children[0]
         next_operator = first_children[1]
         assert start_event.label == "A"
-        assert next_operator.operator.name == "XOR"
+        assert next_operator.operator.value == Operator.XOR.value
         second_children = next_operator.children
         assert len(second_children) == 2
         first_operator = second_children[0]
         second_operator = second_children[1]
-        assert first_operator.operator.name == "PARALLEL"
-        assert second_operator.operator.name == "PARALLEL"
+        assert first_operator.operator.value == Operator.PARALLEL.value
+        assert second_operator.operator.value == Operator.PARALLEL.value
         first_operator_children = first_operator.children
         assert len(first_operator_children) == 2
         second_operator_children = second_operator.children
@@ -387,13 +387,13 @@ class TestEvent:
         start_event = first_children[0]
         next_operator = first_children[1]
         assert start_event.label == "A"
-        assert next_operator.operator.name == "PARALLEL"
+        assert next_operator.operator.value == Operator.PARALLEL.value
         second_children = next_operator.children
         assert len(second_children) == 2
         first_operator = second_children[0]
         second_operator = second_children[1]
-        assert first_operator.operator.name == "XOR"
-        assert second_operator.operator.name == "XOR"
+        assert first_operator.operator.value == Operator.XOR.value
+        assert second_operator.operator.value == Operator.XOR.value
         first_operator_children = first_operator.children
         assert len(first_operator_children) == 2
         second_operator_children = second_operator.children
@@ -426,15 +426,15 @@ class TestEvent:
         }
         process_tree = event.calculate_process_tree_from_event_sets()
         and_gate = process_tree.children[1]
-        assert and_gate.operator.name == "PARALLEL"
+        assert and_gate.operator.value == Operator.PARALLEL.value
         event.infer_or_gate_from_node(and_gate)
-        assert and_gate.operator.name == "OR"
+        assert and_gate.operator.value == Operator.OR.value
         and_gate_children = and_gate.children
         assert len(and_gate_children) == 2
         first_child = and_gate_children[0]
         assert len(first_child.children) == 0
         second_child = and_gate_children[1]
-        assert second_child.operator.name == "PARALLEL"
+        assert second_child.operator.value == Operator.PARALLEL.value
 
     @staticmethod
     def test_get_extended_or_gates_from_process_tree() -> None:
@@ -448,9 +448,9 @@ class TestEvent:
         process_tree = event.calculate_process_tree_from_event_sets()
         logic_gates_tree = process_tree.children[1]
         event.get_extended_or_gates_from_process_tree(logic_gates_tree)
-        assert logic_gates_tree.operator.name == "OR"
+        assert logic_gates_tree.operator.value == Operator.OR.value
         assert len(logic_gates_tree.children) == 2
-        assert logic_gates_tree.children[1].operator.name == "OR"
+        assert logic_gates_tree.children[1].operator.value == Operator.OR.value
         assert logic_gates_tree.children[0].label is not None
         assert len(logic_gates_tree.children[1].children) == 1
         assert logic_gates_tree.children[1].children[0].label is not None
@@ -468,7 +468,7 @@ class TestEvent:
         logic_gates_tree = process_tree.children[1]
         event.get_extended_or_gates_from_process_tree(logic_gates_tree)
         event.filter_defunct_or_gates(logic_gates_tree)
-        assert logic_gates_tree.operator.name == "OR"
+        assert logic_gates_tree.operator.value == Operator.OR.value
         assert len(logic_gates_tree.children) == 2
         labels = ["B", "C"]
         for child in logic_gates_tree.children:
@@ -492,7 +492,7 @@ class TestEvent:
         process_tree = event.calculate_process_tree_from_event_sets()
         logic_gates_tree = process_tree.children[1]
         event.process_or_gates(logic_gates_tree)
-        assert logic_gates_tree.operator.name == "OR"
+        assert logic_gates_tree.operator.value == Operator.OR.value
         assert len(logic_gates_tree.children) == 3
         labels = ["B", "C", "D"]
         for child in logic_gates_tree.children:
@@ -517,7 +517,7 @@ class TestEvent:
         logic_gates_tree = event.reduce_process_tree_to_preferred_logic_gates(
             process_tree
         )
-        assert logic_gates_tree.operator.name == "OR"
+        assert logic_gates_tree.operator.value == Operator.OR.value
         assert len(logic_gates_tree.children) == 3
         labels = ["B", "C", "D"]
         for child in logic_gates_tree.children:
@@ -544,7 +544,7 @@ class TestEvent:
         updated_node_2 = event.update_tree_with_repeat_logic(node_2)
 
         def _check_node_for_repeat_and(node):
-            assert node.operator.name == "PARALLEL"
+            assert node.operator.value == Operator.PARALLEL.value
             assert len(node.children) == 2
             labels = ["B", "B"]
             for child in node.children:
@@ -554,16 +554,26 @@ class TestEvent:
 
         _check_node_for_repeat_and(updated_node_2)
 
-        node_3 = ProcessTree(
-            Operator.SEQUENCE,
+        event.event_sets = {
+            EventSet(["B", "B", "C"]),
+        }
+        node_3 = ProcessTree(None, None, None, "C")
+        node_4 = ProcessTree(
+            Operator.PARALLEL,
             None,
-            [node_2],
+            [node_2, node_3],
         )
-        updated_node_3 = event.update_tree_with_repeat_logic(node_3)
-        assert updated_node_3.operator.name == "SEQUENCE"
-        assert len(updated_node_3.children) == 1
-        (child_op,) = updated_node_3.children
-        _check_node_for_repeat_and(child_op)
+        updated_node_4 = event.update_tree_with_repeat_logic(node_4)
+        assert updated_node_4.operator.value == Operator.PARALLEL.value
+        assert len(updated_node_4.children) == 2
+
+        labels = ["C"]
+        for child in updated_node_4.children:
+            if child.label == "C":
+                labels.remove(child.label)
+            else:
+                _check_node_for_repeat_and(child)
+        assert len(labels) == 0
 
     @staticmethod
     def test_calculate_repeats_in_tree() -> None:
@@ -581,11 +591,14 @@ class TestEvent:
             logic_gates_tree
         )
 
-        assert logic_gate_tree_with_branches.operator.name == "XOR"
+        assert (
+            logic_gate_tree_with_branches.operator.value
+            == Operator.XOR.value
+        )
         labels_b = ["B", "B"]
         labels_cd = ["D", "C"]
         for child_and in logic_gate_tree_with_branches.children:
-            assert child_and.operator.name == "PARALLEL"
+            assert child_and.operator.value == Operator.PARALLEL.value
             for child in child_and.children:
                 if child.label == "B":
                     labels_b.remove(child.label)
@@ -608,10 +621,32 @@ class TestEvent:
             logic_gates_tree
         )
 
-        assert logic_gate_tree_with_branches.operator.name == "BRANCH"
+        assert (
+            logic_gate_tree_with_branches.operator.value
+            == Operator.BRANCH.value
+        )
         child, = logic_gate_tree_with_branches.children
         assert child.label == "B"
 
+    @staticmethod
+    def test_remove_defunct_sequence_logic() -> None:
+        """Tests for method remove_defunct_sequence_logic"""
+
+        node_b1 = ProcessTree(None, None, None, "B")
+        node_b2 = ProcessTree(None, None, None, "B")
+        node_parallel = ProcessTree(
+            Operator.PARALLEL,
+            None,
+            [node_b1, node_b2],
+        )
+        node_sequence = ProcessTree(
+            Operator.SEQUENCE,
+            None,
+            [node_parallel],
+        )
+
+        processed_tree = Event.remove_defunct_sequence_logic(node_sequence)
+        assert processed_tree.operator.value == Operator.PARALLEL.value
 
     @staticmethod
     def test_calculate_logic_gates() -> None:
@@ -627,7 +662,7 @@ class TestEvent:
             EventSet(["D"]),
         }
         logic_gates_tree = event.calculate_logic_gates()
-        assert logic_gates_tree.operator.name == "OR"
+        assert logic_gates_tree.operator.value == Operator.OR.value
         assert len(logic_gates_tree.children) == 3
         labels = ["B", "C", "D"]
         for child in logic_gates_tree.children:
@@ -695,7 +730,10 @@ def test_get_logic_from_xor_puml_file() -> None:
     assert events_forward_logic["A"].logic_gate_tree.label == "B"
     assert events_backward_logic["A"].logic_gate_tree is None
     # check B logic trees
-    assert events_forward_logic["B"].logic_gate_tree.operator.name == "XOR"
+    assert (
+        events_forward_logic["B"].logic_gate_tree.operator.value
+        == Operator.XOR.value
+        )
     following_b_events = ["C", "D", "E"]
     for child in events_forward_logic["B"].logic_gate_tree.children:
         assert child.label in following_b_events
@@ -708,7 +746,10 @@ def test_get_logic_from_xor_puml_file() -> None:
         assert events_backward_logic[event_type].logic_gate_tree.label == "B"
     # check F logic trees
     assert events_forward_logic["F"].logic_gate_tree is None
-    assert events_backward_logic["F"].logic_gate_tree.operator.name == "XOR"
+    assert (
+        events_backward_logic["F"].logic_gate_tree.operator.value
+        == Operator.XOR.value
+    )
     preceding_f_events = ["C", "D", "E"]
     for child in events_backward_logic["F"].logic_gate_tree.children:
         assert child.label in preceding_f_events
@@ -726,7 +767,8 @@ def test_get_logic_from_nested_and_puml_file() -> None:
     )
     # check A logic trees
     assert (
-        events_forward_logic["A"].logic_gate_tree.operator.name == "PARALLEL"
+        events_forward_logic["A"].logic_gate_tree.operator.value
+        == Operator.PARALLEL.value
     )
     following_a_events = ["B", "C"]
     for child in events_forward_logic["A"].logic_gate_tree.children:
@@ -736,7 +778,8 @@ def test_get_logic_from_nested_and_puml_file() -> None:
     assert events_backward_logic["A"].logic_gate_tree is None
     # check B logic trees
     assert (
-        events_forward_logic["B"].logic_gate_tree.operator.name == "PARALLEL"
+        events_forward_logic["B"].logic_gate_tree.operator.value
+        == Operator.PARALLEL.value
     )
     following_b_events = ["D", "E"]
     for child in events_forward_logic["B"].logic_gate_tree.children:
@@ -754,7 +797,8 @@ def test_get_logic_from_nested_and_puml_file() -> None:
     # check F logic trees
     assert events_forward_logic["F"].logic_gate_tree is None
     assert (
-        events_backward_logic["F"].logic_gate_tree.operator.name == "PARALLEL"
+        events_backward_logic["F"].logic_gate_tree.operator.value
+        == Operator.PARALLEL.value
     )
     preceding_f_events = ["C", "D", "E"]
     for child in events_backward_logic["F"].logic_gate_tree.children:
@@ -772,13 +816,19 @@ def test_get_logic_from_nested_or_puml_file() -> None:
         update_all_connections_from_data(data)
     )
     # check A logic trees
-    assert events_forward_logic["A"].logic_gate_tree.operator.name == "OR"
+    assert (
+        events_forward_logic["A"].logic_gate_tree.operator.value
+        == Operator.OR.value
+    )
     following_a_events = ["B", "C"]
     for child in events_forward_logic["A"].logic_gate_tree.children:
         assert child.label in following_a_events
         following_a_events.remove(child.label)
     # check B logic trees
-    assert events_forward_logic["B"].logic_gate_tree.operator.name == "OR"
+    assert (
+        events_forward_logic["B"].logic_gate_tree.operator.value
+        == Operator.OR.value
+    )
     following_b_events = ["D", "E"]
     for child in events_forward_logic["B"].logic_gate_tree.children:
         assert child.label in following_b_events
@@ -794,7 +844,10 @@ def test_get_logic_from_nested_or_puml_file() -> None:
         assert events_backward_logic[event_type].logic_gate_tree.label == "B"
     # check F logic trees
     assert events_forward_logic["F"].logic_gate_tree is None
-    assert events_backward_logic["F"].logic_gate_tree.operator.name == "OR"
+    assert (
+        events_backward_logic["F"].logic_gate_tree.operator.value
+        == Operator.OR.value
+    )
     preceding_f_events = ["C", "D", "E"]
     for child in events_backward_logic["F"].logic_gate_tree.children:
         assert child.label in preceding_f_events
@@ -811,7 +864,10 @@ def test_get_logic_from_nested_xor_puml_file() -> None:
         update_all_connections_from_data(data)
     )
     # check A logic trees
-    assert events_forward_logic["A"].logic_gate_tree.operator.name == "XOR"
+    assert (
+        events_forward_logic["A"].logic_gate_tree.operator.value
+        == Operator.XOR.value
+    )
     following_a_events = ["B", "C"]
     for child in events_forward_logic["A"].logic_gate_tree.children:
         assert child.label in following_a_events
@@ -819,7 +875,10 @@ def test_get_logic_from_nested_xor_puml_file() -> None:
     assert len(following_a_events) == 0
     assert events_backward_logic["A"].logic_gate_tree is None
     # check B logic trees
-    assert events_forward_logic["B"].logic_gate_tree.operator.name == "XOR"
+    assert (
+        events_forward_logic["B"].logic_gate_tree.operator.value
+        == Operator.XOR.value
+    )
     following_b_events = ["D", "E"]
     for child in events_forward_logic["B"].logic_gate_tree.children:
         assert child.label in following_b_events
@@ -835,7 +894,10 @@ def test_get_logic_from_nested_xor_puml_file() -> None:
         assert events_backward_logic[event_type].logic_gate_tree.label == "B"
     # check F logic trees
     assert events_forward_logic["F"].logic_gate_tree is None
-    assert events_backward_logic["F"].logic_gate_tree.operator.name == "XOR"
+    assert (
+        events_backward_logic["F"].logic_gate_tree.operator.value
+        == Operator.XOR.value
+    )
     preceding_f_events = ["C", "D", "E"]
     for child in events_backward_logic["F"].logic_gate_tree.children:
         assert child.label in preceding_f_events
@@ -852,7 +914,10 @@ def test_get_logic_from_repeated_event_puml_file() -> None:
         update_all_connections_from_data(data)
     )
     # check A logic trees
-    assert events_forward_logic["A"].logic_gate_tree.operator.name == "XOR"
+    assert (
+        events_forward_logic["A"].logic_gate_tree.operator.value
+        == Operator.XOR.value
+    )
     following_a_events = ["B", "C"]
     for child in events_forward_logic["A"].logic_gate_tree.children:
         assert child.label in following_a_events
@@ -860,7 +925,10 @@ def test_get_logic_from_repeated_event_puml_file() -> None:
     assert len(following_a_events) == 0
     assert events_backward_logic["A"].logic_gate_tree is None
     # check B logic trees
-    assert events_forward_logic["B"].logic_gate_tree.operator.name == "PARALLEL"
+    assert (
+        events_forward_logic["B"].logic_gate_tree.operator.value
+        == Operator.PARALLEL.value
+    )
     following_b_events = ["D", "D", "D"]
     for child in events_forward_logic["B"].logic_gate_tree.children:
         assert child.label in following_b_events
@@ -875,13 +943,16 @@ def test_get_logic_from_repeated_event_puml_file() -> None:
     assert events_backward_logic["D"].logic_gate_tree.label == "B"
     # check E logic trees
     assert events_forward_logic["E"].logic_gate_tree is None
-    assert events_backward_logic["E"].logic_gate_tree.operator.name == "XOR"
+    assert (
+        events_backward_logic["E"].logic_gate_tree.operator.value
+        == Operator.XOR.value
+    )
     preceding_e_events = ["C", "D", "D", "D"]
     for child in events_backward_logic["E"].logic_gate_tree.children:
         if child.label == "C":
             preceding_e_events.remove(child.label)
         else:
-            assert child.operator.name == "PARALLEL"
+            assert child.operator.value == Operator.PARALLEL.value
             for grandchild in child.children:
                 assert grandchild.label in preceding_e_events
                 preceding_e_events.remove(grandchild.label)

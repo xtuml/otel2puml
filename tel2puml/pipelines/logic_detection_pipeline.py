@@ -213,10 +213,11 @@ class Event:
         logic_gate_tree = self.reduce_process_tree_to_preferred_logic_gates(
             process_tree
         )
-        logic_gate_tree_with_branches = self.calculate_repeats_in_tree(
+        logic_gate_tree_with_repeats = self.calculate_repeats_in_tree(
             logic_gate_tree
         )
-        return logic_gate_tree_with_branches
+
+        return logic_gate_tree_with_repeats
 
     def update_event_sets(
         self,
@@ -379,12 +380,12 @@ class Event:
         """
         if node.operator is None:
             return
-        if node.operator.name != "PARALLEL":
+        if node.operator.value != Operator.PARALLEL.value:
             return
         for counter, child in enumerate(node.children):
             if child.operator is None:
                 continue
-            if child.operator.name == "XOR":
+            if child.operator.value == Operator.XOR.value:
                 if any(
                     str(child_of_child) == "tau"
                     for child_of_child in child.children
@@ -428,8 +429,8 @@ class Event:
         for node in process_tree.children:
             Event.filter_defunct_or_gates(node)
             if node.operator is not None:
-                if node.operator.name == "OR":
-                    if node.parent.operator.name == "OR":
+                if node.operator.value == Operator.OR.value:
+                    if node.parent.operator.value == Operator.OR.value:
                         node.parent.children.remove(node)
                         node.parent.children.extend(node.children)
 
@@ -446,7 +447,7 @@ class Event:
             counts = [
                 event_set[event_type]
                 for event_set in self.event_sets
-                if event_type in event_set.get_repeated_events() 
+                if event_type in event_set.get_repeated_events()
             ]
             if len(counts) > 1:
                 logic_gate_tree = ProcessTree(
@@ -456,9 +457,8 @@ class Event:
                 )
                 break
 
-        logic_gate_tree = self.update_tree_with_repeat_logic(
-            logic_gate_tree
-        )
+        logic_gate_tree = self.update_tree_with_repeat_logic(logic_gate_tree)
+        logic_gate_tree = Event.remove_defunct_sequence_logic(logic_gate_tree)
 
         return logic_gate_tree
 
@@ -474,9 +474,7 @@ class Event:
                 for event_set in self.event_sets
                 if node.label in event_set.get_repeated_events()
             ]
-            if len(counts) != 1:
-                return node
-            else:
+            if len(counts) == 1:
                 return ProcessTree(
                     Operator.PARALLEL, node.parent, [node] * counts[0]
                 )
@@ -485,7 +483,22 @@ class Event:
                 self.update_tree_with_repeat_logic(child)
                 for child in node.children
             ]
-            return node
+
+        return node
+
+    @staticmethod
+    def remove_defunct_sequence_logic(node: ProcessTree):
+        """Method to remove defunct sequence logic from a tree."""
+        if node.operator is not None:
+            if node.operator == Operator.SEQUENCE:
+                return Event.remove_defunct_sequence_logic(node.children[0])
+
+            node.children = [
+                Event.remove_defunct_sequence_logic(child)
+                for child in node.children
+            ]
+
+        return node
 
     # -----------------Conditional methods-----------------
     """
