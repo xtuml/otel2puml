@@ -144,13 +144,16 @@ class Node:
             event_node_map = self.event_node_map_incoming
         else:
             event_node_map = self.event_node_map_outgoing
-        self._load_logic_into_logic_list(logic_tree, event_node_map, direction)
+        self._load_logic_into_logic_list(
+            logic_tree, event_node_map, direction, self
+        )
 
     def _load_logic_into_logic_list(
         self,
         logic_tree: ProcessTree,
         event_node_map: dict[str, "Node"],
         direction: Literal["incoming", "outgoing"],
+        root_node: "Node",
     ) -> None:
         """Loads logic into the logic list.
 
@@ -175,14 +178,14 @@ class Node:
                     is_stub=True,
                 )
                 # Add the node to the appropriate node list
-                getattr(self, direction).append(node_to_add)
+                getattr(root_node, direction).append(node_to_add)
                 # Add the node to the event node map
                 event_node_map[logic_tree.label] = node_to_add
             logic_list.append(event_node_map[logic_tree.label])
         elif logic_tree.operator == Operator.SEQUENCE:
             for child in logic_tree.children:
                 self._load_logic_into_logic_list(
-                    child, event_node_map, direction
+                    child, event_node_map, direction, root_node
                 )
         else:
             logic_operator_node = Node(
@@ -190,7 +193,7 @@ class Node:
             )
             for child in logic_tree.children:
                 logic_operator_node._load_logic_into_logic_list(
-                    child, event_node_map, direction
+                    child, event_node_map, direction, root_node
                 )
             logic_list.append(logic_operator_node)
 
