@@ -1,0 +1,200 @@
+"""Configuration for the tests in the node_map_to_puml directory."""
+from copy import deepcopy
+
+import pytest
+from pm4py import ProcessTree
+from pm4py.objects.process_tree.obj import Operator
+
+from tel2puml.pipelines.logic_detection_pipeline import Event
+from tel2puml.node_map_to_puml.node import Node
+
+
+@pytest.fixture
+def uids_and_event_types() -> list[tuple[str, str]]:
+    """Returns a list of uids and event types.
+
+    :return: The uids and event types.
+    :rtype: `list`[`tuple`[`str`, `str`]]
+    """
+    return [
+        ("uid1", "event1"),
+        ("uid2", "event2"),
+        ("uid3", "event3"),
+    ]
+
+
+@pytest.fixture
+def nodes(uids_and_event_types: list[tuple[str, str]]) -> list[Node]:
+    """Returns a list of nodes.
+
+    :param uids_and_event_types: The uids and event types.
+    :type uids_and_event_types: `list`[`tuple`[`str`, `str`]]
+    :return: The nodes.
+    :rtype: `list`[:class:`Node`]
+    """
+    return [
+        Node(data=uid, event_type=event_type)
+        for uid, event_type in uids_and_event_types
+    ]
+
+
+@pytest.fixture
+def node(nodes: list[Node]) -> Node:
+    """Returns a node.
+
+    :param nodes: The nodes to use.
+    :type nodes: `list`[:class:`Node`]
+    :return: The node.
+    :rtype: :class:`Node`
+    """
+    return_node = Node("test_data", "test_event_type")
+    return_node.update_node_list_with_nodes(deepcopy(nodes), "incoming")
+    return_node.update_node_list_with_nodes(deepcopy(nodes), "outgoing")
+    return return_node
+
+
+@pytest.fixture
+def process_tree_no_logic(
+    uids_and_event_types: list[tuple[str, str]],
+) -> ProcessTree:
+    """Returns a process tree with no logic.
+
+    :param uids_and_event_types: The uids and event types.
+    :type: `list`[`tuple`[`str`, `str`]]
+    :return: The process tree with no logic.
+    :rtype: :class:`ProcessTree`
+    """
+    process_tree = ProcessTree(operator=Operator.SEQUENCE)
+    children = []
+    for _, event_type in uids_and_event_types:
+        children.append(ProcessTree(label=event_type))
+    process_tree.children = children
+    return process_tree
+
+
+@pytest.fixture
+def process_tree_with_and_logic_gate(
+    uids_and_event_types: list[tuple[str, str]],
+) -> ProcessTree:
+    """Returns a process tree with an AND logic gate.
+
+    :param uids_and_event_types: The uids and event types.
+    :type: `list`[`tuple`[`str`, `str`]]
+    :return: The process tree with an AND logic gate.
+    :rtype: :class:`ProcessTree`
+    """
+    process_tree = ProcessTree(operator=Operator.PARALLEL)
+    children = []
+    for _, event_type in uids_and_event_types:
+        children.append(ProcessTree(label=event_type))
+    process_tree.children = children
+    return process_tree
+
+
+@pytest.fixture
+def process_tree_with_or_logic_gate(
+    uids_and_event_types: list[tuple[str, str]],
+) -> ProcessTree:
+    """Returns a process tree with an OR logic gate.
+
+    :param uids_and_event_types: The uids and event types.
+    :type: `list`[`tuple`[`str`, `str`]]
+    :return: The process tree with an OR logic gate.
+    :rtype: :class:`ProcessTree`
+    """
+    process_tree = ProcessTree(operator=Operator.OR)
+    children = []
+    for _, event_type in uids_and_event_types:
+        children.append(ProcessTree(label=event_type))
+    process_tree.children = children
+    return process_tree
+
+
+@pytest.fixture
+def process_tree_with_xor_logic_gate(
+    uids_and_event_types: list[tuple[str, str]],
+) -> ProcessTree:
+    """Returns a process tree with an XOR logic gate.
+
+    :param uids_and_event_types: The uids and event types.
+    :type: `list`[`tuple`[`str`, `str`]]
+    :return: The process tree with an XOR logic gate.
+    :rtype: :class:`ProcessTree`
+    """
+    process_tree = ProcessTree(operator=Operator.XOR)
+    children = []
+    for _, event_type in uids_and_event_types:
+        children.append(ProcessTree(label=event_type))
+    process_tree.children = children
+    return process_tree
+
+
+@pytest.fixture
+def process_tree_with_and_xor_logic_gate(
+    uids_and_event_types: list[tuple[str, str]],
+) -> ProcessTree:
+    """Returns a process tree with an AND and XOR logic gate. The first event
+    type is connected to an AND logic gate and the rest are connected to an XOR
+
+    :param uids_and_event_types: The uids and event types.
+    :type uids_and_event_types: `list`[`tuple`[`str`, `str`]]
+    :return: The process tree with an AND and XOR logic gate.
+    :rtype: :class:`ProcessTree`
+    """
+    process_tree = ProcessTree(operator=Operator.PARALLEL)
+    children = []
+    for _, event_type in uids_and_event_types[:1]:
+        children.append(ProcessTree(label=event_type))
+    xor_process_tree = ProcessTree(operator=Operator.XOR)
+    xor_children = []
+    for _, event_type in uids_and_event_types[1:]:
+        xor_children.append(ProcessTree(label=event_type))
+    xor_process_tree.children = xor_children
+    children.append(xor_process_tree)
+    process_tree.children = children
+    return process_tree
+
+
+@pytest.fixture
+def events(
+    process_tree_no_logic: ProcessTree,
+) -> dict[str, Event]:
+    """Returns a dictionary of events.
+
+    :param process_tree_no_logic: The process tree with no logic.
+    :type process_tree_no_logic: :class:`ProcessTree`
+    :return: The events as a dictionary of event types mapped to logic tree
+    :rtype: `dict`[`str`, :class:`Event`]
+    """
+    process_trees_names_map = {
+        "no_logic_1": process_tree_no_logic,
+        "no_logic_2": deepcopy(process_tree_no_logic),
+    }
+    events_map = {}
+    for event_type, process_tree in process_trees_names_map.items():
+        event = Event(event_type=event_type)
+        event.logic_gate_tree = process_tree
+        events_map[event_type] = event
+    return events_map
+
+
+@pytest.fixture
+def node_map(
+    events: dict[str, Event],
+    nodes: list[Node],
+) -> dict[str, list[Node]]:
+    """Returns a dictionary of event type mapped to nodes.
+
+    :param events: The events to map.
+    :type events: `dict`[`str`, :class:`Event`]
+    :param nodes: The nodes to map.
+    :type nodes: `list`[:class:`Node`]
+    :return: The event types mapped to nodes.
+    :rtype: `dict`[`str`, `list`[:class:`Node`]]"""
+    node_map = {}
+    for event_type in events.keys():
+        node = Node(data=event_type, event_type=event_type)
+        node.update_node_list_with_nodes(nodes, "incoming")
+        node.update_node_list_with_nodes(nodes, "outgoing")
+        node_map[event_type] = [node]
+    return node_map
