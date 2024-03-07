@@ -1,6 +1,7 @@
 """This module holds the 'node' class"""
 from typing import Literal
 from uuid import uuid4
+import logging
 
 from pm4py import ProcessTree
 from pm4py.objects.process_tree.obj import Operator
@@ -144,6 +145,8 @@ class Node:
             event_node_map = self.event_node_map_incoming
         else:
             event_node_map = self.event_node_map_outgoing
+        if self.is_stub:
+            return
         self._load_logic_into_logic_list(
             logic_tree, event_node_map, direction, self
         )
@@ -181,6 +184,11 @@ class Node:
                 getattr(root_node, direction).append(node_to_add)
                 # Add the node to the event node map
                 event_node_map[logic_tree.label] = node_to_add
+                logging.getLogger().debug(
+                    f"Stub node created on parent node with ID: {self.uid}\n"
+                    f"The stub node has:\nEvent type: {logic_tree.label}\n"
+                    f"Node ID: {node_id}"
+                )
             logic_list.append(event_node_map[logic_tree.label])
         elif logic_tree.operator == Operator.SEQUENCE:
             for child in logic_tree.children:

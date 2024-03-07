@@ -210,11 +210,12 @@ class TestNode:
                 assert incoming_node in xor_node_direction_logic_list
 
     @staticmethod
-    def test_load_logic_into_list_stub_node(
+    def test_load_logic_into_list_child_stub_node(
         node_with_child_to_stub: Node,
         process_tree_with_and_logic_gate: ProcessTree,
     ) -> None:
-        """Test the load_logic_into_list method with a stub node.
+        """Test the load_logic_into_list method that should create a child stub
+        node.
 
         :param node_with_child_to_stub: The node with a child missing.
         :type node_with_child_to_stub: :class:`Node`
@@ -251,6 +252,33 @@ class TestNode:
                 copied_direction_node_list.remove(incoming_node)
             assert len(copied_direction_node_list) == 1
             assert copied_direction_node_list[0].is_stub
+            assert len(getattr(copied_direction_node_list[0], direction)) == 0
+            assert (
+                len(
+                    getattr(
+                        copied_direction_node_list[0], f"{direction}_logic"
+                    )
+                )
+                == 0
+            )
+
+    @staticmethod
+    def test_load_logic_into_list_parent_stub_node(
+        process_tree_with_and_logic_gate: ProcessTree,
+    ) -> None:
+        """Test the load_logic_into_list method that should for a stub
+        node. This should not update any of the lists on the stub node.
+        """
+        node = Node(uid="test_stub", event_type="test_stub", is_stub=True)
+        for direction in ["incoming", "outgoing"]:
+            assert len(getattr(node, direction)) == 0
+            assert len(getattr(node, f"{direction}_logic")) == 0
+            node.load_logic_into_list(
+                process_tree_with_and_logic_gate,
+                direction
+            )
+            assert len(getattr(node, direction)) == 0
+            assert len(getattr(node, f"{direction}_logic")) == 0
 
 
 def test_load_logic_tree_into_nodes_incoming(
