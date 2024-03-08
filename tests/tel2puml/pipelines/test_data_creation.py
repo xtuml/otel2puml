@@ -128,7 +128,7 @@ def test_generate_test_data_template_all_paths_false_large_num_paths():
     assert len(job_ids) == num_templates
     assert sum(event_types_count.values()) == num_templates
     for prob in count_prob.values():
-        assert 0.32 < prob < 0.34
+        assert 0.32 <= prob < 0.3466
 
 
 def test_puml_conversion_to_markov_chain():

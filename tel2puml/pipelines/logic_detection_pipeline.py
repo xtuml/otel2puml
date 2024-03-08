@@ -1,22 +1,106 @@
 """Module to detect the logic in a sequence of PV events.
 """
+
 from itertools import product, permutations
 from uuid import uuid4
 from datetime import datetime, timedelta
 from typing import Any, Generator
 from copy import deepcopy
+from enum import Enum
 
 from numpy import ndarray
 import numpy as np
 import pandas as pd
 from pm4py import (
-    discover_process_tree_inductive, ProcessTree,
-    format_dataframe
+    discover_process_tree_inductive,
+    ProcessTree,
+    format_dataframe,
 )
-from pm4py.objects.process_tree.obj import Operator
 
 from test_event_generator.solutions.graph_solution import GraphSolution
 from test_event_generator.solutions.event_solution import EventSolution
+
+
+class Operator(Enum):
+    """
+    Enum to represent the operators in a process tree.
+    """
+    # sequence operator
+    SEQUENCE = "->"
+    # exclusive choice operator
+    XOR = "X"
+    # parallel operator
+    PARALLEL = "+"
+    # loop operator
+    LOOP = "*"
+    # or operator
+    OR = "O"
+    # interleaving operator
+    INTERLEAVING = "<>"
+    # partially-ordered operator
+    PARTIALORDER = "PO"
+    # branch operator
+    BRANCH = "BR"
+
+    def __str__(self):
+        """
+        Provides a string representation of the current operator
+
+        :return: String representation of the process tree.
+        :rtype: `str`
+        """
+        return self.value
+
+    def __repr__(self):
+        """
+        Provides a string representation of the current operator
+
+        :return: String representation of the process tree.
+        :rtype: `str`
+        """
+        return self.value
+
+
+class EventSet(dict[str, int]):
+    """Class to represent a set of unique events and their counts.
+
+    :param events: The events.
+    :type events: `list`[`str`]
+    """
+
+    def __init__(
+        self,
+        events: list[str],
+    ) -> None:
+        """Constructor method."""
+        super().__init__()
+        for event in events:
+            self[event] = self.get(event, 0) + 1
+
+    def __key(self):
+        return tuple((k, self[k]) for k in sorted(self))
+
+    def __hash__(self):
+        return hash(self.__key())
+
+    def __eq__(self, other):
+        return self.__key() == other.__key()
+
+    def to_frozenset(self) -> frozenset[str]:
+        """Method to get the events as a list.
+
+        :return: The events as a list.
+        :rtype: `list`[`str`]
+        """
+        return frozenset(self.keys())
+
+    def get_repeated_events(self) -> dict[str, int]:
+        """Method to get the repeated events.
+
+        :return: The repeated events.
+        :rtype: `dict`[`str`, `int`]
+        """
+        return {event: count for event, count in self.items() if count > 1}
 
 
 class Event:
@@ -25,17 +109,17 @@ class Event:
     :param event_type: The type of event.
     :type event_type: `str`
     """
+
     def __init__(
         self,
         event_type: str,
     ) -> None:
-        """Constructor method.
-        """
+        """Constructor method."""
         self.event_type = event_type
         self.edge_counts_per_data_point: dict[
             tuple[str, str], dict[str, int]
         ] = {}
-        self.event_sets: set[frozenset[str]] = set()
+        self.event_sets: set[EventSet] = set()
         self.occured_edges: list[list[tuple[str, str]]] = []
         self.conditional_count_matrix: ndarray | None = None
         self._condtional_probability_matrix: ndarray | None = None
@@ -69,7 +153,7 @@ class Event:
         )
         network_x_graph = GraphSolution.create_networkx_graph_from_nodes(
             list(graph_solution.events.values()),
-            link_func=lambda x: x.get_post_event_edge_tuples()
+            link_func=lambda x: x.get_post_event_edge_tuples(),
         )
         GraphSolution.get_graphviz_plot(network_x_graph).savefig(
             output_file_path
@@ -91,16 +175,17 @@ class Event:
         """
         event_solution = EventSolution(
             meta_data={
-                "EventType": node.label if node.label is not None
-                else node.operator.value
+                "EventType": (
+                    node.label
+                    if node.label is not None
+                    else node.operator.value
+                )
             },
         )
         for child in node.children:
             event_solution.add_post_event(
-                Event.
-                update_graph_solution_with_event_solution_from_process_node(
-                    child,
-                    graph_solution
+                Event.update_graph_solution_with_event_solution_from_process_node(  # noqa: E501
+                    child, graph_solution
                 )
             )
         graph_solution.add_event(event_solution)
@@ -128,9 +213,7 @@ class Event:
         self._logic_gate_tree = value
         self._update_since_logic_gate_tree = False
 
-    def calculate_logic_gates(
-        self
-    ) -> ProcessTree:
+    def calculate_logic_gates(self) -> ProcessTree:
         """This method calculates the logic gates from the event sets.
 
         :return: The logic gate tree.
@@ -140,7 +223,11 @@ class Event:
         logic_gate_tree = self.reduce_process_tree_to_preferred_logic_gates(
             process_tree
         )
-        return logic_gate_tree
+        logic_gate_tree_with_repeats = self.calculate_repeats_in_tree(
+            logic_gate_tree
+        )
+
+        return logic_gate_tree_with_repeats
 
     def update_event_sets(
         self,
@@ -154,8 +241,18 @@ class Event:
         """
         if len(events) == 0:
             return
-        self.event_sets.add(frozenset(events))
+
+        self.event_sets.add(EventSet(events))
+
         self._update_since_logic_gate_tree = True
+
+    def get_reduced_event_set(self) -> set[frozenset[str]]:
+        """This method reduces the event set to a list of unique events.
+
+        :return: The reduced event set.
+        :rtype: `list`[`str`]
+        """
+        return {event_set.to_frozenset() for event_set in self.event_sets}
 
     def create_augmented_data_from_event_sets(
         self,
@@ -165,25 +262,25 @@ class Event:
 
         :return: The augmented data.
         :rtype: `Generator`[`dict`[`str`, `Any`], `Any`, `None`]"""
-        for event_set in self.event_sets:
-            yield from self.create_augmented_data_from_event_set(
-                event_set
+        for reduced_event_set in self.get_reduced_event_set():
+            yield from self.create_augmented_data_from_reduced_event_set(
+                reduced_event_set
             )
 
-    def create_augmented_data_from_event_set(
+    def create_augmented_data_from_reduced_event_set(
         self,
-        event_set: frozenset[str],
+        reduced_event_set: frozenset[str],
     ) -> Generator[dict[str, Any], Any, None]:
         """Method to create augmented data from a single event set then
         yielding the augmented data.
 
-        :param event_set: The event set.
-        :type event_set: `frozenset`[`str`]
+        :param reduced_event_set: The reduced event set.
+        :type reduced_event_set: `frozenset`[`str`]
         :return: The augmented data.
         :rtype: `Generator`[`dict`[`str`, `Any`], `Any`, `None`]
         """
         for permutation in permutations(
-            event_set, len(event_set)
+            reduced_event_set, len(reduced_event_set)
         ):
             case_id = str(uuid4())
             yield from self.create_data_from_event_sequence(
@@ -229,8 +326,10 @@ class Event:
             self.create_augmented_data_from_event_sets()
         )
         event_log = format_dataframe(
-            augmented_dataframe, case_id='case_id', activity_key='activity',
-            timestamp_key='timestamp'
+            augmented_dataframe,
+            case_id="case_id",
+            activity_key="activity",
+            timestamp_key="timestamp",
         )
         process_tree = discover_process_tree_inductive(
             event_log,
@@ -291,12 +390,12 @@ class Event:
         """
         if node.operator is None:
             return
-        if node.operator.name != "PARALLEL":
+        if node.operator.value != Operator.PARALLEL.value:
             return
         for counter, child in enumerate(node.children):
             if child.operator is None:
                 continue
-            if child.operator.name == "XOR":
+            if child.operator.value == Operator.XOR.value:
                 if any(
                     str(child_of_child) == "tau"
                     for child_of_child in child.children
@@ -309,18 +408,14 @@ class Event:
                             node_new_children.append(child_of_child)
                     if len(node_new_children) > 1:
                         node_new_children = [
-                            ProcessTree(
-                                Operator.XOR,
-                                node,
-                                node_new_children
-                            )
+                            ProcessTree(Operator.XOR, node, node_new_children)
                         ]
                     if len(node.children[counter + 1:]) > 0:
                         end_children = [
                             ProcessTree(
                                 Operator.PARALLEL,
                                 node,
-                                node.children[counter + 1:]
+                                node.children[counter + 1:],
                             )
                         ]
                     else:
@@ -328,7 +423,7 @@ class Event:
                     node.children = [
                         *node.children[:counter],
                         *node_new_children,
-                        *end_children
+                        *end_children,
                     ]
                     break
 
@@ -344,10 +439,76 @@ class Event:
         for node in process_tree.children:
             Event.filter_defunct_or_gates(node)
             if node.operator is not None:
-                if node.operator.name == "OR":
-                    if node.parent.operator.name == "OR":
+                if node.operator.value == Operator.OR.value:
+                    if node.parent.operator.value == Operator.OR.value:
                         node.parent.children.remove(node)
                         node.parent.children.extend(node.children)
+
+    def calculate_repeats_in_tree(
+        self, logic_gate_tree: ProcessTree
+    ) -> ProcessTree:
+        """Method to find the repeats in a process tree.
+
+        :return: The process tree with repeats.
+        :rtype: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+        """
+        all_event_types = set().union(*self.get_reduced_event_set())
+        for event_type in all_event_types:
+            counts = [
+                event_set[event_type]
+                for event_set in self.event_sets
+                if event_type in event_set.get_repeated_events()
+            ]
+            if len(counts) > 1:
+                logic_gate_tree = ProcessTree(
+                    Operator.BRANCH,
+                    logic_gate_tree.parent,
+                    [logic_gate_tree],
+                )
+                break
+
+        logic_gate_tree = self.update_tree_with_repeat_logic(logic_gate_tree)
+        logic_gate_tree = Event.remove_defunct_sequence_logic(logic_gate_tree)
+
+        return logic_gate_tree
+
+    def update_tree_with_repeat_logic(self, node: ProcessTree):
+        """Method to update a tree with repeat logic.
+
+        :param node: The node.
+        :type node: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+        """
+        if node.operator is None:
+            counts = [
+                event_set[node.label]
+                for event_set in self.event_sets
+                if node.label in event_set.get_repeated_events()
+            ]
+            if len(counts) == 1:
+                return ProcessTree(
+                    Operator.PARALLEL, node.parent, [node] * counts[0]
+                )
+        else:
+            node.children = [
+                self.update_tree_with_repeat_logic(child)
+                for child in node.children
+            ]
+
+        return node
+
+    @staticmethod
+    def remove_defunct_sequence_logic(node: ProcessTree):
+        """Method to remove defunct sequence logic from a tree."""
+        if node.operator is not None:
+            if node.operator == Operator.SEQUENCE:
+                return Event.remove_defunct_sequence_logic(node.children[0])
+
+            node.children = [
+                Event.remove_defunct_sequence_logic(child)
+                for child in node.children
+            ]
+
+        return node
 
     # -----------------Conditional methods-----------------
     """
@@ -368,8 +529,7 @@ class Event:
         data_point_edges = set()
         for edge_tuple in edge_tuples:
             self.update_with_edge_tuple_and_data_point_edges(
-                edge_tuple,
-                data_point_edges
+                edge_tuple, data_point_edges
             )
         self.update_conditional_count_matrix(data_point_edges)
         self._update_since_conditional_probability_matrix = True
@@ -493,7 +653,7 @@ class Event:
 
 
 def update_all_connections_from_data(
-    events: list[dict]
+    events: list[dict],
 ) -> tuple[dict[str, Event], dict[str, Event]]:
     """This function detects the logic in a sequence of PV events.
 
@@ -510,29 +670,19 @@ def update_all_connections_from_data(
         for event in graph_solution.events.values():
             event_type: str = event.meta_data["EventType"]
             if event_type not in events_forward_logic:
-                events_forward_logic[event_type] = Event(
-                    event_type
-                )
+                events_forward_logic[event_type] = Event(event_type)
             if event_type not in events_backward_logic:
-                events_backward_logic[event_type] = Event(
-                    event_type
-                )
+                events_backward_logic[event_type] = Event(event_type)
             events_forward_logic[event_type].update_event_sets(
-                get_events_set_from_events_list(
-                    event.post_events
-                )
+                get_events_set_from_events_list(event.post_events)
             )
             events_backward_logic[event_type].update_event_sets(
-                get_events_set_from_events_list(
-                    event.previous_events
-                )
+                get_events_set_from_events_list(event.previous_events)
             )
     return events_forward_logic, events_backward_logic
 
 
-def get_events_set_from_events_list(
-    events: list[EventSolution]
-) -> list[str]:
+def get_events_set_from_events_list(events: list[EventSolution]) -> list[str]:
     """This function gets the events set as a list of event types from a list
     of event solutions.
 
