@@ -266,7 +266,7 @@ class TestNode:
     def test_load_logic_into_list_parent_stub_node(
         process_tree_with_and_logic_gate: ProcessTree,
     ) -> None:
-        """Test the load_logic_into_list method that should for a stub
+        """Test the load_logic_into_list method for a stub
         node. This should not update any of the lists on the stub node.
         """
         node = Node(uid="test_stub", event_type="test_stub", is_stub=True)
