@@ -1,5 +1,5 @@
 """Tests for the node module."""
-from copy import deepcopy
+from copy import deepcopy, copy
 
 from pm4py import ProcessTree
 
@@ -208,6 +208,77 @@ class TestNode:
             assert len(xor_node_direction_logic_list) == 2
             for incoming_node in direction_node_list[1:]:
                 assert incoming_node in xor_node_direction_logic_list
+
+    @staticmethod
+    def test_load_logic_into_list_child_stub_node(
+        node_with_child_to_stub: Node,
+        process_tree_with_and_logic_gate: ProcessTree,
+    ) -> None:
+        """Test the load_logic_into_list method that should create a child stub
+        node.
+
+        :param node_with_child_to_stub: The node with a child missing.
+        :type node_with_child_to_stub: :class:`Node`
+        :param process_tree_no_logic: The process tree with no logic.
+        :type process_tree_no_logic: :class:`ProcessTree`
+        """
+        for direction, direction_node_list, direction_logic_list in zip(
+            ["incoming", "outgoing"],
+            [
+                node_with_child_to_stub.incoming,
+                node_with_child_to_stub.outgoing,
+            ],
+            [
+                node_with_child_to_stub.incoming_logic,
+                node_with_child_to_stub.outgoing_logic,
+            ],
+        ):
+            assert len(direction_node_list) == 2
+            previous_direction_node_list = copy(direction_node_list)
+            node_with_child_to_stub.load_logic_into_list(
+                process_tree_with_and_logic_gate, direction
+            )
+            assert len(direction_node_list) == 3
+            assert len(direction_logic_list) == 1
+            operator_node = direction_logic_list[0]
+            assert operator_node.operator == "AND"
+            operator_node_direction_logic_list = getattr(
+                operator_node, f"{direction}_logic"
+            )
+            assert len(operator_node_direction_logic_list) == 3
+            copied_direction_node_list = copy(direction_node_list)
+            for incoming_node in previous_direction_node_list:
+                assert incoming_node in operator_node_direction_logic_list
+                copied_direction_node_list.remove(incoming_node)
+            assert len(copied_direction_node_list) == 1
+            assert copied_direction_node_list[0].is_stub
+            assert len(getattr(copied_direction_node_list[0], direction)) == 0
+            assert (
+                len(
+                    getattr(
+                        copied_direction_node_list[0], f"{direction}_logic"
+                    )
+                )
+                == 0
+            )
+
+    @staticmethod
+    def test_load_logic_into_list_parent_stub_node(
+        process_tree_with_and_logic_gate: ProcessTree,
+    ) -> None:
+        """Test the load_logic_into_list method for a stub
+        node. This should not update any of the lists on the stub node.
+        """
+        node = Node(uid="test_stub", event_type="test_stub", is_stub=True)
+        for direction in ["incoming", "outgoing"]:
+            assert len(getattr(node, direction)) == 0
+            assert len(getattr(node, f"{direction}_logic")) == 0
+            node.load_logic_into_list(
+                process_tree_with_and_logic_gate,
+                direction
+            )
+            assert len(getattr(node, direction)) == 0
+            assert len(getattr(node, f"{direction}_logic")) == 0
 
 
 def test_load_logic_tree_into_nodes_incoming(

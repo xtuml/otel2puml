@@ -1,5 +1,7 @@
 """This module holds the 'node' class"""
 from typing import Literal
+from uuid import uuid4
+import logging
 
 from pm4py import ProcessTree
 from pm4py.objects.process_tree.obj import Operator
@@ -47,6 +49,7 @@ class Node:
         outgoing: list["Node"] | None = None,
         incoming_logic: list["Node"] | None = None,
         outgoing_logic: list["Node"] | None = None,
+        is_stub: bool = False,
     ) -> None:
         """Constructor method.
         """
@@ -58,6 +61,7 @@ class Node:
         self.uid = uid if uid is not None else data
         self.operator = operator
         self.event_type = event_type
+        self.is_stub = is_stub
 
         self.branch_enum = ["AND", "OR", "XOR", "LOOP", "BRANCH"]
 
@@ -141,13 +145,18 @@ class Node:
             event_node_map = self.event_node_map_incoming
         else:
             event_node_map = self.event_node_map_outgoing
-        self._load_logic_into_logic_list(logic_tree, event_node_map, direction)
+        if self.is_stub:
+            return
+        self._load_logic_into_logic_list(
+            logic_tree, event_node_map, direction, self
+        )
 
     def _load_logic_into_logic_list(
         self,
         logic_tree: ProcessTree,
         event_node_map: dict[str, "Node"],
         direction: Literal["incoming", "outgoing"],
+        root_node: "Node",
     ) -> None:
         """Loads logic into the logic list.
 
@@ -163,11 +172,28 @@ class Node:
         else:
             logic_list = self.outgoing_logic
         if logic_tree.label is not None:
+            if logic_tree.label not in event_node_map:
+                node_id = str(uuid4())
+                node_to_add = Node(
+                    data=node_id,
+                    uid=node_id,
+                    event_type=logic_tree.label,
+                    is_stub=True,
+                )
+                # Add the node to the appropriate node list
+                getattr(root_node, direction).append(node_to_add)
+                # Add the node to the event node map
+                event_node_map[logic_tree.label] = node_to_add
+                logging.getLogger().debug(
+                    f"Stub node created on parent node with ID: {self.uid}\n"
+                    f"The stub node has:\nEvent type: {logic_tree.label}\n"
+                    f"Node ID: {node_id}"
+                )
             logic_list.append(event_node_map[logic_tree.label])
         elif logic_tree.operator == Operator.SEQUENCE:
             for child in logic_tree.children:
                 self._load_logic_into_logic_list(
-                    child, event_node_map, direction
+                    child, event_node_map, direction, root_node
                 )
         else:
             logic_operator_node = Node(
@@ -175,7 +201,7 @@ class Node:
             )
             for child in logic_tree.children:
                 logic_operator_node._load_logic_into_logic_list(
-                    child, event_node_map, direction
+                    child, event_node_map, direction, root_node
                 )
             logic_list.append(logic_operator_node)
 
