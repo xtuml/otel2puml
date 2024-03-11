@@ -128,7 +128,7 @@ def recursive_get_type(
         str: The string representation of event types.
     """
     if depth > max_depth:
-        print("max depth exceeded")
+        print("max depth exceeded when running recursive_get_type")
         return output_wip
     if output_wip != "":
         output = ",".join([output_wip, event_tree["eventType"]])
@@ -183,7 +183,7 @@ def stringify_events(events):
                         ",".join(
                             reversed(
                                 recursive_get_type(
-                                    events[event_keys[loop]], ""
+                                    events[event_keys[loop]], "", 100
                                 ).split(",")
                             )
                         ),

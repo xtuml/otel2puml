@@ -4,26 +4,26 @@
             :A;
             if (XOR) then (true)
                 :B;
-                :D;
-                if (XOR) then (true)
-                    :E;
-                else (false)
-                    :F;
-                endif
-            else (false)
                 :C;
                 if (XOR) then (true)
                     :D;
+                else (false)
+                    :E;
+                endif
+            else (false)
+                :F;
+                if (XOR) then (true)
+                    :G;
                     if (XOR) then (true)
-                        :E;
+                        :H;
                     else (false)
-                        :F;
+                        :I;
                     endif
                 else (false)
-                    :F;
+                    :J;
                 endif
             endif
-            :G;
+            :K;
         end group
     }
 @enduml
