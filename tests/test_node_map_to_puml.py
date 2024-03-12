@@ -14,6 +14,7 @@ from tel2puml.node_map_to_puml.node_map_to_puml import (
     create_content_logic,
     create_content,
     analyse_node,
+    get_coords_in_nested_dict,
 )
 
 
@@ -1571,5 +1572,63 @@ class TestAnalyseNode(unittest.TestCase):
         self.assertEqual(result, output)  # Assert that output is not modified
 
 
-if __name__ == "__main__":
+class TestGetCoordsInNestedDict(unittest.TestCase):
+    def test_item_present(self):
+        # Test case where the item is present in the nested dictionary
+        dictionary = {
+            "parent1": {
+                "child1": "item1",
+                "child2": "item2"
+            },
+            "parent2": {
+                "child3": "item3",
+                "child4": "item4"
+            }
+        }
+        item = "item3"
+
+        result = get_coords_in_nested_dict(item, dictionary)
+
+        self.assertEqual(result, "child3")
+
+    def test_item_not_present(self):
+        # Test case where the item is not present in the nested dictionary
+        dictionary = {
+            "parent1": {
+                "child1": "item1",
+                "child2": "item2"
+            },
+            "parent2": {
+                "child3": "item3",
+                "child4": "item4"
+            }
+        }
+        item = "item5"
+
+        result = get_coords_in_nested_dict(item, dictionary)
+
+        self.assertIsNone(result)
+
+    def test_empty_dictionary(self):
+        # Test case where the nested dictionary is empty
+        dictionary = {}
+        item = "item1"
+
+        result = get_coords_in_nested_dict(item, dictionary)
+
+        self.assertIsNone(result)
+
+    def test_empty_nested_dictionary(self):
+        # Test case where the nested dictionary is empty
+        dictionary = {
+            "parent1": {},
+            "parent2": {}
+        }
+        item = "item1"
+
+        result = get_coords_in_nested_dict(item, dictionary)
+
+        self.assertIsNone(result)
+
+if __name__ == '__main__':
     unittest.main()
