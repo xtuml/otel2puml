@@ -477,6 +477,10 @@ class TestEvent:
         assert len(labels) == 0
 
     @staticmethod
+    def test_process_missing_and_gates() -> None:
+        pass
+
+    @staticmethod
     def test_process_or_gates() -> None:
         """Tests for method process_or_gates"""
         event = Event("A")
