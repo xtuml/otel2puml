@@ -484,9 +484,17 @@ class Event:
                     weighted_cover.add(subset)
                     universe -= subset
 
+                for event_set in reduced_event_set:
+                    for cover_set in weighted_cover:
+                        if event_set & cover_set == cover_set:
+                            event_set -= cover_set
+                    if len(event_set) > 0:
+                        insoluble = True
+                        break
+
             if not insoluble:
                 for x, y in permutations(weighted_cover, 2):
-                    if len(x.intersection(y)) > 0:
+                    if len(x & y) > 0:
                         insoluble = True
                         break
 
