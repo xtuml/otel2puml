@@ -957,3 +957,36 @@ def test_get_logic_from_repeated_event_puml_file() -> None:
                 assert grandchild.label in preceding_e_events
                 preceding_e_events.remove(grandchild.label)
     assert len(preceding_e_events) == 0
+
+
+def test_get_logic_from_or_and_or_puml_file() -> None:
+    """Test method for getting logic gates for a puml file with nested OR
+    and AND gates"""
+    puml_file = "puml_files/OR_AND_OR_test.puml"
+    data = generate_test_data(puml_file)
+    events_forward_logic, events_backward_logic = (
+        update_all_connections_from_data(data)
+    )
+    # check A, E logic trees
+    for events_logic in [events_forward_logic["A"], events_backward_logic["E"]]:
+        assert (
+            events_logic.logic_gate_tree.operator.value
+            == Operator.OR.value
+        )
+        for child in events_logic.logic_gate_tree.children:
+            if child.label is not None:
+                assert child.label == "B"
+            else:
+                assert child.operator.value == Operator.PARALLEL.value
+                events_after = ["C", "D"]
+                for grandchild in child.children:
+                    events_after.remove(grandchild.label)
+                assert len(events_after) == 0
+        assert events_logic.logic_gate_tree is None
+    # check B logic trees
+    assert events_forward_logic["B"].logic_gate_tree.label == "E"
+    assert events_backward_logic["B"].logic_gate_tree.label == "A"
+    # check C, D logic trees
+    for event in ["C", "D"]:
+        assert events_forward_logic[event].logic_gate_tree.label == "E"
+        assert events_backward_logic[event].logic_gate_tree.label == "A"

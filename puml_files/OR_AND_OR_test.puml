@@ -1,0 +1,17 @@
+@startuml
+partition "OR_AND_OR" {
+    group "OR_AND_OR"
+        #green:A;
+        split
+            :B;
+        split again
+            fork
+                :C;
+            fork again
+                :D;
+            end fork
+        end split
+        #red:E;
+    end group
+}
+@enduml
