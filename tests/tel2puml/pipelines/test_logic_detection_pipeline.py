@@ -1002,6 +1002,6 @@ def test_get_logic_from_and_under_or_puml_file() -> None:
     assert events_forward_logic["B"].logic_gate_tree.label == "H"
     assert events_backward_logic["B"].logic_gate_tree.label == "A"
     # check C, D logic trees
-    for event in ["C", "D"]:
+    for event in ["C", "D", "E", "F", "G"]:
         assert events_forward_logic[event].logic_gate_tree.label == "H"
         assert events_backward_logic[event].logic_gate_tree.label == "A"
