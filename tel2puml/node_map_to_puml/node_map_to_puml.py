@@ -146,6 +146,10 @@ def get_tree_similarity(reverse_node_trees:dict, smallest_tree:list):
         smallest tree.
     """
     tree_similarity = 0
+    if len(smallest_tree) != 0:
+        for key, val in reverse_node_trees.items():
+            if(val[0] != smallest_tree[0]):
+                return 0
 
     for loop in range(0, len(smallest_tree)):
         trees_are_similar = True
@@ -800,7 +804,7 @@ if __name__ == "__main__":
         "branching_loop_end_test",  # NOT MARKOVIAN!
     ]
 
-    puml_name = names[4 - 1]
+    puml_name = names[3 - 1]
     tab_chars = "    "
     puml_header = [
         "@startuml",

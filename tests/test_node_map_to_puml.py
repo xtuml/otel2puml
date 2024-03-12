@@ -9,6 +9,7 @@ from tel2puml.node_map_to_puml.node_map_to_puml import (
     append_logic_start,
     handle_loop_start,
     get_reverse_node_tree_dict,
+    get_tree_similarity,
 )
 
 
@@ -290,6 +291,137 @@ class TestGetReverseNodeTree(unittest.TestCase):
         )
 
         self.assertEqual(result, [])
+
+
+class TestGetTreeSimilarity(unittest.TestCase):
+    def test_get_tree_similarity_all_trees_converge(self):
+        # Test case where all trees in reverse_node_trees converge
+
+        start_node = Node("A")
+        end_node = Node("I")
+        reverse_node_trees = {
+            "Tree1": [end_node, Node("C"), Node("B"), start_node],
+            "Tree2": [end_node, Node("E"), Node("D"), start_node],
+            "Tree3": [end_node, Node("G"), Node("F"), start_node],
+        }
+
+        start_node.outgoing = [
+            reverse_node_trees["Tree1"][2],
+            reverse_node_trees["Tree2"][2],
+            reverse_node_trees["Tree3"][2],
+        ]
+        end_node.incoming = [
+            reverse_node_trees["Tree1"][1],
+            reverse_node_trees["Tree2"][1],
+            reverse_node_trees["Tree3"][1],
+        ]
+
+        reverse_node_trees["Tree1"][1].incoming = reverse_node_trees["Tree1"][2]
+        reverse_node_trees["Tree1"][1].outgoing = reverse_node_trees["Tree1"][0]
+
+        reverse_node_trees["Tree2"][1].incoming = reverse_node_trees["Tree2"][2]
+        reverse_node_trees["Tree2"][1].outgoing = reverse_node_trees["Tree2"][0]
+
+        reverse_node_trees["Tree3"][1].incoming = reverse_node_trees["Tree3"][2]
+        reverse_node_trees["Tree3"][1].outgoing = reverse_node_trees["Tree3"][0]
+
+        reverse_node_trees["Tree1"][2].incoming = reverse_node_trees["Tree1"][3]
+        reverse_node_trees["Tree1"][2].outgoing = reverse_node_trees["Tree1"][1]
+    
+        reverse_node_trees["Tree2"][2].incoming = reverse_node_trees["Tree2"][3]
+        reverse_node_trees["Tree2"][2].outgoing = reverse_node_trees["Tree2"][1]
+    
+        reverse_node_trees["Tree3"][2].incoming = reverse_node_trees["Tree3"][3]
+        reverse_node_trees["Tree3"][2].outgoing = reverse_node_trees["Tree3"][1]
+
+        smallest_tree = reverse_node_trees["Tree1"]
+
+        result = get_tree_similarity(reverse_node_trees, smallest_tree)
+
+        self.assertEqual(result, 2)
+
+    def test_get_tree_similarity_not_all_trees_converge(self):
+        # Test case where not all trees in reverse_node_trees converge
+
+        start_node = Node("A")
+        end_node = Node("I")
+        reverse_node_trees = {
+            "Tree1": [end_node, Node("C"), Node("B"), start_node],
+            "Tree2": [end_node, Node("E"), Node("D"), start_node],
+            "Tree3": [Node("1"), Node("G"), Node("F"), start_node],
+        }
+
+        start_node.outgoing = [
+            reverse_node_trees["Tree1"][2],
+            reverse_node_trees["Tree2"][2],
+            reverse_node_trees["Tree3"][2],
+        ]
+        end_node.incoming = [
+            reverse_node_trees["Tree1"][1],
+            reverse_node_trees["Tree2"][1],
+        ]
+
+        reverse_node_trees["Tree1"][1].incoming = reverse_node_trees["Tree1"][2]
+        reverse_node_trees["Tree1"][1].outgoing = reverse_node_trees["Tree1"][0]
+
+        reverse_node_trees["Tree2"][1].incoming = reverse_node_trees["Tree2"][2]
+        reverse_node_trees["Tree2"][1].outgoing = reverse_node_trees["Tree2"][0]
+
+        reverse_node_trees["Tree3"][1].incoming = reverse_node_trees["Tree3"][2]
+        reverse_node_trees["Tree3"][1].outgoing = reverse_node_trees["Tree3"][0]
+
+        reverse_node_trees["Tree1"][2].incoming = reverse_node_trees["Tree1"][3]
+        reverse_node_trees["Tree1"][2].outgoing = reverse_node_trees["Tree1"][1]
+    
+        reverse_node_trees["Tree2"][2].incoming = reverse_node_trees["Tree2"][3]
+        reverse_node_trees["Tree2"][2].outgoing = reverse_node_trees["Tree2"][1]
+    
+        reverse_node_trees["Tree3"][2].incoming = reverse_node_trees["Tree3"][3]
+        reverse_node_trees["Tree3"][2].outgoing = reverse_node_trees["Tree3"][1]
+
+        smallest_tree = reverse_node_trees["Tree1"]
+
+        result = get_tree_similarity(reverse_node_trees, smallest_tree)
+
+        self.assertEqual(result, 0)
+
+    def test_get_tree_similarity_empty_tree(self):
+        # Test case where reverse_node_trees contains an empty tree
+
+        start_node = Node("A")
+        end_node = Node("I")
+        reverse_node_trees = {
+            "Tree1": [end_node, Node("C"), Node("B"), start_node],
+            "Tree2": [Node("K"), Node("E"), Node("D"), start_node],
+            "Tree3": [],
+        }
+
+        start_node.outgoing = [
+            reverse_node_trees["Tree1"][2],
+            reverse_node_trees["Tree2"][2],
+        ]
+        end_node.incoming = [
+            reverse_node_trees["Tree1"][1],
+            reverse_node_trees["Tree2"][1],
+        ]
+
+        reverse_node_trees["Tree1"][1].incoming = reverse_node_trees["Tree1"][2]
+        reverse_node_trees["Tree1"][1].outgoing = reverse_node_trees["Tree1"][0]
+
+        reverse_node_trees["Tree2"][1].incoming = reverse_node_trees["Tree2"][2]
+        reverse_node_trees["Tree2"][1].outgoing = reverse_node_trees["Tree2"][0]
+
+        reverse_node_trees["Tree1"][2].incoming = reverse_node_trees["Tree1"][3]
+        reverse_node_trees["Tree1"][2].outgoing = reverse_node_trees["Tree1"][1]
+
+        reverse_node_trees["Tree2"][2].incoming = reverse_node_trees["Tree2"][3]
+        reverse_node_trees["Tree2"][2].outgoing = reverse_node_trees["Tree2"][1]
+
+        smallest_tree = reverse_node_trees["Tree1"]
+
+        result = get_tree_similarity(reverse_node_trees, smallest_tree)
+
+        self.assertEqual(result, 0)
 
 
 class TestAppendLogicMiddleOrEnd(unittest.TestCase):
@@ -719,9 +851,10 @@ class TestGetReverseNodeTreeDict(unittest.TestCase):
         )
 
         self.assertEqual(reverse_node_trees, {
-            "C":[lookup_table["G"], lookup_table["E"]], 
-            "D":[lookup_table["G"], lookup_table["F"]], 
+            "C":[lookup_table["G"], lookup_table["E"]],
+            "D":[lookup_table["G"], lookup_table["F"]],
         })
+
 
 if __name__ == "__main__":
     unittest.main()
