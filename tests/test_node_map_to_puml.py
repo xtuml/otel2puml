@@ -13,6 +13,7 @@ from tel2puml.node_map_to_puml.node_map_to_puml import (
     handle_divergent_tree_children,
     create_content_logic,
     create_content,
+    analyse_node,
 )
 
 
@@ -1405,6 +1406,169 @@ class TestCreateContent(unittest.TestCase):
         )
 
         self.assertEqual(result, [])
+
+
+class TestAnalyseNode(unittest.TestCase):
+    def test_analyse_node_with_logic(self):
+        # Test case where the head node has outgoing logic
+
+        lookup_table = {
+            "A": Node("A"),
+            "B": Node("B"),
+            "C": Node("C"),
+        }
+        logic_table = {
+            "XOR": Node(
+                data="XOR",
+                incoming=lookup_table["A"],
+                outgoing=[
+                    lookup_table["B"],
+                    lookup_table["C"],
+                ],
+            )
+        }
+        lookup_table["A"].outgoing_logic = [logic_table["XOR"]]
+        lookup_table["B"].incoming_logic = [logic_table["XOR"]]
+        lookup_table["C"].incoming_logic = [logic_table["XOR"]]
+
+        logic_lines = {
+            "XOR": {
+                "start": "XOR_START",
+                "middle": "XOR_MIDDLE",
+                "end": "XOR_END",
+            },
+            "SWITCH": {
+                "start": "SWITCH_START",
+                "middle": ["SWITCH_MIDDLE_1", "SWITCH_MIDDLE_1"],
+                "end": "SWITCH_END",
+            },
+        }
+        output = []
+
+        depth = 1
+        max_depth = 10
+
+        expected_output = ["A", "XOR_START", "B", "XOR_MIDDLE", "C", "XOR_END"]
+
+        result = analyse_node(
+            node_tree=lookup_table["A"],
+            output=output,
+            logic_lines=logic_lines,
+            lookup_table=lookup_table,
+            append_first_node=True,
+            depth=depth,
+            max_depth=max_depth,
+        )
+
+        for idx,item in enumerate(expected_output):
+            self.assertEqual(result[idx].uid, item)
+
+    def test_analyse_node_with_uid(self):
+        # Test case where the head node is a data node
+        lookup_table = {
+            "A": Node("A"),
+            "B": Node("B"),
+            "C": Node("C"),
+            "D": Node("D"),
+        }
+        logic_table = {
+            "XOR": Node(
+                data="XOR",
+                incoming=lookup_table["B"],
+                outgoing=[
+                    lookup_table["C"],
+                    lookup_table["D"],
+                ],
+            )
+        }
+        lookup_table["B"].outgoing_logic = [logic_table["XOR"]]
+        lookup_table["C"].incoming_logic = [logic_table["XOR"]]
+        lookup_table["D"].incoming_logic = [logic_table["XOR"]]
+
+        lookup_table["A"].outgoing = [lookup_table["B"]]
+        lookup_table["B"].outgoing = [lookup_table["C"], lookup_table["D"]]
+
+        lookup_table["B"].incoming = [lookup_table["A"]]
+        lookup_table["C"].incoming = [lookup_table["B"]]
+        lookup_table["D"].incoming = [lookup_table["B"]]
+
+
+        logic_lines = {
+            "XOR": {
+                "start": "XOR_START",
+                "middle": "XOR_MIDDLE",
+                "end": "XOR_END",
+            },
+            "SWITCH": {
+                "start": "SWITCH_START",
+                "middle": ["SWITCH_MIDDLE_1", "SWITCH_MIDDLE_1"],
+                "end": "SWITCH_END",
+            },
+            "LOOP":{"end":"END_LOOP"},
+        }
+        output = []
+
+        depth = 1
+        max_depth = 10
+
+        expected_output = ["A", "B", "XOR_START", "C", "XOR_MIDDLE", "D", "XOR_END"]
+
+        result = analyse_node(
+            node_tree=lookup_table["A"],
+            output=output,
+            logic_lines=logic_lines,
+            lookup_table=lookup_table,
+            append_first_node=True,
+            depth=depth,
+            max_depth=max_depth,
+        )
+
+        for idx,item in enumerate(expected_output):
+            self.assertEqual(result[idx].uid, item)
+
+    def test_analyse_node_with_leaf_uid(self):
+        # Test case where the node is a leaf uid node
+        node = Node("A")
+        output = []
+        logic_lines = {"LOOP": {"end": "END_LOOP"}}
+        lookup_table = {}
+        append_first_node = True
+        depth = 0
+        max_depth = 10
+
+        result = analyse_node(
+            node_tree=node,
+            output=output,
+            logic_lines=logic_lines,
+            lookup_table=lookup_table,
+            append_first_node=append_first_node,
+            depth=depth,
+            max_depth=max_depth,
+        )
+
+        self.assertEqual(result, output)  # Assert that output is not modified
+
+    def test_analyse_node_max_depth_reached(self):
+        # Test case where the maximum depth is reached
+        node = Node("A")
+        output = []
+        logic_lines = {"LOOP": {"end": "END_LOOP"}}
+        lookup_table = {}
+        append_first_node = True
+        depth = 10
+        max_depth = 10
+
+        result = analyse_node(
+            node_tree=node,
+            output=output,
+            logic_lines=logic_lines,
+            lookup_table=lookup_table,
+            append_first_node=append_first_node,
+            depth=depth,
+            max_depth=max_depth,
+        )
+
+        self.assertEqual(result, output)  # Assert that output is not modified
 
 
 if __name__ == "__main__":
