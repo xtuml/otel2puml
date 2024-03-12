@@ -466,17 +466,27 @@ class Event:
                 else:
                     insoluble = True
 
+            universe = set(labels)
             reduced_event_set = self.get_reduced_event_set()
-            reduced_event_set.remove(set(labels))
+            reduced_event_set.remove(universe)
 
-            for x, y in permutations(reduced_event_set, 2):
+            weighted_cover = set()
+            while universe:
+                subset = max(
+                    reduced_event_set,
+                    key=lambda s: len(s & universe) / len(s)**2
+                )
+                weighted_cover.add(subset)
+                universe -= subset
+
+            for x, y in permutations(weighted_cover, 2):
                 if len(x.intersection(y)) > 0:
                     insoluble = True
                     break
 
             if not insoluble:
                 children = []
-                for event_set in reduced_event_set:
+                for event_set in weighted_cover:
                     if len(event_set) > 1:
                         children.append(
                             ProcessTree(

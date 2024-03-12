@@ -10,8 +10,16 @@ partition "OR_AND_OR" {
             fork again
                 :D;
             end fork
+        split again
+            fork
+                :E;
+            fork again
+                :F;
+            fork again
+                :G;
+            end fork
         end split
-        #red:E;
+        #red:H;
     end group
 }
 @enduml
