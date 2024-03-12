@@ -984,7 +984,7 @@ def test_get_logic_from_and_under_or_puml_file() -> None:
                 assert child.label == "B"
             else:
                 assert child.operator.value == Operator.PARALLEL.value
-                if child.children[0].label in events_after_cd: 
+                if child.children[0].label in events_after_cd:
                     for grandchild in child.children:
                         events_after_cd.remove(grandchild.label)
                 else:
