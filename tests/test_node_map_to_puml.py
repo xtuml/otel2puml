@@ -7,6 +7,8 @@ from tel2puml.node_map_to_puml.node_map_to_puml import (
     get_reverse_node_tree,
     append_logic_middle_or_end,
     append_logic_start,
+    handle_loop_start,
+    get_reverse_node_tree_dict,
 )
 
 
@@ -582,6 +584,144 @@ class TestAppendLogicStart(unittest.TestCase):
         self.assertEqual(result[1].incoming, expected_output[1].incoming)
         self.assertEqual(result[1].outgoing, expected_output[1].outgoing)
 
+
+class TestHandleLoopStart(unittest.TestCase):
+    def test_handle_loop_start_no_loop_start(self):
+        # Test case where there is no loop start detected
+        output = []
+        node_tree = Node("A")
+        logic_lines = {"LOOP": {"start": "START_LOOP", "end": "END_LOOP"}}
+
+        result = handle_loop_start(output, node_tree, logic_lines)
+
+        self.assertEqual(result, [])
+
+    def test_handle_loop_start_with_loop_start(self):
+        # Test case where there is a loop start detected
+        output = []
+
+        nodes = {"A": Node("A")}
+        nodes["B"] = Node("B")
+        nodes["C"] = Node("C")
+        nodes["D"] = Node("D")
+
+        nodes["A"].outgoing = [nodes["B"]]
+        nodes["B"].outgoing = [nodes["C"]]
+        nodes["C"].outgoing = [nodes["D"]]
+        nodes["D"].outgoing = [nodes["A"]]
+
+        nodes["A"].incoming = [nodes["D"]]
+        nodes["B"].incoming = [nodes["A"]]
+        nodes["C"].incoming = [nodes["B"]]
+        nodes["D"].incoming = [nodes["C"]]
+
+        nodes["D"].outgoing.append(Node("END_LOOP"))
+        node_tree = nodes["A"]
+        logic_lines = {"LOOP": {"start": "START_LOOP", "end": "END_LOOP"}}
+
+        result = handle_loop_start(output, node_tree, logic_lines)
+
+        self.assertEqual(result[0].uid, "START_LOOP")
+        self.assertEqual(result[0].incoming, [nodes["D"]])
+        self.assertEqual(result[0].outgoing, [nodes["B"]])
+
+    def test_handle_loop_start_multiple_possible_descendants(self):
+        # Test case where there are multiple possible descendant incoming nodes
+        output = []
+        nodes = {"A": Node("A")}
+        nodes["B"] = Node("B")
+        nodes["C"] = Node("C")
+        nodes["D"] = Node("D")
+
+        nodes["A"].outgoing = [nodes["B"], nodes["C"]]
+        nodes["B"].outgoing = [nodes["A"], nodes["D"]]
+        nodes["C"].outgoing = [nodes["A"], nodes["D"]]
+        nodes["D"].outgoing = []
+
+        nodes["A"].incoming = [nodes["B"], nodes["C"]]
+        nodes["B"].incoming = [nodes["A"]]
+        nodes["C"].incoming = [nodes["A"]]
+        nodes["D"].incoming = [nodes["B"], nodes["C"]]
+
+        nodes["B"].outgoing.append(Node("END_LOOP"))
+        nodes["C"].outgoing.append(Node("END_LOOP"))
+        node_tree = nodes["A"]
+        logic_lines = {"LOOP": {"start": "START_LOOP", "end": "END_LOOP"}}
+
+        result = handle_loop_start(output, node_tree, logic_lines)
+
+        self.assertEqual(result[0].uid, "START_LOOP")
+        self.assertEqual(result[0].incoming, [nodes["B"], nodes["C"]])
+        self.assertEqual(result[0].outgoing, [nodes["B"], nodes["C"]])
+
+    def test_handle_loop_start_no_possible_descendants(self):
+        # Test case where there are no possible descendant incoming nodes
+        output = []
+        node_tree = Node("A")
+        node_tree.incoming = [Node("B")]
+        logic_lines = {"LOOP": {"start": "START_LOOP", "end": "END_LOOP"}}
+
+        result = handle_loop_start(output, node_tree, logic_lines)
+
+        self.assertEqual(result, [])
+
+
+class TestGetReverseNodeTreeDict(unittest.TestCase):
+    def test_get_reverse_node_tree_dict_with_reverse_node_trees(self):
+        # Test case with reverse node trees
+        lookup_table = {
+            "A": Node("A"),
+            "B": Node("B"),
+            "C": Node("C"),
+            "D": Node("D"),
+            "E": Node("E"),
+            "F": Node("F"),
+            "G": Node("G"),
+        }
+        logic_table = {
+            "XOR": Node(
+                data="XOR",
+                incoming=lookup_table["B"],
+                outgoing=[lookup_table["C"], lookup_table["D"]],
+            )
+        }
+        lookup_table["B"].outgoing_logic = [logic_table["XOR"]]
+        lookup_table["C"].incoming_logic = [logic_table["XOR"]]
+        lookup_table["D"].incoming_logic = [logic_table["XOR"]]
+
+        lookup_table["A"].outgoing = [lookup_table["B"]]
+        lookup_table["B"].outgoing = [lookup_table["C"], lookup_table["D"]]
+        lookup_table["C"].outgoing = [lookup_table["E"]]
+        lookup_table["D"].outgoing = [lookup_table["F"]]
+        lookup_table["E"].outgoing = [lookup_table["G"]]
+        lookup_table["F"].outgoing = [lookup_table["G"]]
+
+        node_tree = lookup_table["B"]
+
+        logic_lines = {
+            "XOR": {
+                "start": "XOR_START",
+                "middle": "XOR_MIDDLE",
+                "end": "XOR_END",
+            },
+            "SWITCH": {
+                "start": "SWITCH_START",
+                "middle": ["SWITCH_MIDDLE_1", "SWITCH_MIDDLE_1"],
+                "end": "SWITCH_END",
+            },
+            "LOOP": {
+                "end": "END_LOOP"
+            },
+        }
+
+        reverse_node_trees = get_reverse_node_tree_dict(
+            node_tree, lookup_table, logic_lines
+        )
+
+        self.assertEqual(reverse_node_trees, {
+            "C":[lookup_table["G"], lookup_table["E"]], 
+            "D":[lookup_table["G"], lookup_table["F"]], 
+        })
 
 if __name__ == "__main__":
     unittest.main()
