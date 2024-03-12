@@ -982,6 +982,8 @@ def test_get_logic_from_or_and_or_puml_file() -> None:
                 for grandchild in child.children:
                     events_after.remove(grandchild.label)
                 assert len(events_after) == 0
+
+    for events_logic in [events_forward_logic["E"], events_backward_logic["A"]]:
         assert events_logic.logic_gate_tree is None
     # check B logic trees
     assert events_forward_logic["B"].logic_gate_tree.label == "E"

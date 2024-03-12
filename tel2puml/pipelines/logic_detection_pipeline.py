@@ -87,10 +87,10 @@ class EventSet(dict[str, int]):
         return self.__key() == other.__key()
 
     def to_frozenset(self) -> frozenset[str]:
-        """Method to get the events as a list.
+        """Method to get the events as a frozenset.
 
-        :return: The events as a list.
-        :rtype: `list`[`str`]
+        :return: The events as a frozenset.
+        :rtype: `frozenset`[`str`]
         """
         return frozenset(self.keys())
 
@@ -336,8 +336,9 @@ class Event:
         )
         return process_tree
 
-    @staticmethod
+
     def reduce_process_tree_to_preferred_logic_gates(
+        self,
         process_tree: ProcessTree,
     ) -> ProcessTree:
         """This method reduces a process tree to the preferred logic gates by
@@ -353,6 +354,7 @@ class Event:
         logic_gate_tree: ProcessTree = process_tree.children[1]
         # calculate OR gates
         Event.process_or_gates(logic_gate_tree)
+        self.process_missing_and_gates(logic_gate_tree)
         return logic_gate_tree
 
     @staticmethod
@@ -443,6 +445,60 @@ class Event:
                     if node.parent.operator.value == Operator.OR.value:
                         node.parent.children.remove(node)
                         node.parent.children.extend(node.children)
+
+    def process_missing_and_gates(
+        self,
+        process_tree: ProcessTree,
+    ) -> None:
+        if (
+                process_tree.operator is not None 
+                and process_tree.operator.value == Operator.OR.value
+        ):
+            labels = []
+            insoluble = False
+            for child in process_tree.children:
+                if child.operator is None:
+                    labels.append(child.label)
+                else:
+                    insoluble = True
+
+            reduced_event_set = self.get_reduced_event_set()
+            reduced_event_set.remove(set(labels))
+
+            for x, y in permutations(reduced_event_set, 2):
+                if len(x.intersection(y)) > 0:
+                    insoluble = True
+                    break
+
+            if not insoluble:
+                children = []
+                for event_set in reduced_event_set:
+                    if len(event_set) > 1:
+                        children.append(
+                            ProcessTree(
+                                Operator.PARALLEL,
+                                process_tree,
+                                [
+                                    ProcessTree(
+                                        label=event,
+                                        parent=process_tree,
+                                    )
+                                    for event in event_set
+                                ],
+                            )
+                        )
+                    else:
+                        label, = event_set
+                        children.append(
+                            ProcessTree(
+                                label=label,
+                                parent=process_tree,
+                            )
+                        )
+                process_tree.children = children
+
+        for child in process_tree.children:
+            self.process_missing_and_gates(child)
 
     def calculate_repeats_in_tree(
         self, logic_gate_tree: ProcessTree
