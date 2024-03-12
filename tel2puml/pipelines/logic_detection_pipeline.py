@@ -336,7 +336,6 @@ class Event:
         )
         return process_tree
 
-
     def reduce_process_tree_to_preferred_logic_gates(
         self,
         process_tree: ProcessTree,
@@ -450,8 +449,13 @@ class Event:
         self,
         process_tree: ProcessTree,
     ) -> None:
+        """Method to add missing AND gates to a process tree below OR gates.
+
+        :param process_tree: The process tree.
+        :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+        """
         if (
-                process_tree.operator is not None 
+                process_tree.operator is not None
                 and process_tree.operator.value == Operator.OR.value
         ):
             labels = []
