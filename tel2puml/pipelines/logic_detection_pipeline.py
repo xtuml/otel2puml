@@ -465,24 +465,30 @@ class Event:
                     labels.append(child.label)
                 else:
                     insoluble = True
-
-            universe = set(labels)
-            reduced_event_set = self.get_reduced_event_set()
-            reduced_event_set.remove(universe)
-
-            weighted_cover = set()
-            while universe:
-                subset = max(
-                    reduced_event_set,
-                    key=lambda s: len(s & universe) / len(s)**2
-                )
-                weighted_cover.add(subset)
-                universe -= subset
-
-            for x, y in permutations(weighted_cover, 2):
-                if len(x.intersection(y)) > 0:
-                    insoluble = True
                     break
+
+            if not insoluble:
+                universe = set(labels)
+                reduced_event_set = self.get_reduced_event_set()
+                reduced_event_set.remove(universe)
+
+                weighted_cover = set()
+                while universe:
+                    subset = max(
+                        reduced_event_set,
+                        key=lambda s: len(s & universe) / len(s)**2
+                    )
+                    if len(subset) == 0:
+                        insoluble = True
+                        break
+                    weighted_cover.add(subset)
+                    universe -= subset
+
+            if not insoluble:
+                for x, y in permutations(weighted_cover, 2):
+                    if len(x.intersection(y)) > 0:
+                        insoluble = True
+                        break
 
             if not insoluble:
                 children = []
