@@ -10,6 +10,7 @@ from tel2puml.node_map_to_puml.node_map_to_puml import (
     handle_loop_start,
     get_reverse_node_tree_dict,
     get_tree_similarity,
+    handle_immediate_children,
 )
 
 
@@ -854,6 +855,193 @@ class TestGetReverseNodeTreeDict(unittest.TestCase):
             "C":[lookup_table["G"], lookup_table["E"]],
             "D":[lookup_table["G"], lookup_table["F"]],
         })
+
+
+class TestHandleImmediateChildren(unittest.TestCase):
+    def test_handle_immediate_children_tree_similarity_greater_than_zero(self):
+        # Test case where tree_similarity is greater than zero
+        lookup_table = {
+            "A": Node("A"),
+            "B": Node("B"),
+            "C": Node("C"),
+        }
+        logic_table = {
+            "XOR": Node(
+                data="XOR",
+                incoming=lookup_table["A"],
+                outgoing=[
+                    lookup_table["B"],
+                    lookup_table["C"],
+                ],
+            )
+        }
+        lookup_table["A"].outgoing_logic = [logic_table["XOR"]]
+        lookup_table["B"].incoming_logic = [logic_table["XOR"]]
+        lookup_table["C"].incoming_logic = [logic_table["XOR"]]
+
+        output = [lookup_table["A"]]
+
+        node_tree = lookup_table["A"]
+
+        logic_lines = {
+            "XOR": {
+                "start": "XOR_START",
+                "middle": "XOR_MIDDLE",
+                "end": "XOR_END",
+            },
+            "SWITCH": {
+                "start": "SWITCH_START",
+                "middle": ["SWITCH_MIDDLE_1", "SWITCH_MIDDLE_1"],
+                "end": "SWITCH_END",
+            },
+        }
+        output = [lookup_table["A"], Node(logic_lines["XOR"]["start"])]
+        reverse_node_trees = {"B": [lookup_table["B"]], "C": [lookup_table["C"]]}
+        depth = 1
+        max_depth = 10
+
+        expected_output = ["A", "XOR_START", "B", "XOR_MIDDLE", "C", "XOR_END"]
+
+        result = handle_immediate_children(
+            node_tree,
+            1,
+            reverse_node_trees,
+            output,
+            logic_lines,
+            lookup_table,
+            depth,
+            max_depth,
+        )
+
+        for idx, item in enumerate(expected_output):
+            self.assertEqual(result[idx].uid, item)
+
+    def test_handle_immediate_children_tree_similarity_zero(self):
+        # Test case where tree_similarity is zero
+        lookup_table = {
+            "A": Node("A"),
+            "B": Node("B"),
+            "C": Node("C"),
+            "D": Node("D"),
+        }
+        logic_table = {
+            "XOR": Node(
+                data="XOR",
+                incoming=lookup_table["A"],
+                outgoing=[
+                    lookup_table["B"],
+                    lookup_table["C"],
+                ],
+            )
+        }
+        lookup_table["A"].outgoing_logic = [logic_table["XOR"]]
+        lookup_table["B"].incoming_logic = [logic_table["XOR"]]
+        lookup_table["C"].incoming_logic = [logic_table["XOR"]]
+        lookup_table["C"].outgoing = [lookup_table["D"]]
+
+        output = [lookup_table["A"]]
+
+        node_tree = lookup_table["A"]
+
+        logic_lines = {
+            "XOR": {
+                "start": "XOR_START",
+                "middle": "XOR_MIDDLE",
+                "end": "XOR_END",
+            },
+            "SWITCH": {
+                "start": "SWITCH_START",
+                "middle": ["SWITCH_MIDDLE_1", "SWITCH_MIDDLE_1"],
+                "end": "SWITCH_END",
+            },
+            "LOOP": {
+                "end": "LOOP_END"
+            }
+        }
+        output = [lookup_table["A"], Node(logic_lines["XOR"]["start"])]
+        reverse_node_trees = {"B": [lookup_table["B"]], "C": [lookup_table["C"]]}
+        depth = 1
+        max_depth = 10
+
+        expected_output = ["A", "XOR_START", "B", "XOR_MIDDLE", "C", "D", "XOR_END"]
+
+
+        result = handle_immediate_children(
+            node_tree,
+            0,
+            reverse_node_trees,
+            output,
+            logic_lines,
+            lookup_table,
+            depth,
+            max_depth,
+        )
+
+        for idx, item in enumerate(expected_output):
+            self.assertEqual(result[idx].uid, item)
+
+    def test_handle_immediate_children_max_depth_reached(self):
+        # Test case where the maximum depth is reached
+        lookup_table = {
+            "A": Node("A"),
+            "B": Node("B"),
+            "C": Node("C"),
+            "D": Node("D"),
+        }
+        logic_table = {
+            "XOR": Node(
+                data="XOR",
+                incoming=lookup_table["A"],
+                outgoing=[
+                    lookup_table["B"],
+                    lookup_table["C"],
+                ],
+            )
+        }
+        lookup_table["A"].outgoing_logic = [logic_table["XOR"]]
+        lookup_table["B"].incoming_logic = [logic_table["XOR"]]
+        lookup_table["C"].incoming_logic = [logic_table["XOR"]]
+        lookup_table["C"].outgoing = [lookup_table["D"]]
+
+        output = [lookup_table["A"]]
+
+        node_tree = lookup_table["A"]
+
+        logic_lines = {
+            "XOR": {
+                "start": "XOR_START",
+                "middle": "XOR_MIDDLE",
+                "end": "XOR_END",
+            },
+            "SWITCH": {
+                "start": "SWITCH_START",
+                "middle": ["SWITCH_MIDDLE_1", "SWITCH_MIDDLE_1"],
+                "end": "SWITCH_END",
+            },
+            "LOOP": {
+                "end": "LOOP_END"
+            }
+        }
+        output = [lookup_table["A"], Node(logic_lines["XOR"]["start"])]
+        reverse_node_trees = {"B": [lookup_table["B"]], "C": [lookup_table["C"]]}
+        depth = 1
+        max_depth = 0
+
+        expected_output = ["A", "XOR_START", "XOR_MIDDLE", "XOR_END"]
+
+        result = handle_immediate_children(
+            node_tree,
+            0,
+            reverse_node_trees,
+            output,
+            logic_lines,
+            lookup_table,
+            depth,
+            max_depth,
+        )
+
+        for idx, item in enumerate(expected_output):
+            self.assertEqual(result[idx].uid, item)
 
 
 if __name__ == "__main__":
