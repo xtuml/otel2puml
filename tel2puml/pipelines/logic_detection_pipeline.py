@@ -342,7 +342,7 @@ class Event:
     ) -> ProcessTree:
         """This method reduces a process tree to the preferred logic gates by
         removing the first event and getting the subsequent tree and then
-        calculating the OR gates.
+        calculating the OR gates and adding missing AND gates.
 
         :param process_tree: The process tree.
         :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
@@ -353,6 +353,7 @@ class Event:
         logic_gate_tree: ProcessTree = process_tree.children[1]
         # calculate OR gates
         Event.process_or_gates(logic_gate_tree)
+        # process missing AND gates
         self.process_missing_and_gates(logic_gate_tree)
         return logic_gate_tree
 
@@ -484,6 +485,7 @@ class Event:
                     weighted_cover.add(subset)
                     universe -= subset
 
+            if not insoluble:
                 for event_set in reduced_event_set:
                     for cover_set in weighted_cover:
                         if event_set & cover_set == cover_set:
