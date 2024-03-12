@@ -384,7 +384,7 @@ def handle_immediate_children(
 
 
 def handle_divergent_tree_children(
-    tree_similarity:int, smallest_tree:list, output:list, logic_lines, lookup_table
+    tree_similarity:int, tree:list, output:list, logic_lines, lookup_table
 ):
     """
     Handles all divergent child nodes in a list of trees that eventually
@@ -402,7 +402,7 @@ def handle_divergent_tree_children(
         str: The updated output string.
     """
     if tree_similarity > 0:
-        sliced_tree = smallest_tree[0:tree_similarity]
+        sliced_tree = tree[0:tree_similarity]
         sliced_tree.reverse()
         for node in sliced_tree:
             output = analyse_node(

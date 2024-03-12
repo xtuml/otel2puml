@@ -11,6 +11,7 @@ from tel2puml.node_map_to_puml.node_map_to_puml import (
     get_reverse_node_tree_dict,
     get_tree_similarity,
     handle_immediate_children,
+    handle_divergent_tree_children,
 )
 
 
@@ -303,7 +304,7 @@ class TestGetTreeSimilarity(unittest.TestCase):
         reverse_node_trees = {
             "Tree1": [end_node, Node("C"), Node("B"), start_node],
             "Tree2": [end_node, Node("E"), Node("D"), start_node],
-            "Tree3": [end_node, Node("G"), Node("F"), start_node],
+            "Tree3": [end_node, Node("G"), start_node],
         }
 
         start_node.outgoing = [
@@ -317,29 +318,46 @@ class TestGetTreeSimilarity(unittest.TestCase):
             reverse_node_trees["Tree3"][1],
         ]
 
-        reverse_node_trees["Tree1"][1].incoming = reverse_node_trees["Tree1"][2]
-        reverse_node_trees["Tree1"][1].outgoing = reverse_node_trees["Tree1"][0]
+        reverse_node_trees["Tree1"][1].incoming = reverse_node_trees["Tree1"][
+            2
+        ]
+        reverse_node_trees["Tree1"][1].outgoing = reverse_node_trees["Tree1"][
+            0
+        ]
 
-        reverse_node_trees["Tree2"][1].incoming = reverse_node_trees["Tree2"][2]
-        reverse_node_trees["Tree2"][1].outgoing = reverse_node_trees["Tree2"][0]
+        reverse_node_trees["Tree2"][1].incoming = reverse_node_trees["Tree2"][
+            2
+        ]
+        reverse_node_trees["Tree2"][1].outgoing = reverse_node_trees["Tree2"][
+            0
+        ]
 
-        reverse_node_trees["Tree3"][1].incoming = reverse_node_trees["Tree3"][2]
-        reverse_node_trees["Tree3"][1].outgoing = reverse_node_trees["Tree3"][0]
+        reverse_node_trees["Tree3"][1].incoming = reverse_node_trees["Tree3"][
+            2
+        ]
+        reverse_node_trees["Tree3"][1].outgoing = reverse_node_trees["Tree3"][
+            0
+        ]
 
-        reverse_node_trees["Tree1"][2].incoming = reverse_node_trees["Tree1"][3]
-        reverse_node_trees["Tree1"][2].outgoing = reverse_node_trees["Tree1"][1]
-    
-        reverse_node_trees["Tree2"][2].incoming = reverse_node_trees["Tree2"][3]
-        reverse_node_trees["Tree2"][2].outgoing = reverse_node_trees["Tree2"][1]
-    
-        reverse_node_trees["Tree3"][2].incoming = reverse_node_trees["Tree3"][3]
-        reverse_node_trees["Tree3"][2].outgoing = reverse_node_trees["Tree3"][1]
+        reverse_node_trees["Tree1"][2].incoming = reverse_node_trees["Tree1"][
+            3
+        ]
+        reverse_node_trees["Tree1"][2].outgoing = reverse_node_trees["Tree1"][
+            1
+        ]
 
-        smallest_tree = reverse_node_trees["Tree1"]
+        reverse_node_trees["Tree2"][2].incoming = reverse_node_trees["Tree2"][
+            3
+        ]
+        reverse_node_trees["Tree2"][2].outgoing = reverse_node_trees["Tree2"][
+            1
+        ]
+
+        smallest_tree = reverse_node_trees["Tree3"]
 
         result = get_tree_similarity(reverse_node_trees, smallest_tree)
 
-        self.assertEqual(result, 2)
+        self.assertEqual(result, 1)
 
     def test_get_tree_similarity_not_all_trees_converge(self):
         # Test case where not all trees in reverse_node_trees converge
@@ -362,23 +380,47 @@ class TestGetTreeSimilarity(unittest.TestCase):
             reverse_node_trees["Tree2"][1],
         ]
 
-        reverse_node_trees["Tree1"][1].incoming = reverse_node_trees["Tree1"][2]
-        reverse_node_trees["Tree1"][1].outgoing = reverse_node_trees["Tree1"][0]
+        reverse_node_trees["Tree1"][1].incoming = reverse_node_trees["Tree1"][
+            2
+        ]
+        reverse_node_trees["Tree1"][1].outgoing = reverse_node_trees["Tree1"][
+            0
+        ]
 
-        reverse_node_trees["Tree2"][1].incoming = reverse_node_trees["Tree2"][2]
-        reverse_node_trees["Tree2"][1].outgoing = reverse_node_trees["Tree2"][0]
+        reverse_node_trees["Tree2"][1].incoming = reverse_node_trees["Tree2"][
+            2
+        ]
+        reverse_node_trees["Tree2"][1].outgoing = reverse_node_trees["Tree2"][
+            0
+        ]
 
-        reverse_node_trees["Tree3"][1].incoming = reverse_node_trees["Tree3"][2]
-        reverse_node_trees["Tree3"][1].outgoing = reverse_node_trees["Tree3"][0]
+        reverse_node_trees["Tree3"][1].incoming = reverse_node_trees["Tree3"][
+            2
+        ]
+        reverse_node_trees["Tree3"][1].outgoing = reverse_node_trees["Tree3"][
+            0
+        ]
 
-        reverse_node_trees["Tree1"][2].incoming = reverse_node_trees["Tree1"][3]
-        reverse_node_trees["Tree1"][2].outgoing = reverse_node_trees["Tree1"][1]
-    
-        reverse_node_trees["Tree2"][2].incoming = reverse_node_trees["Tree2"][3]
-        reverse_node_trees["Tree2"][2].outgoing = reverse_node_trees["Tree2"][1]
-    
-        reverse_node_trees["Tree3"][2].incoming = reverse_node_trees["Tree3"][3]
-        reverse_node_trees["Tree3"][2].outgoing = reverse_node_trees["Tree3"][1]
+        reverse_node_trees["Tree1"][2].incoming = reverse_node_trees["Tree1"][
+            3
+        ]
+        reverse_node_trees["Tree1"][2].outgoing = reverse_node_trees["Tree1"][
+            1
+        ]
+
+        reverse_node_trees["Tree2"][2].incoming = reverse_node_trees["Tree2"][
+            3
+        ]
+        reverse_node_trees["Tree2"][2].outgoing = reverse_node_trees["Tree2"][
+            1
+        ]
+
+        reverse_node_trees["Tree3"][2].incoming = reverse_node_trees["Tree3"][
+            3
+        ]
+        reverse_node_trees["Tree3"][2].outgoing = reverse_node_trees["Tree3"][
+            1
+        ]
 
         smallest_tree = reverse_node_trees["Tree1"]
 
@@ -406,17 +448,33 @@ class TestGetTreeSimilarity(unittest.TestCase):
             reverse_node_trees["Tree2"][1],
         ]
 
-        reverse_node_trees["Tree1"][1].incoming = reverse_node_trees["Tree1"][2]
-        reverse_node_trees["Tree1"][1].outgoing = reverse_node_trees["Tree1"][0]
+        reverse_node_trees["Tree1"][1].incoming = reverse_node_trees["Tree1"][
+            2
+        ]
+        reverse_node_trees["Tree1"][1].outgoing = reverse_node_trees["Tree1"][
+            0
+        ]
 
-        reverse_node_trees["Tree2"][1].incoming = reverse_node_trees["Tree2"][2]
-        reverse_node_trees["Tree2"][1].outgoing = reverse_node_trees["Tree2"][0]
+        reverse_node_trees["Tree2"][1].incoming = reverse_node_trees["Tree2"][
+            2
+        ]
+        reverse_node_trees["Tree2"][1].outgoing = reverse_node_trees["Tree2"][
+            0
+        ]
 
-        reverse_node_trees["Tree1"][2].incoming = reverse_node_trees["Tree1"][3]
-        reverse_node_trees["Tree1"][2].outgoing = reverse_node_trees["Tree1"][1]
+        reverse_node_trees["Tree1"][2].incoming = reverse_node_trees["Tree1"][
+            3
+        ]
+        reverse_node_trees["Tree1"][2].outgoing = reverse_node_trees["Tree1"][
+            1
+        ]
 
-        reverse_node_trees["Tree2"][2].incoming = reverse_node_trees["Tree2"][3]
-        reverse_node_trees["Tree2"][2].outgoing = reverse_node_trees["Tree2"][1]
+        reverse_node_trees["Tree2"][2].incoming = reverse_node_trees["Tree2"][
+            3
+        ]
+        reverse_node_trees["Tree2"][2].outgoing = reverse_node_trees["Tree2"][
+            1
+        ]
 
         smallest_tree = reverse_node_trees["Tree1"]
 
@@ -842,19 +900,20 @@ class TestGetReverseNodeTreeDict(unittest.TestCase):
                 "middle": ["SWITCH_MIDDLE_1", "SWITCH_MIDDLE_1"],
                 "end": "SWITCH_END",
             },
-            "LOOP": {
-                "end": "END_LOOP"
-            },
+            "LOOP": {"end": "END_LOOP"},
         }
 
         reverse_node_trees = get_reverse_node_tree_dict(
             node_tree, lookup_table, logic_lines
         )
 
-        self.assertEqual(reverse_node_trees, {
-            "C":[lookup_table["G"], lookup_table["E"]],
-            "D":[lookup_table["G"], lookup_table["F"]],
-        })
+        self.assertEqual(
+            reverse_node_trees,
+            {
+                "C": [lookup_table["G"], lookup_table["E"]],
+                "D": [lookup_table["G"], lookup_table["F"]],
+            },
+        )
 
 
 class TestHandleImmediateChildren(unittest.TestCase):
@@ -896,7 +955,10 @@ class TestHandleImmediateChildren(unittest.TestCase):
             },
         }
         output = [lookup_table["A"], Node(logic_lines["XOR"]["start"])]
-        reverse_node_trees = {"B": [lookup_table["B"]], "C": [lookup_table["C"]]}
+        reverse_node_trees = {
+            "B": [lookup_table["B"]],
+            "C": [lookup_table["C"]],
+        }
         depth = 1
         max_depth = 10
 
@@ -954,17 +1016,25 @@ class TestHandleImmediateChildren(unittest.TestCase):
                 "middle": ["SWITCH_MIDDLE_1", "SWITCH_MIDDLE_1"],
                 "end": "SWITCH_END",
             },
-            "LOOP": {
-                "end": "LOOP_END"
-            }
+            "LOOP": {"end": "LOOP_END"},
         }
         output = [lookup_table["A"], Node(logic_lines["XOR"]["start"])]
-        reverse_node_trees = {"B": [lookup_table["B"]], "C": [lookup_table["C"]]}
+        reverse_node_trees = {
+            "B": [lookup_table["B"]],
+            "C": [lookup_table["C"]],
+        }
         depth = 1
         max_depth = 10
 
-        expected_output = ["A", "XOR_START", "B", "XOR_MIDDLE", "C", "D", "XOR_END"]
-
+        expected_output = [
+            "A",
+            "XOR_START",
+            "B",
+            "XOR_MIDDLE",
+            "C",
+            "D",
+            "XOR_END",
+        ]
 
         result = handle_immediate_children(
             node_tree,
@@ -1018,12 +1088,13 @@ class TestHandleImmediateChildren(unittest.TestCase):
                 "middle": ["SWITCH_MIDDLE_1", "SWITCH_MIDDLE_1"],
                 "end": "SWITCH_END",
             },
-            "LOOP": {
-                "end": "LOOP_END"
-            }
+            "LOOP": {"end": "LOOP_END"},
         }
         output = [lookup_table["A"], Node(logic_lines["XOR"]["start"])]
-        reverse_node_trees = {"B": [lookup_table["B"]], "C": [lookup_table["C"]]}
+        reverse_node_trees = {
+            "B": [lookup_table["B"]],
+            "C": [lookup_table["C"]],
+        }
         depth = 1
         max_depth = 0
 
@@ -1042,6 +1113,74 @@ class TestHandleImmediateChildren(unittest.TestCase):
 
         for idx, item in enumerate(expected_output):
             self.assertEqual(result[idx].uid, item)
+
+
+class TestHandleDivergentTreeChildren(unittest.TestCase):
+    def test_handle_divergent_tree_children_no_similarity(self):
+        # Test case where tree similarity is 0
+        smallest_tree = [Node("A"), Node("B"), Node("C")]
+        output = "output"
+        logic_lines = {"LOOP": {"end": "END_LOOP"}}
+        lookup_table = {"A": Node("A"), "B": Node("B"), "C": Node("C")}
+
+        result = handle_divergent_tree_children(
+            0, smallest_tree, output, logic_lines, lookup_table
+        )
+
+        self.assertEqual(result, output)
+
+    def test_handle_divergent_tree_children_with_similarity(self):
+        # Test case where tree similarity is greater than 0
+
+        lookup_table = {
+            "A": Node("A"),
+            "B": Node("B"),
+            "C": Node("C"),
+            "D": Node("D"),
+            "E": Node("E"),
+        }
+        logic_table = {
+            "XOR": Node(
+                data="XOR",
+                incoming=lookup_table["A"],
+                outgoing=[
+                    lookup_table["B"],
+                    lookup_table["C"],
+                ],
+            )
+        }
+        lookup_table["A"].outgoing_logic = [logic_table["XOR"]]
+        lookup_table["B"].incoming_logic = [logic_table["XOR"]]
+        lookup_table["C"].incoming_logic = [logic_table["XOR"]]
+        lookup_table["B"].outgoing = [lookup_table["E"]]
+        lookup_table["C"].outgoing = [lookup_table["D"]]
+        lookup_table["D"].outgoing = [lookup_table["E"]]
+
+        output = [lookup_table["A"]]
+
+        logic_lines = {
+            "XOR": {
+                "start": "XOR_START",
+                "middle": "XOR_MIDDLE",
+                "end": "XOR_END",
+            },
+            "SWITCH": {
+                "start": "SWITCH_START",
+                "middle": ["SWITCH_MIDDLE_1", "SWITCH_MIDDLE_1"],
+                "end": "SWITCH_END",
+            },
+            "LOOP": {"end": "LOOP_END"},
+        }
+        output = []
+        tree = [lookup_table["D"], lookup_table["C"], lookup_table["A"]]
+
+        result = handle_divergent_tree_children(
+            2, tree, output, logic_lines, lookup_table
+        )
+
+        expected_output = [lookup_table["C"], lookup_table["D"]]
+
+        self.assertEqual(result, expected_output)
 
 
 if __name__ == "__main__":
