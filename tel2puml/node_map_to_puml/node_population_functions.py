@@ -1,3 +1,8 @@
+"""
+This module contains functions for populating node data, printing outgoing
+    nodes, and retrieving data from PUML files.
+"""
+
 from networkx import find_cycle
 from tel2puml.node_map_to_puml.node import Node
 import tel2puml.jAlergiaPipeline as jAlergiaPipeline
@@ -43,7 +48,7 @@ def populate_outgoing(
             if cycle_depth == -1:
                 try:
                     cycle_depth = len(find_cycle(graph, child))
-                except:
+                except Exception:
                     cycle_depth = -1
 
             if child not in lookup_table:
@@ -68,11 +73,11 @@ def populate_outgoing(
         cycle = [["", ""]]
         try:
             cycle = find_cycle(graph)
-        except:
-            print()
+        except Exception:
+            pass
         if cycle != [["", ""]]:
-            lookup_table[cycle[-1][0]].outgoing.insert(0,
-                Node(uid="repeat while (unconstrained)",outgoing=[])
+            lookup_table[cycle[-1][0]].outgoing.insert(
+                0, Node(uid="repeat while (unconstrained)", outgoing=[])
             )
 
     return lookup_table
@@ -156,36 +161,46 @@ def get_data(puml_files="", print_output: bool = False):
 
     return lookup_tables, node_trees, event_references
 
+
 def copy_node(
-        node:Node,
-        uid=None,
-        incoming=None,
-        outgoing=None,
-        incoming_logic=None,
-        outgoing_logic=None
-    ):
+    node: Node,
+    uid=None,
+    incoming=None,
+    outgoing=None,
+    incoming_logic=None,
+    outgoing_logic=None,
+):
     """
-    Creates a copy of a given node with optional modifications to its attributes.
+    Creates a copy of a given node with optional modifications to its
+        attributes.
 
     Args:
         node (Node): The node to be copied.
-        uid (Any, optional): The modified data for the copied node. Defaults to None.
-        incoming (List[Edge], optional): The modified incoming edges for the copied node. Defaults to None.
-        outgoing (List[Edge], optional): The modified outgoing edges for the copied node. Defaults to None.
-        incoming_logic (Any, optional): The modified incoming logic for the copied node. Defaults to None.
-        outgoing_logic (Any, optional): The modified outgoing logic for the copied node. Defaults to None.
+        uid (Any, optional): The modified data for the copied node.
+            Defaults to None.
+        incoming (List[Edge], optional): The modified incoming edges for the
+            copied node. Defaults to None.
+        outgoing (List[Edge], optional): The modified outgoing edges for the
+            copied node. Defaults to None.
+        incoming_logic (Any, optional): The modified incoming logic for the
+            copied node. Defaults to None.
+        outgoing_logic (Any, optional): The modified outgoing logic for the
+            copied node. Defaults to None.
 
     Returns:
         Node: The copied node with optional modifications.
     """
     return Node(
-            uid=node.uid if uid is None else uid,
-            incoming=node.incoming if incoming is None else incoming,
-            outgoing=node.outgoing if outgoing is None else outgoing,
-            incoming_logic=node.incoming_logic if incoming_logic is None else incoming_logic,
-            outgoing_logic=node.outgoing_logic if outgoing_logic is None else outgoing_logic
+        uid=node.uid if uid is None else uid,
+        incoming=node.incoming if incoming is None else incoming,
+        outgoing=node.outgoing if outgoing is None else outgoing,
+        incoming_logic=(
+            node.incoming_logic if incoming_logic is None else incoming_logic
+        ),
+        outgoing_logic=(
+            node.outgoing_logic if outgoing_logic is None else outgoing_logic
+        ),
     )
-
 
 
 if __name__ == "__main__":

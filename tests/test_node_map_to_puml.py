@@ -1,3 +1,4 @@
+""" Unit and end-to-end tests for node_map_to_puml """
 import unittest
 from tel2puml.node_map_to_puml.node import Node
 from tel2puml.node_map_to_puml.node_map_to_puml import (
@@ -23,13 +24,14 @@ from tel2puml.node_map_to_puml.node_map_to_puml import (
 )
 from tel2puml.node_map_to_puml.node_population_functions import (
     get_data,
-    copy_node,
 )
 
 
 class TestIsInLoop(unittest.TestCase):
+    """Test case class for the `is_in_loop` function."""
+
     def test_is_in_loop_target_in_loop(self):
-        # Test case where the target node is in a loop
+        """Test case where the target node is in a loop."""
         nodes = {"A": Node("A")}
         nodes["B"] = Node("B")
         nodes["C"] = Node("C")
@@ -49,8 +51,7 @@ class TestIsInLoop(unittest.TestCase):
         self.assertTrue(result)
 
     def test_is_in_loop_target_not_in_loop(self):
-        # Test case where the target node is not in a loop
-
+        """Test case where the target node is not in a loop."""
         nodes = {"A": Node("A")}
         nodes["B"] = Node("B")
         nodes["C"] = Node("C")
@@ -71,7 +72,7 @@ class TestIsInLoop(unittest.TestCase):
         self.assertFalse(result)
 
     def test_is_in_loop_max_depth_reached(self):
-        # Test case where the maximum depth is reached
+        """Test case where the maximum depth is reached."""
         nodes = {"A": Node("A")}
         nodes["B"] = Node("B")
         nodes["C"] = Node("C")
@@ -93,8 +94,10 @@ class TestIsInLoop(unittest.TestCase):
 
 
 class TestDrillDownTree(unittest.TestCase):
+    """Test case class for the drill_down_tree function."""
+
     def test_drill_down_tree_single_node(self):
-        # Test case with a single node
+        """Test case with a single node."""
         node = Node("A")
         lookup_table = {}
         logic_lines = {"LOOP": {"end": "END_LOOP"}}
@@ -105,7 +108,7 @@ class TestDrillDownTree(unittest.TestCase):
         self.assertEqual(result, node)
 
     def test_drill_down_tree_no_outgoing_nodes(self):
-        # Test case with a node that has no outgoing nodes
+        """Test case with a node that has no outgoing nodes."""
         node = Node("A")
         lookup_table = {}
         logic_lines = {"LOOP": {"end": "END_LOOP"}}
@@ -116,7 +119,7 @@ class TestDrillDownTree(unittest.TestCase):
         self.assertEqual(result, node)
 
     def test_drill_down_tree_single_outgoing_node(self):
-        # Test case with a node that has a single outgoing node
+        """Test case with a node that has a single outgoing node."""
         node = Node("A")
         node.outgoing = [Node("B")]
         lookup_table = {}
@@ -128,7 +131,7 @@ class TestDrillDownTree(unittest.TestCase):
         self.assertEqual(result, node.outgoing[0])
 
     def test_drill_down_tree_multiple_outgoing_nodes(self):
-        # Test case with a node that has multiple outgoing nodes
+        """Test case with a node that has multiple outgoing nodes."""
         node = Node("A")
         node.outgoing = [Node("B"), Node("C")]
         lookup_table = {}
@@ -140,7 +143,10 @@ class TestDrillDownTree(unittest.TestCase):
         self.assertEqual(result, node)
 
     def test_drill_down_tree_allowed_nodes(self):
-        # Test case with a node that has multiple outgoing nodes, but only one is allowed
+        """
+        Test case with a node that has multiple outgoing nodes, but only one is
+        allowed
+        """
         node = Node("A")
         node.outgoing = [Node("B"), Node("C")]
         lookup_table = {"B": True}
@@ -152,8 +158,7 @@ class TestDrillDownTree(unittest.TestCase):
         self.assertEqual(result, node.outgoing[0])
 
     def test_drill_down_tree_in_loop(self):
-        # Test case with a node that is in a loop
-
+        """Test case with a node that is in a loop."""
         nodes = {"A": Node("A")}
         nodes["B"] = Node("B")
         nodes["C"] = Node("C")
@@ -176,7 +181,7 @@ class TestDrillDownTree(unittest.TestCase):
         self.assertEqual(result, target)
 
     def test_drill_down_tree_max_depth_reached(self):
-        # Test case where the maximum depth is reached
+        """Test case where the maximum depth is reached."""
         node = Node("A")
         node.outgoing = [Node("B")]
         lookup_table = {}
@@ -189,8 +194,9 @@ class TestDrillDownTree(unittest.TestCase):
 
 
 class TestGetReverseNodeTree(unittest.TestCase):
+    """ Unit tests for the get_reverse_node_tree function. """
     def test_get_reverse_node_tree_single_node(self):
-        # Test case with a single node
+        """ Test case with a single node """
         node = Node("A")
         lookup_table = {}
         logic_lines = {"LOOP": {"end": "END_LOOP"}}
@@ -203,7 +209,7 @@ class TestGetReverseNodeTree(unittest.TestCase):
         self.assertEqual(result, [])
 
     def test_get_reverse_node_tree_no_outgoing_nodes(self):
-        # Test case with a node that has no outgoing nodes
+        """ Test case with a node that has no outgoing nodes """
         node = Node("A")
         lookup_table = {}
         logic_lines = {"LOOP": {"end": "END_LOOP"}}
@@ -216,7 +222,7 @@ class TestGetReverseNodeTree(unittest.TestCase):
         self.assertEqual(result, [])
 
     def test_get_reverse_node_tree_single_outgoing_node(self):
-        # Test case with a node that has a single outgoing node
+        """ Test case with a node that has a single outgoing node """
         lookup_table = {"A": Node("A")}
         lookup_table["B"] = Node("B")
         lookup_table["C"] = Node("C")
@@ -234,7 +240,7 @@ class TestGetReverseNodeTree(unittest.TestCase):
         self.assertEqual(result, [lookup_table["C"], lookup_table["B"]])
 
     def test_get_reverse_node_tree_multiple_outgoing_nodes(self):
-        # Test case with a node that has multiple outgoing nodes
+        """ Test case with a node that has multiple outgoing nodes """
         node = Node("A")
         node.outgoing = [Node("B"), Node("C")]
         lookup_table = {}
@@ -248,8 +254,10 @@ class TestGetReverseNodeTree(unittest.TestCase):
         self.assertEqual(result, [])
 
     def test_get_reverse_node_tree_allowed_nodes(self):
-        # Test case with a node that has multiple outgoing nodes, but only one
-        #   is in the lookup table
+        """
+        Test case with a node that has multiple outgoing nodes, but only
+        one is in the lookup table
+        """
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -268,7 +276,7 @@ class TestGetReverseNodeTree(unittest.TestCase):
         self.assertEqual(result, [lookup_table["B"]])
 
     def test_get_reverse_node_tree_in_loop(self):
-        # Test case with a node that is in a loop
+        """ Test case with a node that is in a loop """
 
         nodes = {"A": Node("A")}
         nodes["B"] = Node("B")
@@ -293,7 +301,7 @@ class TestGetReverseNodeTree(unittest.TestCase):
         self.assertEqual(result, [nodes["C"], nodes["B"]])
 
     def test_get_reverse_node_tree_max_depth_reached(self):
-        # Test case where the maximum depth is reached
+        """ Test case where the maximum depth is reached """
         node = Node("A")
         node.outgoing = [Node("B")]
         lookup_table = {}
@@ -308,8 +316,9 @@ class TestGetReverseNodeTree(unittest.TestCase):
 
 
 class TestGetTreeSimilarity(unittest.TestCase):
+    """ Unit tests for the get_tree_similarity function """
     def test_get_tree_similarity_all_trees_converge(self):
-        # Test case where all trees in reverse_node_trees converge
+        """ Test case where all trees in reverse_node_trees converge """
 
         start_node = Node("A")
         end_node = Node("I")
@@ -372,7 +381,7 @@ class TestGetTreeSimilarity(unittest.TestCase):
         self.assertEqual(result, 1)
 
     def test_get_tree_similarity_not_all_trees_converge(self):
-        # Test case where not all trees in reverse_node_trees converge
+        """ Test case where not all trees in reverse_node_trees converge """
 
         start_node = Node("A")
         end_node = Node("I")
@@ -441,7 +450,7 @@ class TestGetTreeSimilarity(unittest.TestCase):
         self.assertEqual(result, 0)
 
     def test_get_tree_similarity_empty_tree(self):
-        # Test case where reverse_node_trees contains an empty tree
+        """ Test case where reverse_node_trees contains an empty tree """
 
         start_node = Node("A")
         end_node = Node("I")
@@ -496,8 +505,9 @@ class TestGetTreeSimilarity(unittest.TestCase):
 
 
 class TestAppendLogicMiddleOrEnd(unittest.TestCase):
+    """ Unit tests for the append_logic_middle_or_end function """
     def test_append_logic_middle_or_end_middle(self):
-        # Test case for appending logic in the middle of a branch
+        """ Test case for appending logic in the middle of a branch """
 
         lookup_table = {
             "A": Node("A"),
@@ -551,7 +561,7 @@ class TestAppendLogicMiddleOrEnd(unittest.TestCase):
         self.assertEqual(result[1].outgoing, expected_output[1].outgoing)
 
     def test_append_logic_middle_or_end_end(self):
-        # Test case for appending logic at the end of a branch
+        """ Test case for appending logic at the end of a branch """
 
         lookup_table = {
             "A": Node("A"),
@@ -605,8 +615,9 @@ class TestAppendLogicMiddleOrEnd(unittest.TestCase):
         self.assertEqual(result[1].outgoing, expected_output[1].outgoing)
 
     def test_append_logic_middle_or_end_switch_end(self):
-        # Test case for appending logic at the end of a branch with a SWITCH
-        #   node
+        """
+        Test case for appending logic at the end of a branch with a SWITCH node
+        """
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -670,8 +681,9 @@ class TestAppendLogicMiddleOrEnd(unittest.TestCase):
 
 
 class TestAppendLogicStart(unittest.TestCase):
+    """ Unit tests for the append_logic_start function """
     def test_append_logic_start_regular_node(self):
-        # Test case for appending logic start node for a regular node
+        """ Test case for appending logic start node for a regular node """
 
         lookup_table = {
             "A": Node("A"),
@@ -727,7 +739,7 @@ class TestAppendLogicStart(unittest.TestCase):
         self.assertEqual(result[1].outgoing, expected_output[1].outgoing)
 
     def test_append_logic_start_switch_node(self):
-        # Test case for appending logic start node for a switch node
+        """ Test case for appending logic start node for a switch node """
 
         lookup_table = {
             "A": Node("A"),
@@ -789,8 +801,9 @@ class TestAppendLogicStart(unittest.TestCase):
 
 
 class TestHandleLoopStart(unittest.TestCase):
+    """ Unit tests for the handle_loop_start function """
     def test_handle_loop_start_no_loop_start(self):
-        # Test case where there is no loop start detected
+        """ Test case where there is no loop start detected """
         output = []
         node_tree = Node("A")
         logic_lines = {"LOOP": {"start": "START_LOOP", "end": "END_LOOP"}}
@@ -800,7 +813,7 @@ class TestHandleLoopStart(unittest.TestCase):
         self.assertEqual(result, [])
 
     def test_handle_loop_start_with_loop_start(self):
-        # Test case where there is a loop start detected
+        """ Test case where there is a loop start detected """
         output = []
 
         nodes = {"A": Node("A")}
@@ -829,7 +842,9 @@ class TestHandleLoopStart(unittest.TestCase):
         self.assertEqual(result[0].outgoing, [nodes["B"]])
 
     def test_handle_loop_start_multiple_possible_descendants(self):
-        # Test case where there are multiple possible descendant incoming nodes
+        """
+        Test case where there are multiple possible descendant incoming nodes
+        """
         output = []
         nodes = {"A": Node("A")}
         nodes["B"] = Node("B")
@@ -858,7 +873,7 @@ class TestHandleLoopStart(unittest.TestCase):
         self.assertEqual(result[0].outgoing, [nodes["B"], nodes["C"]])
 
     def test_handle_loop_start_no_possible_descendants(self):
-        # Test case where there are no possible descendant incoming nodes
+        """ Test case where there are no possible descendant incoming nodes """
         output = []
         node_tree = Node("A")
         node_tree.incoming = [Node("B")]
@@ -870,8 +885,9 @@ class TestHandleLoopStart(unittest.TestCase):
 
 
 class TestGetReverseNodeTreeDict(unittest.TestCase):
+    """ Unit tests for the get_reverse_node_tree_dict function """
     def test_get_reverse_node_tree_dict_with_reverse_node_trees(self):
-        # Test case with reverse node trees
+        """ Test case with reverse node trees """
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -929,8 +945,9 @@ class TestGetReverseNodeTreeDict(unittest.TestCase):
 
 
 class TestGetSmallestReverseTree(unittest.TestCase):
+    """ Unit tests for the get_smallest_reverse_tree function """
     def test_get_smallest_reverse_tree_empty_dict(self):
-        # Test case with an empty dictionary
+        """ Test case with an empty dictionary """
         reverse_node_trees = {}
 
         result = get_smallest_reverse_tree(reverse_node_trees)
@@ -938,7 +955,7 @@ class TestGetSmallestReverseTree(unittest.TestCase):
         self.assertEqual(result, [])
 
     def test_get_smallest_reverse_tree_single_tree(self):
-        # Test case with a single reverse tree
+        """ Test case with a single reverse tree """
         reverse_node_trees = {"tree1": [1, 2, 3, 4, 5]}
 
         result = get_smallest_reverse_tree(reverse_node_trees)
@@ -946,7 +963,7 @@ class TestGetSmallestReverseTree(unittest.TestCase):
         self.assertEqual(result, [1, 2, 3, 4, 5])
 
     def test_get_smallest_reverse_tree_multiple_trees(self):
-        # Test case with multiple reverse trees
+        """ Test case with multiple reverse trees """
         reverse_node_trees = {
             "tree1": [1, 2, 3],
             "tree2": [1, 2, 3, 4],
@@ -959,7 +976,7 @@ class TestGetSmallestReverseTree(unittest.TestCase):
         self.assertEqual(result, [1, 2])
 
     def test_get_smallest_reverse_tree_equal_length_trees(self):
-        # Test case with multiple reverse trees of equal length
+        """ Test case with multiple reverse trees of equal length """
         reverse_node_trees = {
             "tree1": [1, 2, 3],
             "tree2": [4, 5, 6],
@@ -972,8 +989,9 @@ class TestGetSmallestReverseTree(unittest.TestCase):
 
 
 class TestHandleImmediateChildren(unittest.TestCase):
+    """ Unit tests for the handle_immediate_children function """
     def test_handle_immediate_children_tree_similarity_greater_than_zero(self):
-        # Test case where tree_similarity is greater than zero
+        """ Test case where tree_similarity is greater than zero """
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -1034,7 +1052,7 @@ class TestHandleImmediateChildren(unittest.TestCase):
             self.assertEqual(result[idx].uid, item)
 
     def test_handle_immediate_children_tree_similarity_zero(self):
-        # Test case where tree_similarity is zero
+        """ Test case where tree_similarity is zero """
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -1106,7 +1124,7 @@ class TestHandleImmediateChildren(unittest.TestCase):
             self.assertEqual(result[idx].uid, item)
 
     def test_handle_immediate_children_max_depth_reached(self):
-        # Test case where the maximum depth is reached
+        """ Test case where the maximum depth is reached """
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -1171,8 +1189,9 @@ class TestHandleImmediateChildren(unittest.TestCase):
 
 
 class TestHandleDivergentTreeChildren(unittest.TestCase):
+    """ Unit tests for the handle_divergent_tree_children function """
     def test_handle_divergent_tree_children_no_similarity(self):
-        # Test case where tree similarity is 0
+        """ Test case where tree similarity is 0 """
         smallest_tree = [Node("A"), Node("B"), Node("C")]
         output = "output"
         logic_lines = {"LOOP": {"end": "END_LOOP"}}
@@ -1185,7 +1204,7 @@ class TestHandleDivergentTreeChildren(unittest.TestCase):
         self.assertEqual(result, output)
 
     def test_handle_divergent_tree_children_with_similarity(self):
-        # Test case where tree similarity is greater than 0
+        """ Test case where tree similarity is greater than 0 """
 
         lookup_table = {
             "A": Node("A"),
@@ -1239,8 +1258,9 @@ class TestHandleDivergentTreeChildren(unittest.TestCase):
 
 
 class TestCreateContentLogic(unittest.TestCase):
+    """ Unit tests for the create_content_logic function """
     def test_create_content_logic_multiple_outgoing_nodes(self):
-        # Test case with a node that has multiple outgoing nodes
+        """ Test case with a node that has multiple outgoing nodes """
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -1288,7 +1308,7 @@ class TestCreateContentLogic(unittest.TestCase):
             self.assertEqual(result[idx].uid, item)
 
     def test_create_content_logic_in_loop(self):
-        # Test case with a node that is in a loop
+        """ Test case with a node that is in a loop """
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -1352,7 +1372,7 @@ class TestCreateContentLogic(unittest.TestCase):
             self.assertEqual(result[idx].uid, item)
 
     def test_create_content_logic_max_depth_reached(self):
-        # Test case where the maximum depth is reached
+        """ Test case where the maximum depth is reached """
         node = Node("A")
         node.outgoing = [Node("B")]
         output = []
@@ -1368,8 +1388,9 @@ class TestCreateContentLogic(unittest.TestCase):
 
 
 class TestCreateContent(unittest.TestCase):
+    """ Unit tests for the create_content function """
     def test_create_content_append_first_node(self):
-        # Test case where append_first_node is True
+        """ Test case where append_first_node is True """
         node_tree = Node("A")
         node_tree.outgoing = [Node("B")]
         output = []
@@ -1393,7 +1414,7 @@ class TestCreateContent(unittest.TestCase):
             self.assertEqual(result[idx].uid, item)
 
     def test_create_content_append_first_node_false(self):
-        # Test case where append_first_node is False
+        """ Test case where append_first_node is False """
         node_tree = Node("A")
         node_tree.outgoing = [Node("B")]
         output = []
@@ -1414,7 +1435,7 @@ class TestCreateContent(unittest.TestCase):
         self.assertEqual(result, [])
 
     def test_create_content_node_is_loop(self):
-        # Test case where the node is a loop
+        """ Test case where the node is a loop """
         node_tree = Node("A")
         node_tree.outgoing = [
             Node("B", outgoing=[node_tree, Node("END_LOOP")])
@@ -1440,7 +1461,7 @@ class TestCreateContent(unittest.TestCase):
             self.assertEqual(result[idx].uid, item)
 
     def test_create_content_max_depth_reached(self):
-        # Test case where the maximum depth is reached
+        """ Test case where the maximum depth is reached """
         node_tree = Node("A")
         node_tree.outgoing = [Node("B"), Node("C")]
         output = []
@@ -1462,8 +1483,9 @@ class TestCreateContent(unittest.TestCase):
 
 
 class TestAnalyseNode(unittest.TestCase):
+    """ Unit tests for the analyse_node function """
     def test_analyse_node_with_logic(self):
-        # Test case where the head node has outgoing logic
+        """ Test case where the head node has outgoing logic """
 
         lookup_table = {
             "A": Node("A"),
@@ -1517,7 +1539,7 @@ class TestAnalyseNode(unittest.TestCase):
             self.assertEqual(result[idx].uid, item)
 
     def test_analyse_node_with_uid(self):
-        # Test case where the head node is a data node
+        """ Test case where the head node is a data node """
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -1587,7 +1609,7 @@ class TestAnalyseNode(unittest.TestCase):
             self.assertEqual(result[idx].uid, item)
 
     def test_analyse_node_with_leaf_uid(self):
-        # Test case where the node is a leaf uid node
+        """ Test case where the node is a leaf uid node """
         node = Node("A")
         output = []
         logic_lines = {"LOOP": {"end": "END_LOOP"}}
@@ -1606,10 +1628,10 @@ class TestAnalyseNode(unittest.TestCase):
             max_depth=max_depth,
         )
 
-        self.assertEqual(result, output)  # Assert that output is not modified
+        self.assertEqual(result, output)
 
     def test_analyse_node_max_depth_reached(self):
-        # Test case where the maximum depth is reached
+        """ Test case where the maximum depth is reached """
         node = Node("A")
         output = []
         logic_lines = {"LOOP": {"end": "END_LOOP"}}
@@ -1628,12 +1650,13 @@ class TestAnalyseNode(unittest.TestCase):
             max_depth=max_depth,
         )
 
-        self.assertEqual(result, output)  # Assert that output is not modified
+        self.assertEqual(result, output)
 
 
 class TestGetCoordsInNestedDict(unittest.TestCase):
+    """ Unit tests for the get_coords_in_nested_dict function """
     def test_item_present(self):
-        # Test case where the item is present in the nested dictionary
+        """ Test case where the item is present in the nested dictionary """
         dictionary = {
             "parent1": {"child1": "item1", "child2": "item2"},
             "parent2": {"child3": "item3", "child4": "item4"},
@@ -1645,7 +1668,9 @@ class TestGetCoordsInNestedDict(unittest.TestCase):
         self.assertEqual(result, "child3")
 
     def test_item_not_present(self):
-        # Test case where the item is not present in the nested dictionary
+        """
+        Test case where the item is not present in the nested dictionary
+        """
         dictionary = {
             "parent1": {"child1": "item1", "child2": "item2"},
             "parent2": {"child3": "item3", "child4": "item4"},
@@ -1657,7 +1682,7 @@ class TestGetCoordsInNestedDict(unittest.TestCase):
         self.assertIsNone(result)
 
     def test_empty_dictionary(self):
-        # Test case where the nested dictionary is empty
+        """ Test case where the nested dictionary is empty """
         dictionary = {}
         item = "item1"
 
@@ -1666,7 +1691,7 @@ class TestGetCoordsInNestedDict(unittest.TestCase):
         self.assertIsNone(result)
 
     def test_empty_nested_dictionary(self):
-        # Test case where the nested dictionary is empty
+        """ Test case where the nested dictionary is empty """
         dictionary = {"parent1": {}, "parent2": {}}
         item = "item1"
 
@@ -1676,8 +1701,9 @@ class TestGetCoordsInNestedDict(unittest.TestCase):
 
 
 class TestFormatOutput(unittest.TestCase):
+    """ Unit tests for the format_output function """
     def test_format_output_no_event_reference(self):
-        # Test case where there is no event reference
+        """ Test case where there is no event reference """
         input = [Node("A"), Node("B"), Node("C")]
         logic_lines = {
             "SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}
@@ -1695,7 +1721,7 @@ class TestFormatOutput(unittest.TestCase):
         self.assertEqual(result, expected_output)
 
     def test_format_output_with_event_reference(self):
-        # Test case where there is an event reference
+        """ Test case where there is an event reference """
         input = [Node("A"), Node("B"), Node("C")]
         logic_lines = {
             "SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}
@@ -1713,7 +1739,7 @@ class TestFormatOutput(unittest.TestCase):
         self.assertEqual(result, expected_output)
 
     def test_format_output_with_switch_start(self):
-        # Test case where there is a switch start line
+        """ Test case where there is a switch start line """
         input = [Node("START"), Node("A"), Node("B"), Node("C")]
         logic_lines = {
             "SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}
@@ -1731,7 +1757,7 @@ class TestFormatOutput(unittest.TestCase):
         self.assertEqual(result, expected_output)
 
     def test_format_output_with_switch_middle(self):
-        # Test case where there is a switch middle line
+        """ Test case where there is a switch middle line """
         input = [Node("A"), Node("MIDDLE"), Node("B"), Node("C")]
         logic_lines = {
             "SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}
@@ -1749,7 +1775,7 @@ class TestFormatOutput(unittest.TestCase):
         self.assertEqual(result, expected_output)
 
     def test_format_output_with_switch_end(self):
-        # Test case where there is a switch end line
+        """ Test case where there is a switch end line """
         input = [Node("A"), Node("B"), Node("END")]
         logic_lines = {
             "SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}
@@ -1767,7 +1793,7 @@ class TestFormatOutput(unittest.TestCase):
         self.assertEqual(result, expected_output)
 
     def test_format_output_with_switch_middle_in_end(self):
-        # Test case where there is a switch middle line in the end line
+        """ Test case where there is a switch middle line in the end line """
         input = [Node("A"), Node("B"), Node("MIDDLE"), Node("END")]
         logic_lines = {
             "SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}
@@ -1785,7 +1811,9 @@ class TestFormatOutput(unittest.TestCase):
         self.assertEqual(result, expected_output)
 
     def test_format_output_with_switch_middle_in_middle(self):
-        # Test case where there is a switch middle line in the middle line
+        """
+        Test case where there is a switch middle line in the middle line
+        """
         input = [
             Node("A"),
             Node("MIDDLE"),
@@ -1810,8 +1838,9 @@ class TestFormatOutput(unittest.TestCase):
 
 
 class TestFindNearestExtantAncestor(unittest.TestCase):
+    """ Unit tests for the find_nearest_extant_ancestor function """
     def test_find_nearest_extant_ancestor_node_in_uid_list(self):
-        # Test case where the node is in the uid_list
+        """ Test case where the node is in the uid_list """
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -1839,7 +1868,7 @@ class TestFindNearestExtantAncestor(unittest.TestCase):
         self.assertEqual(result, node)
 
     def test_find_nearest_extant_ancestor_node_not_in_uid_list(self):
-        # Test case where the node is not in the uid_list
+        """ Test case where the node is not in the uid_list """
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -1861,7 +1890,7 @@ class TestFindNearestExtantAncestor(unittest.TestCase):
         self.assertEqual(result, node.incoming[0])
 
     def test_find_nearest_extant_ancestor_max_depth_reached(self):
-        # Test case where the maximum depth is reached
+        """ Test case where the maximum depth is reached """
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -1885,8 +1914,9 @@ class TestFindNearestExtantAncestor(unittest.TestCase):
 
 
 class TestInsertItemUsingPropertyKey(unittest.TestCase):
+    """ Unit tests for the insert_item_using_property_key function """
     def test_insert_item_using_property_key_incoming(self):
-        # Test case for inserting a node based on the incoming property
+        """ Test case for inserting a node based on the incoming property """
         uid_list = [Node("A"), Node("B"), Node("C")]
         node = Node("D", incoming=[uid_list[2]])
         logic_lines = {}
@@ -1901,7 +1931,7 @@ class TestInsertItemUsingPropertyKey(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_insert_item_using_property_key_outgoing(self):
-        # Test case for inserting a node based on the outgoing property
+        """ Test case for inserting a node based on the outgoing property """
         uid_list = [Node("A"), Node("B"), Node("D")]
         node = Node("C", outgoing=[uid_list[2]], incoming=[uid_list[1]])
         property_key = "outgoing"
@@ -1916,7 +1946,9 @@ class TestInsertItemUsingPropertyKey(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_insert_item_using_property_key_incoming_logic(self):
-        # Test case for inserting a node based on the incoming_logic property
+        """
+        Test case for inserting a node based on the incoming_logic property
+        """
         uid_list = [Node("A"), Node("B"), Node("C")]
         uid_list.append(Node("XOR", incoming=uid_list[2]))
         node = Node("D", incoming_logic=[uid_list[-1]], incoming=[uid_list[3]])
@@ -1933,7 +1965,9 @@ class TestInsertItemUsingPropertyKey(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_insert_item_using_property_key_outgoing_logic(self):
-        # Test case for inserting a node based on the outgoing_logic property
+        """
+        Test case for inserting a node based on the outgoing_logic property
+        """
         uid_list = [Node("A"), Node("B"), Node("XOR"), Node("D")]
         node = Node("C", outgoing_logic=[uid_list[2]])
         node.incoming = [uid_list[-1]]
@@ -1952,7 +1986,7 @@ class TestInsertItemUsingPropertyKey(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_insert_item_using_property_key_invalid_property_key(self):
-        # Test case for inserting a node with an invalid property key
+        """ Test case for inserting a node with an invalid property key """
         uid_list = [Node("A"), Node("B"), Node("C")]
         node = Node("D")
         property_key = "invalid_key"
@@ -1964,7 +1998,7 @@ class TestInsertItemUsingPropertyKey(unittest.TestCase):
             )
 
     def test_insert_item_using_property_key_insert_before_item(self):
-        # Test case for inserting a node before the nearest relative
+        """ Test case for inserting a node before the nearest relative """
         uid_list = [Node("A"), Node("B"), Node("D")]
         node = Node("C", incoming=[uid_list[-1]])
         property_key = "incoming"
@@ -1980,8 +2014,9 @@ class TestInsertItemUsingPropertyKey(unittest.TestCase):
 
 
 class TestInsertMissingNodes(unittest.TestCase):
+    """ Unit tests for the insert_missing_nodes function """
     def test_insert_missing_nodes_no_missing_nodes(self):
-        # Test case with no missing nodes
+        """ Test case with no missing nodes """
         uid_list = ["A", "B", "C"]
         missing_nodes = []
         logic_lines = {}
@@ -1991,7 +2026,7 @@ class TestInsertMissingNodes(unittest.TestCase):
         self.assertEqual(result, uid_list)
 
     def test_insert_missing_nodes_missing_nodes_at_beginning(self):
-        # Test case with missing nodes at the beginning of the uid list
+        """ Test case with missing nodes at the beginning of the uid list """
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -2034,7 +2069,7 @@ class TestInsertMissingNodes(unittest.TestCase):
         self.assertEqual(result, expected_result)
 
     def test_insert_missing_nodes_missing_nodes_at_end(self):
-        # Test case with missing nodes at the end of the uid list
+        """ Test case with missing nodes at the end of the uid list """
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -2076,7 +2111,7 @@ class TestInsertMissingNodes(unittest.TestCase):
         self.assertEqual(result, expected_result)
 
     def test_insert_missing_nodes_missing_nodes_in_middle(self):
-        # Test case with missing nodes in the middle of the uid list
+        """ Test case with missing nodes in the middle of the uid list """
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -2119,7 +2154,12 @@ class TestInsertMissingNodes(unittest.TestCase):
 
 
 class TestEndToEnd(unittest.TestCase):
+    """ End-to-end testing for the puml pipeline """
     def test_simple_test(self):
+        """
+        Test case for generating a PlantUML diagram using the
+        simple_test.puml file as a base for event generation
+        """
         puml_name = "simple_test"
         tab_chars = "    "
         puml_header = [
@@ -2229,6 +2269,10 @@ class TestEndToEnd(unittest.TestCase):
         )
 
     def test_sequence_xor_fork(self):
+        """
+        Test case for generating a PlantUML diagram using the
+        sequence_xor_fork.puml file as a base for event generation
+        """
         puml_name = "sequence_xor_fork"
         tab_chars = "    "
         puml_header = [
@@ -2347,6 +2391,10 @@ class TestEndToEnd(unittest.TestCase):
         )
 
     def test_loop_XORFork_a(self):
+        """
+        Test case for generating a PlantUML diagram using the
+        loop_XORFork_a.puml file as a base for event generation
+        """
         puml_name = "loop_XORFork_a"
         tab_chars = "    "
         puml_header = [
@@ -2461,6 +2509,10 @@ class TestEndToEnd(unittest.TestCase):
         )
 
     def test_complicated_test(self):
+        """
+        Test case for generating a PlantUML diagram using the
+        complicated_test.puml file as a base for event generation
+        """
         puml_name = "complicated_test"
         tab_chars = "    "
         puml_header = [
@@ -2613,6 +2665,10 @@ class TestEndToEnd(unittest.TestCase):
         )
 
     def test_branching_loop_end_test(self):
+        """
+        Test case for generating a PlantUML diagram using the
+        branching_loop_end_test.puml file as a base for event generation
+        """
         puml_name = "branching_loop_end_test"
         tab_chars = "    "
         puml_header = [

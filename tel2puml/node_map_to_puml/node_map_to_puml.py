@@ -1,5 +1,9 @@
+
+"""
+This module contains functions that can be used to parse a logic tree created
+    (created by jAlergia) into PUML.
+"""
 from tel2puml.node_map_to_puml.node_population_functions import (
-    get_data,
     copy_node,
 )
 from tel2puml.node_map_to_puml.node import Node
@@ -40,7 +44,7 @@ def is_in_loop(
     for outgoing in node.outgoing:
         output = (
             is_in_loop(target, logic_lines, outgoing, depth + 1, max_depth)
-            if output == False
+            if not output
             else output
         )
 
@@ -475,7 +479,7 @@ def create_content_logic(
 
     output = handle_loop_start(output, node_tree, logic_lines)
 
-    if append_first_node == False:
+    if not append_first_node:
         append_first_node = True
     else:
         output.append(node_tree)
@@ -545,7 +549,7 @@ def create_content(
     if depth >= max_depth:
         return output
 
-    if append_first_node == False:
+    if not append_first_node:
         append_first_node = True
     else:
         output.append(node_tree)
@@ -558,7 +562,7 @@ def create_content(
             if (
                 (not (node_is_loop))
                 and (not is_in_loop(outgoing_node, logic_lines, node_tree))
-                or (not outgoing_node in output)
+                or (outgoing_node not in output)
                 and (outgoing_node.uid in lookup_table)
             ):
                 output = analyse_node(
@@ -724,6 +728,20 @@ def format_output(
 
 
 def find_nearest_extant_ancestor(uid_list, node, depth=0, max_depth=100):
+    """
+    Finds the nearest extant ancestor of a given node in a tree structure.
+
+    Args:
+        uid_list (list): List of unique identifiers of nodes in the tree.
+        node (Node): The node for which to find the nearest extant ancestor.
+        depth (int, optional): The current depth in the tree. Defaults to 0.
+        max_depth (int, optional): The maximum depth to search for the
+            ancestor. Defaults to 100.
+
+    Returns:
+        Node: The nearest extant ancestor of the given node, or the node itself
+            if it is in the uid_list.
+    """
     if depth >= max_depth:
         return node
     if node in uid_list:
