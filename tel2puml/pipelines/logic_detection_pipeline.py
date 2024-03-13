@@ -409,43 +409,33 @@ class Event:
                 else:
                     non_tau_children.append(child)
 
-        if len(non_tau_children) == 0:
-            new_children = []
+        if len(tau_children) > 0:
+            node.operator = Operator.OR
+            removed_tau_children = []
             for child in tau_children:
                 for grandchild in child.children:
                     if str(grandchild) != "tau":
                         grandchild.parent = node
-                        new_children.append(grandchild)
+                        removed_tau_children.append(grandchild)
 
-            node.operator = Operator.OR
-            node.children = new_children
-        else:
-            if len(tau_children) > 0:
-                node.operator = Operator.OR
-                new_children = []
-                for child in tau_children:
-                    for grandchild in child.children:
-                        if str(grandchild) != "tau":
-                            grandchild.parent = node
-                            new_children.append(grandchild)
+            if len(non_tau_children) == 0:
+                node.children = removed_tau_children
+                return
 
-                if len(non_tau_children) == 1:
-                    new_non_tau_children, = non_tau_children
+            updated_children = []
+            for children in (removed_tau_children, non_tau_children):
+                if len(children) == 1:
+                    updated_children.append(children[0])
                 else:
-                    new_non_tau_children = ProcessTree(
-                        Operator.PARALLEL,
-                        node,
-                        non_tau_children,
+                    updated_children.append(
+                        ProcessTree(
+                            Operator.PARALLEL,
+                            node,
+                            children,
+                        )
                     )
 
-                node.children = [
-                    new_non_tau_children,
-                    ProcessTree(
-                        Operator.PARALLEL,
-                        node,
-                        [*non_tau_children, *new_children],
-                    )
-                ]
+            node.children = updated_children
 
     @staticmethod
     def filter_defunct_or_gates(

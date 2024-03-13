@@ -433,53 +433,40 @@ class TestEvent:
         labels = ["B", "C"]
         for child in logic_gate.children:
             labels.remove(child.label)
-        assert len(labels) == 0
+        assert len(labels) == 0 
 
+        def _check_or(tree):
+            logic_gate = tree.children[1]
+            assert logic_gate.operator.value == Operator.PARALLEL.value
+            event.infer_or_gate_from_node(logic_gate)
+            assert logic_gate.operator.value == Operator.OR.value
+            assert len(logic_gate.children) == 2
+            labels_b = ["B"]
+            labels_cd = ["C", "D"]
+            for child in logic_gate.children:
+                if child.label == "B":
+                    labels_b.remove(child.label)
+                else:
+                    assert child.operator.value == Operator.PARALLEL.value
+                    assert len(child.children) == 2
+                    for grandchild in child.children:
+                        labels_cd.remove(grandchild.label)
+            assert len(labels_b) == 0
+            assert len(labels_cd) == 0
+   
         event.event_sets = {
             EventSet(["B", "C", "D"]),
             EventSet(["B"]),
         }
         process_tree = event.calculate_process_tree_from_event_sets()
-        logic_gate = process_tree.children[1]
-        assert logic_gate.operator.value == Operator.PARALLEL.value
-        event.infer_or_gate_from_node(logic_gate)
-        assert logic_gate.operator.value == Operator.OR.value
-        assert len(logic_gate.children) == 2
-        labels_b = ["B"]
-        labels_bcd = ["B", "C", "D"]
-        for child in logic_gate.children:
-            if child.label == "B":
-                labels_b.remove(child.label)
-            else:
-                assert child.operator.value == Operator.PARALLEL.value
-                assert len(child.children) == 3
-                for grandchild in child.children:
-                    labels_bcd.remove(grandchild.label)
-        assert len(labels_b) == 0
-        assert len(labels_bcd) == 0
+        _check_or(process_tree)
 
         event.event_sets = {
             EventSet(["B", "C", "D"]),
             EventSet(["C", "D"]),
         }
         process_tree = event.calculate_process_tree_from_event_sets()
-        logic_gate = process_tree.children[1]
-        assert logic_gate.operator.value == Operator.PARALLEL.value
-        event.infer_or_gate_from_node(logic_gate)
-        assert logic_gate.operator.value == Operator.OR.value
-        assert len(logic_gate.children) == 2
-        labels_cd = ["C", "D"]
-        labels_bcd = ["B", "C", "D"]
-        for child in logic_gate.children:
-            assert child.operator.value == Operator.PARALLEL.value
-            if len(child.children) == 2:
-                for grandchild in child.children:
-                    labels_cd.remove(grandchild.label)
-            else:
-                for grandchild in child.children:
-                    labels_bcd.remove(grandchild.label)
-        assert len(labels_cd) == 0
-        assert len(labels_bcd) == 0
+        _check_or(process_tree)
 
     @staticmethod
     def test_get_extended_or_gates_from_process_tree() -> None:
