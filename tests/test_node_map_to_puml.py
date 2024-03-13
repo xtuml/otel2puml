@@ -16,6 +16,7 @@ from tel2puml.node_map_to_puml.node_map_to_puml import (
     analyse_node,
     get_coords_in_nested_dict,
     format_output,
+    insert_item_using_property_key,
 )
 
 
@@ -1731,6 +1732,94 @@ class TestFormatOutput(unittest.TestCase):
 
         self.assertEqual(result, expected_output)
 
+
+class TestInsertItemUsingPropertyKey(unittest.TestCase):
+    def test_insert_item_using_property_key_incoming(self):
+        # Test case for inserting a node based on the incoming property
+        uid_list = [Node("A"), Node("B"), Node("C")]
+        node = Node("D", incoming = [uid_list[2]])
+        property_key = "incoming"
+        insert_before_item = False
+
+        result = insert_item_using_property_key(
+            uid_list, node, property_key, insert_before_item
+        )
+
+        expected = [uid_list[0],uid_list[1],uid_list[2], node]
+        self.assertEqual(result, expected)
+
+    def test_insert_item_using_property_key_outgoing(self):
+        # Test case for inserting a node based on the outgoing property
+        uid_list = [Node("A"), Node("B"), Node("D")]
+        node = Node("C", outgoing = [uid_list[2]])
+        property_key = "outgoing"
+        insert_before_item = True
+
+        result = insert_item_using_property_key(
+            uid_list, node, property_key, insert_before_item
+        )
+
+        expected = [uid_list[0],uid_list[1],node,uid_list[-1]]
+        self.assertEqual(result, expected)
+
+    def test_insert_item_using_property_key_incoming_logic(self):
+        # Test case for inserting a node based on the incoming_logic property
+        uid_list = [Node("A"), Node("B"), Node("C")]
+        uid_list.append(Node("XOR", incoming=uid_list[2]))
+        node = Node("D", incoming_logic = [uid_list[-1]])
+        uid_list[-1].outgoing = node
+        property_key = "incoming_logic"
+        insert_before_item = False
+
+        result = insert_item_using_property_key(
+            uid_list, node, property_key, insert_before_item
+        )
+
+        expected = [uid_list[0], uid_list[1], uid_list[2], uid_list[3], node]
+        self.assertEqual(result, expected)
+
+    def test_insert_item_using_property_key_outgoing_logic(self):
+        # Test case for inserting a node based on the outgoing_logic property
+        uid_list = [Node("A"), Node("B"), Node("XOR"), Node("C")]
+        node = Node("D", outgoing_logic = [uid_list[2]])
+        uid_list[2].incoming = [node]
+        uid_list[2].outgoing = [uid_list[3]]
+        uid_list[3].incoming = [uid_list[1]]
+        property_key = "outgoing_logic"
+        insert_before_item = False
+
+        result = insert_item_using_property_key(
+            uid_list, node, property_key, insert_before_item
+        )
+
+        expected = [uid_list[0], uid_list[1], uid_list[2], uid_list[3], node]
+        self.assertEqual(result, expected)
+
+    def test_insert_item_using_property_key_invalid_property_key(self):
+        # Test case for inserting a node with an invalid property key
+        uid_list = [Node("A"), Node("B"), Node("C")]
+        node = Node("D")
+        property_key = "invalid_key"
+        insert_before_item = False
+
+        with self.assertRaises(ValueError):
+            insert_item_using_property_key(
+                uid_list, node, property_key, insert_before_item
+            )
+
+    def test_insert_item_using_property_key_insert_before_item(self):
+        # Test case for inserting a node before the nearest relative
+        uid_list = [Node("A"), Node("B"), Node("D")]
+        node = Node("C", incoming=[uid_list[-1]])
+        property_key = "incoming"
+        insert_before_item = True
+
+        result = insert_item_using_property_key(
+            uid_list, node, property_key, insert_before_item
+        )
+
+        expected = [uid_list[0], uid_list[1], node, uid_list[3]]
+        self.assertEqual(result, expected)
 
 if __name__ == '__main__':
     unittest.main()
