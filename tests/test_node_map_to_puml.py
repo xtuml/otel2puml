@@ -9,6 +9,7 @@ from tel2puml.node_map_to_puml.node_map_to_puml import (
     handle_loop_start,
     get_reverse_node_tree_dict,
     get_tree_similarity,
+    get_smallest_reverse_tree,
     handle_immediate_children,
     handle_divergent_tree_children,
     create_content_logic,
@@ -925,6 +926,49 @@ class TestGetReverseNodeTreeDict(unittest.TestCase):
                 "D": [lookup_table["G"], lookup_table["F"]],
             },
         )
+
+
+class TestGetSmallestReverseTree(unittest.TestCase):
+    def test_get_smallest_reverse_tree_empty_dict(self):
+        # Test case with an empty dictionary
+        reverse_node_trees = {}
+
+        result = get_smallest_reverse_tree(reverse_node_trees)
+
+        self.assertEqual(result, [])
+
+    def test_get_smallest_reverse_tree_single_tree(self):
+        # Test case with a single reverse tree
+        reverse_node_trees = {"tree1": [1, 2, 3, 4, 5]}
+
+        result = get_smallest_reverse_tree(reverse_node_trees)
+
+        self.assertEqual(result, [1, 2, 3, 4, 5])
+
+    def test_get_smallest_reverse_tree_multiple_trees(self):
+        # Test case with multiple reverse trees
+        reverse_node_trees = {
+            "tree1": [1, 2, 3],
+            "tree2": [1, 2, 3, 4],
+            "tree3": [1, 2],
+            "tree4": [1, 2, 3, 4, 5],
+        }
+
+        result = get_smallest_reverse_tree(reverse_node_trees)
+
+        self.assertEqual(result, [1, 2])
+
+    def test_get_smallest_reverse_tree_equal_length_trees(self):
+        # Test case with multiple reverse trees of equal length
+        reverse_node_trees = {
+            "tree1": [1, 2, 3],
+            "tree2": [4, 5, 6],
+            "tree3": [7, 8, 9],
+        }
+
+        result = get_smallest_reverse_tree(reverse_node_trees)
+
+        self.assertEqual(result, [1, 2, 3])
 
 
 class TestHandleImmediateChildren(unittest.TestCase):

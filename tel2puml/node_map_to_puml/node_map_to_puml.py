@@ -331,6 +331,8 @@ def get_smallest_reverse_tree(reverse_node_trees: dict):
     Returns:
     list: The smallest reverse tree found.
     """
+    if len(reverse_node_trees) == 0:
+        return []
     smallest_tree = []
     for _ in range(0, 100):
         smallest_tree.append(".")
