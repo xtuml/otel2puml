@@ -528,7 +528,6 @@ class TestEvent:
 
         def _check_or_case(event: Event):
             process_tree = event.calculate_process_tree_from_event_sets()
-            copy_tree = deepcopy(process_tree)
             logic_gates_tree = process_tree.children[1]
             event.process_or_gates(logic_gates_tree)
             event.process_missing_and_gates(logic_gates_tree)
@@ -541,7 +540,6 @@ class TestEvent:
 
         def _check_and_case(event: Event):
             process_tree = event.calculate_process_tree_from_event_sets()
-            copy_tree = deepcopy(process_tree)
             logic_gates_tree = process_tree.children[1]
             event.process_or_gates(logic_gates_tree)
             event.process_missing_and_gates(logic_gates_tree)
