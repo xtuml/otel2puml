@@ -15,6 +15,7 @@ from tel2puml.node_map_to_puml.node_map_to_puml import (
     create_content,
     analyse_node,
     get_coords_in_nested_dict,
+    format_output,
 )
 
 
@@ -1629,6 +1630,107 @@ class TestGetCoordsInNestedDict(unittest.TestCase):
         result = get_coords_in_nested_dict(item, dictionary)
 
         self.assertIsNone(result)
+
+
+class TestFormatOutput(unittest.TestCase):
+    def test_format_output_no_event_reference(self):
+        # Test case where there is no event reference
+        input = [Node("A"), Node("B"), Node("C")]
+        logic_lines = {"SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}}
+        tab_chars = "\t"
+        tab_num = 2
+        event_reference = {}
+
+        expected_output = ["\t\tA", "\t\tB", "\t\tC"]
+
+        result = format_output(input, logic_lines, tab_chars, tab_num, event_reference)
+
+        self.assertEqual(result, expected_output)
+
+    def test_format_output_with_event_reference(self):
+        # Test case where there is an event reference
+        input = [Node("A"), Node("B"), Node("C")]
+        logic_lines = {"SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}}
+        tab_chars = "\t"
+        tab_num = 2
+        event_reference = {"B": "EVENT1"}
+
+        expected_output = ["\t\tA", "\t\t:EVENT1;", "\t\tC"]
+
+        result = format_output(input, logic_lines, tab_chars, tab_num, event_reference)
+
+        self.assertEqual(result, expected_output)
+
+    def test_format_output_with_switch_start(self):
+        # Test case where there is a switch start line
+        input = [Node("START"), Node("A"), Node("B"), Node("C")]
+        logic_lines = {"SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}}
+        tab_chars = "\t"
+        tab_num = 2
+        event_reference = {}
+
+        expected_output = ["\t\tSTART", "\t\t\t\tA", "\t\t\t\tB", "\t\t\t\tC"]
+
+        result = format_output(input, logic_lines, tab_chars, tab_num, event_reference)
+
+        self.assertEqual(result, expected_output)
+
+    def test_format_output_with_switch_middle(self):
+        # Test case where there is a switch middle line
+        input = [Node("A"), Node("MIDDLE"), Node("B"), Node("C")]
+        logic_lines = {"SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}}
+        tab_chars = "\t"
+        tab_num = 2
+        event_reference = {}
+
+        expected_output = ["\t\tA", "\tMIDDLE", "\t\tB", "\t\tC"]
+
+        result = format_output(input, logic_lines, tab_chars, tab_num, event_reference)
+
+        self.assertEqual(result, expected_output)
+
+    def test_format_output_with_switch_end(self):
+        # Test case where there is a switch end line
+        input = [Node("A"), Node("B"), Node("END")]
+        logic_lines = {"SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}}
+        tab_chars = "\t"
+        tab_num = 2
+        event_reference = {}
+
+        expected_output = ["\t\tA", "\t\tB", "END"]
+
+        result = format_output(input, logic_lines, tab_chars, tab_num, event_reference)
+
+        self.assertEqual(result, expected_output)
+
+    def test_format_output_with_switch_middle_in_end(self):
+        # Test case where there is a switch middle line in the end line
+        input = [Node("A"), Node("B"), Node("MIDDLE"), Node("END")]
+        logic_lines = {"SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}}
+        tab_chars = "\t"
+        tab_num = 2
+        event_reference = {}
+
+        expected_output = ["\t\tA", "\t\tB", "\tMIDDLE", "END"]
+
+        result = format_output(input, logic_lines, tab_chars, tab_num, event_reference)
+
+        self.assertEqual(result, expected_output)
+
+    def test_format_output_with_switch_middle_in_middle(self):
+        # Test case where there is a switch middle line in the middle line
+        input = [Node("A"), Node("MIDDLE"), Node("B"), Node("MIDDLE"), Node("C")]
+        logic_lines = {"SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}}
+        tab_chars = "\t"
+        tab_num = 2
+        event_reference = {}
+
+        expected_output = ["\t\tA", "\tMIDDLE", "\t\tB", "\tMIDDLE", "\t\tC"]
+
+        result = format_output(input, logic_lines, tab_chars, tab_num, event_reference)
+
+        self.assertEqual(result, expected_output)
+
 
 if __name__ == '__main__':
     unittest.main()
