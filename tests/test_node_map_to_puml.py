@@ -20,6 +20,10 @@ from tel2puml.node_map_to_puml.node_map_to_puml import (
     insert_item_using_property_key,
     insert_missing_nodes,
 )
+from tel2puml.node_map_to_puml.node_population_functions import (
+    get_data,
+    copy_node,
+)
 
 
 class TestIsInLoop(unittest.TestCase):
@@ -2068,6 +2072,618 @@ class TestInsertMissingNodes(unittest.TestCase):
             lookup_table["F"],
         ]
         self.assertEqual(result, expected_result)
+
+
+class TestEndToEnd(unittest.TestCase):
+    def test_simple_test(self):
+        puml_name = "simple_test"
+        tab_chars = "    "
+        puml_header = [
+            "@startuml",
+            tab_chars * 0 + 'partition "' + puml_name + '" {',
+            (tab_chars * 1) + 'group "' + puml_name + '"',
+        ]
+
+        tab_num = 2
+
+        puml_footer = [
+            (tab_chars * 1) + "end group",
+            (tab_chars * 0 + "}"),
+            "@enduml",
+        ]
+
+        lookup_tables, node_trees, event_references = get_data(puml_name)
+
+        node_tree = node_trees[0]
+        lookup_table = lookup_tables[0]
+        event_reference = event_references[0]
+
+        logic_table = {
+            "NODE_XOR_1": Node(
+                uid="XOR",
+                incoming=[lookup_table["q0"]],
+                outgoing=[lookup_table["q1"], lookup_table["q2"]],
+            )
+        }
+
+        lookup_table["q0"].outgoing_logic = [logic_table["NODE_XOR_1"]]
+        lookup_table["q1"].incoming_logic = [logic_table["NODE_XOR_1"]]
+        lookup_table["q2"].incoming_logic = [logic_table["NODE_XOR_1"]]
+
+        logic_lines = {
+            "AND": {
+                "start": "fork",
+                "middle": "fork again",
+                "end": "end fork",
+            },
+            "OR": {
+                "start": "split",
+                "middle": "split again",
+                "end": "end split",
+            },
+            "XOR": {
+                "start": "if (XOR) then (true)",
+                "middle": "else (false)",
+                "end": "endif",
+            },
+            "LOOP": {
+                "start": "repeat",
+                "middle": "",
+                "end": "repeat while (unconstrained)",
+            },
+            "SWITCH": {
+                "start": "switch (XOR)",
+                "middle": ['case ("', '")'],
+                "end": "endswitch",
+            },
+        }
+
+        output = []
+
+        output = analyse_node(
+            node_tree=node_tree,
+            output=output,
+            logic_lines=logic_lines,
+            lookup_table=lookup_table,
+            append_first_node=True,
+        )
+
+        present_event_names = [
+            event.uid for event in output if event.uid in lookup_table
+        ]
+        missing_events = [
+            lookup_table[event_name]
+            for event_name in lookup_table
+            if event_name not in present_event_names
+        ]
+
+        output = insert_missing_nodes(output, missing_events, logic_lines)
+
+        formatted_output = format_output(
+            output, logic_lines, tab_chars, tab_num, event_reference
+        )
+
+        puml_full = puml_header + formatted_output + puml_footer
+
+        self.assertEqual(
+            [
+                "@startuml",
+                'partition "simple_test" {',
+                '    group "simple_test"',
+                "        :A;",
+                "        if (XOR) then (true)",
+                "            :B;",
+                "            :C;",
+                "        else (false)",
+                "            :D;",
+                "        endif",
+                "    end group",
+                "}",
+                "@enduml",
+            ],
+            puml_full,
+        )
+
+    def test_sequence_xor_fork(self):
+        puml_name = "sequence_xor_fork"
+        tab_chars = "    "
+        puml_header = [
+            "@startuml",
+            tab_chars * 0 + 'partition "' + puml_name + '" {',
+            (tab_chars * 1) + 'group "' + puml_name + '"',
+        ]
+
+        tab_num = 2
+
+        puml_footer = [
+            (tab_chars * 1) + "end group",
+            (tab_chars * 0 + "}"),
+            "@enduml",
+        ]
+
+        lookup_tables, node_trees, event_references = get_data(puml_name)
+
+        node_tree = node_trees[0]
+        lookup_table = lookup_tables[0]
+        event_reference = event_references[0]
+
+        logic_table = {
+            "NODE_XOR_1": Node(
+                uid="XOR",
+                incoming=[lookup_table["q1"]],
+                outgoing=[
+                    lookup_table["q2"],
+                    lookup_table["q3"],
+                    lookup_table["q4"],
+                ],
+            )
+        }
+
+        lookup_table["q1"].outgoing_logic = [logic_table["NODE_XOR_1"]]
+        lookup_table["q2"].incoming_logic = [logic_table["NODE_XOR_1"]]
+        lookup_table["q3"].incoming_logic = [logic_table["NODE_XOR_1"]]
+        lookup_table["q4"].incoming_logic = [logic_table["NODE_XOR_1"]]
+
+        logic_lines = {
+            "AND": {
+                "start": "fork",
+                "middle": "fork again",
+                "end": "end fork",
+            },
+            "OR": {
+                "start": "split",
+                "middle": "split again",
+                "end": "end split",
+            },
+            "XOR": {
+                "start": "if (XOR) then (true)",
+                "middle": "else (false)",
+                "end": "endif",
+            },
+            "LOOP": {
+                "start": "repeat",
+                "middle": "",
+                "end": "repeat while (unconstrained)",
+            },
+            "SWITCH": {
+                "start": "switch (XOR)",
+                "middle": ['case ("', '")'],
+                "end": "endswitch",
+            },
+        }
+
+        output = []
+
+        output = analyse_node(
+            node_tree=node_tree,
+            output=output,
+            logic_lines=logic_lines,
+            lookup_table=lookup_table,
+            append_first_node=True,
+        )
+
+        present_event_names = [
+            event.uid for event in output if event.uid in lookup_table
+        ]
+        missing_events = [
+            lookup_table[event_name]
+            for event_name in lookup_table
+            if event_name not in present_event_names
+        ]
+
+        output = insert_missing_nodes(output, missing_events, logic_lines)
+
+        formatted_output = format_output(
+            output, logic_lines, tab_chars, tab_num, event_reference
+        )
+
+        puml_full = puml_header + formatted_output + puml_footer
+
+        self.assertEqual(
+            [
+                "@startuml",
+                'partition "sequence_xor_fork" {',
+                '    group "sequence_xor_fork"',
+                "        :A;",
+                "        :B;",
+                "        switch (XOR)",
+                '            case ("1")',
+                "                :C;",
+                '            case ("2")',
+                "                :D;",
+                '            case ("3")',
+                "                :E;",
+                "        endswitch",
+                "        :F;",
+                "    end group",
+                "}",
+                "@enduml",
+            ],
+            puml_full,
+        )
+
+    def test_loop_XORFork_a(self):
+        puml_name = "loop_XORFork_a"
+        tab_chars = "    "
+        puml_header = [
+            "@startuml",
+            tab_chars * 0 + 'partition "' + puml_name + '" {',
+            (tab_chars * 1) + 'group "' + puml_name + '"',
+        ]
+
+        tab_num = 2
+
+        puml_footer = [
+            (tab_chars * 1) + "end group",
+            (tab_chars * 0 + "}"),
+            "@enduml",
+        ]
+
+        lookup_tables, node_trees, event_references = get_data(puml_name)
+
+        node_tree = node_trees[0]
+        lookup_table = lookup_tables[0]
+        event_reference = event_references[0]
+
+        logic_table = {
+            "NODE_XOR_1": Node(
+                uid="XOR",
+                incoming=[lookup_table["q1"]],
+                outgoing=[lookup_table["q2"], lookup_table["q3"]],
+            )
+        }
+
+        lookup_table["q1"].outgoing_logic = [logic_table["NODE_XOR_1"]]
+        lookup_table["q2"].incoming_logic = [logic_table["NODE_XOR_1"]]
+        lookup_table["q3"].incoming_logic = [logic_table["NODE_XOR_1"]]
+
+        logic_lines = {
+            "AND": {
+                "start": "fork",
+                "middle": "fork again",
+                "end": "end fork",
+            },
+            "OR": {
+                "start": "split",
+                "middle": "split again",
+                "end": "end split",
+            },
+            "XOR": {
+                "start": "if (XOR) then (true)",
+                "middle": "else (false)",
+                "end": "endif",
+            },
+            "LOOP": {
+                "start": "repeat",
+                "middle": "",
+                "end": "repeat while (unconstrained)",
+            },
+            "SWITCH": {
+                "start": "switch (XOR)",
+                "middle": ['case ("', '")'],
+                "end": "endswitch",
+            },
+        }
+
+        output = []
+
+        output = analyse_node(
+            node_tree=node_tree,
+            output=output,
+            logic_lines=logic_lines,
+            lookup_table=lookup_table,
+            append_first_node=True,
+        )
+
+        present_event_names = [
+            event.uid for event in output if event.uid in lookup_table
+        ]
+        missing_events = [
+            lookup_table[event_name]
+            for event_name in lookup_table
+            if event_name not in present_event_names
+        ]
+
+        output = insert_missing_nodes(output, missing_events, logic_lines)
+
+        formatted_output = format_output(
+            output, logic_lines, tab_chars, tab_num, event_reference
+        )
+
+        puml_full = puml_header + formatted_output + puml_footer
+
+        self.assertEqual(
+            [
+                "@startuml",
+                'partition "loop_XORFork_a" {',
+                '    group "loop_XORFork_a"',
+                "        :A;",
+                "        repeat",
+                "            :B;",
+                "            if (XOR) then (true)",
+                "                :C;",
+                "            else (false)",
+                "                :D;",
+                "                :E;",
+                "            endif",
+                "            :F;",
+                "        repeat while (unconstrained)",
+                "        :G;",
+                "    end group",
+                "}",
+                "@enduml",
+            ],
+            puml_full,
+        )
+
+    def test_complicated_test(self):
+        puml_name = "complicated_test"
+        tab_chars = "    "
+        puml_header = [
+            "@startuml",
+            tab_chars * 0 + 'partition "' + puml_name + '" {',
+            (tab_chars * 1) + 'group "' + puml_name + '"',
+        ]
+
+        tab_num = 2
+
+        puml_footer = [
+            (tab_chars * 1) + "end group",
+            (tab_chars * 0 + "}"),
+            "@enduml",
+        ]
+
+        lookup_tables, node_trees, event_references = get_data(puml_name)
+
+        node_tree = node_trees[0]
+        lookup_table = lookup_tables[0]
+        event_reference = event_references[0]
+
+        logic_table = {
+            "NODE_XOR_1": Node(
+                uid="XOR",
+                incoming=[lookup_table["q0"]],
+                outgoing=[lookup_table["q1"], lookup_table["q2"]],
+            ),
+            "NODE_XOR_2": Node(
+                uid="XOR",
+                incoming=[lookup_table["q3"]],
+                outgoing=[lookup_table["q6"], lookup_table["q7"]],
+            ),
+            "NODE_XOR_3": Node(
+                uid="XOR",
+                incoming=[lookup_table["q2"]],
+                outgoing=[lookup_table["q4"], lookup_table["q5"]],
+            ),
+            "NODE_XOR_4": Node(
+                uid="XOR",
+                incoming=[lookup_table["q4"]],
+                outgoing=[lookup_table["q8"], lookup_table["q9"]],
+            ),
+        }
+
+        lookup_table["q0"].outgoing_logic = [logic_table["NODE_XOR_1"]]
+        lookup_table["q1"].incoming_logic = [logic_table["NODE_XOR_1"]]
+        lookup_table["q2"].incoming_logic = [logic_table["NODE_XOR_1"]]
+
+        lookup_table["q3"].outgoing_logic = [logic_table["NODE_XOR_2"]]
+        lookup_table["q6"].incoming_logic = [logic_table["NODE_XOR_2"]]
+        lookup_table["q7"].incoming_logic = [logic_table["NODE_XOR_2"]]
+
+        lookup_table["q2"].outgoing_logic = [logic_table["NODE_XOR_3"]]
+        lookup_table["q4"].incoming_logic = [logic_table["NODE_XOR_3"]]
+        lookup_table["q5"].incoming_logic = [logic_table["NODE_XOR_3"]]
+
+        lookup_table["q4"].outgoing_logic = [logic_table["NODE_XOR_4"]]
+        lookup_table["q8"].incoming_logic = [logic_table["NODE_XOR_4"]]
+        lookup_table["q9"].incoming_logic = [logic_table["NODE_XOR_4"]]
+
+        logic_lines = {
+            "AND": {
+                "start": "fork",
+                "middle": "fork again",
+                "end": "end fork",
+            },
+            "OR": {
+                "start": "split",
+                "middle": "split again",
+                "end": "end split",
+            },
+            "XOR": {
+                "start": "if (XOR) then (true)",
+                "middle": "else (false)",
+                "end": "endif",
+            },
+            "LOOP": {
+                "start": "repeat",
+                "middle": "",
+                "end": "repeat while (unconstrained)",
+            },
+            "SWITCH": {
+                "start": "switch (XOR)",
+                "middle": ['case ("', '")'],
+                "end": "endswitch",
+            },
+        }
+
+        output = []
+
+        output = analyse_node(
+            node_tree=node_tree,
+            output=output,
+            logic_lines=logic_lines,
+            lookup_table=lookup_table,
+            append_first_node=True,
+        )
+
+        present_event_names = [
+            event.uid for event in output if event.uid in lookup_table
+        ]
+        missing_events = [
+            lookup_table[event_name]
+            for event_name in lookup_table
+            if event_name not in present_event_names
+        ]
+
+        output = insert_missing_nodes(output, missing_events, logic_lines)
+
+        formatted_output = format_output(
+            output, logic_lines, tab_chars, tab_num, event_reference
+        )
+
+        puml_full = puml_header + formatted_output + puml_footer
+
+        self.assertEqual(
+            [
+                "@startuml",
+                'partition "complicated_test" {',
+                '    group "complicated_test"',
+                "        :A;",
+                "        if (XOR) then (true)",
+                "            :B;",
+                "            :C;",
+                "            if (XOR) then (true)",
+                "                :D;",
+                "            else (false)",
+                "                :E;",
+                "            endif",
+                "        else (false)",
+                "            :F;",
+                "            if (XOR) then (true)",
+                "                :G;",
+                "                if (XOR) then (true)",
+                "                    :H;",
+                "                else (false)",
+                "                    :I;",
+                "                endif",
+                "            else (false)",
+                "                :J;",
+                "            endif",
+                "        endif",
+                "        :K;",
+                "    end group",
+                "}",
+                "@enduml",
+            ],
+            puml_full,
+        )
+
+    def test_branching_loop_end_test(self):
+        puml_name = "branching_loop_end_test"
+        tab_chars = "    "
+        puml_header = [
+            "!!NON-MARKOVIAN!!",
+            "",
+            "@startuml",
+            tab_chars * 0 + 'partition "' + puml_name + '" {',
+            (tab_chars * 1) + 'group "' + puml_name + '"',
+        ]
+
+        tab_num = 2
+
+        puml_footer = [
+            (tab_chars * 1) + "end group",
+            (tab_chars * 0 + "}"),
+            "@enduml",
+        ]
+
+        lookup_tables, node_trees, event_references = get_data(puml_name)
+
+        node_tree = node_trees[0]
+        lookup_table = lookup_tables[0]
+        event_reference = event_references[0]
+
+        logic_table = {
+            "NODE_XOR_1": Node(
+                uid="XOR",
+                incoming=[lookup_table["q1"]],
+                outgoing=[lookup_table["q2"], lookup_table["q3"]],
+            )
+        }
+
+        lookup_table["q1"].outgoing_logic = [logic_table["NODE_XOR_1"]]
+        lookup_table["q2"].incoming_logic = [logic_table["NODE_XOR_1"]]
+        lookup_table["q3"].incoming_logic = [logic_table["NODE_XOR_1"]]
+
+        logic_lines = {
+            "AND": {
+                "start": "fork",
+                "middle": "fork again",
+                "end": "end fork",
+            },
+            "OR": {
+                "start": "split",
+                "middle": "split again",
+                "end": "end split",
+            },
+            "XOR": {
+                "start": "if (XOR) then (true)",
+                "middle": "else (false)",
+                "end": "endif",
+            },
+            "LOOP": {
+                "start": "repeat",
+                "middle": "",
+                "end": "repeat while (unconstrained)",
+            },
+            "SWITCH": {
+                "start": "switch (XOR)",
+                "middle": ['case ("', '")'],
+                "end": "endswitch",
+            },
+        }
+
+        output = []
+
+        output = analyse_node(
+            node_tree=node_tree,
+            output=output,
+            logic_lines=logic_lines,
+            lookup_table=lookup_table,
+            append_first_node=True,
+        )
+
+        present_event_names = [
+            event.uid for event in output if event.uid in lookup_table
+        ]
+        missing_events = [
+            lookup_table[event_name]
+            for event_name in lookup_table
+            if event_name not in present_event_names
+        ]
+
+        output = insert_missing_nodes(output, missing_events, logic_lines)
+
+        formatted_output = format_output(
+            output, logic_lines, tab_chars, tab_num, event_reference
+        )
+
+        puml_full = puml_header + formatted_output + puml_footer
+
+        self.assertEqual(
+            [
+                "!!NON-MARKOVIAN!!",
+                "",
+                "@startuml",
+                'partition "branching_loop_end_test" {',
+                '    group "branching_loop_end_test"',
+                "        :A;",
+                "        repeat",
+                "            :B;",
+                "            if (XOR) then (true)",
+                "                :C;",
+                "            else (false)",
+                "                :D;",
+                "            repeat while (unconstrained)",
+                "            :E;",
+                "        endif",
+                "        :F;",
+                "    end group",
+                "}",
+                "@enduml",
+            ],
+            puml_full,
+        )
 
 
 if __name__ == "__main__":
