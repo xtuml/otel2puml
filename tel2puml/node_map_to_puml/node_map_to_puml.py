@@ -1,8 +1,13 @@
-from tel2puml.node_map_to_puml.node_population_functions import get_data, copy_node
+from tel2puml.node_map_to_puml.node_population_functions import (
+    get_data,
+    copy_node,
+)
 from tel2puml.node_map_to_puml.node import Node
 
 
-def is_in_loop(target:Node, logic_lines:dict, node=None, depth=0, max_depth=100):
+def is_in_loop(
+    target: Node, logic_lines: dict, node=None, depth=0, max_depth=100
+):
     """
     Checks if a target node is in a loop within a given logic map.
 
@@ -43,7 +48,11 @@ def is_in_loop(target:Node, logic_lines:dict, node=None, depth=0, max_depth=100)
 
 
 def drill_down_tree(
-    node: Node, lookup_table:dict, logic_lines:dict, max_depth:int=100, depth:int=0
+    node: Node,
+    lookup_table: dict,
+    logic_lines: dict,
+    max_depth: int = 100,
+    depth: int = 0,
 ):
     """
     Recursively drills down a tree starting from the given node if all
@@ -94,7 +103,7 @@ def drill_down_tree(
 
 
 def get_reverse_node_tree(
-    node: Node, lookup_table:dict, logic_lines:dict, max_depth:int=100
+    node: Node, lookup_table: dict, logic_lines: dict, max_depth: int = 100
 ):
     """
     Returns a list of nodes in reverse order from the given node to its
@@ -133,7 +142,7 @@ def get_reverse_node_tree(
     return node_tree
 
 
-def get_tree_similarity(reverse_node_trees:dict, smallest_tree:list):
+def get_tree_similarity(reverse_node_trees: dict, smallest_tree: list):
     """
     Calculate whether all nodes in a list of reversed trees converge.
 
@@ -148,7 +157,7 @@ def get_tree_similarity(reverse_node_trees:dict, smallest_tree:list):
     tree_similarity = 0
     if len(smallest_tree) != 0:
         for key, val in reverse_node_trees.items():
-            if(val[0] != smallest_tree[0]):
+            if val[0] != smallest_tree[0]:
                 return 0
 
     for loop in range(0, len(smallest_tree)):
@@ -175,7 +184,9 @@ def get_tree_similarity(reverse_node_trees:dict, smallest_tree:list):
     return tree_similarity
 
 
-def append_logic_middle_or_end(output:list, idx:int, node_tree:Node, logic_lines:dict):
+def append_logic_middle_or_end(
+    output: list, idx: int, node_tree: Node, logic_lines: dict
+):
     """
     Appends a node for the middle or end of a logic branch to the output
         list.
@@ -197,7 +208,11 @@ def append_logic_middle_or_end(output:list, idx:int, node_tree:Node, logic_lines
             len(node_tree.outgoing_logic[0].outgoing) > 2
             and node_tree.outgoing_logic[0].uid == "XOR"
         ):
-            uid_to_append = logic_lines["SWITCH"]["middle"][0] + str(idx + 2) + logic_lines["SWITCH"]["middle"][1]
+            uid_to_append = (
+                logic_lines["SWITCH"]["middle"][0]
+                + str(idx + 2)
+                + logic_lines["SWITCH"]["middle"][1]
+            )
         else:
             uid_to_append = logic_lines[node_tree.outgoing_logic[0].uid][
                 "middle"
@@ -209,9 +224,7 @@ def append_logic_middle_or_end(output:list, idx:int, node_tree:Node, logic_lines
         ):
             uid_to_append = logic_lines["SWITCH"]["end"]
         else:
-            uid_to_append = logic_lines[node_tree.outgoing_logic[0].uid][
-                "end"
-            ]
+            uid_to_append = logic_lines[node_tree.outgoing_logic[0].uid]["end"]
     output.append(
         copy_node(
             node=node_tree.outgoing_logic[0],
@@ -222,7 +235,7 @@ def append_logic_middle_or_end(output:list, idx:int, node_tree:Node, logic_lines
     return output
 
 
-def append_logic_start(output:list, node_tree:Node, logic_lines:dict):
+def append_logic_start(output: list, node_tree: Node, logic_lines: dict):
     """
     Appends the logic start node OR the switch start
         (as it's different to all the others) to the output list if required.
@@ -262,7 +275,7 @@ def append_logic_start(output:list, node_tree:Node, logic_lines:dict):
     return output
 
 
-def handle_loop_start(output:list, node_tree:Node, logic_lines:dict):
+def handle_loop_start(output: list, node_tree: Node, logic_lines: dict):
     """
     Detects the start of a loop and appends a loop start node if one is
         detected.
@@ -286,7 +299,9 @@ def handle_loop_start(output:list, node_tree:Node, logic_lines:dict):
     return output
 
 
-def get_reverse_node_tree_dict(node_tree:Node, lookup_table:dict, logic_lines:dict):
+def get_reverse_node_tree_dict(
+    node_tree: Node, lookup_table: dict, logic_lines: dict
+):
     """
     Returns a dictionary mapping each outgoing node in the given node_tree to
         its reverse node tree.
@@ -306,7 +321,7 @@ def get_reverse_node_tree_dict(node_tree:Node, lookup_table:dict, logic_lines:di
     return reverse_node_trees
 
 
-def get_smallest_reverse_tree(reverse_node_trees:dict):
+def get_smallest_reverse_tree(reverse_node_trees: dict):
     """
     Get the shallowest reverse tree from a dictionary of reverse node trees.
 
@@ -326,14 +341,14 @@ def get_smallest_reverse_tree(reverse_node_trees:dict):
 
 
 def handle_immediate_children(
-    node_tree:Node,
-    tree_similarity:int,
-    reverse_node_trees:dict,
-    output:list,
-    logic_lines:dict,
-    lookup_table:dict,
-    depth:int,
-    max_depth:int,
+    node_tree: Node,
+    tree_similarity: int,
+    reverse_node_trees: dict,
+    output: list,
+    logic_lines: dict,
+    lookup_table: dict,
+    depth: int,
+    max_depth: int,
 ):
     """
     Handles the immediate children of a given node in the node tree. This is
@@ -347,7 +362,7 @@ def handle_immediate_children(
         reverse_node_trees (dict): A dictionary mapping node uid to a list of
             node trees.
         output (str): The output string to append the analysis results to.
-        logic_lines (list): A list of logic lines.
+        logic_lines (dict): A dict of logic lines.
         lookup_table (dict): A lookup table for node uid to node names.
         depth (int): The current depth in the node tree.
         max_depth (int): The maximum depth to analyze.
@@ -384,7 +399,7 @@ def handle_immediate_children(
 
 
 def handle_divergent_tree_children(
-    tree_similarity:int, tree:list, output:list, logic_lines, lookup_table
+    tree_similarity: int, tree: list, output: list, logic_lines, lookup_table
 ):
     """
     Handles all divergent child nodes in a list of trees that eventually
@@ -395,7 +410,7 @@ def handle_divergent_tree_children(
         tree_similarity (int): The similarity score between the trees.
         smallest_tree (list): The list of nodes in the smallest tree.
         output (str): The current output string.
-        logic_lines (list): The list of logic lines.
+        logic_lines (dict): The list of logic lines.
         lookup_table (dict): The lookup table for node mapping.
 
     Returns:
@@ -423,8 +438,8 @@ def create_content_logic(
     logic_lines: dict,
     lookup_table: dict,
     append_first_node: bool = True,
-    depth:int=0,
-    max_depth:int=10,
+    depth: int = 0,
+    max_depth: int = 10,
 ):
     """
     Analyses a logic node and appends the correct 'logic' string to the output
@@ -497,8 +512,8 @@ def create_content(
     logic_lines: dict,
     lookup_table: dict,
     append_first_node: bool = True,
-    depth:int=0,
-    max_depth:int=10,
+    depth: int = 0,
+    max_depth: int = 10,
 ):
     """
     Appends content to the output list for 'non-logic' nodes. Note that as
@@ -631,7 +646,7 @@ def analyse_node(
     return output
 
 
-def get_coords_in_nested_dict(item, dictionary:dict):
+def get_coords_in_nested_dict(item, dictionary: dict):
     """
     Returns whether an item is present in a twice-nested dictionary, and if so,
         what second-level key is required to obtain it.
@@ -651,7 +666,13 @@ def get_coords_in_nested_dict(item, dictionary:dict):
     return None
 
 
-def format_output(input:list, logic_lines:dict, tab_chars:str, tab_num:int, event_reference:dict):
+def format_output(
+    input: list,
+    logic_lines: dict,
+    tab_chars: str,
+    tab_num: int,
+    event_reference: dict,
+):
     """
     Formats the given uid for output to PUML. Replaces
 
@@ -700,8 +721,22 @@ def format_output(input:list, logic_lines:dict, tab_chars:str, tab_num:int, even
     return output
 
 
+def find_nearest_extant_ancestor(uid_list, node, depth=0, max_depth=100):
+    if depth >= max_depth:
+        return node
+    if node in uid_list:
+        return node
+    return find_nearest_extant_ancestor(
+        uid_list, node.incoming[0], depth + 1, max_depth
+    )
+
+
 def insert_item_using_property_key(
-    uid_list:list, node: Node, property_key:str, insert_before_item:bool=False
+    uid_list: list,
+    node: Node,
+    logic_lines: dict,
+    property_key: str,
+    insert_before_item: bool = False,
 ):
     """
     Inserts a node into a list of nodes, using the node's incoming/outgoing
@@ -710,10 +745,15 @@ def insert_item_using_property_key(
     Args:
         uid_list (list): The list of uid to insert the node into.
         node (dict): The node to be inserted.
+        logic_lines (dict): A list of logic lines.
         property_key (str): The property key used to determine the insertion
             position.
         insert_before_item (bool, optional): Determines whether to insert the
             node before or after the nearest relative. Defaults to False.
+        depth (int, optional): The current depth of the analysis.
+            Defaults to 0.
+        max_depth (int, optional): The maximum depth allowed for the analysis.
+            Defaults to 10.
 
     Returns:
         list: The updated uid list with the node inserted.
@@ -735,36 +775,51 @@ def insert_item_using_property_key(
 
         nearest_relative = node_property[0]
 
+        if (nearest_relative not in uid_list) and (len(node.incoming) > 0):
+            nearest_relative = find_nearest_extant_ancestor(uid_list, node)
+        elif len(node.incoming) == 0:
+            uid_list.insert(0, node)
+            return uid_list
+
         uid_list.reverse()
 
         for relative in node_property:
-            uid_list.index(nearest_relative) < uid_list.index(relative)
-            nearest_relative = relative
+            if nearest_relative in uid_list and relative in uid_list:
+                if uid_list.index(nearest_relative) > uid_list.index(relative):
+                    nearest_relative = relative
 
         uid_list.reverse()
 
-        for insertion_index in [
-            relative_index
-            for relative_index in range(len(uid_list))
-            if nearest_relative == uid_list[relative_index]
-        ]:
+        insertion_index = 0
+        for idx, item in enumerate(uid_list):
+            if item == nearest_relative and idx > insertion_index:
+                insertion_index = idx
 
-            while insertion_index < len(uid_list):
-                if insertion_index == len(uid_list) - 1:
-                    break
+        while insertion_index < len(uid_list):
+            if insertion_index == len(uid_list) - 1:
+                break
 
-                if len(uid_list[insertion_index + 1].incoming) != 0:
-                    insertion_index += 1
-
-            if insert_before_item:
-                uid_list.insert(insertion_index, node)
+            if (
+                get_coords_in_nested_dict(
+                    uid_list[insertion_index + 1].uid, logic_lines
+                )
+                is not None
+            ):
+                insertion_index += 1
             else:
-                uid_list.insert(insertion_index + 1, node)
+                break
+
+        if insert_before_item:
+            uid_list.insert(insertion_index, node)
+        else:
+            uid_list.insert(insertion_index + 1, node)
 
     return uid_list
 
 
-def insert_missing_nodes(uid_list:list, missing_nodes:list):
+def insert_missing_nodes(
+    uid_list: list, missing_nodes: list, logic_lines: dict
+):
     """
     Inserts missing nodes (normally 'leaf' nodes) into the uid list.
 
@@ -776,8 +831,10 @@ def insert_missing_nodes(uid_list:list, missing_nodes:list):
         list: The updated uid list with the missing nodes inserted.
     """
 
-    unchanged_uid_list = uid_list
     for missing_node in missing_nodes:
+        unchanged_uid_list = []
+        for item in uid_list:
+            unchanged_uid_list.append(item)
 
         for KVP in [
             ["incoming_logic", False],
@@ -785,8 +842,9 @@ def insert_missing_nodes(uid_list:list, missing_nodes:list):
             ["outgoing_logic", True],
             ["outgoing", True],
         ]:
+            print("test")
             uid_list = insert_item_using_property_key(
-                uid_list, missing_node, *KVP
+                uid_list, missing_node, logic_lines, *KVP
             )
             if unchanged_uid_list != uid_list:
                 break
@@ -963,7 +1021,7 @@ if __name__ == "__main__":
         if event_name not in present_event_names
     ]
 
-    output = insert_missing_nodes(output, missing_events)
+    output = insert_missing_nodes(output, missing_events, logic_lines)
 
     print("\n\n##################\n\n")
 

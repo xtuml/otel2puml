@@ -16,7 +16,9 @@ from tel2puml.node_map_to_puml.node_map_to_puml import (
     analyse_node,
     get_coords_in_nested_dict,
     format_output,
+    find_nearest_extant_ancestor,
     insert_item_using_property_key,
+    insert_missing_nodes,
 )
 
 
@@ -1463,7 +1465,7 @@ class TestAnalyseNode(unittest.TestCase):
             max_depth=max_depth,
         )
 
-        for idx,item in enumerate(expected_output):
+        for idx, item in enumerate(expected_output):
             self.assertEqual(result[idx].uid, item)
 
     def test_analyse_node_with_uid(self):
@@ -1495,7 +1497,6 @@ class TestAnalyseNode(unittest.TestCase):
         lookup_table["C"].incoming = [lookup_table["B"]]
         lookup_table["D"].incoming = [lookup_table["B"]]
 
-
         logic_lines = {
             "XOR": {
                 "start": "XOR_START",
@@ -1507,14 +1508,22 @@ class TestAnalyseNode(unittest.TestCase):
                 "middle": ["SWITCH_MIDDLE_1", "SWITCH_MIDDLE_1"],
                 "end": "SWITCH_END",
             },
-            "LOOP":{"end":"END_LOOP"},
+            "LOOP": {"end": "END_LOOP"},
         }
         output = []
 
         depth = 1
         max_depth = 10
 
-        expected_output = ["A", "B", "XOR_START", "C", "XOR_MIDDLE", "D", "XOR_END"]
+        expected_output = [
+            "A",
+            "B",
+            "XOR_START",
+            "C",
+            "XOR_MIDDLE",
+            "D",
+            "XOR_END",
+        ]
 
         result = analyse_node(
             node_tree=lookup_table["A"],
@@ -1526,7 +1535,7 @@ class TestAnalyseNode(unittest.TestCase):
             max_depth=max_depth,
         )
 
-        for idx,item in enumerate(expected_output):
+        for idx, item in enumerate(expected_output):
             self.assertEqual(result[idx].uid, item)
 
     def test_analyse_node_with_leaf_uid(self):
@@ -1578,14 +1587,8 @@ class TestGetCoordsInNestedDict(unittest.TestCase):
     def test_item_present(self):
         # Test case where the item is present in the nested dictionary
         dictionary = {
-            "parent1": {
-                "child1": "item1",
-                "child2": "item2"
-            },
-            "parent2": {
-                "child3": "item3",
-                "child4": "item4"
-            }
+            "parent1": {"child1": "item1", "child2": "item2"},
+            "parent2": {"child3": "item3", "child4": "item4"},
         }
         item = "item3"
 
@@ -1596,14 +1599,8 @@ class TestGetCoordsInNestedDict(unittest.TestCase):
     def test_item_not_present(self):
         # Test case where the item is not present in the nested dictionary
         dictionary = {
-            "parent1": {
-                "child1": "item1",
-                "child2": "item2"
-            },
-            "parent2": {
-                "child3": "item3",
-                "child4": "item4"
-            }
+            "parent1": {"child1": "item1", "child2": "item2"},
+            "parent2": {"child3": "item3", "child4": "item4"},
         }
         item = "item5"
 
@@ -1622,10 +1619,7 @@ class TestGetCoordsInNestedDict(unittest.TestCase):
 
     def test_empty_nested_dictionary(self):
         # Test case where the nested dictionary is empty
-        dictionary = {
-            "parent1": {},
-            "parent2": {}
-        }
+        dictionary = {"parent1": {}, "parent2": {}}
         item = "item1"
 
         result = get_coords_in_nested_dict(item, dictionary)
@@ -1637,142 +1631,254 @@ class TestFormatOutput(unittest.TestCase):
     def test_format_output_no_event_reference(self):
         # Test case where there is no event reference
         input = [Node("A"), Node("B"), Node("C")]
-        logic_lines = {"SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}}
+        logic_lines = {
+            "SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}
+        }
         tab_chars = "\t"
         tab_num = 2
         event_reference = {}
 
         expected_output = ["\t\tA", "\t\tB", "\t\tC"]
 
-        result = format_output(input, logic_lines, tab_chars, tab_num, event_reference)
+        result = format_output(
+            input, logic_lines, tab_chars, tab_num, event_reference
+        )
 
         self.assertEqual(result, expected_output)
 
     def test_format_output_with_event_reference(self):
         # Test case where there is an event reference
         input = [Node("A"), Node("B"), Node("C")]
-        logic_lines = {"SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}}
+        logic_lines = {
+            "SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}
+        }
         tab_chars = "\t"
         tab_num = 2
         event_reference = {"B": "EVENT1"}
 
         expected_output = ["\t\tA", "\t\t:EVENT1;", "\t\tC"]
 
-        result = format_output(input, logic_lines, tab_chars, tab_num, event_reference)
+        result = format_output(
+            input, logic_lines, tab_chars, tab_num, event_reference
+        )
 
         self.assertEqual(result, expected_output)
 
     def test_format_output_with_switch_start(self):
         # Test case where there is a switch start line
         input = [Node("START"), Node("A"), Node("B"), Node("C")]
-        logic_lines = {"SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}}
+        logic_lines = {
+            "SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}
+        }
         tab_chars = "\t"
         tab_num = 2
         event_reference = {}
 
         expected_output = ["\t\tSTART", "\t\t\t\tA", "\t\t\t\tB", "\t\t\t\tC"]
 
-        result = format_output(input, logic_lines, tab_chars, tab_num, event_reference)
+        result = format_output(
+            input, logic_lines, tab_chars, tab_num, event_reference
+        )
 
         self.assertEqual(result, expected_output)
 
     def test_format_output_with_switch_middle(self):
         # Test case where there is a switch middle line
         input = [Node("A"), Node("MIDDLE"), Node("B"), Node("C")]
-        logic_lines = {"SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}}
+        logic_lines = {
+            "SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}
+        }
         tab_chars = "\t"
         tab_num = 2
         event_reference = {}
 
         expected_output = ["\t\tA", "\tMIDDLE", "\t\tB", "\t\tC"]
 
-        result = format_output(input, logic_lines, tab_chars, tab_num, event_reference)
+        result = format_output(
+            input, logic_lines, tab_chars, tab_num, event_reference
+        )
 
         self.assertEqual(result, expected_output)
 
     def test_format_output_with_switch_end(self):
         # Test case where there is a switch end line
         input = [Node("A"), Node("B"), Node("END")]
-        logic_lines = {"SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}}
+        logic_lines = {
+            "SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}
+        }
         tab_chars = "\t"
         tab_num = 2
         event_reference = {}
 
         expected_output = ["\t\tA", "\t\tB", "END"]
 
-        result = format_output(input, logic_lines, tab_chars, tab_num, event_reference)
+        result = format_output(
+            input, logic_lines, tab_chars, tab_num, event_reference
+        )
 
         self.assertEqual(result, expected_output)
 
     def test_format_output_with_switch_middle_in_end(self):
         # Test case where there is a switch middle line in the end line
         input = [Node("A"), Node("B"), Node("MIDDLE"), Node("END")]
-        logic_lines = {"SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}}
+        logic_lines = {
+            "SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}
+        }
         tab_chars = "\t"
         tab_num = 2
         event_reference = {}
 
         expected_output = ["\t\tA", "\t\tB", "\tMIDDLE", "END"]
 
-        result = format_output(input, logic_lines, tab_chars, tab_num, event_reference)
+        result = format_output(
+            input, logic_lines, tab_chars, tab_num, event_reference
+        )
 
         self.assertEqual(result, expected_output)
 
     def test_format_output_with_switch_middle_in_middle(self):
         # Test case where there is a switch middle line in the middle line
-        input = [Node("A"), Node("MIDDLE"), Node("B"), Node("MIDDLE"), Node("C")]
-        logic_lines = {"SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}}
+        input = [
+            Node("A"),
+            Node("MIDDLE"),
+            Node("B"),
+            Node("MIDDLE"),
+            Node("C"),
+        ]
+        logic_lines = {
+            "SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}
+        }
         tab_chars = "\t"
         tab_num = 2
         event_reference = {}
 
         expected_output = ["\t\tA", "\tMIDDLE", "\t\tB", "\tMIDDLE", "\t\tC"]
 
-        result = format_output(input, logic_lines, tab_chars, tab_num, event_reference)
+        result = format_output(
+            input, logic_lines, tab_chars, tab_num, event_reference
+        )
 
         self.assertEqual(result, expected_output)
+
+
+class TestFindNearestExtantAncestor(unittest.TestCase):
+    def test_find_nearest_extant_ancestor_node_in_uid_list(self):
+        # Test case where the node is in the uid_list
+        lookup_table = {
+            "A": Node("A"),
+            "B": Node("B"),
+            "C": Node("C"),
+            "D": Node("D"),
+        }
+        lookup_table["A"].outgoing = [lookup_table["B"]]
+        lookup_table["B"].outgoing = [lookup_table["C"]]
+        lookup_table["C"].outgoing = [lookup_table["D"]]
+
+        lookup_table["B"].incoming = [lookup_table["A"]]
+        lookup_table["C"].incoming = [lookup_table["B"]]
+        lookup_table["D"].incoming = [lookup_table["C"]]
+
+        uid_list = [
+            lookup_table["A"],
+            lookup_table["B"],
+            lookup_table["C"],
+            lookup_table["D"],
+        ]
+        node = lookup_table["D"]
+
+        result = find_nearest_extant_ancestor(uid_list, node)
+
+        self.assertEqual(result, node)
+
+    def test_find_nearest_extant_ancestor_node_not_in_uid_list(self):
+        # Test case where the node is not in the uid_list
+        lookup_table = {
+            "A": Node("A"),
+            "B": Node("B"),
+            "C": Node("C"),
+            "D": Node("D"),
+        }
+        lookup_table["A"].outgoing = [lookup_table["B"]]
+        lookup_table["B"].outgoing = [lookup_table["C"]]
+        lookup_table["C"].outgoing = [lookup_table["D"]]
+
+        lookup_table["B"].incoming = [lookup_table["A"]]
+        lookup_table["C"].incoming = [lookup_table["B"]]
+        lookup_table["D"].incoming = [lookup_table["C"]]
+
+        uid_list = [lookup_table["A"], lookup_table["B"], lookup_table["C"]]
+        node = lookup_table["D"]
+        result = find_nearest_extant_ancestor(uid_list, node)
+
+        self.assertEqual(result, node.incoming[0])
+
+    def test_find_nearest_extant_ancestor_max_depth_reached(self):
+        # Test case where the maximum depth is reached
+        lookup_table = {
+            "A": Node("A"),
+            "B": Node("B"),
+            "C": Node("C"),
+            "D": Node("D"),
+        }
+        lookup_table["A"].outgoing = [lookup_table["B"]]
+        lookup_table["B"].outgoing = [lookup_table["C"]]
+        lookup_table["C"].outgoing = [lookup_table["D"]]
+
+        lookup_table["B"].incoming = [lookup_table["A"]]
+        lookup_table["C"].incoming = [lookup_table["B"]]
+        lookup_table["D"].incoming = [lookup_table["C"]]
+
+        uid_list = [lookup_table["A"], lookup_table["B"], lookup_table["C"]]
+        node = lookup_table["D"]
+
+        result = find_nearest_extant_ancestor(uid_list, node, max_depth=0)
+
+        self.assertEqual(result, node)
 
 
 class TestInsertItemUsingPropertyKey(unittest.TestCase):
     def test_insert_item_using_property_key_incoming(self):
         # Test case for inserting a node based on the incoming property
         uid_list = [Node("A"), Node("B"), Node("C")]
-        node = Node("D", incoming = [uid_list[2]])
+        node = Node("D", incoming=[uid_list[2]])
+        logic_lines = {}
         property_key = "incoming"
         insert_before_item = False
 
         result = insert_item_using_property_key(
-            uid_list, node, property_key, insert_before_item
+            uid_list, node, logic_lines, property_key, insert_before_item
         )
 
-        expected = [uid_list[0],uid_list[1],uid_list[2], node]
+        expected = [uid_list[0], uid_list[1], uid_list[2], node]
         self.assertEqual(result, expected)
 
     def test_insert_item_using_property_key_outgoing(self):
         # Test case for inserting a node based on the outgoing property
         uid_list = [Node("A"), Node("B"), Node("D")]
-        node = Node("C", outgoing = [uid_list[2]])
+        node = Node("C", outgoing=[uid_list[2]], incoming=[uid_list[1]])
         property_key = "outgoing"
         insert_before_item = True
+        logic_lines = {}
 
         result = insert_item_using_property_key(
-            uid_list, node, property_key, insert_before_item
+            uid_list, node, logic_lines, property_key, insert_before_item
         )
 
-        expected = [uid_list[0],uid_list[1],node,uid_list[-1]]
+        expected = [uid_list[0], uid_list[1], node, uid_list[-1]]
         self.assertEqual(result, expected)
 
     def test_insert_item_using_property_key_incoming_logic(self):
         # Test case for inserting a node based on the incoming_logic property
         uid_list = [Node("A"), Node("B"), Node("C")]
         uid_list.append(Node("XOR", incoming=uid_list[2]))
-        node = Node("D", incoming_logic = [uid_list[-1]])
+        node = Node("D", incoming_logic=[uid_list[-1]], incoming=[uid_list[3]])
         uid_list[-1].outgoing = node
+        logic_lines = {"XOR": {"start": "XOR"}}
         property_key = "incoming_logic"
         insert_before_item = False
 
         result = insert_item_using_property_key(
-            uid_list, node, property_key, insert_before_item
+            uid_list, node, logic_lines, property_key, insert_before_item
         )
 
         expected = [uid_list[0], uid_list[1], uid_list[2], uid_list[3], node]
@@ -1780,19 +1886,21 @@ class TestInsertItemUsingPropertyKey(unittest.TestCase):
 
     def test_insert_item_using_property_key_outgoing_logic(self):
         # Test case for inserting a node based on the outgoing_logic property
-        uid_list = [Node("A"), Node("B"), Node("XOR"), Node("C")]
-        node = Node("D", outgoing_logic = [uid_list[2]])
+        uid_list = [Node("A"), Node("B"), Node("XOR"), Node("D")]
+        node = Node("C", outgoing_logic=[uid_list[2]])
+        node.incoming = [uid_list[-1]]
         uid_list[2].incoming = [node]
         uid_list[2].outgoing = [uid_list[3]]
         uid_list[3].incoming = [uid_list[1]]
         property_key = "outgoing_logic"
         insert_before_item = False
+        logic_lines = {"XOR": {"start": "XOR"}}
 
         result = insert_item_using_property_key(
-            uid_list, node, property_key, insert_before_item
+            uid_list, node, logic_lines, property_key, insert_before_item
         )
 
-        expected = [uid_list[0], uid_list[1], uid_list[2], uid_list[3], node]
+        expected = [uid_list[0], uid_list[1], uid_list[2], node, uid_list[-1]]
         self.assertEqual(result, expected)
 
     def test_insert_item_using_property_key_invalid_property_key(self):
@@ -1813,13 +1921,154 @@ class TestInsertItemUsingPropertyKey(unittest.TestCase):
         node = Node("C", incoming=[uid_list[-1]])
         property_key = "incoming"
         insert_before_item = True
+        logic_lines = {}
 
         result = insert_item_using_property_key(
-            uid_list, node, property_key, insert_before_item
+            uid_list, node, logic_lines, property_key, insert_before_item
         )
 
         expected = [uid_list[0], uid_list[1], node, uid_list[3]]
         self.assertEqual(result, expected)
 
-if __name__ == '__main__':
+
+class TestInsertMissingNodes(unittest.TestCase):
+    def test_insert_missing_nodes_no_missing_nodes(self):
+        # Test case with no missing nodes
+        uid_list = ["A", "B", "C"]
+        missing_nodes = []
+        logic_lines = {}
+
+        result = insert_missing_nodes(uid_list, missing_nodes, logic_lines)
+
+        self.assertEqual(result, uid_list)
+
+    def test_insert_missing_nodes_missing_nodes_at_beginning(self):
+        # Test case with missing nodes at the beginning of the uid list
+        lookup_table = {
+            "A": Node("A"),
+            "B": Node("B"),
+            "C": Node("C"),
+            "D": Node("D"),
+            "E": Node("E"),
+            "F": Node("F"),
+        }
+        lookup_table["A"].outgoing = [lookup_table["B"]]
+        lookup_table["B"].outgoing = [lookup_table["C"]]
+        lookup_table["C"].outgoing = [lookup_table["D"]]
+        lookup_table["D"].outgoing = [lookup_table["E"]]
+        lookup_table["E"].outgoing = [lookup_table["F"]]
+
+        lookup_table["B"].incoming = [lookup_table["A"]]
+        lookup_table["C"].incoming = [lookup_table["B"]]
+        lookup_table["D"].incoming = [lookup_table["C"]]
+        lookup_table["E"].incoming = [lookup_table["D"]]
+        lookup_table["F"].incoming = [lookup_table["E"]]
+
+        uid_list = [lookup_table["D"], lookup_table["E"], lookup_table["F"]]
+        missing_nodes = [
+            lookup_table["A"],
+            lookup_table["B"],
+            lookup_table["C"],
+        ]
+
+        logic_lines = {}
+
+        result = insert_missing_nodes(uid_list, missing_nodes, logic_lines)
+
+        expected_result = [
+            lookup_table["A"],
+            lookup_table["B"],
+            lookup_table["C"],
+            lookup_table["D"],
+            lookup_table["E"],
+            lookup_table["F"],
+        ]
+        self.assertEqual(result, expected_result)
+
+    def test_insert_missing_nodes_missing_nodes_at_end(self):
+        # Test case with missing nodes at the end of the uid list
+        lookup_table = {
+            "A": Node("A"),
+            "B": Node("B"),
+            "C": Node("C"),
+            "D": Node("D"),
+            "E": Node("E"),
+            "F": Node("F"),
+        }
+        lookup_table["A"].outgoing = [lookup_table["B"]]
+        lookup_table["B"].outgoing = [lookup_table["C"]]
+        lookup_table["C"].outgoing = [lookup_table["D"]]
+        lookup_table["D"].outgoing = [lookup_table["E"]]
+        lookup_table["E"].outgoing = [lookup_table["F"]]
+
+        lookup_table["B"].incoming = [lookup_table["A"]]
+        lookup_table["C"].incoming = [lookup_table["B"]]
+        lookup_table["D"].incoming = [lookup_table["C"]]
+        lookup_table["E"].incoming = [lookup_table["D"]]
+        lookup_table["F"].incoming = [lookup_table["E"]]
+
+        uid_list = [lookup_table["A"], lookup_table["B"], lookup_table["C"]]
+        missing_nodes = [
+            lookup_table["D"],
+            lookup_table["E"],
+            lookup_table["F"],
+        ]
+        logic_lines = {}
+
+        result = insert_missing_nodes(uid_list, missing_nodes, logic_lines)
+
+        expected_result = [
+            lookup_table["A"],
+            lookup_table["B"],
+            lookup_table["C"],
+            lookup_table["D"],
+            lookup_table["E"],
+            lookup_table["F"],
+        ]
+        self.assertEqual(result, expected_result)
+
+    def test_insert_missing_nodes_missing_nodes_in_middle(self):
+        # Test case with missing nodes in the middle of the uid list
+        lookup_table = {
+            "A": Node("A"),
+            "B": Node("B"),
+            "C": Node("C"),
+            "D": Node("D"),
+            "E": Node("E"),
+            "F": Node("F"),
+        }
+        lookup_table["A"].outgoing = [lookup_table["B"]]
+        lookup_table["B"].outgoing = [lookup_table["C"]]
+        lookup_table["C"].outgoing = [lookup_table["D"]]
+        lookup_table["D"].outgoing = [lookup_table["E"]]
+        lookup_table["E"].outgoing = [lookup_table["F"]]
+
+        lookup_table["B"].incoming = [lookup_table["A"]]
+        lookup_table["C"].incoming = [lookup_table["B"]]
+        lookup_table["D"].incoming = [lookup_table["C"]]
+        lookup_table["E"].incoming = [lookup_table["D"]]
+        lookup_table["F"].incoming = [lookup_table["E"]]
+
+        uid_list = [lookup_table["A"], lookup_table["B"], lookup_table["F"]]
+        missing_nodes = [
+            lookup_table["C"],
+            lookup_table["D"],
+            lookup_table["E"],
+        ]
+        logic_lines = {}
+
+        result = insert_missing_nodes(uid_list, missing_nodes, logic_lines)
+
+        expected_result = [
+            lookup_table["A"],
+            lookup_table["B"],
+            lookup_table["C"],
+            lookup_table["D"],
+            lookup_table["E"],
+            lookup_table["F"],
+        ]
+        self.assertEqual(result, expected_result)
+
+
+if __name__ == "__main__":
     unittest.main()
