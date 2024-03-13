@@ -433,7 +433,7 @@ class TestEvent:
         labels = ["B", "C"]
         for child in logic_gate.children:
             labels.remove(child.label)
-        assert len(labels) == 0 
+        assert len(labels) == 0
 
         def _check_or(tree):
             logic_gate = tree.children[1]
@@ -453,7 +453,7 @@ class TestEvent:
                         labels_cd.remove(grandchild.label)
             assert len(labels_b) == 0
             assert len(labels_cd) == 0
-   
+
         event.event_sets = {
             EventSet(["B", "C", "D"]),
             EventSet(["B"]),
