@@ -1,6 +1,5 @@
 """Test the logic detection pipeline."""
 
-from copy import deepcopy
 from datetime import datetime, timedelta
 
 from pm4py import ProcessTree
