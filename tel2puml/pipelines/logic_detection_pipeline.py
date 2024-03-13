@@ -479,11 +479,14 @@ class Event:
                         reduced_event_set,
                         key=lambda s: len(s & universe) / len(s)**2
                     )
-                    if len(subset) == 0:
-                        insoluble = True
-                        break
+
+                    pre_size = len(universe)
                     weighted_cover.add(subset)
                     universe -= subset
+
+                    if pre_size == len(universe):
+                        insoluble = True
+                        break
 
             if not insoluble:
                 for event_set in reduced_event_set:
