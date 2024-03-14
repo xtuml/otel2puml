@@ -595,6 +595,18 @@ class TestEvent:
     @staticmethod
     def test_reduce_process_tree_to_preferred_logic_gates() -> None:
         """Tests for method reduce_process_tree_to_preffered_logic_gates"""
+        def _test_logic_gate(process_tree: ProcessTree):
+            logic_gates_tree = event.reduce_process_tree_to_preferred_logic_gates(
+                process_tree
+            )
+            assert logic_gates_tree.operator.value == Operator.OR.value
+            assert len(logic_gates_tree.children) == 3
+            labels = ["B", "C", "D"]
+            for child in logic_gates_tree.children:
+                assert child.label in labels
+                labels.remove(child.label)
+            assert len(labels) == 0
+
         event = Event("A")
         event.event_sets = {
             EventSet(["B", "C", "D"]),
@@ -606,16 +618,55 @@ class TestEvent:
             EventSet(["D"]),
         }
         process_tree = event.calculate_process_tree_from_event_sets()
-        logic_gates_tree = event.reduce_process_tree_to_preferred_logic_gates(
-            process_tree
+        _test_logic_gate(process_tree)
+
+        event.event_sets = {
+            EventSet(["B", "C", "D"]),
+            EventSet(["C", "D"]),
+            EventSet(["D"]),
+            EventSet(["B"]),
+        }
+        process_tree = event.calculate_process_tree_from_event_sets()
+        _test_logic_gate(process_tree)
+
+        main_tree = ProcessTree(
+            operator=Operator.PARALLEL,
+            children=[
+                ProcessTree(
+                    operator=Operator.XOR,
+                    children=[
+                        ProcessTree(label="tau"),
+                        ProcessTree(label="B")],
+                ),
+                ProcessTree(
+                    operator=Operator.XOR,
+                    children=[
+                        ProcessTree(label="tau"),
+                        ProcessTree(
+                            operator=Operator.PARALLEL,
+                            children=[
+                                ProcessTree(
+                                    operator=Operator.XOR,
+                                    children=[
+                                        ProcessTree(label="tau"),
+                                        ProcessTree(label="C")],
+                                ),
+                                ProcessTree(label="D"),
+                            ],
+                        )
+                    ]
+                )
+                ,
+            ],
         )
-        assert logic_gates_tree.operator.value == Operator.OR.value
-        assert len(logic_gates_tree.children) == 3
-        labels = ["B", "C", "D"]
-        for child in logic_gates_tree.children:
-            assert child.label in labels
-            labels.remove(child.label)
-        assert len(labels) == 0
+        process_tree = ProcessTree(
+            label=Operator.SEQUENCE,
+            children=[
+                ProcessTree(label="A"),
+                main_tree,
+            ]
+        )
+        _test_logic_gate(process_tree)
 
     @staticmethod
     def test_update_tree_with_repeat_logic() -> None:
