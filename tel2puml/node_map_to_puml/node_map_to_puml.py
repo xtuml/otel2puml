@@ -772,7 +772,7 @@ def find_nearest_extant_ancestor(
 
 
 def insert_item_using_property_key(
-    uid_list: list,
+    node_list: list,
     node: Node,
     logic_lines: dict,
     property_key: str,
@@ -783,20 +783,16 @@ def insert_item_using_property_key(
         property to determine where it should be inserted.
 
     Args:
-        uid_list (list): The list of uid to insert the node into.
-        node (dict): The node to be inserted.
-        logic_lines (dict): A list of logic lines.
+        node_list (list): The list of nodes to insert into.
+        node (Node): The node to be inserted.
+        logic_lines (dict): A dictionary containing logic lines.
         property_key (str): The property key used to determine the insertion
             position.
         insert_before_item (bool, optional): Determines whether to insert the
             node before or after the nearest relative. Defaults to False.
-        depth (int, optional): The current depth of the analysis.
-            Defaults to 0.
-        max_depth (int, optional): The maximum depth allowed for the analysis.
-            Defaults to 10.
 
     Returns:
-        list: The updated uid list with the node inserted.
+        list: The updated node_list with the node inserted.
     """
     node_property = None
     node_property = getattr(node, property_key)
@@ -805,33 +801,33 @@ def insert_item_using_property_key(
 
         nearest_relative = node_property[0]
 
-        if (nearest_relative not in uid_list) and (len(node.incoming) > 0):
-            nearest_relative = find_nearest_extant_ancestor(uid_list, node)
+        if (nearest_relative not in node_list) and (len(node.incoming) > 0):
+            nearest_relative = find_nearest_extant_ancestor(node_list, node)
         elif len(node.incoming) == 0:
-            uid_list.insert(0, node)
-            return uid_list
+            node_list.insert(0, node)
+            return node_list
 
-        uid_list.reverse()
+        node_list.reverse()
 
         for relative in node_property:
-            if nearest_relative in uid_list and relative in uid_list:
-                if uid_list.index(nearest_relative) > uid_list.index(relative):
+            if nearest_relative in node_list and relative in node_list:
+                if node_list.index(nearest_relative) > node_list.index(relative):
                     nearest_relative = relative
 
-        uid_list.reverse()
+        node_list.reverse()
 
         insertion_index = 0
-        for idx, item in enumerate(uid_list):
+        for idx, item in enumerate(node_list):
             if item == nearest_relative and idx > insertion_index:
                 insertion_index = idx
 
-        while insertion_index < len(uid_list):
-            if insertion_index == len(uid_list) - 1:
+        while insertion_index < len(node_list):
+            if insertion_index == len(node_list) - 1:
                 break
 
             if (
                 get_coords_in_nested_dict(
-                    uid_list[insertion_index + 1].uid, logic_lines
+                    node_list[insertion_index + 1].uid, logic_lines
                 )
                 is not None
             ):
@@ -840,11 +836,11 @@ def insert_item_using_property_key(
                 break
 
         if insert_before_item:
-            uid_list.insert(insertion_index, node)
+            node_list.insert(insertion_index, node)
         else:
-            uid_list.insert(insertion_index + 1, node)
+            node_list.insert(insertion_index + 1, node)
 
-    return uid_list
+    return node_list
 
 
 def insert_missing_nodes(
