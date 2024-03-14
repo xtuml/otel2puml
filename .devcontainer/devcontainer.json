@@ -9,8 +9,8 @@
 	"features": {
 		"ghcr.io/rocker-org/devcontainer-features/apt-packages:1": {
 			"packages": "default-jre"
-	}
-},
+		}
+	},
 
 	"customizations": {
 		"vscode": {

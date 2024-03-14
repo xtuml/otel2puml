@@ -20,6 +20,8 @@ from pm4py import (
 from test_event_generator.solutions.graph_solution import GraphSolution
 from test_event_generator.solutions.event_solution import EventSolution
 
+from tel2puml.utils import get_weighted_cover
+
 
 class Operator(Enum):
     """
@@ -87,10 +89,10 @@ class EventSet(dict[str, int]):
         return self.__key() == other.__key()
 
     def to_frozenset(self) -> frozenset[str]:
-        """Method to get the events as a list.
+        """Method to get the events as a frozenset.
 
-        :return: The events as a list.
-        :rtype: `list`[`str`]
+        :return: The events as a frozenset.
+        :rtype: `frozenset`[`str`]
         """
         return frozenset(self.keys())
 
@@ -336,13 +338,13 @@ class Event:
         )
         return process_tree
 
-    @staticmethod
     def reduce_process_tree_to_preferred_logic_gates(
+        self,
         process_tree: ProcessTree,
     ) -> ProcessTree:
         """This method reduces a process tree to the preferred logic gates by
         removing the first event and getting the subsequent tree and then
-        calculating the OR gates.
+        calculating the OR gates and adding missing AND gates.
 
         :param process_tree: The process tree.
         :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
@@ -353,6 +355,8 @@ class Event:
         logic_gate_tree: ProcessTree = process_tree.children[1]
         # calculate OR gates
         Event.process_or_gates(logic_gate_tree)
+        # process missing AND gates
+        self.process_missing_and_gates(logic_gate_tree)
         return logic_gate_tree
 
     @staticmethod
@@ -392,40 +396,48 @@ class Event:
             return
         if node.operator.value != Operator.PARALLEL.value:
             return
-        for counter, child in enumerate(node.children):
+
+        tau_children = []
+        non_tau_children = []
+        for child in node.children:
             if child.operator is None:
-                continue
-            if child.operator.value == Operator.XOR.value:
+                non_tau_children.append(child)
+            elif child.operator.value == Operator.XOR.value:
                 if any(
-                    str(child_of_child) == "tau"
-                    for child_of_child in child.children
+                    str(grandchild) == "tau"
+                    for grandchild in child.children
                 ):
-                    node.operator = Operator.OR
-                    node_new_children = []
-                    for child_of_child in child.children:
-                        if str(child_of_child) != "tau":
-                            child_of_child.parent = node
-                            node_new_children.append(child_of_child)
-                    if len(node_new_children) > 1:
-                        node_new_children = [
-                            ProcessTree(Operator.XOR, node, node_new_children)
-                        ]
-                    if len(node.children[counter + 1:]) > 0:
-                        end_children = [
-                            ProcessTree(
-                                Operator.PARALLEL,
-                                node,
-                                node.children[counter + 1:],
-                            )
-                        ]
-                    else:
-                        end_children = node.children[counter + 1:]
-                    node.children = [
-                        *node.children[:counter],
-                        *node_new_children,
-                        *end_children,
-                    ]
-                    break
+                    tau_children.append(child)
+                else:
+                    non_tau_children.append(child)
+
+        if len(tau_children) > 0:
+            node.operator = Operator.OR
+            removed_tau_children = []
+            for child in tau_children:
+                for grandchild in child.children:
+                    if str(grandchild) != "tau":
+                        grandchild.parent = node
+                        removed_tau_children.append(grandchild)
+
+            if len(non_tau_children) == 0:
+                node.children = removed_tau_children
+                return
+
+            updated_children = []
+            for children in (removed_tau_children, non_tau_children):
+                if len(children) == 1:
+                    updated_children.append(children[0])
+                else:
+                    updated_children.append(
+                        ProcessTree(
+                            Operator.PARALLEL,
+                            node,
+                            children,
+                        )
+                    )
+
+            node.children = updated_children
 
     @staticmethod
     def filter_defunct_or_gates(
@@ -443,6 +455,68 @@ class Event:
                     if node.parent.operator.value == Operator.OR.value:
                         node.parent.children.remove(node)
                         node.parent.children.extend(node.children)
+
+    def process_missing_and_gates(
+        self,
+        process_tree: ProcessTree,
+    ) -> None:
+        """Method to add missing AND gates to a process tree below OR gates.
+
+        :param process_tree: The process tree.
+        :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+        """
+        if (
+                process_tree.operator is not None
+                and process_tree.operator.value == Operator.OR.value
+        ):
+            labels = []
+            insoluble = False
+            for child in process_tree.children:
+                if child.operator is None:
+                    labels.append(child.label)
+                else:
+                    insoluble = True
+                    break
+
+            if not insoluble:
+                universe = set(labels)
+                reduced_event_set = self.get_reduced_event_set()
+                reduced_event_set.remove(universe)
+
+                weighted_cover = get_weighted_cover(
+                    reduced_event_set,
+                    universe
+                )
+
+                if weighted_cover is not None:
+                    children = []
+                    for event_set in weighted_cover:
+                        if len(event_set) > 1:
+                            children.append(
+                                ProcessTree(
+                                    Operator.PARALLEL,
+                                    process_tree,
+                                    [
+                                        ProcessTree(
+                                            label=event,
+                                            parent=process_tree,
+                                        )
+                                        for event in event_set
+                                    ],
+                                )
+                            )
+                        else:
+                            label, = event_set
+                            children.append(
+                                ProcessTree(
+                                    label=label,
+                                    parent=process_tree,
+                                )
+                            )
+                    process_tree.children = children
+
+        for child in process_tree.children:
+            self.process_missing_and_gates(child)
 
     def calculate_repeats_in_tree(
         self, logic_gate_tree: ProcessTree
