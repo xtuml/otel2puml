@@ -207,11 +207,11 @@ class Node:
 
     def copy_node(
         self,
-        uid=None,
-        incoming=None,
-        outgoing=None,
-        incoming_logic=None,
-        outgoing_logic=None,
+        uid: str = None,
+        incoming: list = None,
+        outgoing: list = None,
+        incoming_logic: list = None,
+        outgoing_logic: list = None,
     ):
         """
         Creates a copy of a given node with optional modifications to its
