@@ -20,6 +20,8 @@ from pm4py import (
 from test_event_generator.solutions.graph_solution import GraphSolution
 from test_event_generator.solutions.event_solution import EventSolution
 
+from tel2puml.utils import get_weighted_cover
+
 
 class Operator(Enum):
     """
@@ -481,62 +483,37 @@ class Event:
                 reduced_event_set = self.get_reduced_event_set()
                 reduced_event_set.remove(universe)
 
-                weighted_cover = set()
-                while universe:
-                    subset = max(
-                        reduced_event_set,
-                        key=lambda s: len(s & universe) / len(s)**2
-                    )
+                weighted_cover = get_weighted_cover(
+                    reduced_event_set, 
+                    universe
+                )
 
-                    pre_size = len(universe)
-                    weighted_cover.add(subset)
-                    universe -= subset
-
-                    if pre_size == len(universe):
-                        insoluble = True
-                        break
-
-            if not insoluble:
-                for event_set in reduced_event_set:
-                    for cover_set in weighted_cover:
-                        if event_set & cover_set == cover_set:
-                            event_set -= cover_set
-                    if len(event_set) > 0:
-                        insoluble = True
-                        break
-
-            if not insoluble:
-                for x, y in permutations(weighted_cover, 2):
-                    if len(x & y) > 0:
-                        insoluble = True
-                        break
-
-            if not insoluble:
-                children = []
-                for event_set in weighted_cover:
-                    if len(event_set) > 1:
-                        children.append(
-                            ProcessTree(
-                                Operator.PARALLEL,
-                                process_tree,
-                                [
-                                    ProcessTree(
-                                        label=event,
-                                        parent=process_tree,
-                                    )
-                                    for event in event_set
-                                ],
+                if weighted_cover is not None:
+                    children = []
+                    for event_set in weighted_cover:
+                        if len(event_set) > 1:
+                            children.append(
+                                ProcessTree(
+                                    Operator.PARALLEL,
+                                    process_tree,
+                                    [
+                                        ProcessTree(
+                                            label=event,
+                                            parent=process_tree,
+                                        )
+                                        for event in event_set
+                                    ],
+                                )
                             )
-                        )
-                    else:
-                        label, = event_set
-                        children.append(
-                            ProcessTree(
-                                label=label,
-                                parent=process_tree,
+                        else:
+                            label, = event_set
+                            children.append(
+                                ProcessTree(
+                                    label=label,
+                                    parent=process_tree,
+                                )
                             )
-                        )
-                process_tree.children = children
+                    process_tree.children = children
 
         for child in process_tree.children:
             self.process_missing_and_gates(child)
