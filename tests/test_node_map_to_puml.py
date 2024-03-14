@@ -1,4 +1,5 @@
-""" Unit and end-to-end tests for node_map_to_puml """
+"""Unit and end-to-end tests for node_map_to_puml"""
+
 import unittest
 from tel2puml.node_map_to_puml.node import Node
 from tel2puml.node_map_to_puml.node_map_to_puml import (
@@ -21,9 +22,12 @@ from tel2puml.node_map_to_puml.node_map_to_puml import (
     find_nearest_extant_ancestor,
     insert_item_using_property_key,
     insert_missing_nodes,
+    alter_node_tree_to_contain_logic_nodes,
+    convert_nodes_to_puml,
 )
 from tel2puml.node_map_to_puml.node_population_functions import (
-    get_data,
+    convert_to_nodes,
+    get_puml_data_and_analyse_with_jalergia,
 )
 
 
@@ -194,9 +198,10 @@ class TestDrillDownTree(unittest.TestCase):
 
 
 class TestGetReverseNodeTree(unittest.TestCase):
-    """ Unit tests for the get_reverse_node_tree function. """
+    """Unit tests for the get_reverse_node_tree function."""
+
     def test_get_reverse_node_tree_single_node(self):
-        """ Test case with a single node """
+        """Test case with a single node"""
         node = Node("A")
         lookup_table = {}
         logic_lines = {"LOOP": {"end": "END_LOOP"}}
@@ -209,7 +214,7 @@ class TestGetReverseNodeTree(unittest.TestCase):
         self.assertEqual(result, [])
 
     def test_get_reverse_node_tree_no_outgoing_nodes(self):
-        """ Test case with a node that has no outgoing nodes """
+        """Test case with a node that has no outgoing nodes"""
         node = Node("A")
         lookup_table = {}
         logic_lines = {"LOOP": {"end": "END_LOOP"}}
@@ -222,7 +227,7 @@ class TestGetReverseNodeTree(unittest.TestCase):
         self.assertEqual(result, [])
 
     def test_get_reverse_node_tree_single_outgoing_node(self):
-        """ Test case with a node that has a single outgoing node """
+        """Test case with a node that has a single outgoing node"""
         lookup_table = {"A": Node("A")}
         lookup_table["B"] = Node("B")
         lookup_table["C"] = Node("C")
@@ -240,7 +245,7 @@ class TestGetReverseNodeTree(unittest.TestCase):
         self.assertEqual(result, [lookup_table["C"], lookup_table["B"]])
 
     def test_get_reverse_node_tree_multiple_outgoing_nodes(self):
-        """ Test case with a node that has multiple outgoing nodes """
+        """Test case with a node that has multiple outgoing nodes"""
         node = Node("A")
         node.outgoing = [Node("B"), Node("C")]
         lookup_table = {}
@@ -276,7 +281,7 @@ class TestGetReverseNodeTree(unittest.TestCase):
         self.assertEqual(result, [lookup_table["B"]])
 
     def test_get_reverse_node_tree_in_loop(self):
-        """ Test case with a node that is in a loop """
+        """Test case with a node that is in a loop"""
 
         nodes = {"A": Node("A")}
         nodes["B"] = Node("B")
@@ -301,7 +306,7 @@ class TestGetReverseNodeTree(unittest.TestCase):
         self.assertEqual(result, [nodes["C"], nodes["B"]])
 
     def test_get_reverse_node_tree_max_depth_reached(self):
-        """ Test case where the maximum depth is reached """
+        """Test case where the maximum depth is reached"""
         node = Node("A")
         node.outgoing = [Node("B")]
         lookup_table = {}
@@ -316,9 +321,10 @@ class TestGetReverseNodeTree(unittest.TestCase):
 
 
 class TestGetTreeSimilarity(unittest.TestCase):
-    """ Unit tests for the get_tree_similarity function """
+    """Unit tests for the get_tree_similarity function"""
+
     def test_get_tree_similarity_all_trees_converge(self):
-        """ Test case where all trees in reverse_node_trees converge """
+        """Test case where all trees in reverse_node_trees converge"""
 
         start_node = Node("A")
         end_node = Node("I")
@@ -381,7 +387,7 @@ class TestGetTreeSimilarity(unittest.TestCase):
         self.assertEqual(result, 1)
 
     def test_get_tree_similarity_not_all_trees_converge(self):
-        """ Test case where not all trees in reverse_node_trees converge """
+        """Test case where not all trees in reverse_node_trees converge"""
 
         start_node = Node("A")
         end_node = Node("I")
@@ -450,7 +456,7 @@ class TestGetTreeSimilarity(unittest.TestCase):
         self.assertEqual(result, 0)
 
     def test_get_tree_similarity_empty_tree(self):
-        """ Test case where reverse_node_trees contains an empty tree """
+        """Test case where reverse_node_trees contains an empty tree"""
 
         start_node = Node("A")
         end_node = Node("I")
@@ -505,9 +511,10 @@ class TestGetTreeSimilarity(unittest.TestCase):
 
 
 class TestAppendLogicMiddleOrEnd(unittest.TestCase):
-    """ Unit tests for the append_logic_middle_or_end function """
+    """Unit tests for the append_logic_middle_or_end function"""
+
     def test_append_logic_middle_or_end_middle(self):
-        """ Test case for appending logic in the middle of a branch """
+        """Test case for appending logic in the middle of a branch"""
 
         lookup_table = {
             "A": Node("A"),
@@ -561,7 +568,7 @@ class TestAppendLogicMiddleOrEnd(unittest.TestCase):
         self.assertEqual(result[1].outgoing, expected_output[1].outgoing)
 
     def test_append_logic_middle_or_end_end(self):
-        """ Test case for appending logic at the end of a branch """
+        """Test case for appending logic at the end of a branch"""
 
         lookup_table = {
             "A": Node("A"),
@@ -681,9 +688,10 @@ class TestAppendLogicMiddleOrEnd(unittest.TestCase):
 
 
 class TestAppendLogicStart(unittest.TestCase):
-    """ Unit tests for the append_logic_start function """
+    """Unit tests for the append_logic_start function"""
+
     def test_append_logic_start_regular_node(self):
-        """ Test case for appending logic start node for a regular node """
+        """Test case for appending logic start node for a regular node"""
 
         lookup_table = {
             "A": Node("A"),
@@ -739,7 +747,7 @@ class TestAppendLogicStart(unittest.TestCase):
         self.assertEqual(result[1].outgoing, expected_output[1].outgoing)
 
     def test_append_logic_start_switch_node(self):
-        """ Test case for appending logic start node for a switch node """
+        """Test case for appending logic start node for a switch node"""
 
         lookup_table = {
             "A": Node("A"),
@@ -801,9 +809,10 @@ class TestAppendLogicStart(unittest.TestCase):
 
 
 class TestHandleLoopStart(unittest.TestCase):
-    """ Unit tests for the handle_loop_start function """
+    """Unit tests for the handle_loop_start function"""
+
     def test_handle_loop_start_no_loop_start(self):
-        """ Test case where there is no loop start detected """
+        """Test case where there is no loop start detected"""
         output = []
         node_tree = Node("A")
         logic_lines = {"LOOP": {"start": "START_LOOP", "end": "END_LOOP"}}
@@ -813,7 +822,7 @@ class TestHandleLoopStart(unittest.TestCase):
         self.assertEqual(result, [])
 
     def test_handle_loop_start_with_loop_start(self):
-        """ Test case where there is a loop start detected """
+        """Test case where there is a loop start detected"""
         output = []
 
         nodes = {"A": Node("A")}
@@ -873,7 +882,7 @@ class TestHandleLoopStart(unittest.TestCase):
         self.assertEqual(result[0].outgoing, [nodes["B"], nodes["C"]])
 
     def test_handle_loop_start_no_possible_descendants(self):
-        """ Test case where there are no possible descendant incoming nodes """
+        """Test case where there are no possible descendant incoming nodes"""
         output = []
         node_tree = Node("A")
         node_tree.incoming = [Node("B")]
@@ -885,9 +894,10 @@ class TestHandleLoopStart(unittest.TestCase):
 
 
 class TestGetReverseNodeTreeDict(unittest.TestCase):
-    """ Unit tests for the get_reverse_node_tree_dict function """
+    """Unit tests for the get_reverse_node_tree_dict function"""
+
     def test_get_reverse_node_tree_dict_with_reverse_node_trees(self):
-        """ Test case with reverse node trees """
+        """Test case with reverse node trees"""
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -945,9 +955,10 @@ class TestGetReverseNodeTreeDict(unittest.TestCase):
 
 
 class TestGetSmallestReverseTree(unittest.TestCase):
-    """ Unit tests for the get_smallest_reverse_tree function """
+    """Unit tests for the get_smallest_reverse_tree function"""
+
     def test_get_smallest_reverse_tree_empty_dict(self):
-        """ Test case with an empty dictionary """
+        """Test case with an empty dictionary"""
         reverse_node_trees = {}
 
         result = get_smallest_reverse_tree(reverse_node_trees)
@@ -955,7 +966,7 @@ class TestGetSmallestReverseTree(unittest.TestCase):
         self.assertEqual(result, [])
 
     def test_get_smallest_reverse_tree_single_tree(self):
-        """ Test case with a single reverse tree """
+        """Test case with a single reverse tree"""
         reverse_node_trees = {"tree1": [1, 2, 3, 4, 5]}
 
         result = get_smallest_reverse_tree(reverse_node_trees)
@@ -963,7 +974,7 @@ class TestGetSmallestReverseTree(unittest.TestCase):
         self.assertEqual(result, [1, 2, 3, 4, 5])
 
     def test_get_smallest_reverse_tree_multiple_trees(self):
-        """ Test case with multiple reverse trees """
+        """Test case with multiple reverse trees"""
         reverse_node_trees = {
             "tree1": [1, 2, 3],
             "tree2": [1, 2, 3, 4],
@@ -976,7 +987,7 @@ class TestGetSmallestReverseTree(unittest.TestCase):
         self.assertEqual(result, [1, 2])
 
     def test_get_smallest_reverse_tree_equal_length_trees(self):
-        """ Test case with multiple reverse trees of equal length """
+        """Test case with multiple reverse trees of equal length"""
         reverse_node_trees = {
             "tree1": [1, 2, 3],
             "tree2": [4, 5, 6],
@@ -989,9 +1000,10 @@ class TestGetSmallestReverseTree(unittest.TestCase):
 
 
 class TestHandleImmediateChildren(unittest.TestCase):
-    """ Unit tests for the handle_immediate_children function """
+    """Unit tests for the handle_immediate_children function"""
+
     def test_handle_immediate_children_tree_similarity_greater_than_zero(self):
-        """ Test case where tree_similarity is greater than zero """
+        """Test case where tree_similarity is greater than zero"""
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -1052,7 +1064,7 @@ class TestHandleImmediateChildren(unittest.TestCase):
             self.assertEqual(result[idx].uid, item)
 
     def test_handle_immediate_children_tree_similarity_zero(self):
-        """ Test case where tree_similarity is zero """
+        """Test case where tree_similarity is zero"""
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -1124,7 +1136,7 @@ class TestHandleImmediateChildren(unittest.TestCase):
             self.assertEqual(result[idx].uid, item)
 
     def test_handle_immediate_children_max_depth_reached(self):
-        """ Test case where the maximum depth is reached """
+        """Test case where the maximum depth is reached"""
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -1189,9 +1201,10 @@ class TestHandleImmediateChildren(unittest.TestCase):
 
 
 class TestHandleDivergentTreeChildren(unittest.TestCase):
-    """ Unit tests for the handle_divergent_tree_children function """
+    """Unit tests for the handle_divergent_tree_children function"""
+
     def test_handle_divergent_tree_children_no_similarity(self):
-        """ Test case where tree similarity is 0 """
+        """Test case where tree similarity is 0"""
         smallest_tree = [Node("A"), Node("B"), Node("C")]
         output = "output"
         logic_lines = {"LOOP": {"end": "END_LOOP"}}
@@ -1204,7 +1217,7 @@ class TestHandleDivergentTreeChildren(unittest.TestCase):
         self.assertEqual(result, output)
 
     def test_handle_divergent_tree_children_with_similarity(self):
-        """ Test case where tree similarity is greater than 0 """
+        """Test case where tree similarity is greater than 0"""
 
         lookup_table = {
             "A": Node("A"),
@@ -1258,9 +1271,10 @@ class TestHandleDivergentTreeChildren(unittest.TestCase):
 
 
 class TestCreateContentLogic(unittest.TestCase):
-    """ Unit tests for the create_content_logic function """
+    """Unit tests for the create_content_logic function"""
+
     def test_create_content_logic_multiple_outgoing_nodes(self):
-        """ Test case with a node that has multiple outgoing nodes """
+        """Test case with a node that has multiple outgoing nodes"""
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -1308,7 +1322,7 @@ class TestCreateContentLogic(unittest.TestCase):
             self.assertEqual(result[idx].uid, item)
 
     def test_create_content_logic_in_loop(self):
-        """ Test case with a node that is in a loop """
+        """Test case with a node that is in a loop"""
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -1372,7 +1386,7 @@ class TestCreateContentLogic(unittest.TestCase):
             self.assertEqual(result[idx].uid, item)
 
     def test_create_content_logic_max_depth_reached(self):
-        """ Test case where the maximum depth is reached """
+        """Test case where the maximum depth is reached"""
         node = Node("A")
         node.outgoing = [Node("B")]
         output = []
@@ -1388,9 +1402,10 @@ class TestCreateContentLogic(unittest.TestCase):
 
 
 class TestCreateContent(unittest.TestCase):
-    """ Unit tests for the create_content function """
+    """Unit tests for the create_content function"""
+
     def test_create_content_append_first_node(self):
-        """ Test case where append_first_node is True """
+        """Test case where append_first_node is True"""
         node_tree = Node("A")
         node_tree.outgoing = [Node("B")]
         output = []
@@ -1414,7 +1429,7 @@ class TestCreateContent(unittest.TestCase):
             self.assertEqual(result[idx].uid, item)
 
     def test_create_content_append_first_node_false(self):
-        """ Test case where append_first_node is False """
+        """Test case where append_first_node is False"""
         node_tree = Node("A")
         node_tree.outgoing = [Node("B")]
         output = []
@@ -1435,7 +1450,7 @@ class TestCreateContent(unittest.TestCase):
         self.assertEqual(result, [])
 
     def test_create_content_node_is_loop(self):
-        """ Test case where the node is a loop """
+        """Test case where the node is a loop"""
         node_tree = Node("A")
         node_tree.outgoing = [
             Node("B", outgoing=[node_tree, Node("END_LOOP")])
@@ -1461,7 +1476,7 @@ class TestCreateContent(unittest.TestCase):
             self.assertEqual(result[idx].uid, item)
 
     def test_create_content_max_depth_reached(self):
-        """ Test case where the maximum depth is reached """
+        """Test case where the maximum depth is reached"""
         node_tree = Node("A")
         node_tree.outgoing = [Node("B"), Node("C")]
         output = []
@@ -1483,9 +1498,10 @@ class TestCreateContent(unittest.TestCase):
 
 
 class TestAnalyseNode(unittest.TestCase):
-    """ Unit tests for the analyse_node function """
+    """Unit tests for the analyse_node function"""
+
     def test_analyse_node_with_logic(self):
-        """ Test case where the head node has outgoing logic """
+        """Test case where the head node has outgoing logic"""
 
         lookup_table = {
             "A": Node("A"),
@@ -1539,7 +1555,7 @@ class TestAnalyseNode(unittest.TestCase):
             self.assertEqual(result[idx].uid, item)
 
     def test_analyse_node_with_uid(self):
-        """ Test case where the head node is a data node """
+        """Test case where the head node is a data node"""
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -1609,7 +1625,7 @@ class TestAnalyseNode(unittest.TestCase):
             self.assertEqual(result[idx].uid, item)
 
     def test_analyse_node_with_leaf_uid(self):
-        """ Test case where the node is a leaf uid node """
+        """Test case where the node is a leaf uid node"""
         node = Node("A")
         output = []
         logic_lines = {"LOOP": {"end": "END_LOOP"}}
@@ -1631,7 +1647,7 @@ class TestAnalyseNode(unittest.TestCase):
         self.assertEqual(result, output)
 
     def test_analyse_node_max_depth_reached(self):
-        """ Test case where the maximum depth is reached """
+        """Test case where the maximum depth is reached"""
         node = Node("A")
         output = []
         logic_lines = {"LOOP": {"end": "END_LOOP"}}
@@ -1654,9 +1670,10 @@ class TestAnalyseNode(unittest.TestCase):
 
 
 class TestGetCoordsInNestedDict(unittest.TestCase):
-    """ Unit tests for the get_coords_in_nested_dict function """
+    """Unit tests for the get_coords_in_nested_dict function"""
+
     def test_item_present(self):
-        """ Test case where the item is present in the nested dictionary """
+        """Test case where the item is present in the nested dictionary"""
         dictionary = {
             "parent1": {"child1": "item1", "child2": "item2"},
             "parent2": {"child3": "item3", "child4": "item4"},
@@ -1682,7 +1699,7 @@ class TestGetCoordsInNestedDict(unittest.TestCase):
         self.assertIsNone(result)
 
     def test_empty_dictionary(self):
-        """ Test case where the nested dictionary is empty """
+        """Test case where the nested dictionary is empty"""
         dictionary = {}
         item = "item1"
 
@@ -1691,7 +1708,7 @@ class TestGetCoordsInNestedDict(unittest.TestCase):
         self.assertIsNone(result)
 
     def test_empty_nested_dictionary(self):
-        """ Test case where the nested dictionary is empty """
+        """Test case where the nested dictionary is empty"""
         dictionary = {"parent1": {}, "parent2": {}}
         item = "item1"
 
@@ -1701,9 +1718,10 @@ class TestGetCoordsInNestedDict(unittest.TestCase):
 
 
 class TestFormatOutput(unittest.TestCase):
-    """ Unit tests for the format_output function """
+    """Unit tests for the format_output function"""
+
     def test_format_output_no_event_reference(self):
-        """ Test case where there is no event reference """
+        """Test case where there is no event reference"""
         input = [Node("A"), Node("B"), Node("C")]
         logic_lines = {
             "SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}
@@ -1721,7 +1739,7 @@ class TestFormatOutput(unittest.TestCase):
         self.assertEqual(result, expected_output)
 
     def test_format_output_with_event_reference(self):
-        """ Test case where there is an event reference """
+        """Test case where there is an event reference"""
         input = [Node("A"), Node("B"), Node("C")]
         logic_lines = {
             "SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}
@@ -1739,7 +1757,7 @@ class TestFormatOutput(unittest.TestCase):
         self.assertEqual(result, expected_output)
 
     def test_format_output_with_switch_start(self):
-        """ Test case where there is a switch start line """
+        """Test case where there is a switch start line"""
         input = [Node("START"), Node("A"), Node("B"), Node("C")]
         logic_lines = {
             "SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}
@@ -1757,7 +1775,7 @@ class TestFormatOutput(unittest.TestCase):
         self.assertEqual(result, expected_output)
 
     def test_format_output_with_switch_middle(self):
-        """ Test case where there is a switch middle line """
+        """Test case where there is a switch middle line"""
         input = [Node("A"), Node("MIDDLE"), Node("B"), Node("C")]
         logic_lines = {
             "SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}
@@ -1775,7 +1793,7 @@ class TestFormatOutput(unittest.TestCase):
         self.assertEqual(result, expected_output)
 
     def test_format_output_with_switch_end(self):
-        """ Test case where there is a switch end line """
+        """Test case where there is a switch end line"""
         input = [Node("A"), Node("B"), Node("END")]
         logic_lines = {
             "SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}
@@ -1793,7 +1811,7 @@ class TestFormatOutput(unittest.TestCase):
         self.assertEqual(result, expected_output)
 
     def test_format_output_with_switch_middle_in_end(self):
-        """ Test case where there is a switch middle line in the end line """
+        """Test case where there is a switch middle line in the end line"""
         input = [Node("A"), Node("B"), Node("MIDDLE"), Node("END")]
         logic_lines = {
             "SWITCH": {"start": "START", "middle": ["MIDDLE"], "end": "END"}
@@ -1838,9 +1856,10 @@ class TestFormatOutput(unittest.TestCase):
 
 
 class TestFindNearestExtantAncestor(unittest.TestCase):
-    """ Unit tests for the find_nearest_extant_ancestor function """
+    """Unit tests for the find_nearest_extant_ancestor function"""
+
     def test_find_nearest_extant_ancestor_node_in_uid_list(self):
-        """ Test case where the node is in the uid_list """
+        """Test case where the node is in the uid_list"""
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -1868,7 +1887,7 @@ class TestFindNearestExtantAncestor(unittest.TestCase):
         self.assertEqual(result, node)
 
     def test_find_nearest_extant_ancestor_node_not_in_uid_list(self):
-        """ Test case where the node is not in the uid_list """
+        """Test case where the node is not in the uid_list"""
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -1890,7 +1909,7 @@ class TestFindNearestExtantAncestor(unittest.TestCase):
         self.assertEqual(result, node.incoming[0])
 
     def test_find_nearest_extant_ancestor_max_depth_reached(self):
-        """ Test case where the maximum depth is reached """
+        """Test case where the maximum depth is reached"""
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -1914,9 +1933,10 @@ class TestFindNearestExtantAncestor(unittest.TestCase):
 
 
 class TestInsertItemUsingPropertyKey(unittest.TestCase):
-    """ Unit tests for the insert_item_using_property_key function """
+    """Unit tests for the insert_item_using_property_key function"""
+
     def test_insert_item_using_property_key_incoming(self):
-        """ Test case for inserting a node based on the incoming property """
+        """Test case for inserting a node based on the incoming property"""
         uid_list = [Node("A"), Node("B"), Node("C")]
         node = Node("D", incoming=[uid_list[2]])
         logic_lines = {}
@@ -1931,7 +1951,7 @@ class TestInsertItemUsingPropertyKey(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_insert_item_using_property_key_outgoing(self):
-        """ Test case for inserting a node based on the outgoing property """
+        """Test case for inserting a node based on the outgoing property"""
         uid_list = [Node("A"), Node("B"), Node("D")]
         node = Node("C", outgoing=[uid_list[2]], incoming=[uid_list[1]])
         property_key = "outgoing"
@@ -1986,7 +2006,7 @@ class TestInsertItemUsingPropertyKey(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_insert_item_using_property_key_invalid_property_key(self):
-        """ Test case for inserting a node with an invalid property key """
+        """Test case for inserting a node with an invalid property key"""
         uid_list = [Node("A"), Node("B"), Node("C")]
         node = Node("D")
         property_key = "invalid_key"
@@ -1998,7 +2018,7 @@ class TestInsertItemUsingPropertyKey(unittest.TestCase):
             )
 
     def test_insert_item_using_property_key_insert_before_item(self):
-        """ Test case for inserting a node before the nearest relative """
+        """Test case for inserting a node before the nearest relative"""
         uid_list = [Node("A"), Node("B"), Node("D")]
         node = Node("C", incoming=[uid_list[-1]])
         property_key = "incoming"
@@ -2014,9 +2034,10 @@ class TestInsertItemUsingPropertyKey(unittest.TestCase):
 
 
 class TestInsertMissingNodes(unittest.TestCase):
-    """ Unit tests for the insert_missing_nodes function """
+    """Unit tests for the insert_missing_nodes function"""
+
     def test_insert_missing_nodes_no_missing_nodes(self):
-        """ Test case with no missing nodes """
+        """Test case with no missing nodes"""
         uid_list = ["A", "B", "C"]
         missing_nodes = []
         logic_lines = {}
@@ -2026,7 +2047,7 @@ class TestInsertMissingNodes(unittest.TestCase):
         self.assertEqual(result, uid_list)
 
     def test_insert_missing_nodes_missing_nodes_at_beginning(self):
-        """ Test case with missing nodes at the beginning of the uid list """
+        """Test case with missing nodes at the beginning of the uid list"""
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -2069,7 +2090,7 @@ class TestInsertMissingNodes(unittest.TestCase):
         self.assertEqual(result, expected_result)
 
     def test_insert_missing_nodes_missing_nodes_at_end(self):
-        """ Test case with missing nodes at the end of the uid list """
+        """Test case with missing nodes at the end of the uid list"""
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -2111,7 +2132,7 @@ class TestInsertMissingNodes(unittest.TestCase):
         self.assertEqual(result, expected_result)
 
     def test_insert_missing_nodes_missing_nodes_in_middle(self):
-        """ Test case with missing nodes in the middle of the uid list """
+        """Test case with missing nodes in the middle of the uid list"""
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -2153,34 +2174,338 @@ class TestInsertMissingNodes(unittest.TestCase):
         self.assertEqual(result, expected_result)
 
 
+class TestAlterNodeTreeToContainLogicNodes(unittest.TestCase):
+    """
+    Test case class for the alter_node_tree_to_contain_logic_nodes function.
+    """
+
+    def test_alter_node_tree_to_contain_logic_nodes_no_logic(self):
+        """
+        Test case to verify the behavior of
+            alter_node_tree_to_contain_logic_nodes when there is no logic to be
+            added.
+
+        """
+        logic_table = {}
+        lookup_table = {"A": Node("A")}
+        result = alter_node_tree_to_contain_logic_nodes(
+            lookup_table, logic_table
+        )
+
+        self.assertEqual(lookup_table, result)
+
+    def test_alter_node_tree_to_contain_logic_nodes_no_nodes(self):
+        """
+        Test case to verify the behavior of the
+            alter_node_tree_to_contain_logic_nodes method when no logic nodes
+            are provided
+        """
+        logic_table = {
+            "XOR_1": Node(
+                "XOR", incoming=[Node("A")], outgoing=[Node("B"), Node("C")]
+            )
+        }
+        lookup_table = {}
+        result = alter_node_tree_to_contain_logic_nodes(
+            lookup_table, logic_table
+        )
+
+        self.assertEqual(lookup_table, result)
+
+    def test_alter_node_tree_to_contain_logic_nodes_one_logic_node(self):
+        """
+        Test case for the alter_node_tree_to_contain_logic_nodes method when
+            only one logic node is provided
+        """
+        lookup_table = {"A": Node("A"), "B": Node("B"), "C": Node("C")}
+        lookup_table["A"].outgoing = [lookup_table["B"], lookup_table["C"]]
+        lookup_table["B"].incoming = [lookup_table["A"]]
+        lookup_table["C"].incoming = [lookup_table["A"]]
+
+        logic_table = {
+            "XOR_1": Node(
+                "XOR",
+                incoming=[lookup_table["A"]],
+                outgoing=[lookup_table["B"], lookup_table["C"]],
+            )
+        }
+        result = alter_node_tree_to_contain_logic_nodes(
+            lookup_table, logic_table
+        )
+
+        expected_results = {
+            "A": {"incoming_logic": [], "outgoing_logic": ["B", "C"]},
+            "B": {"incoming_logic": ["A"], "outgoing_logic": []},
+            "C": {"incoming_logic": ["A"], "outgoing_logic": []},
+        }
+
+        for expected_result in expected_results:
+            if len(expected_results[expected_result]["incoming_logic"]) > 0:
+                for idx, item in enumerate(
+                    expected_results[expected_result]["incoming_logic"]
+                ):
+                    self.assertEqual(
+                        item, result[expected_result].incoming[idx].uid
+                    )
+
+            if len(expected_results[expected_result]["outgoing_logic"]) > 0:
+                for idx, item in enumerate(
+                    expected_results[expected_result]["outgoing_logic"]
+                ):
+                    self.assertEqual(
+                        item, result[expected_result].outgoing[idx].uid
+                    )
+
+
+class TestConvertNodesToPuml(unittest.TestCase):
+    """End-to-end testing for the puml pipeline"""
+
+    def test_convert_nodes_to_puml_no_branching(self):
+        """
+        Test case for generating a PlantUML diagram using the
+        a simple node tree with no branches
+        """
+
+        lookup_table = {
+            "A": Node("A"),
+            "B": Node("B"),
+            "C": Node("C"),
+        }
+
+        lookup_table["A"].outgoing = [lookup_table["B"]]
+        lookup_table["B"].outgoing = [lookup_table["C"]]
+
+        lookup_table["B"].incoming = [lookup_table["A"]]
+        lookup_table["C"].incoming = [lookup_table["B"]]
+
+        event_reference = {
+            "A": "A",
+            "B": "B",
+            "C": "C",
+        }
+
+        head_node = lookup_table[list(lookup_table.keys())[0]]
+
+        puml_name = "No branches"
+
+        puml_full = convert_nodes_to_puml(
+            lookup_table, head_node, event_reference, puml_name
+        )
+
+        self.assertEqual(
+            [
+                "@startuml",
+                'partition "No branches" {',
+                '    group "No branches"',
+                "        :A;",
+                "        :B;",
+                "        :C;",
+                "    end group",
+                "}",
+                "@enduml",
+            ],
+            puml_full,
+        )
+
+    def test_convert_nodes_to_puml_one_XOR(self):
+        """
+        Test case for generating a PlantUML diagram using the
+        a simple node tree with no branches
+        """
+
+        lookup_table = {
+            "A": Node("A"),
+            "B": Node("B"),
+            "C": Node("C"),
+        }
+
+        lookup_table["A"].outgoing = [lookup_table["B"]]
+
+        lookup_table["B"].incoming = [lookup_table["A"]]
+        lookup_table["C"].incoming = [lookup_table["B"]]
+
+        event_reference = {
+            "A": "A",
+            "B": "B",
+            "C": "C",
+        }
+
+        xor_node = Node(
+            "XOR",
+            incoming=lookup_table["A"],
+            outgoing=[lookup_table["B"], lookup_table["C"]],
+        )
+
+        lookup_table["A"].outgoing_logic = [xor_node]
+        lookup_table["B"].incoming_logic = [xor_node]
+        lookup_table["C"].incoming_logic = [xor_node]
+
+        head_node = lookup_table[list(lookup_table.keys())[0]]
+
+        puml_name = "One XOR"
+
+        puml_full = convert_nodes_to_puml(
+            lookup_table, head_node, event_reference, puml_name
+        )
+
+        self.assertEqual(
+            [
+                "@startuml",
+                'partition "One XOR" {',
+                '    group "One XOR"',
+                "        :A;",
+                "        if (XOR) then (true)",
+                "            :B;",
+                "        else (false)",
+                "            :C;",
+                "        endif",
+                "    end group",
+                "}",
+                "@enduml",
+            ],
+            puml_full,
+        )
+
+    def test_convert_nodes_to_puml_one_LOOP(self):
+        """
+        Test case for generating a PlantUML diagram using the
+        a simple node tree with no branches
+        """
+
+        lookup_table = {
+            "A": Node("A"),
+            "B": Node("B"),
+            "C": Node("C"),
+            "D": Node("D"),
+        }
+
+        lookup_table["A"].outgoing = [lookup_table["B"]]
+        lookup_table["B"].outgoing = [lookup_table["C"]]
+        lookup_table["C"].outgoing = [
+            Node("repeat while (unconstrained)", incoming=lookup_table["C"]),
+            lookup_table["B"],
+            lookup_table["D"],
+        ]
+
+        lookup_table["B"].incoming = [lookup_table["A"], lookup_table["C"]]
+        lookup_table["C"].incoming = [lookup_table["B"]]
+        lookup_table["D"].incoming = [lookup_table["C"]]
+
+        event_reference = {
+            "A": "A",
+            "B": "B",
+            "C": "C",
+            "D": "D",
+        }
+
+        head_node = lookup_table[list(lookup_table.keys())[0]]
+
+        puml_name = "One XOR"
+
+        puml_full = convert_nodes_to_puml(
+            lookup_table, head_node, event_reference, puml_name
+        )
+
+        self.assertEqual(
+            [
+                "@startuml",
+                'partition "One XOR" {',
+                '    group "One XOR"',
+                "        :A;",
+                "        repeat",
+                "            :B;",
+                "            :C;",
+                "        repeat while (unconstrained)",
+                "        :D;",
+                "    end group",
+                "}",
+                "@enduml",
+            ],
+            puml_full,
+        )
+
+    def test_convert_nodes_to_puml_one_AND(self):
+        """
+        Test case for generating a PlantUML diagram using the
+        a simple node tree with no branches
+        """
+
+        lookup_table = {
+            "A": Node("A"),
+            "B": Node("B"),
+            "C": Node("C"),
+        }
+
+        lookup_table["A"].outgoing = [lookup_table["B"]]
+
+        lookup_table["B"].incoming = [lookup_table["A"]]
+        lookup_table["C"].incoming = [lookup_table["B"]]
+
+        event_reference = {
+            "A": "A",
+            "B": "B",
+            "C": "C",
+        }
+
+        xor_node = Node(
+            "AND",
+            incoming=lookup_table["A"],
+            outgoing=[lookup_table["B"], lookup_table["C"]],
+        )
+
+        lookup_table["A"].outgoing_logic = [xor_node]
+        lookup_table["B"].incoming_logic = [xor_node]
+        lookup_table["C"].incoming_logic = [xor_node]
+
+        head_node = lookup_table[list(lookup_table.keys())[0]]
+
+        puml_name = "One XOR"
+
+        puml_full = convert_nodes_to_puml(
+            lookup_table, head_node, event_reference, puml_name
+        )
+
+        self.assertEqual(
+            [
+                "@startuml",
+                'partition "One XOR" {',
+                '    group "One XOR"',
+                "        :A;",
+                "        fork",
+                "            :B;",
+                "        fork again",
+                "            :C;",
+                "        end fork",
+                "    end group",
+                "}",
+                "@enduml",
+            ],
+            puml_full,
+        )
+
+
 class TestEndToEnd(unittest.TestCase):
-    """ End-to-end testing for the puml pipeline """
+    """End-to-end testing for the puml pipeline"""
+
     def test_simple_test(self):
         """
         Test case for generating a PlantUML diagram using the
         simple_test.puml file as a base for event generation
         """
+
         puml_name = "simple_test"
-        tab_chars = "    "
-        puml_header = [
-            "@startuml",
-            tab_chars * 0 + 'partition "' + puml_name + '" {',
-            (tab_chars * 1) + 'group "' + puml_name + '"',
-        ]
+        print_output = True
 
-        tab_num = 2
+        graph_list, event_references = get_puml_data_and_analyse_with_jalergia(
+            puml_name, print_output
+        )
+        lookup_tables, node_trees, event_references = convert_to_nodes(
+            graph_list, event_references, print_output
+        )
 
-        puml_footer = [
-            (tab_chars * 1) + "end group",
-            (tab_chars * 0 + "}"),
-            "@enduml",
-        ]
-
-        lookup_tables, node_trees, event_references = get_data(puml_name)
-
-        node_tree = node_trees[0]
         lookup_table = lookup_tables[0]
         event_reference = event_references[0]
+        head_node = node_trees[0]
 
         logic_table = {
             "NODE_XOR_1": Node(
@@ -2190,64 +2515,13 @@ class TestEndToEnd(unittest.TestCase):
             )
         }
 
-        lookup_table["q0"].outgoing_logic = [logic_table["NODE_XOR_1"]]
-        lookup_table["q1"].incoming_logic = [logic_table["NODE_XOR_1"]]
-        lookup_table["q2"].incoming_logic = [logic_table["NODE_XOR_1"]]
-
-        logic_lines = {
-            "AND": {
-                "start": "fork",
-                "middle": "fork again",
-                "end": "end fork",
-            },
-            "OR": {
-                "start": "split",
-                "middle": "split again",
-                "end": "end split",
-            },
-            "XOR": {
-                "start": "if (XOR) then (true)",
-                "middle": "else (false)",
-                "end": "endif",
-            },
-            "LOOP": {
-                "start": "repeat",
-                "middle": "",
-                "end": "repeat while (unconstrained)",
-            },
-            "SWITCH": {
-                "start": "switch (XOR)",
-                "middle": ['case ("', '")'],
-                "end": "endswitch",
-            },
-        }
-
-        output = []
-
-        output = analyse_node(
-            node_tree=node_tree,
-            output=output,
-            logic_lines=logic_lines,
-            lookup_table=lookup_table,
-            append_first_node=True,
+        lookup_table = alter_node_tree_to_contain_logic_nodes(
+            lookup_table, logic_table
         )
 
-        present_event_names = [
-            event.uid for event in output if event.uid in lookup_table
-        ]
-        missing_events = [
-            lookup_table[event_name]
-            for event_name in lookup_table
-            if event_name not in present_event_names
-        ]
-
-        output = insert_missing_nodes(output, missing_events, logic_lines)
-
-        formatted_output = format_output(
-            output, logic_lines, tab_chars, tab_num, event_reference
+        puml_full = convert_nodes_to_puml(
+            lookup_table, head_node, event_reference, puml_name
         )
-
-        puml_full = puml_header + formatted_output + puml_footer
 
         self.assertEqual(
             [
@@ -2274,26 +2548,18 @@ class TestEndToEnd(unittest.TestCase):
         sequence_xor_fork.puml file as a base for event generation
         """
         puml_name = "sequence_xor_fork"
-        tab_chars = "    "
-        puml_header = [
-            "@startuml",
-            tab_chars * 0 + 'partition "' + puml_name + '" {',
-            (tab_chars * 1) + 'group "' + puml_name + '"',
-        ]
+        print_output = True
 
-        tab_num = 2
+        graph_list, event_references = get_puml_data_and_analyse_with_jalergia(
+            puml_name, print_output
+        )
+        lookup_tables, node_trees, event_references = convert_to_nodes(
+            graph_list, event_references, print_output
+        )
 
-        puml_footer = [
-            (tab_chars * 1) + "end group",
-            (tab_chars * 0 + "}"),
-            "@enduml",
-        ]
-
-        lookup_tables, node_trees, event_references = get_data(puml_name)
-
-        node_tree = node_trees[0]
         lookup_table = lookup_tables[0]
         event_reference = event_references[0]
+        head_node = node_trees[0]
 
         logic_table = {
             "NODE_XOR_1": Node(
@@ -2307,65 +2573,13 @@ class TestEndToEnd(unittest.TestCase):
             )
         }
 
-        lookup_table["q1"].outgoing_logic = [logic_table["NODE_XOR_1"]]
-        lookup_table["q2"].incoming_logic = [logic_table["NODE_XOR_1"]]
-        lookup_table["q3"].incoming_logic = [logic_table["NODE_XOR_1"]]
-        lookup_table["q4"].incoming_logic = [logic_table["NODE_XOR_1"]]
-
-        logic_lines = {
-            "AND": {
-                "start": "fork",
-                "middle": "fork again",
-                "end": "end fork",
-            },
-            "OR": {
-                "start": "split",
-                "middle": "split again",
-                "end": "end split",
-            },
-            "XOR": {
-                "start": "if (XOR) then (true)",
-                "middle": "else (false)",
-                "end": "endif",
-            },
-            "LOOP": {
-                "start": "repeat",
-                "middle": "",
-                "end": "repeat while (unconstrained)",
-            },
-            "SWITCH": {
-                "start": "switch (XOR)",
-                "middle": ['case ("', '")'],
-                "end": "endswitch",
-            },
-        }
-
-        output = []
-
-        output = analyse_node(
-            node_tree=node_tree,
-            output=output,
-            logic_lines=logic_lines,
-            lookup_table=lookup_table,
-            append_first_node=True,
+        lookup_table = alter_node_tree_to_contain_logic_nodes(
+            lookup_table, logic_table
         )
 
-        present_event_names = [
-            event.uid for event in output if event.uid in lookup_table
-        ]
-        missing_events = [
-            lookup_table[event_name]
-            for event_name in lookup_table
-            if event_name not in present_event_names
-        ]
-
-        output = insert_missing_nodes(output, missing_events, logic_lines)
-
-        formatted_output = format_output(
-            output, logic_lines, tab_chars, tab_num, event_reference
+        puml_full = convert_nodes_to_puml(
+            lookup_table, head_node, event_reference, puml_name
         )
-
-        puml_full = puml_header + formatted_output + puml_footer
 
         self.assertEqual(
             [
@@ -2396,26 +2610,18 @@ class TestEndToEnd(unittest.TestCase):
         loop_XORFork_a.puml file as a base for event generation
         """
         puml_name = "loop_XORFork_a"
-        tab_chars = "    "
-        puml_header = [
-            "@startuml",
-            tab_chars * 0 + 'partition "' + puml_name + '" {',
-            (tab_chars * 1) + 'group "' + puml_name + '"',
-        ]
+        print_output = True
 
-        tab_num = 2
+        graph_list, event_references = get_puml_data_and_analyse_with_jalergia(
+            puml_name, print_output
+        )
+        lookup_tables, node_trees, event_references = convert_to_nodes(
+            graph_list, event_references, print_output
+        )
 
-        puml_footer = [
-            (tab_chars * 1) + "end group",
-            (tab_chars * 0 + "}"),
-            "@enduml",
-        ]
-
-        lookup_tables, node_trees, event_references = get_data(puml_name)
-
-        node_tree = node_trees[0]
         lookup_table = lookup_tables[0]
         event_reference = event_references[0]
+        head_node = node_trees[0]
 
         logic_table = {
             "NODE_XOR_1": Node(
@@ -2425,64 +2631,13 @@ class TestEndToEnd(unittest.TestCase):
             )
         }
 
-        lookup_table["q1"].outgoing_logic = [logic_table["NODE_XOR_1"]]
-        lookup_table["q2"].incoming_logic = [logic_table["NODE_XOR_1"]]
-        lookup_table["q3"].incoming_logic = [logic_table["NODE_XOR_1"]]
-
-        logic_lines = {
-            "AND": {
-                "start": "fork",
-                "middle": "fork again",
-                "end": "end fork",
-            },
-            "OR": {
-                "start": "split",
-                "middle": "split again",
-                "end": "end split",
-            },
-            "XOR": {
-                "start": "if (XOR) then (true)",
-                "middle": "else (false)",
-                "end": "endif",
-            },
-            "LOOP": {
-                "start": "repeat",
-                "middle": "",
-                "end": "repeat while (unconstrained)",
-            },
-            "SWITCH": {
-                "start": "switch (XOR)",
-                "middle": ['case ("', '")'],
-                "end": "endswitch",
-            },
-        }
-
-        output = []
-
-        output = analyse_node(
-            node_tree=node_tree,
-            output=output,
-            logic_lines=logic_lines,
-            lookup_table=lookup_table,
-            append_first_node=True,
+        lookup_table = alter_node_tree_to_contain_logic_nodes(
+            lookup_table, logic_table
         )
 
-        present_event_names = [
-            event.uid for event in output if event.uid in lookup_table
-        ]
-        missing_events = [
-            lookup_table[event_name]
-            for event_name in lookup_table
-            if event_name not in present_event_names
-        ]
-
-        output = insert_missing_nodes(output, missing_events, logic_lines)
-
-        formatted_output = format_output(
-            output, logic_lines, tab_chars, tab_num, event_reference
+        puml_full = convert_nodes_to_puml(
+            lookup_table, head_node, event_reference, puml_name
         )
-
-        puml_full = puml_header + formatted_output + puml_footer
 
         self.assertEqual(
             [
@@ -2514,26 +2669,18 @@ class TestEndToEnd(unittest.TestCase):
         complicated_test.puml file as a base for event generation
         """
         puml_name = "complicated_test"
-        tab_chars = "    "
-        puml_header = [
-            "@startuml",
-            tab_chars * 0 + 'partition "' + puml_name + '" {',
-            (tab_chars * 1) + 'group "' + puml_name + '"',
-        ]
+        print_output = True
 
-        tab_num = 2
+        graph_list, event_references = get_puml_data_and_analyse_with_jalergia(
+            puml_name, print_output
+        )
+        lookup_tables, node_trees, event_references = convert_to_nodes(
+            graph_list, event_references, print_output
+        )
 
-        puml_footer = [
-            (tab_chars * 1) + "end group",
-            (tab_chars * 0 + "}"),
-            "@enduml",
-        ]
-
-        lookup_tables, node_trees, event_references = get_data(puml_name)
-
-        node_tree = node_trees[0]
         lookup_table = lookup_tables[0]
         event_reference = event_references[0]
+        head_node = node_trees[0]
 
         logic_table = {
             "NODE_XOR_1": Node(
@@ -2558,76 +2705,13 @@ class TestEndToEnd(unittest.TestCase):
             ),
         }
 
-        lookup_table["q0"].outgoing_logic = [logic_table["NODE_XOR_1"]]
-        lookup_table["q1"].incoming_logic = [logic_table["NODE_XOR_1"]]
-        lookup_table["q2"].incoming_logic = [logic_table["NODE_XOR_1"]]
-
-        lookup_table["q3"].outgoing_logic = [logic_table["NODE_XOR_2"]]
-        lookup_table["q6"].incoming_logic = [logic_table["NODE_XOR_2"]]
-        lookup_table["q7"].incoming_logic = [logic_table["NODE_XOR_2"]]
-
-        lookup_table["q2"].outgoing_logic = [logic_table["NODE_XOR_3"]]
-        lookup_table["q4"].incoming_logic = [logic_table["NODE_XOR_3"]]
-        lookup_table["q5"].incoming_logic = [logic_table["NODE_XOR_3"]]
-
-        lookup_table["q4"].outgoing_logic = [logic_table["NODE_XOR_4"]]
-        lookup_table["q8"].incoming_logic = [logic_table["NODE_XOR_4"]]
-        lookup_table["q9"].incoming_logic = [logic_table["NODE_XOR_4"]]
-
-        logic_lines = {
-            "AND": {
-                "start": "fork",
-                "middle": "fork again",
-                "end": "end fork",
-            },
-            "OR": {
-                "start": "split",
-                "middle": "split again",
-                "end": "end split",
-            },
-            "XOR": {
-                "start": "if (XOR) then (true)",
-                "middle": "else (false)",
-                "end": "endif",
-            },
-            "LOOP": {
-                "start": "repeat",
-                "middle": "",
-                "end": "repeat while (unconstrained)",
-            },
-            "SWITCH": {
-                "start": "switch (XOR)",
-                "middle": ['case ("', '")'],
-                "end": "endswitch",
-            },
-        }
-
-        output = []
-
-        output = analyse_node(
-            node_tree=node_tree,
-            output=output,
-            logic_lines=logic_lines,
-            lookup_table=lookup_table,
-            append_first_node=True,
+        lookup_table = alter_node_tree_to_contain_logic_nodes(
+            lookup_table, logic_table
         )
 
-        present_event_names = [
-            event.uid for event in output if event.uid in lookup_table
-        ]
-        missing_events = [
-            lookup_table[event_name]
-            for event_name in lookup_table
-            if event_name not in present_event_names
-        ]
-
-        output = insert_missing_nodes(output, missing_events, logic_lines)
-
-        formatted_output = format_output(
-            output, logic_lines, tab_chars, tab_num, event_reference
+        puml_full = convert_nodes_to_puml(
+            lookup_table, head_node, event_reference, puml_name
         )
-
-        puml_full = puml_header + formatted_output + puml_footer
 
         self.assertEqual(
             [
@@ -2670,28 +2754,18 @@ class TestEndToEnd(unittest.TestCase):
         branching_loop_end_test.puml file as a base for event generation
         """
         puml_name = "branching_loop_end_test"
-        tab_chars = "    "
-        puml_header = [
-            "!!NON-MARKOVIAN!!",
-            "",
-            "@startuml",
-            tab_chars * 0 + 'partition "' + puml_name + '" {',
-            (tab_chars * 1) + 'group "' + puml_name + '"',
-        ]
+        print_output = True
 
-        tab_num = 2
+        graph_list, event_references = get_puml_data_and_analyse_with_jalergia(
+            puml_name, print_output
+        )
+        lookup_tables, node_trees, event_references = convert_to_nodes(
+            graph_list, event_references, print_output
+        )
 
-        puml_footer = [
-            (tab_chars * 1) + "end group",
-            (tab_chars * 0 + "}"),
-            "@enduml",
-        ]
-
-        lookup_tables, node_trees, event_references = get_data(puml_name)
-
-        node_tree = node_trees[0]
         lookup_table = lookup_tables[0]
         event_reference = event_references[0]
+        head_node = node_trees[0]
 
         logic_table = {
             "NODE_XOR_1": Node(
@@ -2701,69 +2775,16 @@ class TestEndToEnd(unittest.TestCase):
             )
         }
 
-        lookup_table["q1"].outgoing_logic = [logic_table["NODE_XOR_1"]]
-        lookup_table["q2"].incoming_logic = [logic_table["NODE_XOR_1"]]
-        lookup_table["q3"].incoming_logic = [logic_table["NODE_XOR_1"]]
-
-        logic_lines = {
-            "AND": {
-                "start": "fork",
-                "middle": "fork again",
-                "end": "end fork",
-            },
-            "OR": {
-                "start": "split",
-                "middle": "split again",
-                "end": "end split",
-            },
-            "XOR": {
-                "start": "if (XOR) then (true)",
-                "middle": "else (false)",
-                "end": "endif",
-            },
-            "LOOP": {
-                "start": "repeat",
-                "middle": "",
-                "end": "repeat while (unconstrained)",
-            },
-            "SWITCH": {
-                "start": "switch (XOR)",
-                "middle": ['case ("', '")'],
-                "end": "endswitch",
-            },
-        }
-
-        output = []
-
-        output = analyse_node(
-            node_tree=node_tree,
-            output=output,
-            logic_lines=logic_lines,
-            lookup_table=lookup_table,
-            append_first_node=True,
+        lookup_table = alter_node_tree_to_contain_logic_nodes(
+            lookup_table, logic_table
         )
 
-        present_event_names = [
-            event.uid for event in output if event.uid in lookup_table
-        ]
-        missing_events = [
-            lookup_table[event_name]
-            for event_name in lookup_table
-            if event_name not in present_event_names
-        ]
-
-        output = insert_missing_nodes(output, missing_events, logic_lines)
-
-        formatted_output = format_output(
-            output, logic_lines, tab_chars, tab_num, event_reference
+        puml_full = convert_nodes_to_puml(
+            lookup_table, head_node, event_reference, puml_name
         )
-
-        puml_full = puml_header + formatted_output + puml_footer
 
         self.assertEqual(
             [
-                "!!NON-MARKOVIAN!!",
-                "",
                 "@startuml",
                 'partition "branching_loop_end_test" {',
                 '    group "branching_loop_end_test"',

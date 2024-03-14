@@ -1,8 +1,8 @@
-
 """
 This module contains functions that can be used to parse a logic tree created
     (created by jAlergia) into PUML.
 """
+
 from tel2puml.node_map_to_puml.node_population_functions import (
     copy_node,
 )
@@ -292,13 +292,36 @@ def handle_loop_start(output: list, node_tree: Node, logic_lines: dict):
     Returns:
         list: The updated list of output nodes.
     """
-    possible_descendant_incoming = [
-        incoming
-        for incoming in node_tree.incoming
-        if is_in_loop(incoming, logic_lines, node_tree)
-        and len(incoming.incoming) > 0
-    ]
-    if len(possible_descendant_incoming) > 0:
+
+    all_ancestors_in_loop = True
+    possible_descendant_incoming = []
+
+    for incoming in node_tree.incoming:
+        if (
+            is_in_loop(incoming, logic_lines, node_tree)
+            and len(incoming.incoming) > 0
+        ):
+            possible_descendant_incoming.append(incoming)
+        if not is_in_loop(incoming, logic_lines, node_tree):
+            all_ancestors_in_loop = False
+
+    if len(possible_descendant_incoming) > 0 and (
+        not all_ancestors_in_loop
+        or (
+            len(node_tree.incoming) > 1
+            or (
+                len(node_tree.incoming) == 1
+                and len(
+                    [
+                        outgoing
+                        for outgoing in node_tree.incoming[0].outgoing
+                        if outgoing.uid == logic_lines["LOOP"]["end"]
+                    ]
+                )
+                == 1
+            )
+        )
+    ):
         output.append(copy_node(node_tree, uid=logic_lines["LOOP"]["start"]))
     return output
 
@@ -548,6 +571,8 @@ def create_content(
     """
     if depth >= max_depth:
         return output
+
+    output = handle_loop_start(output, node_tree, logic_lines)
 
     if not append_first_node:
         append_first_node = True
@@ -869,3 +894,126 @@ def insert_missing_nodes(
                 break
 
     return uid_list
+
+
+def alter_node_tree_to_contain_logic_nodes(
+    lookup_table: dict, logic_table: dict
+):
+    """
+    Modifies the node tree in the lookup table to include logic nodes.
+
+    Args:
+        lookup_table (dict): A dictionary representing the node lookup table.
+        logic_table (dict): A dictionary representing the logic table.
+
+    Returns:
+        dict: The modified lookup table with logic nodes included.
+    """
+    if len(lookup_table) > 0:
+        for logic_node_name in logic_table:
+            logic_node = logic_table[logic_node_name]
+            for outgoing in logic_node.outgoing:
+                lookup_table[outgoing.uid].incoming_logic.append(logic_node)
+            for incoming in logic_node.incoming:
+                lookup_table[incoming.uid].outgoing_logic.append(logic_node)
+        return lookup_table
+    else:
+        return lookup_table
+
+
+def convert_nodes_to_puml(
+    lookup_table: dict,
+    head_node: Node,
+    event_reference: dict,
+    puml_name: str,
+    logic_lines: dict = {},
+):
+    """
+    Converts a node tree to PlantUML code.
+
+    Args:
+        lookup_table (dict): A dictionary mapping event names to their
+            corresponding unique identifiers.
+        head_node (Node): The root node of the node tree.
+        event_reference (dict): A dictionary mapping event unique identifiers
+            to their corresponding names.
+        puml_name (str): The name of the PlantUML partition.
+        logic_lines (dict, optional): A dictionary defining the logic lines for
+             different types of nodes. Defaults to the standard logic strings
+             used by the client.
+
+    Returns:
+        list: A list of strings representing the PlantUML code.
+    """
+
+    if logic_lines == {}:
+        logic_lines = {
+            "AND": {
+                "start": "fork",
+                "middle": "fork again",
+                "end": "end fork",
+            },
+            "OR": {
+                "start": "split",
+                "middle": "split again",
+                "end": "end split",
+            },
+            "XOR": {
+                "start": "if (XOR) then (true)",
+                "middle": "else (false)",
+                "end": "endif",
+            },
+            "LOOP": {
+                "start": "repeat",
+                "middle": "",
+                "end": "repeat while (unconstrained)",
+            },
+            "SWITCH": {
+                "start": "switch (XOR)",
+                "middle": ['case ("', '")'],
+                "end": "endswitch",
+            },
+        }
+
+    output = []
+
+    output = analyse_node(
+        node_tree=head_node,
+        output=output,
+        logic_lines=logic_lines,
+        lookup_table=lookup_table,
+        append_first_node=True,
+    )
+
+    present_event_names = [
+        event.uid for event in output if event.uid in lookup_table
+    ]
+    missing_events = [
+        lookup_table[event_name]
+        for event_name in lookup_table
+        if event_name not in present_event_names
+    ]
+
+    output = insert_missing_nodes(output, missing_events, logic_lines)
+
+    puml_name = puml_name
+    tab_chars = "    "
+    puml_header = [
+        "@startuml",
+        tab_chars * 0 + 'partition "' + puml_name + '" {',
+        (tab_chars * 1) + 'group "' + puml_name + '"',
+    ]
+
+    tab_num = 2
+
+    puml_footer = [
+        (tab_chars * 1) + "end group",
+        (tab_chars * 0 + "}"),
+        "@enduml",
+    ]
+
+    formatted_output = format_output(
+        output, logic_lines, tab_chars, tab_num, event_reference
+    )
+
+    return puml_header + formatted_output + puml_footer

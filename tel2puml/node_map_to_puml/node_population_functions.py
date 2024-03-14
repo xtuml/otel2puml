@@ -110,30 +110,44 @@ def print_outgoing(node, depth=0, max_depth=10):
             )
 
 
-def get_data(puml_files="", print_output: bool = False):
+def get_puml_data_and_analyse_with_jalergia(
+    puml_files: list, print_output: bool
+):
     """
-    Retrieves data from the given PUML files and returns lookup tables and
-        node tree list.
+    Retrieves the PUML data and performs analysis using jAlergia.
 
     Args:
-        puml_files (str): Path to the PUML files. Default is an empty string.
+        puml_files (list): A list of PUML files.
         print_output (bool): Flag indicating whether to print the output.
-            Default is False.
 
     Returns:
-        tuple: A tuple containing lookup tables and node tree list.
-            - lookup_tables (list): List of lookup tables.
-            - node_trees (list): List of node trees.
+        tuple: A tuple containing the graph list and event references.
     """
-
-    head_nodes = []
-    lookup_table = {}
-
     graph_list, event_references = jAlergiaPipeline.main(
         puml_files=puml_files, print_output=print_output
     )
 
+    return graph_list, event_references
+
+
+def convert_to_nodes(graph_list, event_references, print_output: bool = False):
+    """
+    Retrieves data from the given graph list and returns lookup tables, node
+        trees, and event references.
+
+    Args:
+        graph_list (list): A list of graphs.
+        event_references: A list of references.
+        print_output (bool, optional): Whether to print the output. Defaults to
+            False.
+
+    Returns:
+        tuple: A tuple containing lookup tables, node trees, and event
+            references.
+    """
+    head_nodes = []
     lookup_tables = []
+    lookup_table = {}
     node_trees = []
 
     for graph in graph_list:
@@ -204,4 +218,12 @@ def copy_node(
 
 
 if __name__ == "__main__":
-    get_data(puml_files="simple_test", print_output=True)
+
+    print_output = True
+
+    graph_list, event_references = get_puml_data_and_analyse_with_jalergia(
+        "simple_test", print_output
+    )
+    lookup_tables, node_trees, event_references = convert_to_nodes(
+        graph_list, event_references, True
+    )
