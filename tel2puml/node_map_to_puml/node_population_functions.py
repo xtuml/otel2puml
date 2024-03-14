@@ -40,13 +40,19 @@ def populate_outgoing(
         and maximum depth.
 
     Args:
+        node (Node): The node for which to populate the outgoing nodes.
         graph: The graph containing the nodes.
-        lookup_table: A dictionary mapping node data to Node objects.
-        max_depth: The maximum depth to traverse.
+        lookup_table (dict): A dictionary mapping node IDs to Node objects.
+        depth (int, optional): The current depth of recursion. Defaults to 0.
+        max_depth (int, optional): The maximum depth of recursion.
+            Defaults to10.
+        cycle_depth (int, optional): The depth of the cycle in the graph.
+            Defaults to -1.
 
     Returns:
-        The updated lookup table.
+        dict: The updated lookup table with the populated outgoing nodes.
     """
+
     if depth < max_depth:
 
         successors = list(graph.successors(node.uid))
