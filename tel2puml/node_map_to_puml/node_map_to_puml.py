@@ -698,7 +698,8 @@ def format_output(
     event_reference: dict,
 ):
     """
-    Formats the given uid for output to PUML. Replaces
+    Uses the given list of nodes to create a PUML 'body' that can then be
+        combined with the 'header' and 'footer' in another function.
 
     Args:
         output (list): The uid to be formatted.
