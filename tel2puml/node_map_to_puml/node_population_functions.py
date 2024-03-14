@@ -3,7 +3,7 @@ This module contains functions for populating node data, printing outgoing
     nodes, and retrieving data from PUML files.
 """
 
-from networkx import find_cycle
+from networkx import find_cycle, exception
 from tel2puml.node_map_to_puml.node import Node
 import tel2puml.jAlergiaPipeline as jAlergiaPipeline
 
@@ -48,7 +48,7 @@ def populate_outgoing(
             if cycle_depth == -1:
                 try:
                     cycle_depth = len(find_cycle(graph, child))
-                except Exception:
+                except exception.NetworkXNoCycle:
                     cycle_depth = -1
 
             if child not in lookup_table:
@@ -73,7 +73,7 @@ def populate_outgoing(
         cycle = [["", ""]]
         try:
             cycle = find_cycle(graph)
-        except Exception:
+        except exception.NetworkXNoCycle:
             pass
         if cycle != [["", ""]]:
             lookup_table[cycle[-1][0]].outgoing.insert(
