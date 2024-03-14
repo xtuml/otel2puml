@@ -14,7 +14,10 @@ def populate_incoming(node: Node, lookup_table: dict, graph):
         and graph.
 
     Args:
-        lookup_table: A dictionary mapping node data to Node objects.
+        node (Node): The node for which the incoming list needs to be
+            populated.
+        lookup_table (dict): A dictionary mapping node UIDs to their
+            corresponding nodes.
         graph: The graph containing the nodes.
 
     Returns:
