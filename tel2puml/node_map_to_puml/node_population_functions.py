@@ -103,8 +103,9 @@ def print_outgoing(node: Node, depth: int = 0, max_depth: int = 10):
         depth.
 
     Args:
-        depth: The current depth of the recursion.
-        max_depth: The maximum depth to print.
+        node (Node): The head node of the tree to print.
+        depth (int): The current depth of the recursion.
+        max_depth (int): The maximum depth to print.
 
     Returns:
         None
