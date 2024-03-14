@@ -501,9 +501,7 @@ def create_content_logic(
 
     output = handle_loop_start(output, node_tree, logic_lines)
 
-    if not append_first_node:
-        append_first_node = True
-    else:
+    if append_first_node:
         output.append(node_tree)
 
     output = append_logic_start(output, node_tree, logic_lines)
@@ -579,9 +577,7 @@ def create_content(
 
     output = handle_loop_start(output, node_tree, logic_lines)
 
-    if not append_first_node:
-        append_first_node = True
-    else:
+    if append_first_node:
         output.append(node_tree)
 
         for outgoing_node in node_tree.outgoing:
