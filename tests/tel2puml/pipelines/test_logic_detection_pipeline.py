@@ -596,8 +596,10 @@ class TestEvent:
     def test_reduce_process_tree_to_preferred_logic_gates() -> None:
         """Tests for method reduce_process_tree_to_preffered_logic_gates"""
         def _test_logic_gate(process_tree: ProcessTree):
-            logic_gates_tree = event.reduce_process_tree_to_preferred_logic_gates(
-                process_tree
+            logic_gates_tree = (
+                event.reduce_process_tree_to_preferred_logic_gates(
+                    process_tree
+                )
             )
             assert logic_gates_tree.operator.value == Operator.OR.value
             assert len(logic_gates_tree.children) == 3
@@ -653,10 +655,9 @@ class TestEvent:
                                 ),
                                 ProcessTree(label="D"),
                             ],
-                        )
-                    ]
-                )
-                ,
+                        ),
+                    ],
+                ),
             ],
         )
         process_tree = ProcessTree(
