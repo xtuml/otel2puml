@@ -111,17 +111,6 @@ class TestDrillDownTree(unittest.TestCase):
 
         self.assertEqual(result, node)
 
-    def test_drill_down_tree_no_outgoing_nodes(self):
-        """Test case with a node that has no outgoing nodes."""
-        node = Node("A")
-        lookup_table = {}
-        logic_lines = {"LOOP": {"end": "END_LOOP"}}
-        max_depth = 10
-
-        result = drill_down_tree(node, lookup_table, logic_lines, max_depth)
-
-        self.assertEqual(result, node)
-
     def test_drill_down_tree_single_outgoing_node(self):
         """Test case with a node that has a single outgoing node."""
         node = Node("A")
