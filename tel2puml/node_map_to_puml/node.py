@@ -214,11 +214,10 @@ class Node:
         outgoing_logic: list = None,
     ):
         """
-        Creates a copy of a given node with optional modifications to its
+        Creates a copy of this node with optional modifications to its
             attributes.
 
         Args:
-            node (Node): The node to be copied.
             uid (Any, optional): The modified data for the copied node.
                 Defaults to None.
             incoming (List[Edge], optional): The modified incoming edges for
