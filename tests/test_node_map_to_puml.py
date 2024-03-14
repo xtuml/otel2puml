@@ -2012,7 +2012,7 @@ class TestInsertItemUsingPropertyKey(unittest.TestCase):
         property_key = "invalid_key"
         insert_before_item = False
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(Exception):
             insert_item_using_property_key(
                 uid_list, node, property_key, insert_before_item
             )

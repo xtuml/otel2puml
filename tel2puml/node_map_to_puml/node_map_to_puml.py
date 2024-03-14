@@ -797,17 +797,7 @@ def insert_item_using_property_key(
         list: The updated uid list with the node inserted.
     """
     node_property = None
-    match property_key:
-        case "incoming":
-            node_property = node.incoming
-        case "outgoing":
-            node_property = node.outgoing
-        case "incoming_logic":
-            node_property = node.incoming_logic
-        case "outgoing_logic":
-            node_property = node.outgoing_logic
-        case _:
-            raise (ValueError("property_key must be a node linking property."))
+    node_property = getattr(node, property_key)
 
     if len(node_property) > 0:
 
