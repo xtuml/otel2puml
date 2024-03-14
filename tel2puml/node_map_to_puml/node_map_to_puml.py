@@ -99,8 +99,7 @@ def drill_down_tree(
                 depth + 1,
             )
 
-    else:
-        return node
+    return node
 
 
 def get_reverse_node_tree(
