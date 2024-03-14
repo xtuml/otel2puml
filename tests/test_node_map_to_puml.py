@@ -2497,7 +2497,7 @@ class TestEndToEnd(unittest.TestCase):
         """
 
         puml_name = "simple_test"
-        print_output = True
+        print_output = False
 
         graph_list, event_references = get_puml_data_and_analyse_with_jalergia(
             puml_name, print_output
@@ -2551,7 +2551,7 @@ class TestEndToEnd(unittest.TestCase):
         sequence_xor_fork.puml file as a base for event generation
         """
         puml_name = "sequence_xor_fork"
-        print_output = True
+        print_output = False
 
         graph_list, event_references = get_puml_data_and_analyse_with_jalergia(
             puml_name, print_output
@@ -2613,7 +2613,7 @@ class TestEndToEnd(unittest.TestCase):
         loop_XORFork_a.puml file as a base for event generation
         """
         puml_name = "loop_XORFork_a"
-        print_output = True
+        print_output = False
 
         graph_list, event_references = get_puml_data_and_analyse_with_jalergia(
             puml_name, print_output
@@ -2672,7 +2672,7 @@ class TestEndToEnd(unittest.TestCase):
         complicated_test.puml file as a base for event generation
         """
         puml_name = "complicated_test"
-        print_output = True
+        print_output = False
 
         graph_list, event_references = get_puml_data_and_analyse_with_jalergia(
             puml_name, print_output
@@ -2757,7 +2757,7 @@ class TestEndToEnd(unittest.TestCase):
         branching_loop_end_test.puml file as a base for event generation
         """
         puml_name = "branching_loop_end_test"
-        print_output = True
+        print_output = False
 
         graph_list, event_references = get_puml_data_and_analyse_with_jalergia(
             puml_name, print_output
