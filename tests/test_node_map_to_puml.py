@@ -10,7 +10,7 @@ from tel2puml.node_map_to_puml.node_map_to_puml import (
     append_logic_start,
     handle_loop_start,
     get_reverse_node_tree_dict,
-    get_tree_similarity,
+    get_tree_distance_from_convergence,
     get_smallest_reverse_tree,
     handle_immediate_children,
     handle_divergent_tree_children,
@@ -309,10 +309,10 @@ class TestGetReverseNodeTree(unittest.TestCase):
         self.assertEqual(result, [])
 
 
-class TestGetTreeSimilarity(unittest.TestCase):
-    """Unit tests for the get_tree_similarity function"""
+class TestGetTreedistance_from_convergence(unittest.TestCase):
+    """Unit tests for the get_tree_distance_from_convergence function"""
 
-    def test_get_tree_similarity_all_trees_converge(self):
+    def test_get_tree_distance_from_convergence_all_trees_converge(self):
         """Test case where all trees in reverse_node_trees converge"""
 
         start_node = Node("A")
@@ -371,11 +371,13 @@ class TestGetTreeSimilarity(unittest.TestCase):
 
         smallest_tree = reverse_node_trees["Tree3"]
 
-        result = get_tree_similarity(reverse_node_trees, smallest_tree)
+        result = get_tree_distance_from_convergence(
+            reverse_node_trees, smallest_tree
+        )
 
         self.assertEqual(result, 1)
 
-    def test_get_tree_similarity_not_all_trees_converge(self):
+    def test_get_tree_distance_from_convergence_not_all_trees_converge(self):
         """Test case where not all trees in reverse_node_trees converge"""
 
         start_node = Node("A")
@@ -440,11 +442,13 @@ class TestGetTreeSimilarity(unittest.TestCase):
 
         smallest_tree = reverse_node_trees["Tree1"]
 
-        result = get_tree_similarity(reverse_node_trees, smallest_tree)
+        result = get_tree_distance_from_convergence(
+            reverse_node_trees, smallest_tree
+        )
 
         self.assertEqual(result, 0)
 
-    def test_get_tree_similarity_empty_tree(self):
+    def test_get_tree_distance_from_convergence_empty_tree(self):
         """Test case where reverse_node_trees contains an empty tree"""
 
         start_node = Node("A")
@@ -494,7 +498,9 @@ class TestGetTreeSimilarity(unittest.TestCase):
 
         smallest_tree = reverse_node_trees["Tree1"]
 
-        result = get_tree_similarity(reverse_node_trees, smallest_tree)
+        result = get_tree_distance_from_convergence(
+            reverse_node_trees, smallest_tree
+        )
 
         self.assertEqual(result, 0)
 
@@ -991,8 +997,12 @@ class TestGetSmallestReverseTree(unittest.TestCase):
 class TestHandleImmediateChildren(unittest.TestCase):
     """Unit tests for the handle_immediate_children function"""
 
-    def test_handle_immediate_children_tree_similarity_greater_than_zero(self):
-        """Test case where tree_similarity is greater than zero"""
+    def test_handle_immediate_children_tree_divergence_greater_than_zero(
+        self,
+    ):
+        """
+        Test case where tree_distance_from_convergence is greater than zero
+        """
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -1052,8 +1062,10 @@ class TestHandleImmediateChildren(unittest.TestCase):
         for idx, item in enumerate(expected_output):
             self.assertEqual(result[idx].uid, item)
 
-    def test_handle_immediate_children_tree_similarity_zero(self):
-        """Test case where tree_similarity is zero"""
+    def test_handle_immediate_children_tree_distance_from_convergence_zero(
+        self,
+    ):
+        """Test case where tree_distance_from_convergence is zero"""
         lookup_table = {
             "A": Node("A"),
             "B": Node("B"),
@@ -1192,8 +1204,8 @@ class TestHandleImmediateChildren(unittest.TestCase):
 class TestHandleDivergentTreeChildren(unittest.TestCase):
     """Unit tests for the handle_divergent_tree_children function"""
 
-    def test_handle_divergent_tree_children_no_similarity(self):
-        """Test case where tree similarity is 0"""
+    def test_handle_divergent_tree_children_no_distance_from_convergence(self):
+        """Test case where tree distance_from_convergence is 0"""
         smallest_tree = [Node("A"), Node("B"), Node("C")]
         output = "output"
         logic_lines = {"LOOP": {"end": "END_LOOP"}}
@@ -1205,8 +1217,10 @@ class TestHandleDivergentTreeChildren(unittest.TestCase):
 
         self.assertEqual(result, output)
 
-    def test_handle_divergent_tree_children_with_similarity(self):
-        """Test case where tree similarity is greater than 0"""
+    def test_handle_divergent_tree_children_with_distance_from_convergence(
+        self,
+    ):
+        """Test case where tree distance_from_convergence is greater than 0"""
 
         lookup_table = {
             "A": Node("A"),

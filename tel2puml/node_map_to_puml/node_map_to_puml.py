@@ -142,7 +142,9 @@ def get_reverse_node_tree(
     return node_tree
 
 
-def get_tree_similarity(reverse_node_trees: dict, smallest_tree: list):
+def get_tree_distance_from_convergence(
+    reverse_node_trees: dict, smallest_tree: list
+):
     """
     Calculate whether all nodes in a list of reversed trees converge.
 
@@ -151,10 +153,10 @@ def get_tree_similarity(reverse_node_trees: dict, smallest_tree: list):
     smallest_tree (list): The smallest tree present in reverse_node_trees.
 
     Returns:
-    int: The similarity score between the reverse node trees and the
-        smallest tree.
+    int: The minimum number of levels down that must be navigated from the
+        starting point before all trees have the same value.
     """
-    tree_similarity = 0
+    tree_distance_from_convergence = 0
     if len(smallest_tree) != 0:
         for key, val in reverse_node_trees.items():
             if val[0] != smallest_tree[0]:
@@ -167,7 +169,7 @@ def get_tree_similarity(reverse_node_trees: dict, smallest_tree: list):
                 trees_are_similar = False
 
         if trees_are_similar:
-            tree_similarity += 1
+            tree_distance_from_convergence += 1
 
     if (
         len(
@@ -179,9 +181,9 @@ def get_tree_similarity(reverse_node_trees: dict, smallest_tree: list):
         )
         > 0
     ):
-        tree_similarity = 0
+        tree_distance_from_convergence = 0
 
-    return tree_similarity
+    return tree_distance_from_convergence
 
 
 def append_logic_middle_or_end(
@@ -363,7 +365,7 @@ def get_smallest_reverse_tree(reverse_node_trees: dict):
 
 def handle_immediate_children(
     node_tree: Node,
-    tree_similarity: int,
+    tree_distance_from_convergence: int,
     reverse_node_trees: dict,
     output: list,
     logic_lines: dict,
@@ -378,8 +380,8 @@ def handle_immediate_children(
 
     Args:
         node_tree (Node): The node tree to analyze.
-        tree_similarity (int): The similarity score between the current node
-            tree and its parent.
+        tree_distance_from_convergence (int): The distance_from_convergence
+            between the current node tree and its parent.
         reverse_node_trees (dict): A dictionary mapping node uid to a list of
             node trees.
         output (str): The output string to append the analysis results to.
@@ -392,11 +394,11 @@ def handle_immediate_children(
         str: The updated output string after analyzing the immediate children.
     """
     for idx, outgoing_node in enumerate(node_tree.outgoing_logic[0].outgoing):
-        if tree_similarity > 0:
+        if tree_distance_from_convergence > 0:
             start_depth_to_analyse = 0
             max_depth_to_analyse = (
                 len(reverse_node_trees[outgoing_node.uid])
-                - tree_similarity
+                - tree_distance_from_convergence
                 + 1
             )
         else:
@@ -420,7 +422,11 @@ def handle_immediate_children(
 
 
 def handle_divergent_tree_children(
-    tree_similarity: int, tree: list, output: list, logic_lines, lookup_table
+    tree_distance_from_convergence: int,
+    tree: list,
+    output: list,
+    logic_lines,
+    lookup_table,
 ):
     """
     Handles all divergent child nodes in a list of trees that eventually
@@ -428,7 +434,8 @@ def handle_divergent_tree_children(
         'middle' section.
 
     Args:
-        tree_similarity (int): The similarity score between the trees.
+        tree_distance_from_convergence (int): The distance_from_convergence
+            between the trees.
         smallest_tree (list): The list of nodes in the smallest tree.
         output (str): The current output string.
         logic_lines (dict): The list of logic lines.
@@ -437,8 +444,8 @@ def handle_divergent_tree_children(
     Returns:
         str: The updated output string.
     """
-    if tree_similarity > 0:
-        sliced_tree = tree[0:tree_similarity]
+    if tree_distance_from_convergence > 0:
+        sliced_tree = tree[0:tree_distance_from_convergence]
         sliced_tree.reverse()
         for node in sliced_tree:
             output = analyse_node(
@@ -507,11 +514,13 @@ def create_content_logic(
 
     smallest_tree = get_smallest_reverse_tree(reverse_node_trees)
 
-    tree_similarity = get_tree_similarity(reverse_node_trees, smallest_tree)
+    tree_distance_from_convergence = get_tree_distance_from_convergence(
+        reverse_node_trees, smallest_tree
+    )
 
     output = handle_immediate_children(
         node_tree,
-        tree_similarity,
+        tree_distance_from_convergence,
         reverse_node_trees,
         output,
         logic_lines,
@@ -521,7 +530,11 @@ def create_content_logic(
     )
 
     output = handle_divergent_tree_children(
-        tree_similarity, smallest_tree, output, logic_lines, lookup_table
+        tree_distance_from_convergence,
+        smallest_tree,
+        output,
+        logic_lines,
+        lookup_table,
     )
 
     return output
@@ -814,7 +827,9 @@ def insert_item_using_property_key(
 
         for relative in node_property:
             if nearest_relative in node_list and relative in node_list:
-                if node_list.index(nearest_relative) > node_list.index(relative):
+                if node_list.index(nearest_relative) > node_list.index(
+                    relative
+                ):
                     nearest_relative = relative
 
         node_list.reverse()
