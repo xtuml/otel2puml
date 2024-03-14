@@ -3,9 +3,6 @@ This module contains functions that can be used to parse a logic tree created
     (created by jAlergia) into PUML.
 """
 
-from tel2puml.node_map_to_puml.node_population_functions import (
-    copy_node,
-)
 from tel2puml.node_map_to_puml.node import Node
 
 
@@ -230,8 +227,7 @@ def append_logic_middle_or_end(
         else:
             uid_to_append = logic_lines[node_tree.outgoing_logic[0].uid]["end"]
     output.append(
-        copy_node(
-            node=node_tree.outgoing_logic[0],
+        node_tree.outgoing_logic[0].copy_node(
             uid=uid_to_append,
         )
     )
@@ -258,21 +254,18 @@ def append_logic_start(output: list, node_tree: Node, logic_lines: dict):
         and node_tree.outgoing_logic[0].uid == "XOR"
     ):
         output.append(
-            copy_node(
-                node=node_tree.outgoing_logic[0],
+            node_tree.outgoing_logic[0].copy_node(
                 uid=logic_lines["SWITCH"]["start"],
             )
         )
         output.append(
-            copy_node(
-                node=node_tree.outgoing_logic[0],
+            node_tree.outgoing_logic[0].copy_node(
                 uid='case ("1")',
             )
         )
     else:
         output.append(
-            copy_node(
-                node=node_tree.outgoing_logic[0],
+            node_tree.outgoing_logic[0].copy_node(
                 uid=logic_lines[node_tree.outgoing_logic[0].uid]["start"],
             )
         )
@@ -322,7 +315,7 @@ def handle_loop_start(output: list, node_tree: Node, logic_lines: dict):
             )
         )
     ):
-        output.append(copy_node(node_tree, uid=logic_lines["LOOP"]["start"]))
+        output.append(node_tree.copy_node(uid=logic_lines["LOOP"]["start"]))
     return output
 
 

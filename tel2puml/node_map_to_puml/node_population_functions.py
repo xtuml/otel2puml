@@ -176,47 +176,6 @@ def convert_to_nodes(graph_list, event_references, print_output: bool = False):
     return lookup_tables, node_trees, event_references
 
 
-def copy_node(
-    node: Node,
-    uid=None,
-    incoming=None,
-    outgoing=None,
-    incoming_logic=None,
-    outgoing_logic=None,
-):
-    """
-    Creates a copy of a given node with optional modifications to its
-        attributes.
-
-    Args:
-        node (Node): The node to be copied.
-        uid (Any, optional): The modified data for the copied node.
-            Defaults to None.
-        incoming (List[Edge], optional): The modified incoming edges for the
-            copied node. Defaults to None.
-        outgoing (List[Edge], optional): The modified outgoing edges for the
-            copied node. Defaults to None.
-        incoming_logic (Any, optional): The modified incoming logic for the
-            copied node. Defaults to None.
-        outgoing_logic (Any, optional): The modified outgoing logic for the
-            copied node. Defaults to None.
-
-    Returns:
-        Node: The copied node with optional modifications.
-    """
-    return Node(
-        uid=node.uid if uid is None else uid,
-        incoming=node.incoming if incoming is None else incoming,
-        outgoing=node.outgoing if outgoing is None else outgoing,
-        incoming_logic=(
-            node.incoming_logic if incoming_logic is None else incoming_logic
-        ),
-        outgoing_logic=(
-            node.outgoing_logic if outgoing_logic is None else outgoing_logic
-        ),
-    )
-
-
 if __name__ == "__main__":
 
     print_output = True
