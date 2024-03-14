@@ -484,7 +484,7 @@ class Event:
                 reduced_event_set.remove(universe)
 
                 weighted_cover = get_weighted_cover(
-                    reduced_event_set, 
+                    reduced_event_set,
                     universe
                 )
 

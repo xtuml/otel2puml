@@ -5,7 +5,7 @@ from typing import Optional
 
 
 def get_weighted_cover(
-        event_set: set[set | frozenset], 
+        event_set: set[set | frozenset],
         universe: set
 ) -> Optional[set]:
     """
