@@ -675,8 +675,8 @@ def get_coords_in_nested_dict(item, dictionary: dict):
         what second-level key is required to obtain it.
 
     Args:
-        item: The item to search for.
-        dictionary: The nested dictionary to search in.
+        item (any): The item to search for.
+        dictionary (dict): The nested dictionary to search in.
 
     Returns:
         The coordinates of the item if found, None otherwise.
@@ -745,7 +745,9 @@ def format_output(
     return output
 
 
-def find_nearest_extant_ancestor(uid_list, node, depth=0, max_depth=100):
+def find_nearest_extant_ancestor(
+    uid_list: list, node: Node, depth: int = 0, max_depth: int = 100
+):
     """
     Finds the nearest extant ancestor of a given node in a tree structure.
 

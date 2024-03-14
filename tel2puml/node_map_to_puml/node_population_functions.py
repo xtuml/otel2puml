@@ -8,7 +8,7 @@ from tel2puml.node_map_to_puml.node import Node
 import tel2puml.jAlergiaPipeline as jAlergiaPipeline
 
 
-def populate_incoming(node, lookup_table, graph):
+def populate_incoming(node: Node, lookup_table: dict, graph):
     """
     Populates the list of incoming nodes based on the lookup table
         and graph.
@@ -25,7 +25,12 @@ def populate_incoming(node, lookup_table, graph):
 
 
 def populate_outgoing(
-    node, graph, lookup_table, depth=0, max_depth=10, cycle_depth=-1
+    node: Node,
+    graph,
+    lookup_table: dict,
+    depth: int = 0,
+    max_depth: int = 10,
+    cycle_depth: int = -1,
 ):
     """
     Populates the list of outgoing nodes based on the graph, lookup table,
@@ -83,7 +88,7 @@ def populate_outgoing(
     return lookup_table
 
 
-def print_outgoing(node, depth=0, max_depth=10):
+def print_outgoing(node: Node, depth: int = 0, max_depth: int = 10):
     """
     Prints the outgoing nodes recursively up to the specified maximum
         depth.
@@ -130,14 +135,16 @@ def get_puml_data_and_analyse_with_jalergia(
     return graph_list, event_references
 
 
-def convert_to_nodes(graph_list, event_references, print_output: bool = False):
+def convert_to_nodes(
+    graph_list: list, event_references: list, print_output: bool = False
+):
     """
     Retrieves data from the given graph list and returns lookup tables, node
         trees, and event references.
 
     Args:
         graph_list (list): A list of graphs.
-        event_references: A list of references.
+        event_references (list): A list of references.
         print_output (bool, optional): Whether to print the output. Defaults to
             False.
 

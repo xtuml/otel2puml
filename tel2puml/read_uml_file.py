@@ -195,7 +195,7 @@ def stringify_events(events):
     return output
 
 
-def get_puml_data(puml_file, puml_key):
+def get_puml_data(puml_file: str, puml_key: str):
     """
     Retrieves audit event lists from a PlantUML file based on the specified
         key.
