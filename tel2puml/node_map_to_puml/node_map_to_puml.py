@@ -600,9 +600,9 @@ def create_content(
 
 def analyse_node(
     node_tree: Node,
-    output: list,
     logic_lines: dict,
     lookup_table: dict,
+    output: list = None,
     append_first_node: bool = True,
     depth: int = 0,
     max_depth: int = 10,
@@ -632,6 +632,9 @@ def analyse_node(
     Returns:
         list: The updated output list after the analysis.
     """
+
+    if output is None:
+        output = []
 
     if depth >= max_depth:
         return output
@@ -956,11 +959,8 @@ def convert_nodes_to_puml(
             },
         }
 
-    output = []
-
     output = analyse_node(
         node_tree=head_node,
-        output=output,
         logic_lines=logic_lines,
         lookup_table=lookup_table,
         append_first_node=True,
