@@ -125,26 +125,6 @@ def print_outgoing(node: Node, depth: int = 0, max_depth: int = 10):
             )
 
 
-def get_puml_data_and_analyse_with_jalergia(
-    puml_files: list, print_output: bool
-):
-    """
-    Retrieves the PUML data and performs analysis using jAlergia.
-
-    Args:
-        puml_files (list): A list of PUML files.
-        print_output (bool): Flag indicating whether to print the output.
-
-    Returns:
-        tuple: A tuple containing the graph list and event references.
-    """
-    graph_list, event_references = jAlergiaPipeline.main(
-        puml_files=puml_files, print_output=print_output
-    )
-
-    return graph_list, event_references
-
-
 def convert_to_nodes(
     graph_list: list, event_references: list, print_output: bool = False
 ):
@@ -197,7 +177,7 @@ if __name__ == "__main__":
 
     print_output = True
 
-    graph_list, event_references = get_puml_data_and_analyse_with_jalergia(
+    graph_list, event_references = jAlergiaPipeline.process_puml_into_graphs(
         "simple_test", print_output
     )
     lookup_tables, node_trees, event_references = convert_to_nodes(

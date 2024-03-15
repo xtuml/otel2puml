@@ -27,8 +27,8 @@ from tel2puml.node_map_to_puml.node_map_to_puml import (
 )
 from tel2puml.node_map_to_puml.node_population_functions import (
     convert_to_nodes,
-    get_puml_data_and_analyse_with_jalergia,
 )
+from tel2puml.jAlergiaPipeline import process_puml_into_graphs
 
 
 class TestIsInLoop(unittest.TestCase):
@@ -2499,7 +2499,7 @@ class TestEndToEnd(unittest.TestCase):
         puml_name = "simple_test"
         print_output = False
 
-        graph_list, event_references = get_puml_data_and_analyse_with_jalergia(
+        graph_list, event_references = process_puml_into_graphs(
             puml_name, print_output
         )
         lookup_tables, node_trees, event_references = convert_to_nodes(
@@ -2553,7 +2553,7 @@ class TestEndToEnd(unittest.TestCase):
         puml_name = "sequence_xor_fork"
         print_output = False
 
-        graph_list, event_references = get_puml_data_and_analyse_with_jalergia(
+        graph_list, event_references = process_puml_into_graphs(
             puml_name, print_output
         )
         lookup_tables, node_trees, event_references = convert_to_nodes(
@@ -2615,7 +2615,7 @@ class TestEndToEnd(unittest.TestCase):
         puml_name = "loop_XORFork_a"
         print_output = False
 
-        graph_list, event_references = get_puml_data_and_analyse_with_jalergia(
+        graph_list, event_references = process_puml_into_graphs(
             puml_name, print_output
         )
         lookup_tables, node_trees, event_references = convert_to_nodes(
@@ -2674,7 +2674,7 @@ class TestEndToEnd(unittest.TestCase):
         puml_name = "complicated_test"
         print_output = False
 
-        graph_list, event_references = get_puml_data_and_analyse_with_jalergia(
+        graph_list, event_references = process_puml_into_graphs(
             puml_name, print_output
         )
         lookup_tables, node_trees, event_references = convert_to_nodes(
@@ -2759,7 +2759,7 @@ class TestEndToEnd(unittest.TestCase):
         puml_name = "branching_loop_end_test"
         print_output = False
 
-        graph_list, event_references = get_puml_data_and_analyse_with_jalergia(
+        graph_list, event_references = process_puml_into_graphs(
             puml_name, print_output
         )
         lookup_tables, node_trees, event_references = convert_to_nodes(

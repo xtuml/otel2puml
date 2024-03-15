@@ -1,8 +1,9 @@
 """
 Unit tests for the JAlergiaPipeline class.
 """
+
 import unittest
-from tel2puml.jAlergiaPipeline import main
+from tel2puml.jAlergiaPipeline import process_puml_into_graphs
 
 
 class TestJAlergiaPipeline(unittest.TestCase):
@@ -10,19 +11,19 @@ class TestJAlergiaPipeline(unittest.TestCase):
     Unit tests for the JAlergiaPipeline class.
     """
 
-    def test_main_with_default_files(self):
+    def test_process_puml_into_graphs_with_default_files(self):
         """
-        Test the `main` function with default files.
+        Test the `process_puml_into_graphs` function with default files.
         """
         expected_graph_count = 13
 
-        graphs = main()
+        graphs = process_puml_into_graphs()
 
         self.assertEqual(len(graphs[0]), expected_graph_count)
 
-    def test_main_with_custom_file(self):
+    def test_process_puml_into_graphs_with_custom_file(self):
         """
-        Test the `main` function with a custom file.
+        Test the `process_puml_into_graphs` function with a custom file.
         """
         custom_file = "custom_file"
         file_path = "puml_files/" + custom_file + ".puml"
@@ -39,7 +40,9 @@ class TestJAlergiaPipeline(unittest.TestCase):
                         @enduml"""
             )
 
-        graphs = main(puml_files=custom_file, print_output=False)
+        graphs = process_puml_into_graphs(
+            puml_files=custom_file, print_output=False
+        )
 
         import os
 

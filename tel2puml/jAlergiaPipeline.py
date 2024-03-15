@@ -12,7 +12,7 @@ import tel2puml.run_jAlergia as run_jAlergia
 from tel2puml.read_uml_file import get_event_list_from_puml
 
 
-def main(
+def process_puml_into_graphs(
     puml_files: str = "", puml_content: str = "", print_output: bool = False
 ):
     """
@@ -87,4 +87,4 @@ def main(
 
 
 if __name__ == "__main__":
-    main(print_output=True)
+    process_puml_into_graphs(print_output=True)
