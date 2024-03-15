@@ -128,7 +128,7 @@ def recursive_get_type(
         str: The string representation of event types.
     """
     if depth > max_depth:
-        print("max depth exceeded")
+        print("max depth exceeded when running recursive_get_type")
         return output_wip
     if output_wip != "":
         output = ",".join([output_wip, event_tree["eventType"]])
@@ -183,7 +183,7 @@ def stringify_events(events):
                         ",".join(
                             reversed(
                                 recursive_get_type(
-                                    events[event_keys[loop]], ""
+                                    events[event_keys[loop]], "", 100
                                 ).split(",")
                             )
                         ),
@@ -195,7 +195,7 @@ def stringify_events(events):
     return output
 
 
-def get_puml_data(puml_file, puml_key):
+def get_puml_data(puml_file: str, puml_key: str):
     """
     Retrieves audit event lists from a PlantUML file based on the specified
         key.

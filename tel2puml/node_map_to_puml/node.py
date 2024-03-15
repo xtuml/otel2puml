@@ -1,4 +1,5 @@
 """This module holds the 'node' class"""
+
 from typing import Literal
 from uuid import uuid4
 import logging
@@ -51,8 +52,7 @@ class Node:
         outgoing_logic: list["Node"] | None = None,
         is_stub: bool = False,
     ) -> None:
-        """Constructor method.
-        """
+        """Constructor method."""
         self.data = data if data is None else operator
         self.incoming = [] if incoming is None else incoming
         self.outgoing = [] if outgoing is None else outgoing
@@ -204,6 +204,49 @@ class Node:
                     child, event_node_map, direction, root_node
                 )
             logic_list.append(logic_operator_node)
+
+    def copy_node(
+        self,
+        uid: str = None,
+        incoming: list = None,
+        outgoing: list = None,
+        incoming_logic: list = None,
+        outgoing_logic: list = None,
+    ):
+        """
+        Creates a copy of this node with optional modifications to its
+            attributes.
+
+        Args:
+            uid (Any, optional): The modified data for the copied node.
+                Defaults to None.
+            incoming (List[Edge], optional): The modified incoming edges for
+                the copied node. Defaults to None.
+            outgoing (List[Edge], optional): The modified outgoing edges for
+                the copied node. Defaults to None.
+            incoming_logic (Any, optional): The modified incoming logic for
+                the copied node. Defaults to None.
+            outgoing_logic (Any, optional): The modified outgoing logic for
+                the copied node. Defaults to None.
+
+        Returns:
+            Node: The copied node with optional modifications.
+        """
+        return Node(
+            uid=self.uid if uid is None else uid,
+            incoming=self.incoming if incoming is None else incoming,
+            outgoing=self.outgoing if outgoing is None else outgoing,
+            incoming_logic=(
+                self.incoming_logic
+                if incoming_logic is None
+                else incoming_logic
+            ),
+            outgoing_logic=(
+                self.outgoing_logic
+                if outgoing_logic is None
+                else outgoing_logic
+            ),
+        )
 
 
 def load_all_logic_trees_into_nodes(

@@ -8,10 +8,11 @@ partition "loop_XORFork_a" {
                 :C;
             else (false)
                 :D;
+                :E;
             endif
-            :E;
+            :F;
         repeat while (loop)
-        #red:F;
+        #red:G;
     end group
 }
 @enduml

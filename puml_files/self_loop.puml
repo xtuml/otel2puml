@@ -2,12 +2,10 @@
 partition "Branch_Counts" {
     group "Branch_Counts"
         :A;
-        if (XOR) then (true)
+        repeat
             :B;
-            :C;
-        else (false)
-            :D;
-        endif
+        repeat while (loop)
+        :C;
     end group
 }
 @enduml

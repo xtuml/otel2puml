@@ -1,6 +1,6 @@
 """
-    This module reads data from a list of puml file paths, analyses it with
-    jAlergia, then returns the results of the analsyis in networkx format
+This module reads data from a list of puml file paths, analyses it with
+jAlergia, then returns the results of the analsyis in networkx format
 """
 
 from tel2puml.jAlergia2NetworkX import (
@@ -12,7 +12,9 @@ import tel2puml.run_jAlergia as run_jAlergia
 from tel2puml.read_uml_file import get_event_list_from_puml
 
 
-def main(puml_files: str = "", print_output: bool = False):
+def process_puml_into_graphs(
+    puml_files: str = "", puml_content: str = "", print_output: bool = False
+):
     """
     Process a list of PlantUML files and convert them into NetworkX graphs.
 
@@ -67,7 +69,7 @@ def main(puml_files: str = "", print_output: bool = False):
 
             event_references.append(event_reference)
 
-            if (print_output):
+            if print_output:
 
                 networkx_graphs.append(
                     convert_to_networkx(
@@ -78,14 +80,11 @@ def main(puml_files: str = "", print_output: bool = False):
                 )
             else:
                 networkx_graphs.append(
-                    convert_to_networkx(
-                        event_reference,
-                        edge_list
-                    )
+                    convert_to_networkx(event_reference, edge_list)
                 )
 
     return networkx_graphs, event_references
 
 
 if __name__ == "__main__":
-    main(print_output=True)
+    process_puml_into_graphs(print_output=True)
