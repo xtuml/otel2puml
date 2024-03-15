@@ -649,7 +649,7 @@ def analyse_node(
         return output
 
     if len(node_tree.outgoing_logic) > 0:
-        output = create_content_logic(
+        return create_content_logic(
             node_tree=node_tree,
             output=output,
             logic_lines=logic_lines,
@@ -668,7 +668,7 @@ def analyse_node(
         return output
 
     elif node_tree.uid in lookup_table:
-        output = create_content(
+        return create_content(
             node_tree=node_tree,
             output=output,
             logic_lines=logic_lines,
@@ -678,7 +678,7 @@ def analyse_node(
             max_depth=max_depth,
         )
 
-    return output
+
 
 
 def get_coords_in_nested_dict(item, dictionary: dict):

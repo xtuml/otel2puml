@@ -1629,10 +1629,10 @@ class TestAnalyseNode(unittest.TestCase):
 
     def test_analyse_node_with_leaf_uid(self):
         """Test case where the node is a leaf uid node"""
-        node = Node("A")
         output = []
         logic_lines = {"LOOP": {"end": "END_LOOP"}}
-        lookup_table = {}
+        lookup_table = {"A": Node("A")}
+        node = lookup_table["A"]
         append_first_node = True
         depth = 0
         max_depth = 10
