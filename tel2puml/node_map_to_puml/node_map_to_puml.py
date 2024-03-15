@@ -299,6 +299,22 @@ def handle_loop_start(output: list, node_tree: Node, logic_lines: dict):
         if not is_in_loop(incoming, logic_lines, node_tree):
             all_ancestors_in_loop = False
 
+    # IF -----------------:
+    #   If current node has a child that is in a loop,
+    #   but not all of the node's parents are in a loop
+    #
+    # OR -----------------:
+    #   IF ###############:
+    #     Node has more than one parent (and therefore either terminates a loop
+    #     or logic branch)
+    #
+    #   OR ###############:
+    #     Node has only one parent and one of the node's siblings is
+    #     and 'END LOOP' node
+    #
+    #   ENDIF ############:
+    # ENDIF --------------:
+
     if len(possible_descendant_incoming) > 0 and (
         not all_ancestors_in_loop
         or (
@@ -585,6 +601,13 @@ def create_content(
             if outgoing_node.uid == logic_lines["LOOP"]["end"]:
                 node_is_loop = True
 
+            # EITHER:
+            #   Node isn't in loop, and their children aren't in a loop either,
+            # OR:
+            #   Node children aren't already in the ouput,
+            #   but they aren't logic nodes (present in lookup table) and thus
+            #   they should be.
+
             if (
                 (not (node_is_loop))
                 and (not is_in_loop(outgoing_node, logic_lines, node_tree))
@@ -648,6 +671,8 @@ def analyse_node(
     if depth >= max_depth:
         return output
 
+    # IF current node starts a branch (XOR, AND, etc)
+
     if len(node_tree.outgoing_logic) > 0:
         return create_content_logic(
             node_tree=node_tree,
@@ -659,6 +684,9 @@ def analyse_node(
             max_depth=max_depth,
         )
 
+    # OR current node has no outgoing connections and
+    # is not the child of a branch statement
+
     elif (
         (len(node_tree.outgoing_logic) == 0)
         and (len(node_tree.incoming_logic) == 0)
@@ -666,6 +694,9 @@ def analyse_node(
         and (len(node_tree.incoming) > 1)
     ):
         return output
+
+    # OR current node has no children but IS a child of either
+    # a branch statement or a loop
 
     elif node_tree.uid in lookup_table:
         return create_content(
