@@ -1246,8 +1246,6 @@ class TestHandleDivergentTreeChildren(unittest.TestCase):
         lookup_table["C"].outgoing = [lookup_table["D"]]
         lookup_table["D"].outgoing = [lookup_table["E"]]
 
-        output = [lookup_table["A"]]
-
         logic_lines = {
             "XOR": {
                 "start": "XOR_START",

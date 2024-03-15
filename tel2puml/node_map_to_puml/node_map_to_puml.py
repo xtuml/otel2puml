@@ -679,8 +679,6 @@ def analyse_node(
         )
 
 
-
-
 def get_coords_in_nested_dict(item, dictionary: dict):
     """
     Returns whether an item is present in a twice-nested dictionary, and if so,
