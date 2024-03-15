@@ -1,0 +1,22 @@
+@startuml
+partition "loop_XORFork_a_with_nested_loop" {
+    group "loop_XORFork_a_with_nested_loop"
+        #green:A;
+        repeat
+            :B;
+            repeat
+                :M;
+                if (XOR) then (true)
+                    :C;
+                else (false)
+                    :D;
+                    :E;
+                endif
+                :N;
+            repeat while (nested_loop)
+            :F;
+        repeat while (loop)
+        #red:G;
+    end group
+}
+@enduml

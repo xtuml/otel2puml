@@ -2789,26 +2789,145 @@ class TestEndToEnd(unittest.TestCase):
 
         self.assertNotEqual(
             [
-                '@startuml',
+                "@startuml",
                 '    partition "branching_loop_end_test" {',
                 '        group "branching_loop_end_test"',
-                '            :A;',
-                '            if (XOR) then (0)',
-                '                repeat',
-                '                    :B;',
-                '                    :C;',
-                '                repeat while (unconstrained)',
-                '            else (1)',
-                '                repeat',
-                '                    :B;',
-                '                    :D;',
-                '                repeat while (unconstrained)',
-                '                :E;',
-                '            endif',
-                '            :F;',
-                '        end group',
-                '    }',
-                '@enduml',
+                "            :A;",
+                "            if (XOR) then (0)",
+                "                repeat",
+                "                    :B;",
+                "                    :C;",
+                "                repeat while (unconstrained)",
+                "            else (1)",
+                "                repeat",
+                "                    :B;",
+                "                    :D;",
+                "                repeat while (unconstrained)",
+                "                :E;",
+                "            endif",
+                "            :F;",
+                "        end group",
+                "    }",
+                "@enduml",
+            ],
+            puml_full,
+        )
+
+    @unittest.skip(
+        """
+            TODO Networkx can't find nested loops;
+            will have to call it for all nodes.
+        """
+    )
+    def test_loop_XORFork_a_with_nested_loop(self):
+        """
+        Test case for generating a PlantUML diagram using the
+        loop_XORFork_a.puml file as a base for event generation
+        """
+        puml_name = "loop_XORFork_a_with_nested_loop"
+        print_output = False
+
+        graph_list, event_references = process_puml_into_graphs(
+            puml_name, print_output
+        )
+        lookup_tables, node_trees, event_references = convert_to_nodes(
+            graph_list, event_references, print_output
+        )
+
+        lookup_table = lookup_tables[0]
+        event_reference = event_references[0]
+        head_node = node_trees[0]
+
+        logic_table = {
+            "NODE_XOR_1": Node(
+                uid="XOR",
+                incoming=[lookup_table["q1"]],
+                outgoing=[lookup_table["q2"], lookup_table["q3"]],
+            )
+        }
+
+        lookup_table = alter_node_tree_to_contain_logic_nodes(
+            lookup_table, logic_table
+        )
+
+        puml_full = convert_nodes_to_puml(
+            lookup_table, head_node, event_reference, puml_name
+        )
+
+        self.assertEqual(
+            [
+                "@startuml",
+                'partition "loop_XORFork_a" {',
+                '    group "loop_XORFork_a"',
+                "        :A;",
+                "        repeat",
+                "            :B;",
+                "            if (XOR) then (true)",
+                "                :C;",
+                "            else (false)",
+                "                :D;",
+                "                :E;",
+                "            endif",
+                "            :F;",
+                "        repeat while (unconstrained)",
+                "        :G;",
+                "    end group",
+                "}",
+                "@enduml",
+            ],
+            puml_full,
+        )
+
+    @unittest.skip("TODO Self loops currently not detected.")
+    def test_self_loop(self):
+        """
+        Test case for generating a PlantUML diagram using the
+        loop_XORFork_a.puml file as a base for event generation
+        """
+        puml_name = "self_loop"
+        print_output = False
+
+        graph_list, event_references = process_puml_into_graphs(
+            puml_name, print_output
+        )
+        lookup_tables, node_trees, event_references = convert_to_nodes(
+            graph_list, event_references, print_output
+        )
+
+        lookup_table = lookup_tables[0]
+        event_reference = event_references[0]
+        head_node = node_trees[0]
+
+        logic_table = {}
+
+        lookup_table = alter_node_tree_to_contain_logic_nodes(
+            lookup_table, logic_table
+        )
+
+        puml_full = convert_nodes_to_puml(
+            lookup_table, head_node, event_reference, puml_name
+        )
+
+        self.assertEqual(
+            [
+                "@startuml",
+                'partition "loop_XORFork_a" {',
+                '    group "loop_XORFork_a"',
+                "        :A;",
+                "        repeat",
+                "            :B;",
+                "            if (XOR) then (true)",
+                "                :C;",
+                "            else (false)",
+                "                :D;",
+                "                :E;",
+                "            endif",
+                "            :F;",
+                "        repeat while (unconstrained)",
+                "        :G;",
+                "    end group",
+                "}",
+                "@enduml",
             ],
             puml_full,
         )
