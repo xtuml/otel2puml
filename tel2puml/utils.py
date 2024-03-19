@@ -1,7 +1,9 @@
 """Utils for the tel2puml package."""
 
 from itertools import permutations
-from typing import Optional
+from typing import Optional, Generator, Any, TypeVar
+
+T = TypeVar("T")
 
 
 def get_weighted_cover(
@@ -49,3 +51,18 @@ def get_weighted_cover(
             return None
 
     return weighted_cover
+
+
+def convert_nested_generator_to_generator_of_list(
+    nested_generator: Generator[Generator[T, Any, None], Any, None]
+) -> Generator[list[T], Any, None]:
+    """Convert a nested generator to a generator of lists.
+
+    :param nested_generator: The nested generator to be converted.
+    :type nested_generator: `Generator[Generator[T, Any, None], Any, None]`
+    :return: A generator of lists.
+    :rtype: `Generator[list[T], Any, None]`
+
+    """
+    for item in nested_generator:
+        yield list(item)
