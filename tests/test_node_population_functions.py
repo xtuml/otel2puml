@@ -8,7 +8,8 @@ from tel2puml.node_map_to_puml.node import Node
 from tel2puml.node_map_to_puml.node_population_functions import (
     populate_incoming,
     populate_outgoing,
-    print_outgoing
+    print_outgoing,
+    create_event_node_ref
 )
 import networkx as nx
 
@@ -95,6 +96,29 @@ class TestNode(unittest.TestCase):
                     mock_print.call_args_list[loop].args[0],
                     expected_output_lines[loop],
                 )
+
+
+def test_create_event_node_ref():
+    """Test case for the `create_event_node_ref` function.
+    """
+    lookup_table = {
+        "q0": Node("q0"),
+        "q1": Node("q1"),
+        "q2": Node("q2"),
+        "q3": Node("q3"),
+    }
+    node_reference = {
+        "A": ["q0", "q1"],
+        "B": ["q2"],
+        "C": ["q3"],
+    }
+    node_ref = create_event_node_ref(lookup_table, node_reference)
+    expected_output = {
+        "A": [lookup_table["q0"], lookup_table["q1"]],
+        "B": [lookup_table["q2"]],
+        "C": [lookup_table["q3"]],
+    }
+    assert node_ref == expected_output
 
 
 if __name__ == "__main__":
