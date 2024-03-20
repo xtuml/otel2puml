@@ -53,12 +53,15 @@ class Node:
         is_stub: bool = False,
     ) -> None:
         """Constructor method."""
-        self.data = data if data is None else operator
+        self.data = data if data is not None else operator
         self.incoming = [] if incoming is None else incoming
         self.outgoing = [] if outgoing is None else outgoing
         self.incoming_logic = [] if incoming_logic is None else incoming_logic
         self.outgoing_logic = [] if outgoing_logic is None else outgoing_logic
-        self.uid = uid if uid is not None else data
+        self.uid = uid if uid is not None else self.data
+        # this remains here until the code is refactored to be simpler
+        if self.data is None:
+            self.data = self.uid
         self.operator = operator
         self.event_type = event_type
         self.is_stub = is_stub
@@ -189,7 +192,13 @@ class Node:
                     f"The stub node has:\nEvent type: {logic_tree.label}\n"
                     f"Node ID: {node_id}"
                 )
-            logic_list.append(event_node_map[logic_tree.label])
+            # Add the node to the logic list and the appropriate node list if
+            # the operator is a logic node
+            if self.operator is not None:
+                getattr(self, direction).append(
+                    event_node_map[logic_tree.label]
+                )
+                logic_list.append(event_node_map[logic_tree.label])
         elif logic_tree.operator == Operator.SEQUENCE:
             for child in logic_tree.children:
                 self._load_logic_into_logic_list(
@@ -266,9 +275,11 @@ def load_all_logic_trees_into_nodes(
     if direction not in ["incoming", "outgoing"]:
         raise ValueError(f"Invalid direction {direction}")
     for event_type, event in events.items():
-        load_logic_tree_into_nodes(
-            event.logic_gate_tree, nodes[event_type], direction
-        )
+        # catch the case when the event has no logic gate tree
+        if event.logic_gate_tree is not None:
+            load_logic_tree_into_nodes(
+                event.logic_gate_tree, nodes[event_type], direction
+            )
 
 
 def load_logic_tree_into_nodes(

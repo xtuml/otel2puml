@@ -172,18 +172,18 @@ def process_tree_with_and_xor_logic_gate(
 
 @pytest.fixture
 def events(
-    process_tree_no_logic: ProcessTree,
+    process_tree_with_and_logic_gate: ProcessTree,
 ) -> dict[str, Event]:
     """Returns a dictionary of events.
 
-    :param process_tree_no_logic: The process tree with no logic.
-    :type process_tree_no_logic: :class:`ProcessTree`
+    :param process_tree_with_and_logic_gate: The process tree with and logic.
+    :type process_tree_with_and_logic_gate: :class:`ProcessTree`
     :return: The events as a dictionary of event types mapped to logic tree
     :rtype: `dict`[`str`, :class:`Event`]
     """
     process_trees_names_map = {
-        "no_logic_1": process_tree_no_logic,
-        "no_logic_2": deepcopy(process_tree_no_logic),
+        "and_logic_1": process_tree_with_and_logic_gate,
+        "and_logic_2": deepcopy(process_tree_with_and_logic_gate),
     }
     events_map = {}
     for event_type, process_tree in process_trees_names_map.items():

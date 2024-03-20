@@ -66,10 +66,10 @@ class TestNode:
             [node.incoming_logic, node.outgoing_logic],
         ):
             assert len(direction_logic_list) == 0
+            assert len(direction_node_list) == 3
             node.load_logic_into_list(process_tree_no_logic, direction)
-            assert len(direction_logic_list) == 3
-            for direction_node in direction_node_list:
-                assert direction_node in direction_logic_list
+            assert len(direction_logic_list) == 0
+            assert len(direction_node_list) == 3
 
     @staticmethod
     def test_load_logic_into_list_and_logic(
@@ -283,28 +283,33 @@ class TestNode:
 
 def test_load_logic_tree_into_nodes_incoming(
     node: Node,
-    process_tree_no_logic: ProcessTree,
+    process_tree_with_and_logic_gate: ProcessTree,
 ) -> None:
     """Test the load_logic_tree_into_nodes function for both incoming and
     outgoing nodes.
 
     :param node: The node to test.
     :type node: :class:`Node`
-    :param process_tree_no_logic: The process tree with no logic.
-    :type process_tree_no_logic: :class:`ProcessTree`
+    :param process_tree_with_and_logic_gate: The process tree with and logic.
+    :type process_tree_with_and_logic_gate: :class:`ProcessTree`
     """
 
     for direction in ["incoming", "outgoing"]:
         nodes_list = [deepcopy(node), deepcopy(node)]
         load_logic_tree_into_nodes(
-            process_tree_no_logic, nodes_list, direction
+            process_tree_with_and_logic_gate, nodes_list, direction
         )
         for parent_node in nodes_list:
             direction_node_list = getattr(parent_node, direction)
             direction_logic_list = getattr(parent_node, f"{direction}_logic")
-            assert len(direction_logic_list) == 3
+            assert len(direction_logic_list) == 1
+            operator_node = direction_logic_list[0]
+            assert operator_node.operator == "AND"
+            operator_node_direction_logic_list = getattr(
+                operator_node, f"{direction}_logic"
+            )
             for direction_node in direction_node_list:
-                assert direction_node in direction_logic_list
+                assert direction_node in operator_node_direction_logic_list
 
 
 def test_load_all_logic_trees_into_nodes(
@@ -325,6 +330,11 @@ def test_load_all_logic_trees_into_nodes(
             node = nodes[0]
             direction_node_list = getattr(node, direction)
             direction_logic_list = getattr(node, f"{direction}_logic")
-            assert len(direction_logic_list) == 3
+            assert len(direction_logic_list) == 1
+            operator_node = direction_logic_list[0]
+            assert operator_node.operator == "AND"
+            operator_node_direction_logic_list = getattr(
+                operator_node, f"{direction}_logic"
+            )
             for direction_node in direction_node_list:
-                assert direction_node in direction_logic_list
+                assert direction_node in operator_node_direction_logic_list

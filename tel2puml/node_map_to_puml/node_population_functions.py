@@ -173,6 +173,33 @@ def convert_to_nodes(
     return lookup_tables, node_trees, event_references
 
 
+def create_event_node_ref(
+    lookup_table: dict[str, Node], node_references: dict[str, str]
+) -> dict[str, list[Node]]:
+    """Creates a reference to the nodes based on the event type from the
+    network x uid nodes event reference and the lookup table containing the
+    Nodes
+
+    :param lookup_table: A dictionary containing the lookup table of the nodes
+    :type lookup_table: `dict`[`str`, :class:`Node`]
+    :param node_references: A dictionary containing the network x node
+    references
+    :type node_references: `dict`[`str`, `str`]
+    :return: A dictionary containing the event type and the list of nodes
+    :rtype: `dict`[`str`, `list`[:class:`Node`]]
+    """
+    node_ref = {}
+    for event_type, nodes in node_references.items():
+        node_ref[event_type] = []
+        for uid in nodes:
+            if uid not in lookup_table:
+                raise ValueError(f"Node {uid} not found in lookup table")
+            node = lookup_table[uid]
+            node.event_type = event_type
+            node_ref[event_type].append(node)
+    return node_ref
+
+
 if __name__ == "__main__":
 
     print_output = True

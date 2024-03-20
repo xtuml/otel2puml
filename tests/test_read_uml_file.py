@@ -3,12 +3,16 @@ This module contains unit tests for the read_uml_file module.
 The test class contains test methods for the format_events_list_as_nested_json,
     recursive_get_type, and get_event_list_from_puml functions.
 """
-
 import unittest
+
 from tel2puml.read_uml_file import (
     format_events_list_as_nested_json,
     recursive_get_type,
     get_event_list_from_puml,
+    get_markov_sequence_lines_from_audit_event_stream
+)
+from tel2puml.pipelines.data_creation import (
+    generate_test_data_event_sequences_from_puml
 )
 
 
@@ -115,6 +119,16 @@ class Testread_uml_file(unittest.TestCase):
             get_event_list_from_puml(puml_file, puml_key, output_file, DEBUG),
             expected_output,
         )
+
+
+def test_get_markov_sequence_lines_from_audit_event_stream() -> None:
+    """Test the `get_markov_sequence_lines_from_audit_event_stream` function.
+    """
+    event_sequences = generate_test_data_event_sequences_from_puml(
+        "puml_files/simple_test.puml"
+    )
+    result = get_markov_sequence_lines_from_audit_event_stream(event_sequences)
+    assert result == "A,D\nA,B,C"
 
 
 if __name__ == "__main__":

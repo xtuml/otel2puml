@@ -24,13 +24,17 @@ Functions:
 ) -> str:
     Retrieves event lists from a PlantUML file based on the specified key.
 """
-
+from typing import Iterable, Generator, Any
 import re
+
+
 from test_event_generator.solutions.graph_solution import (
     get_audit_event_jsons_and_templates_all_topological_permutations,
     GraphSolution,
 )
 from test_event_generator.io.run import puml_file_to_test_events
+
+from tel2puml.tel2puml_types import PVEvent, NestedEvent
 
 
 def format_events_list_as_nested_json(
@@ -257,6 +261,131 @@ def get_event_list_from_puml(
             f.write(str(output))
 
     return output
+
+
+def format_events_stream_as_nested_json(
+    audit_event_stream: Iterable[Iterable[PVEvent]], debug: bool
+) -> Generator[dict[str, NestedEvent], Any, None]:
+    """
+    Formats a stream of audit event lists as nested JSON and yielding nested
+    json for each job group of events
+
+    :param audit_event_stream: A stream of audit event lists.
+    :type audit_event_stream: `Iterable`[`Iterable`[:class:`PVEvent`]]
+    :param debug: A flag indicating whether to enable debugging.
+    :type debug: `bool`
+    :return: A generator that yields the formatted nested JSON.
+    :rtype: `Generator`[`dict`[`str`, :class:`NestedEvent`], `Any`, `None`]
+    """
+    counter = 0
+    for event_list in audit_event_stream:
+        counter += 1
+
+        if counter > 100 and debug:
+            break
+        events = {}
+        for event in event_list:
+            events[event["eventId"]] = {"eventType": event["eventType"]}
+
+            if "previousEventIds" in event:
+                events[event["eventId"]]["previousEventIds"] = {}
+
+                if isinstance(event["previousEventIds"], list):
+                    for prev in event["previousEventIds"]:
+                        events[event["eventId"]]["previousEventIds"][prev] = (
+                            event["previousEventIds"]
+                        )
+                else:
+                    events[event["eventId"]]["previousEventIds"][
+                        event["previousEventIds"]
+                    ] = {}
+        for event in events:
+            if "previousEventIds" in events[event]:
+                if isinstance(events[event]["previousEventIds"], dict):
+                    for prev in events[event]["previousEventIds"]:
+                        events[event]["previousEventIds"][prev] = events[prev]
+                else:
+                    events[event]["previousEventIds"] = events[
+                        events[event]["previousEventIds"]
+                    ]
+        yield events
+
+
+def stringify_events_generator(
+    events: dict[str, NestedEvent]
+) -> Generator[str, Any, None]:
+    """
+    Converts a dictionary of events into a string representation yielding lines
+    of the string representation
+
+    :param events: A dictionary containing events.
+    :type events: `dict`[`str`, :class:`NestedEvent`]
+    :return: A generator that yields the string representation of the events.
+    :rtype: `Generator`[`str`, `Any`, `None`]
+    """
+
+    event_keys = list(events.keys())
+    for loop in range(0, len(event_keys)):
+        if loop < len(event_keys):
+            if loop < len(event_keys) - 1:
+                next_event = events[event_keys[loop + 1]]
+            if (loop == len(event_keys) - 1) | (
+                "previousEventIds" not in next_event
+            ):
+                yield (
+                    re.sub(
+                        ",,",
+                        "\n",
+                        ",".join(
+                            reversed(
+                                recursive_get_type(
+                                    events[event_keys[loop]], "", 100
+                                ).split(",")
+                            )
+                        ),
+                    )
+                )
+
+
+def yield_markov_sequence_lines_from_audit_event_stream(
+    audit_event_stream: Iterable[Iterable[PVEvent]], debug: bool
+) -> Generator[str, Any, None]:
+    """
+    Retrieves event sequences from a stream of audit event job sequences.
+
+    :param audit_event_stream: A stream of audit event lists.
+    :type audit_event_stream: `Iterable`[`Iterable`[:class:`PVEvent`]]
+    :param debug: A flag indicating whether to enable debugging.
+    :type debug: `bool`
+    :return: A generator that yields the event list as a string.
+    :rtype: `Generator`[`str`, `Any`, `None`]
+    """
+
+    audit_event_nested_jsons = format_events_stream_as_nested_json(
+        audit_event_stream, debug
+    )
+
+    for events in audit_event_nested_jsons:
+        yield from stringify_events_generator(events)
+
+
+def get_markov_sequence_lines_from_audit_event_stream(
+    audit_event_stream: Iterable[Iterable[PVEvent]],
+    debug: bool = False
+) -> str:
+    """
+    Retrieves event sequences from a stream of audit event job sequences.
+
+    :param audit_event_stream: A stream of audit event lists.
+    :type audit_event_stream: `Iterable`[`Iterable`[:class:`PVEvent`]]
+    :param debug: A flag indicating whether to enable debugging.
+    :type debug: `bool`
+    :return: The event list as a string.
+    :rtype: `str`
+    """
+    return "\n".join(yield_markov_sequence_lines_from_audit_event_stream(
+        audit_event_stream, debug
+    ))
 
 
 if __name__ == "__main__":

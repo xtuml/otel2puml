@@ -4,7 +4,7 @@
 from itertools import product, permutations
 from uuid import uuid4
 from datetime import datetime, timedelta
-from typing import Any, Generator
+from typing import Any, Generator, Iterable
 from copy import deepcopy
 from enum import Enum
 
@@ -21,6 +21,7 @@ from test_event_generator.solutions.graph_solution import GraphSolution
 from test_event_generator.solutions.event_solution import EventSolution
 
 from tel2puml.utils import get_weighted_cover
+from tel2puml.tel2puml_types import PVEvent
 
 
 class Operator(Enum):
@@ -729,31 +730,87 @@ class Event:
 def update_all_connections_from_data(
     events: list[dict],
 ) -> tuple[dict[str, Event], dict[str, Event]]:
-    """This function detects the logic in a sequence of PV events.
+    """This function detects the logic in a stream of PV events and updates
+    the forward and backward logic dictionaries of events.
 
-    :param events: A sequence of PV events.
+    :param events: A stream of PV events.
     :type events: `list`[:class:`dict`]
     :return: A tuple of the forward and backward logic dictionaries of events.
     :rtype: `tuple`[`dict`[`str`, :class:`Event`],
     `dict`[`str`, :class:`Event`]]
     """
-    graph_solutions = get_graph_solutions_from_events(events)
+    jobs = cluster_events_by_job_id(events)
+    return update_all_connections_from_clustered_events(jobs.values())
+
+
+def update_all_connections_from_clustered_events(
+    clustered_events: Iterable[Iterable[PVEvent]],
+) -> tuple[dict[str, Event], dict[str, Event]]:
+    """This function detects the logic in a sequence of PV events and updates
+    the forward and backward logic dictionaries of events.
+
+    :param clustered_events: A sequence of PV events.
+    :type clustered_events: `Iterable`[`Iterable`[:class:`PVEvent`]]
+    :return: A tuple of the forward and backward logic dictionaries of events.
+    :rtype: `tuple`[`dict`[`str`, :class:`Event`],
+    `dict`[`str`, :class:`Event`]]
+    """
+    graph_solutions = get_graph_solutions_from_clustered_events(
+        clustered_events
+    )
+    return update_all_connections_from_graph_solutions(
+        graph_solutions
+    )
+
+
+def update_all_connections_from_graph_solutions(
+    graph_solutions: Iterable[GraphSolution],
+) -> tuple[dict[str, Event], dict[str, Event]]:
+    """This function detects the logic in a sequence of graph solutions and
+    updates the forward and backward logic dictionaries of events.
+
+    :param graph_solutions: A sequence of graph solutions.
+    :type graph_solutions: `Iterable`[:class:`GraphSolution`]
+    :return: A tuple of the forward and backward logic dictionaries of events.
+    :rtype: `tuple`[`dict`[`str`, :class:`Event`],
+    `dict`[`str`, :class:`Event`]]
+    """
     events_forward_logic: dict[str, Event] = {}
     events_backward_logic: dict[str, Event] = {}
     for graph_solution in graph_solutions:
-        for event in graph_solution.events.values():
-            event_type: str = event.meta_data["EventType"]
-            if event_type not in events_forward_logic:
-                events_forward_logic[event_type] = Event(event_type)
-            if event_type not in events_backward_logic:
-                events_backward_logic[event_type] = Event(event_type)
-            events_forward_logic[event_type].update_event_sets(
-                get_events_set_from_events_list(event.post_events)
-            )
-            events_backward_logic[event_type].update_event_sets(
-                get_events_set_from_events_list(event.previous_events)
-            )
+        update_events_from_graph_solution(
+            graph_solution, events_forward_logic, events_backward_logic
+        )
     return events_forward_logic, events_backward_logic
+
+
+def update_events_from_graph_solution(
+    graph_solution: GraphSolution,
+    events_forward_logic: dict[str, Event],
+    events_backward_logic: dict[str, Event],
+) -> None:
+    """This function updates the forward and backward logic dictionaries of
+    events from a graph solution.
+
+    :param graph_solution: The graph solution.
+    :type graph_solution: :class:`GraphSolution`
+    :param events_forward_logic: The forward logic dictionary of events.
+    :type events_forward_logic: `dict`[`str`, :class:`Event`]
+    :param events_backward_logic: The backward logic dictionary of events.
+    :type events_backward_logic: `dict`[`str`, :class:`Event`]
+    """
+    for event in graph_solution.events.values():
+        event_type: str = event.meta_data["EventType"]
+        if event_type not in events_forward_logic:
+            events_forward_logic[event_type] = Event(event_type)
+        if event_type not in events_backward_logic:
+            events_backward_logic[event_type] = Event(event_type)
+        events_forward_logic[event_type].update_event_sets(
+            get_events_set_from_events_list(event.post_events)
+        )
+        events_backward_logic[event_type].update_event_sets(
+            get_events_set_from_events_list(event.previous_events)
+        )
 
 
 def get_events_set_from_events_list(events: list[EventSolution]) -> list[str]:
@@ -801,3 +858,18 @@ def cluster_events_by_job_id(events: list[dict]) -> dict[str, list[dict]]:
             events_by_job_id[job_id] = []
         events_by_job_id[job_id].append(event)
     return events_by_job_id
+
+
+def get_graph_solutions_from_clustered_events(
+    clustered_events: Iterable[Iterable[PVEvent]],
+) -> Generator[GraphSolution, Any, None]:
+    """This function gets the graph solutions from a sequence of clustered PV
+    events.
+
+    :param clustered_events: A sequence of clustered PV events.
+    :type clustered_events: `Iterable`[`Iterable`[:class:`PVEvent`]]
+    :return: A generator that yields the graph solutions.
+    :rtype: `Generator`[:class:`GraphSolution`, `Any`, `None`]
+    """
+    for job_events in clustered_events:
+        yield GraphSolution.from_event_list(job_events)
