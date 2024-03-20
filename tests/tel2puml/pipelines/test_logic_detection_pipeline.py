@@ -752,8 +752,8 @@ class TestEvent:
         assert len(labels_cd) == 0
 
         event.event_sets = {
-            EventSet(["B"]),
             EventSet(["B", "B"]),
+            EventSet(["B"]),
         }
 
         process_tree = event.calculate_process_tree_from_event_sets()
@@ -791,6 +791,38 @@ class TestEvent:
         )
         child, = logic_gate_tree_with_branches.children
         assert child.label == "B"
+
+        event.event_sets = {
+            EventSet(["C", "D"]),
+            EventSet(["B", "B"]),
+            EventSet(["B"]),
+        }
+
+        process_tree = event.calculate_process_tree_from_event_sets()
+        logic_gates_tree = event.reduce_process_tree_to_preferred_logic_gates(
+            process_tree
+        )
+        logic_gate_tree_with_branches = event.calculate_repeats_in_tree(
+            logic_gates_tree
+        )
+
+        assert (
+            logic_gate_tree_with_branches.operator.value
+            == Operator.BRANCH.value
+        )
+        child_xor, = logic_gate_tree_with_branches.children
+        assert child_xor.operator.value == Operator.XOR.value
+        labels_b = ["B"]
+        labels_cd = ["D", "C"]
+        for grandchild in child_xor.children:
+            if grandchild.label == "B":
+                labels_b.remove(grandchild.label)
+            else:
+                assert grandchild.operator.value == Operator.PARALLEL.value
+                for great_grandchild in grandchild.children:
+                    labels_cd.remove(great_grandchild.label)
+        assert len(labels_b) == 0
+        assert len(labels_cd) == 0
 
     @staticmethod
     def test_remove_defunct_sequence_logic() -> None:
