@@ -256,6 +256,21 @@ class Event:
         """
         return {event_set.to_frozenset() for event_set in self.event_sets}
 
+    def get_event_set_counts(self) -> dict[str, set[int]]:
+        """Method to get the event set counts.
+
+        :return: The event set counts.
+        :rtype: `dict`[`str`, `set`[`int`]]
+        """
+        event_set_counts: dict[str, set[int]] = {}
+        for event_set in self.event_sets:
+            for event, count in event_set.items():
+                if event in event_set_counts:
+                    event_set_counts[event].add(count)
+                else:
+                    event_set_counts[event] = {count}
+        return event_set_counts
+
     def create_augmented_data_from_event_sets(
         self,
     ) -> Generator[dict[str, Any], Any, None]:
@@ -526,14 +541,9 @@ class Event:
         :return: The process tree with repeats.
         :rtype: :class:`pm4py.objects.process_tree.obj.ProcessTree`
         """
-        all_event_types = set().union(*self.get_reduced_event_set())
-        for event_type in all_event_types:
-            counts = [
-                event_set[event_type]
-                for event_set in self.event_sets
-                if event_type in event_set.get_repeated_events()
-            ]
-            if len(counts) > 1:
+        counts = self.get_event_set_counts()
+        for count in counts.values():
+            if len(count) > 1:
                 logic_gate_tree = ProcessTree(
                     Operator.BRANCH,
                     logic_gate_tree.parent,
@@ -553,14 +563,10 @@ class Event:
         :type node: :class:`pm4py.objects.process_tree.obj.ProcessTree`
         """
         if node.operator is None:
-            counts = [
-                event_set[node.label]
-                for event_set in self.event_sets
-                if node.label in event_set.get_repeated_events()
-            ]
-            if len(counts) == 1:
+            counts = self.get_event_set_counts().get(node.label, set())
+            if len(counts) == 1 and (count := counts.pop()) > 1:
                 return ProcessTree(
-                    Operator.PARALLEL, node.parent, [node] * counts[0]
+                    Operator.PARALLEL, node.parent, [node] * count
                 )
         else:
             node.children = [
