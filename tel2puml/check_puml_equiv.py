@@ -2,7 +2,12 @@
 
 from typing import Any, Generator, Literal, Hashable
 
-from networkx import DiGraph, graph_edit_distance
+from networkx import (
+    DiGraph,
+    graph_edit_distance,
+    set_node_attributes,
+    set_edge_attributes,
+)
 from test_event_generator.io.parse_puml import (
     get_unparsed_job_defs,
     parse_raw_job_def_lines,
@@ -34,6 +39,14 @@ class NXNode:
         """Method to return the hash of the node"""
         return hash(self.node_id)
 
+    def update_extra_info(self, update_dict: dict) -> None:
+        """Method to add extra information to the node
+
+        :param update_dict: dictionary of extra information to add
+        :type update_dict: `dict`
+        """
+        self.extra_info = {**self.extra_info, **update_dict}
+
 
 def parse_raw_job_def(puml_string: str) -> Generator[list[str], Any, None]:
     """Method to parse a raw puml string into a list of parsed puml lines
@@ -50,6 +63,29 @@ def parse_raw_job_def(puml_string: str) -> Generator[list[str], Any, None]:
         # pre-parse
         pre_parse = parse_raw_job_def_lines(raw_job_def_lines)
         yield pre_parse
+
+
+def update_collected_attributes(
+    collected_attributes: dict[tuple[str, int], dict[str, Any]],
+    event_data: EventData,
+) -> None:
+    """Method to update the collected attributes dictionary with the event data
+
+    :param collected_attributes: dictionary of collected attributes
+    :type collected_attributes: `dict`[:class:`tuple`[:class:`str`, `int`],
+    `dict`[:class:`str`, `Any`]]
+    :param event_data: event data to add to the collected attributes
+    :type event_data: :class:`EventData`
+    """
+    if event_data.event_tuple not in collected_attributes:
+        collected_attributes[event_data.event_tuple] = {}
+    collected_attributes[event_data.event_tuple]["is_break"] = (
+        event_data.is_break
+    )
+    for branch_count in event_data.branch_counts.values():
+        if branch_count["user"] not in collected_attributes:
+            collected_attributes[branch_count["user"]] = {}
+        collected_attributes[branch_count["user"]]["is_branch"] = True
 
 
 def create_networkx_graph_from_parsed_puml(
@@ -76,12 +112,14 @@ def create_networkx_graph_from_parsed_puml(
     graph = DiGraph()
     counters = {"XOR": 0, "AND": 0, "OR": 0, "LOOP": 0}
     prev_parsed_lines = [None] + parsed_puml[:-1]
+    collected_attributes = {}
     for parsed_line, prev_parsed_line in zip(parsed_puml, prev_parsed_lines):
         # check if parsed_line is an EventData object. If start create a logic
         # tuple of node otherwise handle paths and ends of logic
         if isinstance(parsed_line, EventData):
             # if just an event create a node
             node = NXNode(parsed_line.event_tuple, parsed_line.event_type)
+            update_collected_attributes(collected_attributes, parsed_line)
         elif parsed_line[0] == "START":
             # if a start of logic or loop create a logic tuple of nodes add it
             # to the front of the logic list and make the node the first node
@@ -132,11 +170,23 @@ def create_networkx_graph_from_parsed_puml(
         prev_node = node
     for node in graph.nodes:
         if isinstance(node, NXNode):
-            graph.nodes[node]["node_type"] = node.node_type
-            graph.nodes[node]["extra_info"] = node.extra_info
+            node.update_extra_info(collected_attributes.get(node.node_id, {}))
+            set_node_attributes(graph, {
+                node: {
+                    "node_type": node.node_type,
+                    "extra_info": node.extra_info,
+                }
+            })
     for edge in graph.edges:
-        graph.edges[edge]["start_node_attr"] = graph.nodes[edge[0]]
-        graph.edges[edge]["end_node_attr"] = graph.nodes[edge[1]]
+        set_edge_attributes(
+            graph,
+            {
+                edge: {
+                    "start_node_attr": graph.nodes[edge[0]],
+                    "end_node_attr": graph.nodes[edge[1]],
+                }
+            }
+        )
     return graph
 
 
