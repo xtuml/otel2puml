@@ -11,6 +11,9 @@ from tel2puml.check_puml_equiv import (
 
 
 def test_create_networkx_graph_from_parsed_puml() -> None:
+    """Test the `create_networkx_graph_from_parsed_puml` function creates the
+    correct networkx graph from the parsed puml
+    """
     # setup events
     events = {}
     for event_string in ["A", "B", "C", "D", "E", "F", "G"]:
@@ -53,6 +56,8 @@ def test_create_networkx_graph_from_parsed_puml() -> None:
 
 
 def test_check_networkx_graph_equivalence_same_graph() -> None:
+    """Test the `check_networkx_graph_equivalence` function returns True when
+    the same graph is passed in"""
     with open(
         "puml_files/bunched_XOR_switch.puml", "r", encoding="utf-8"
     ) as file:
@@ -67,6 +72,8 @@ def test_check_networkx_graph_equivalence_same_graph() -> None:
 
 
 def test_check_networkx_graph_equivalence_different_graph() -> None:
+    """Test the `check_networkx_graph_equivalence` function returns False when
+    different graphs are passed in"""
     with open(
         "puml_files/bunched_XOR_switch.puml", "r", encoding="utf-8"
     ) as file:
@@ -81,6 +88,8 @@ def test_check_networkx_graph_equivalence_different_graph() -> None:
 
 
 def test_check_puml_equivalence_same_puml() -> None:
+    """Test the `check_puml_equivalence` function returns True when the same
+    puml is passed in"""
     with open(
         "puml_files/bunched_XOR_switch.puml", "r", encoding="utf-8"
     ) as file:
@@ -93,6 +102,8 @@ def test_check_puml_equivalence_same_puml() -> None:
 
 
 def test_check_puml_equivalence_different_puml() -> None:
+    """Test the `check_puml_equivalence` function returns False when different
+    puml are passed in"""
     with open(
         "puml_files/bunched_XOR_switch.puml", "r", encoding="utf-8"
     ) as file:
@@ -105,6 +116,8 @@ def test_check_puml_equivalence_different_puml() -> None:
 
 
 def test_check_puml_equivalence_same_puml_reordered() -> None:
+    """Test the `check_puml_equivalence` function returns True when the same
+    puml is passed in but with different ordering"""
     with open(
         "puml_files/bunched_XOR_switch.puml", "r", encoding="utf-8"
     ) as file:

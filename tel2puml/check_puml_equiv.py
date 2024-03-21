@@ -157,12 +157,32 @@ def get_network_x_graph_from_puml_string(
 def node_match(
     node_1_attributes: NXNodeAttributes, node_2_attributes: NXNodeAttributes
 ) -> bool:
+    """Method used in `graph_edit_distance` to check if two nodes are
+    considered equal
+
+    :param node_1_attributes: attributes of the first node
+    :type node_1_attributes: :class:`NXNodeAttributes`
+    :param node_2_attributes: attributes of the second node
+    :type node_2_attributes: :class:`NXNodeAttributes`
+    :return: whether the two nodes are considered equal
+    :rtype: `bool`
+    """
     return node_1_attributes == node_2_attributes
 
 
 def edge_match(
     edge_1_attributes: NXEdgeAttributes, edge_2_attributes: NXEdgeAttributes
 ) -> bool:
+    """Method used in `graph_edit_distance` to check if two edges are
+    considered equal
+
+    :param edge_1_attributes: attributes of the first edge
+    :type edge_1_attributes: :class:`NXEdgeAttributes`
+    :param edge_2_attributes: attributes of the second edge
+    :type edge_2_attributes: :class:`NXEdgeAttributes`
+    :return: whether the two edges are considered equal
+    :rtype: `bool`
+    """
     return (
         edge_1_attributes["start_node_attr"]
         == edge_2_attributes["start_node_attr"]
