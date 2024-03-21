@@ -2,13 +2,14 @@
 
 from typing import Any, Generator, Literal, Hashable
 
-from networkx import DiGraph
-
+from networkx import DiGraph, graph_edit_distance
 from test_event_generator.io.parse_puml import (
     get_unparsed_job_defs,
     parse_raw_job_def_lines,
     EventData,
 )
+
+from tel2puml.tel2puml_types import NXNodeAttributes, NXEdgeAttributes
 
 
 class NXNode:
@@ -23,6 +24,7 @@ class NXNode:
         """Constructor method"""
         self.node_id = node_id
         self.node_type = node_type
+        self.extra_info: dict[str, str] = {}
 
     def __repr__(self) -> str:
         """Method to return a string representation of the node"""
@@ -87,11 +89,11 @@ def create_networkx_graph_from_parsed_puml(
             counters[parsed_line[1]] += 1
             logic_nodes = (
                 NXNode(
-                    (*parsed_line, str(counters[parsed_line[1]])),
+                    (*parsed_line, counters[parsed_line[1]]),
                     "_".join(parsed_line),
                 ),
                 NXNode(
-                    ("END", parsed_line[1], str(counters[parsed_line[1]])),
+                    ("END", parsed_line[1], counters[parsed_line[1]]),
                     f"END_{parsed_line[1]}",
                 ),
             )
@@ -109,7 +111,9 @@ def create_networkx_graph_from_parsed_puml(
                     continue
             # add the edge from the previous node to the end node of the
             # current logic tuple
-            graph.add_edge(prev_node, logic_list[-1][1])
+            graph.add_edge(
+                prev_node, logic_list[-1][1],
+            )
             # if the current line is an END then pop the last logic tuple and
             # set the previous node to the end node in that tuple. Otherwise
             # set the previous node to the start node of the current logic
@@ -122,6 +126,84 @@ def create_networkx_graph_from_parsed_puml(
         # add the edge from the previous node to the current node (in the
         # cases of EventData and START)
         if prev_node is not None:
-            graph.add_edge(prev_node, node)
+            graph.add_edge(
+                prev_node, node,
+            )
         prev_node = node
+    for node in graph.nodes:
+        if isinstance(node, NXNode):
+            graph.nodes[node]["node_type"] = node.node_type
+            graph.nodes[node]["extra_info"] = node.extra_info
+    for edge in graph.edges:
+        graph.edges[edge]["start_node_attr"] = graph.nodes[edge[0]]
+        graph.edges[edge]["end_node_attr"] = graph.nodes[edge[1]]
     return graph
+
+
+def get_network_x_graph_from_puml_string(
+    puml_string: str
+) -> Generator[DiGraph, Any, None]:
+    """Method to get a networkx graph from a puml string
+
+    :param puml_string: puml string
+    :type puml_string: `str`
+    :return: Generator of networkx graphs
+    :rtype: `Generator`[:class:`DiGraph`, `Any`, `None`]
+    """
+    for parsed_puml in parse_raw_job_def(puml_string):
+        yield create_networkx_graph_from_parsed_puml(parsed_puml)
+
+
+def node_match(
+    node_1_attributes: NXNodeAttributes, node_2_attributes: NXNodeAttributes
+) -> bool:
+    return node_1_attributes == node_2_attributes
+
+
+def edge_match(
+    edge_1_attributes: NXEdgeAttributes, edge_2_attributes: NXEdgeAttributes
+) -> bool:
+    return (
+        edge_1_attributes["start_node_attr"]
+        == edge_2_attributes["start_node_attr"]
+        and edge_1_attributes["end_node_attr"]
+        == edge_2_attributes["end_node_attr"]
+    )
+
+
+def check_networkx_graph_equivalence(
+    graph_1: DiGraph, graph_2: DiGraph
+) -> bool:
+    """Method to check the equivalence of two networkx graphs
+
+    :param graph_1: first networkx graph
+    :type graph_1: :class:`DiGraph`
+    :param graph_2: second networkx graph
+    :type graph_2: :class:`DiGraph`
+    :return: whether the two networkx graphs are equivalent
+    :rtype: `bool`
+    """
+    return graph_edit_distance(
+        graph_1, graph_2,
+        node_match=node_match,
+        edge_match=edge_match,
+        timeout=10,
+        upper_bound=1
+    ) == 0
+
+
+def check_puml_equivalence(
+    puml_string_1: str, puml_string_2: str
+) -> bool:
+    """Method to check the equivalence of two puml strings
+
+    :param puml_string_1: first puml string
+    :type puml_string_1: `str`
+    :param puml_string_2: second puml string
+    :type puml_string_2: `str`
+    :return: whether the two puml strings are equivalent
+    :rtype: `bool`
+    """
+    graph_1 = next(get_network_x_graph_from_puml_string(puml_string_1))
+    graph_2 = next(get_network_x_graph_from_puml_string(puml_string_2))
+    return check_networkx_graph_equivalence(graph_1, graph_2)
