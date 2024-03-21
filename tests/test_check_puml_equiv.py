@@ -15,6 +15,8 @@ from tel2puml.check_puml_equiv import (
 
 
 def test_update_collected_attributes() -> None:
+    """Test the `update_collected_attributes` function updates the collected
+    attributes correctly"""
     event_data = EventData()
     event_data.event_type = "A"
     event_data.occurence_id = 0
@@ -175,6 +177,9 @@ def test_check_networkx_graph_equivalence_different_graph() -> None:
 
 def test_check_networkx_graph_equivalence_graph_break_and_branch_true(
 ) -> None:
+    """Test the `check_networkx_graph_equivalence` function returns True when
+    the graphs are the same due to a break and branch attribute being the same
+    """
     graph = nx.DiGraph()
     node_A = NXNode(("A", 0), "A")
     node_B = NXNode(("B", 0), "B")
@@ -212,6 +217,9 @@ def test_check_networkx_graph_equivalence_graph_break_and_branch_true(
 
 def test_check_networkx_graph_equivalence_graph_break_and_branch_false(
 ) -> None:
+    """Test the `check_networkx_graph_equivalence` function returns False when
+    the graphs are different due to a break and branch attribute being
+    different"""
     graph = nx.DiGraph()
     node_A = NXNode(("A", 0), "A")
     node_B = NXNode(("B", 0), "B")
