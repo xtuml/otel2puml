@@ -24,12 +24,23 @@ class NXNode:
     :type node_id: `Hashable`
     :param node_type: the type of the node
     :type node_type: `str`
+    :param extra_info: extra information about the node, defaults to `None`
+    :type extra_info: `dict`[:class:`str`, `str`] | `None`, optional
     """
-    def __init__(self, node_id: Hashable, node_type: str) -> None:
+    def __init__(
+        self,
+        node_id: Hashable,
+        node_type: str,
+        extra_info: dict[str, str] | None = None,
+    ) -> None:
         """Constructor method"""
         self.node_id = node_id
         self.node_type = node_type
-        self.extra_info: dict[str, str] = {}
+        self.extra_info: dict[str, str] = (
+            extra_info
+            if extra_info is not None
+            else {}
+        )
 
     def __repr__(self) -> str:
         """Method to return a string representation of the node"""
