@@ -1,11 +1,11 @@
 """Module for creating PlantUML graph."""
 
-from typing import Hashable
+from typing import Hashable, Optional
 from abc import ABC, abstractmethod
 
 from networkx import DiGraph, topological_sort
 
-from tel2puml_types import (
+from tel2puml.tel2puml_types import (
     PUMLEvent,
     PUMLOperator,
     PUMLOperatorNodes,
@@ -17,16 +17,16 @@ from tel2puml.check_puml_equiv import NXNode
 
 operator_node_puml_map = {
     ("START", "XOR"): (("switch (XOR)", "case"), 2, 0),
-    ("PATH", "XOR"): (("case"), 0, 1),
-    ("END", "XOR"): (("endswitch"), -2, 1),
-    ("START", "AND"): (("fork"), 1, 0),
-    ("PATH", "AND"): (("fork again"), 0, 1),
-    ("END", "AND"): (("end fork"), -1, 1),
-    ("START", "OR"): (("split"), 1, 0),
-    ("PATH", "OR"): (("split again"), 0, 1),
-    ("END", "OR"): (("end split"), -1, 1),
-    ("START", "LOOP"): (("repeat"), 1, 0),
-    ("END", "LOOP"): (("repeat while"), -1, 1),
+    ("PATH", "XOR"): (("case",), 0, 1),
+    ("END", "XOR"): (("endswitch",), -2, 1),
+    ("START", "AND"): (("fork",), 1, 0),
+    ("PATH", "AND"): (("fork again",), 0, 1),
+    ("END", "AND"): (("end fork",), -1, 1),
+    ("START", "OR"): (("split",), 1, 0),
+    ("PATH", "OR"): (("split again",), 0, 1),
+    ("END", "OR"): (("end split",), -1, 1),
+    ("START", "LOOP"): (("repeat",), 1, 0),
+    ("END", "LOOP"): (("repeat while",), -1, 1),
 }
 
 
@@ -52,22 +52,21 @@ class PUMLNode(NXNode, ABC):
         )
 
     @abstractmethod
-    def write_uml_block(
+    def write_uml_blocks(
         self,
         indent: int = 0,
-        surrounding_lines: tuple[str, str] = ("", ""),
         tab_size: int = 4,
-    ) -> tuple[str, int]:
+    ) -> tuple[list[str], int]:
         """Writes the PlantUML block for the node and returns the number of
         indents to be added to the next line.
 
         :param indent: The number of indents to be added to the block.
         :type indent: `int`
-        :param surrounding_lines: The lines to be added before and after the
-        block, defaults to ("", "").
-        :type surrounding_lines: `tuple[str, str]`, optional
         :param tab_size: The size of the tab, defaults to 4.
         :type tab_size: `int`, optional
+        :return: The PlantUML blocks for the node and the number of indents to
+        be added to the next line.
+        :rtype: `tuple[list[str], int]`
         """
         pass
 
@@ -79,8 +78,9 @@ class PUMLEventNode(PUMLNode):
     :type event_name: `str`
     :param occurrence: The occurrence of the event node.
     :type occurrence: `int`
-    :param event_types: The type of the event node.
+    :param event_types: The type of the event node, defaults to `None`.
     :type event_types: :class:`PUMLEvent` or `tuple[:class:`PUMLEvent`, `...`]`
+    | `None`, optional
     :param sub_graph: The sub graph of the event node, defaults to `None`.
     :type sub_graph: :class:`PUMLGraph`, optional
     :param branch_number: The branch number of the event node, defaults to
@@ -91,66 +91,72 @@ class PUMLEventNode(PUMLNode):
         self,
         event_name: str,
         occurrence: int,
-        event_types: tuple[PUMLEvent, ...],
-        sub_graph: "PUMLGraph" | None = None,
+        event_types: tuple[PUMLEvent, ...] | None = None,
+        sub_graph: Optional["PUMLGraph"] = None,
         branch_number: int | None = None,
     ) -> None:
         """Constructor method."""
         node_type = event_name
         node_id = (event_name, occurrence)
+        self.sub_graph = sub_graph
+        self.branch_number = branch_number
+        self.event_types = (
+            event_types if event_types is not None else (PUMLEvent.NORMAL,)
+        )
         extra_info = {
-            "is_branch": PUMLEvent.BRANCH in event_types,
-            "is_break": PUMLEvent.BREAK in event_types,
-            "is_merge": PUMLEvent.MERGE in event_types,
+            "is_branch": PUMLEvent.BRANCH in self.event_types,
+            "is_break": PUMLEvent.BREAK in self.event_types,
+            "is_merge": PUMLEvent.MERGE in self.event_types,
         }
         super().__init__(
             node_id=node_id, node_type=node_type, extra_info=extra_info
         )
-        self.sub_graph = sub_graph
-        self.branch_number = branch_number
-        self.event_types = event_types
 
-    def write_uml_block(
+    def write_uml_blocks(
         self,
         indent: int = 0,
-        surrounding_lines: tuple[str, str] = ("", ""),
         tab_size: int = 4,
-    ) -> tuple[str, int]:
+    ) -> tuple[list[str], int]:
         """Writes the PlantUML block for the node and returns the number of
         indents to be added to the next line.
 
         :param indent: The number of indents to be added to the block.
         :type indent: `int`
-        :param surrounding_lines: The lines to be added before and after the
-        block, defaults to ("", "").
-        :type surrounding_lines: `tuple[str, str]`, optional
         :param tab_size: The size of the tab, defaults to 4.
         :type tab_size: `int`, optional
+        :return: The PlantUML blocks for the node and the number of indents to
+        be added to the next line.
+        :rtype: `tuple[list[str], int]`
         """
         if self.sub_graph is not None:
-            block = self.sub_graph.write_uml_block(indent)
-            next_indent_diff_total = 0 * tab_size
+            blocks = self.sub_graph.write_uml_blocks(indent)
         else:
-            block, next_indent_diff_total = self.write_event_block(indent)
+            blocks = self._write_event_blocks(indent)
+        next_indent_diff_total = 0 * tab_size
         return (
-            surrounding_lines[0] + block + surrounding_lines[1],
+            blocks,
             next_indent_diff_total,
         )
 
-    def write_event_block(
+    def _write_event_blocks(
         self,
         indent: int = 0,
-    ) -> str:
+    ) -> list[str]:
         """Writes the PlantUML block for the event node."""
         branch_info = ""
         if self.extra_info["is_branch"]:
+            if self.branch_number is None:
+                raise RuntimeError(
+                    "Branch number is not provided but event is a branch event"
+                )
             branch_info += (
                 f",BCNT,user={self.node_type},name=BC{self.branch_number}"
             )
-        block = f"{' ' * indent}:{self.node_type}{branch_info};\n"
+        blocks = []
+        blocks.append(f"{' ' * indent}:{self.node_type}{branch_info};")
         if self.extra_info["is_break"]:
-            block += f"{' ' * indent}break\n"
-        return block, 0
+            blocks.append(f"{' ' * indent}break")
+        return blocks
 
 
 class PUMLOperatorNode(PUMLNode):
@@ -172,33 +178,35 @@ class PUMLOperatorNode(PUMLNode):
         super().__init__(node_id, node_type)
         self.operator_type = operator_type
 
-    def write_uml_block(
+    def write_uml_blocks(
         self,
         indent: int = 0,
-        surrounding_lines: tuple[str, str] = ("", ""),
         tab_size: int = 4,
-    ) -> tuple[str, int]:
+    ) -> tuple[list[str], int]:
         """Writes the PlantUML block for the node and returns the number of
         indents to be added to the next line.
 
         :param indent: The number of indents to be added to the block.
         :type indent: `int`
-        :param surrounding_lines: The lines to be added before and after the
-        block, defaults to ("", "").
-        :type surrounding_lines: `tuple[str, str]`, optional
         :param tab_size: The size of the tab, defaults to 4.
         :type tab_size: `int`, optional
+        :return: The PlantUML blocks for the node and the number of indents to
+        be added to the next line.
+        :rtype: `tuple[list[str], int]`
         """
         operator_puml_strings, indent_diff, unindent = operator_node_puml_map[
             self.operator_type.value
         ]
-        block = ""
+        if indent <= 0:
+            indent = 0
+            unindent = 0
+        blocks = []
         for i, operator_puml_string in enumerate(operator_puml_strings):
             line_indent = (i - unindent) * tab_size + indent
-            block += f"{' ' * line_indent}{operator_puml_string}\n"
+            blocks.append(f"{' ' * line_indent}{operator_puml_string}")
         next_indent_diff_total = indent_diff
         return (
-            surrounding_lines[0] + block + surrounding_lines[1],
+            blocks,
             next_indent_diff_total,
         )
 
@@ -206,7 +214,7 @@ class PUMLOperatorNode(PUMLNode):
 class PUMLGraph(DiGraph):
     """Class for creating PlantUML graph."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the PlantUML graph."""
         self.node_counts: dict[Hashable, int] = {}
         self.branch_counts: int = 0
@@ -216,7 +224,7 @@ class PUMLGraph(DiGraph):
         self,
         event_name: str,
         event_types: PUMLEvent | tuple[PUMLEvent, ...],
-        sub_graph: "PUMLGraph" | None = None,
+        sub_graph: Optional["PUMLGraph"] = None,
     ) -> PUMLNode:
         """Adds a node to the PlantUML graph.
 
@@ -327,7 +335,7 @@ class PUMLGraph(DiGraph):
         )
         super().add_edge(start_node, end_node, **attrs)
 
-    def write_uml_block(self, indent: int = 0, tab_size: int = 4) -> str:
+    def write_uml_blocks(self, indent: int = 0, tab_size: int = 4) -> str:
         """Writes the PlantUML block for the graph.
 
         :param indent: The number of indents to be added to the block.
@@ -336,14 +344,15 @@ class PUMLGraph(DiGraph):
         :type tab_size: `int`, optional
         """
         sorted_nodes = topological_sort(self)
-        block = ""
+        blocks = []
         for node in sorted_nodes:
-            surrounding_lines = ("", "")
-            if node.node_type == "LOOP":
-                surrounding_lines = ("repeat\n", "repeat while\n")
-            node_block, indent_diff = node.write_uml_block(
-                indent, tab_size=tab_size, surrounding_lines=surrounding_lines
+            node_block, indent_diff = node.write_uml_blocks(
+                indent, tab_size=tab_size
             )
-            block += node_block
+            if node.node_type == "LOOP":
+                node_block = (
+                    ["repeat"] + node_block + ["repeat while"]
+                )
+            blocks.extend(node_block)
             indent += indent_diff * tab_size
-        return block
+        return blocks
