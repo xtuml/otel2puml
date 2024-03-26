@@ -112,6 +112,25 @@ class TestPUMLEventNode:
                     " " * indent + "repeat while"
                 ], 0)
 
+    @staticmethod
+    def test_write_uml_block_sub_graph_loop_event() -> None:
+        """Tests the write_uml_block method for a loop event.
+        """
+        sub_graph = PUMLGraph()
+        _ = sub_graph.create_event_node("event")
+        loop_event = PUMLEventNode(
+            "event", 0, (PUMLEvent.LOOP,), sub_graph=sub_graph
+        )
+        for indent in [0, 4]:
+            for tab_size in [0, 4]:
+                assert loop_event.write_uml_blocks(
+                    indent=indent, tab_size=tab_size
+                ) == ([
+                    " " * indent + "repeat",
+                    " " * (indent + tab_size) + ":event;",
+                    " " * indent + "repeat while"
+                ], 0)
+
 
 class TestPUMLOperatorNode:
     """Tests for the PUMLOperatorNode class."""
