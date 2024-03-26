@@ -992,6 +992,7 @@ def test_update_all_connections_from_data() -> None:
         EventSet(["E"]),
     }
 
+
 def test_remove_detected_loop_events() -> None:
     """Test for method remove_detected_loop_events"""
     event_a = Event("A")
@@ -1009,7 +1010,7 @@ def test_remove_detected_loop_events() -> None:
     events = {"A": event_a, "B": event_b, "C": event_c}
     remove_detected_loop_events(mapping, events)
     for event_set in event_b.event_sets:
-        assert "A" not in event_set 
+        assert "A" not in event_set
 
 
 def test_get_logic_from_xor_puml_file() -> None:

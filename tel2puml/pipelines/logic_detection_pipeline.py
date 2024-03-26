@@ -894,11 +894,11 @@ def get_graph_solutions_from_clustered_events(
 
 
 def remove_detected_loop_events(
-        mapping: dict[str, list[str]], 
+        mapping: dict[str, list[str]],
         events: dict[str, Event]
 ) -> None:
     """This function removes the detected loop events from the events.
-    
+
     :param mapping: The mapping of event types to loop events.
     :type mapping: `dict`[`str`, `list`[`str`]]
     :param events: The events.
