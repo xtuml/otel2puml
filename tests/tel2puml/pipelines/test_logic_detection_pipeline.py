@@ -10,6 +10,7 @@ from tel2puml.pipelines.logic_detection_pipeline import (
     EventSet,
     Operator,
     update_all_connections_from_data,
+    remove_detected_loop_events,
 )
 from tel2puml.pipelines.data_creation import generate_test_data
 
@@ -990,6 +991,25 @@ def test_update_all_connections_from_data() -> None:
         EventSet(["D"]),
         EventSet(["E"]),
     }
+
+def test_remove_detected_loop_events() -> None:
+    """Test for method remove_detected_loop_events"""
+    event_a = Event("A")
+    event_a.event_sets = {
+        EventSet(["B"]),
+    }
+    event_b = Event("B")
+    event_b.event_sets = {
+        EventSet(["A"]),
+        EventSet(["C"]),
+    }
+    event_c = Event("C")
+
+    mapping = {"B": ["A"]}
+    events = {"A": event_a, "B": event_b, "C": event_c}
+    remove_detected_loop_events(mapping, events)
+    for event_set in event_b.event_sets:
+        assert "A" not in event_set 
 
 
 def test_get_logic_from_xor_puml_file() -> None:
