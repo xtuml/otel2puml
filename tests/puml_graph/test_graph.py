@@ -228,8 +228,10 @@ class TestPUMLOperatorNode:
 
 
 class TestPUMLGraph:
+    """Tests for the PUMLGraph class."""
     @staticmethod
     def test_add_node() -> None:
+        """Tests the add_node method."""
         # test puml event node
         graph = PUMLGraph()
         event_node = PUMLEventNode(
@@ -254,6 +256,7 @@ class TestPUMLGraph:
 
     @staticmethod
     def test_add_edge() -> None:
+        """Tests the add_edge method."""
         graph = PUMLGraph()
         event_node_1 = PUMLEventNode("event", 0)
         event_node_2 = PUMLEventNode("event", 1)
@@ -278,6 +281,7 @@ class TestPUMLGraph:
 
     @staticmethod
     def test_increment_occurrence_count() -> None:
+        """Tests the increment_occurrence_count method."""
         graph = PUMLGraph()
         assert len(graph.node_counts) == 0
         graph.increment_occurrence_count("event")
@@ -288,6 +292,7 @@ class TestPUMLGraph:
 
     @staticmethod
     def test_get_occurrence_count() -> None:
+        """Tests the get_occurrence_count method."""
         graph = PUMLGraph()
         assert graph.get_occurrence_count("event") == 0
         graph.increment_occurrence_count("event")
@@ -295,6 +300,7 @@ class TestPUMLGraph:
 
     @staticmethod
     def test_create_event_node() -> None:
+        """Tests the create_event_node method for current cases."""
         # test normal event
         graph = PUMLGraph()
         event_node = graph.create_event_node("event")
@@ -327,6 +333,7 @@ class TestPUMLGraph:
 
     @staticmethod
     def test_create_operator_node_pair() -> None:
+        """Tests the create_operator_node_pair method for current cases."""
         for operator in PUMLOperator:
             graph = PUMLGraph()
             start_node, end_node = graph.create_operator_node_pair(operator)
@@ -342,7 +349,8 @@ class TestPUMLGraph:
             assert start_node in graph.nodes and end_node in graph.nodes
 
     @staticmethod
-    def test_create_operator_path_node():
+    def test_create_operator_path_node() -> None:
+        """Tests the create_operator_path_node method for various cases."""
         for operator in PUMLOperator:
             if len(operator.value) == 3:
                 graph = PUMLGraph()
@@ -356,6 +364,7 @@ class TestPUMLGraph:
 
     @staticmethod
     def test_write_uml_blocks() -> None:
+        """Tests the write_uml_blocks method for current cases."""
         # test simple event sequence block
         graph = PUMLGraph()
         event_node_1 = graph.create_event_node("event")

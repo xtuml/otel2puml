@@ -33,6 +33,7 @@ class NXEdgeAttributes(TypedDict):
 
 
 class PUMLEvent(Enum):
+    """PlantUML event types"""
     NORMAL = "NORMAL"
     BRANCH = "BRANCH"
     MERGE = "MERGE"
@@ -41,6 +42,7 @@ class PUMLEvent(Enum):
 
 
 class PUMLOperatorNodes(Enum):
+    """PlantUML operators and a tuple of their corresponding PUML nodes"""
     START_XOR = ("START", "XOR")
     PATH_XOR = ("PATH", "XOR")
     END_XOR = ("END", "XOR")
@@ -55,6 +57,7 @@ class PUMLOperatorNodes(Enum):
 
 
 class PUMLOperator(Enum):
+    """PlantUML operators with their corresponding PUML nodes"""
     XOR = (
         PUMLOperatorNodes.START_XOR,
         PUMLOperatorNodes.END_XOR,
