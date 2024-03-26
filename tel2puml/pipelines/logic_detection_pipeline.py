@@ -272,6 +272,20 @@ class Event:
                     event_set_counts[event] = {count}
         return event_set_counts
 
+    def remove_event_type_from_event_sets(self, event_type: str) -> None:
+        """Method to remove an event type from the event sets.
+
+        :param event_type: The event type.
+        :type event_type: `str`
+        """
+        self.event_sets = {
+            event_set
+            for event_set in self.event_sets
+            if event_type not in event_set
+        }
+
+        self._update_since_logic_gate_tree = True
+
     def create_augmented_data_from_event_sets(
         self,
     ) -> Generator[dict[str, Any], Any, None]:
@@ -879,3 +893,19 @@ def get_graph_solutions_from_clustered_events(
     """
     for job_events in clustered_events:
         yield GraphSolution.from_event_list(job_events)
+
+
+def remove_detected_loop_events(
+        mapping: dict[str, list[str]],
+        events: dict[str, Event]
+) -> None:
+    """This function removes the detected loop events from the events.
+
+    :param mapping: The mapping of event types to loop events.
+    :type mapping: `dict`[`str`, `list`[`str`]]
+    :param events: The events.
+    :type events: `dict`[`str`, :class:`Event`]
+    """
+    for event_type, loop_events in mapping.items():
+        for loop_event in loop_events:
+            events[event_type].remove_event_type_from_event_sets(loop_event)
