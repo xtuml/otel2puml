@@ -152,9 +152,17 @@ class PUMLEventNode(PUMLNode):
         :rtype: `tuple[list[str], int]`
         """
         if self.sub_graph is not None:
-            blocks = self.sub_graph.write_uml_blocks(
-                indent, tab_size=tab_size
-            )
+            if PUMLEvent.LOOP in self.event_types:
+                blocks = (
+                    [" " * indent + "repeat"]
+                    + self.sub_graph.write_uml_blocks(
+                        indent + tab_size, tab_size=tab_size
+                    ) + [" " * indent + "repeat while"]
+                )
+            else:
+                blocks = self.sub_graph.write_uml_blocks(
+                    indent, tab_size=tab_size
+                )
         else:
             blocks = self._write_event_blocks(indent)
         next_indent_diff_total = 0 * tab_size
@@ -375,25 +383,24 @@ class PUMLGraph(DiGraph):
         :param tab_size: The size of the tab, defaults to 4.
         :type tab_size: `int`, optional
         """
+        # get the head node of the graph
         head_node = list(topological_sort(self))[0]
-        sorted_nodes = self.order_nodes_from_dfs_successors_dict(
+        # get the ordered nodes from the depth-first search successors
+        sorted_nodes = self._order_nodes_from_dfs_successors_dict(
             head_node, dfs_successors(self, head_node)
         )
+        # create the uml lines for the nodes
         blocks = []
         for node in sorted_nodes:
             node_block, indent_diff = node.write_uml_blocks(
                 indent, tab_size=tab_size
             )
-            if node.node_type == "LOOP":
-                node_block = (
-                    ["repeat"] + node_block + ["repeat while"]
-                )
             blocks.extend(node_block)
             indent += indent_diff * tab_size
         return blocks
 
     @staticmethod
-    def order_nodes_from_dfs_successors_dict(
+    def _order_nodes_from_dfs_successors_dict(
         node: PUMLNode,
         dfs_successor_dict: dict[
             PUMLEventNode | PUMLOperatorNode,
@@ -401,7 +408,9 @@ class PUMLGraph(DiGraph):
         ]
     ) -> list[PUMLEventNode | PUMLOperatorNode]:
         """Orders the nodes in the graph based on the depth-first search
-        successors.
+        successors. If the node is an operator node that is the start of the
+        operator, it adds a path node based how many paths have been traversed
+        from the operator node.
 
         :param node: The node to start the ordering from.
         :type node: :class:`PUMLNode`
@@ -412,16 +421,23 @@ class PUMLGraph(DiGraph):
         """
         ordered_nodes = [node]
         if node in dfs_successor_dict:
+            # loop over the successors in reverse order to get the correct
+            # order of the nodes
             for i, successor in enumerate(reversed(dfs_successor_dict[node])):
+                # check if the successor is an operator node
                 if isinstance(node, PUMLOperatorNode):
+                    # check if the operator node is the start of the operator
                     if node.operator_type in OPERATOR_PATH_FUNCTION_MAP:
+                        # get a path node if the path is not the first path
                         path_node = OPERATOR_PATH_FUNCTION_MAP[
                             node.operator_type
                         ](i)
                         if path_node is not None:
                             ordered_nodes.append(path_node)
+                # recursively order the successors of the successor node and
+                # add them to the ordered nodes
                 ordered_nodes.extend(
-                    PUMLGraph.order_nodes_from_dfs_successors_dict(
+                    PUMLGraph._order_nodes_from_dfs_successors_dict(
                         successor, dfs_successor_dict
                     )
                 )
