@@ -272,6 +272,18 @@ class Event:
                     event_set_counts[event] = {count}
         return event_set_counts
 
+    def remove_event_type_from_event_sets(self, event_type: str) -> None:
+        """Method to remove an event type from the event sets.
+
+        :param event_type: The event type.
+        :type event_type: `str`
+        """
+        self.event_sets = {
+            event_set
+            for event_set in self.event_sets
+            if event_type not in event_set
+        }
+
     def create_augmented_data_from_event_sets(
         self,
     ) -> Generator[dict[str, Any], Any, None]:

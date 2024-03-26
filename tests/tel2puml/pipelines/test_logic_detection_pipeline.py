@@ -254,6 +254,83 @@ class TestEvent:
             EventSet(["B", "C", "C"]),
         }
 
+    def test_get_reduced_event_set(self) -> None:
+        """Tests for method get_reduced_event_set"""
+        event = Event("A")
+        event.event_sets = {
+            EventSet(["B", "C"]),
+            EventSet(["B", "B", "C"]),
+            EventSet(["B", "C", "C"]),
+        }
+        reduced_event_set = event.get_reduced_event_set()
+        assert reduced_event_set == {frozenset(["B", "C"])}
+
+        event.event_sets = {
+            EventSet(["A"]),
+            EventSet(["B"]),
+            EventSet(["B", "C"]),
+            EventSet(["B", "B", "C"]),
+            EventSet(["B", "C", "C"]),
+        }
+        reduced_event_set = event.get_reduced_event_set()
+        assert reduced_event_set == {
+            frozenset(["B", "C"]),
+            frozenset(["A"]),
+            frozenset(["B"]),
+            }
+
+    def test_get_event_set_counts(self) -> None:
+        """Tests for method get_event_set_counts"""
+        event = Event("A")
+        event.event_sets = {
+            EventSet(["B"]),
+        }
+        event_set_counts = event.get_event_set_counts()
+        assert event_set_counts == {'B': {1}}
+
+        event.event_sets = {
+            EventSet(["B", "C"]),
+            EventSet(["B", "B", "C"]),
+            EventSet(["B", "C", "C"]),
+        }
+        event_set_counts = event.get_event_set_counts()
+        assert event_set_counts == {'B': {1, 2}, 'C': {1, 2}}
+
+        event.event_sets = {
+            EventSet(["B"]),
+            EventSet(["B", "C"]),
+            EventSet(["B", "C", "C"]),
+        }
+        event_set_counts = event.get_event_set_counts()
+        assert event_set_counts == {'B': {1}, 'C': {1, 2}}
+
+        event.event_sets = {
+            EventSet(["B", "C"]),
+            EventSet(["B", "B", "C"]),
+            EventSet(["B", "C", "C", "D"]),
+        }
+        event_set_counts = event.get_event_set_counts()
+        assert event_set_counts == {'B': {1, 2}, 'C': {1, 2}, 'D': {1}}
+
+    def test_remove_event_type_from_event_sets(self) -> None:
+        """Tests for method remove_event_type_from_event_sets"""
+        event = Event("A")
+        event.event_sets = {
+            EventSet(["B"]),
+        }
+        event.remove_event_type_from_event_sets("B")
+        assert event.event_sets == set()
+
+        event.event_sets = {
+            EventSet(["B", "C"]),
+            EventSet(["B", "B", "C"]),
+            EventSet(["C", "C"]),
+        }
+        event.remove_event_type_from_event_sets("B")
+        assert event.event_sets == {
+            EventSet(["C", "C"]),
+        }
+
     @staticmethod
     def test_create_data_from_event_sequence() -> None:
         """Tests for method create_data_from_event_sequence"""
