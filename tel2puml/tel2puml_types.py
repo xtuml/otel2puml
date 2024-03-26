@@ -50,7 +50,7 @@ class PUMLOperatorNodes(Enum):
     START_OR = ("START", "OR")
     PATH_OR = ("PATH", "OR")
     END_OR = ("END", "OR")
-    LOOP = ("START", "LOOP")
+    START_LOOP = ("START", "LOOP")
     END_LOOP = ("END", "LOOP")
 
 
@@ -70,7 +70,7 @@ class PUMLOperator(Enum):
         PUMLOperatorNodes.END_OR,
         PUMLOperatorNodes.PATH_OR,
     )
-    LOOP = (PUMLOperatorNodes.LOOP, PUMLOperatorNodes.END_LOOP)
+    LOOP = (PUMLOperatorNodes.START_LOOP, PUMLOperatorNodes.END_LOOP)
 
 
 class PlantUMLEventAttributes(TypedDict):
