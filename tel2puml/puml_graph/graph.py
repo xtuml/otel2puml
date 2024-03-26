@@ -3,7 +3,7 @@
 from typing import Hashable, Optional
 from abc import ABC, abstractmethod
 
-from networkx import DiGraph, topological_sort
+from networkx import DiGraph, topological_sort, dfs_successors
 
 from tel2puml.tel2puml_types import (
     PUMLEvent,
@@ -14,11 +14,14 @@ from tel2puml.tel2puml_types import (
 )
 from tel2puml.check_puml_equiv import NXNode
 
+# Mapping of operator nodes to PlantUML strings, the number of indents to
+# be added to the block proceeding the operator node and the number of indents
+# to add to the next line within the block
 
-operator_node_puml_map = {
+OPERATOR_NODE_PUML_MAP = {
     ("START", "XOR"): (("switch (XOR)", "case"), 2, 0),
     ("PATH", "XOR"): (("case",), 0, 1),
-    ("END", "XOR"): (("endswitch",), -2, 1),
+    ("END", "XOR"): (("endswitch",), -2, 2),
     ("START", "AND"): (("fork",), 1, 0),
     ("PATH", "AND"): (("fork again",), 0, 1),
     ("END", "AND"): (("end fork",), -1, 1),
@@ -27,6 +30,26 @@ operator_node_puml_map = {
     ("END", "OR"): (("end split",), -1, 1),
     ("START", "LOOP"): (("repeat",), 1, 0),
     ("END", "LOOP"): (("repeat while",), -1, 1),
+}
+
+
+OPERATOR_PATH_FUNCTION_MAP = {
+    PUMLOperatorNodes.START_XOR: lambda x: (
+        None if x == 0
+        else PUMLOperatorNode(PUMLOperatorNodes.PATH_XOR, x)
+    ),
+    PUMLOperatorNodes.START_AND: lambda x: (
+        None if x == 0
+        else PUMLOperatorNode(PUMLOperatorNodes.PATH_AND, x)
+    ),
+    PUMLOperatorNodes.START_OR: lambda x: (
+        None if x == 0
+        else PUMLOperatorNode(PUMLOperatorNodes.PATH_OR, x)
+    ),
+    PUMLOperatorNodes.START_LOOP: lambda x: (
+        None if x == 0
+        else PUMLOperatorNode(PUMLOperatorNodes.PATH_LOOP, x)
+    )
 }
 
 
@@ -129,7 +152,9 @@ class PUMLEventNode(PUMLNode):
         :rtype: `tuple[list[str], int]`
         """
         if self.sub_graph is not None:
-            blocks = self.sub_graph.write_uml_blocks(indent)
+            blocks = self.sub_graph.write_uml_blocks(
+                indent, tab_size=tab_size
+            )
         else:
             blocks = self._write_event_blocks(indent)
         next_indent_diff_total = 0 * tab_size
@@ -194,7 +219,7 @@ class PUMLOperatorNode(PUMLNode):
         be added to the next line.
         :rtype: `tuple[list[str], int]`
         """
-        operator_puml_strings, indent_diff, unindent = operator_node_puml_map[
+        operator_puml_strings, indent_diff, unindent = OPERATOR_NODE_PUML_MAP[
             self.operator_type.value
         ]
         if indent <= 0:
@@ -223,9 +248,9 @@ class PUMLGraph(DiGraph):
     def create_event_node(
         self,
         event_name: str,
-        event_types: PUMLEvent | tuple[PUMLEvent, ...],
+        event_types: PUMLEvent | tuple[PUMLEvent, ...] | None = None,
         sub_graph: Optional["PUMLGraph"] = None,
-    ) -> PUMLNode:
+    ) -> PUMLEventNode:
         """Adds a node to the PlantUML graph.
 
         :param event_name: The name of the event node.
@@ -235,43 +260,50 @@ class PUMLGraph(DiGraph):
         `tuple[:class:`PUMLEvent`, `...`]`
         :param sub_graph: The sub graph of the event node, defaults to `None`.
         :type sub_graph: :class:`PUMLGraph`, optional
+        :return: The event node.
+        :rtype: :class:`PUMLEventNode`
         """
+        if event_types is None:
+            event_types = (PUMLEvent.NORMAL,)
         if isinstance(event_types, PUMLEvent):
             event_types = (event_types,)
         if PUMLEvent.BRANCH in event_types:
-            branch_counts = self.branch_counts
+            branch_number = self.branch_counts
             self.branch_counts += 1
         else:
-            branch_counts = None
+            branch_number = None
         node = PUMLEventNode(
             event_name=event_name,
-            occurrence=self.get_occurence_count(event_name),
+            occurrence=self.get_occurrence_count(event_name),
             event_types=event_types,
             sub_graph=sub_graph,
-            branch_counts=branch_counts,
+            branch_number=branch_number,
         )
         self.add_node(node)
-        self.increment_occurence_count(event_name)
+        self.increment_occurrence_count(event_name)
         return node
 
     def create_operator_node_pair(
         self, operator: PUMLOperator
-    ) -> tuple[PUMLNode, PUMLNode]:
+    ) -> tuple[PUMLOperatorNode, PUMLOperatorNode]:
         """Creates a pair of operator nodes.
 
         :param operator: The operator node.
         :type operator: :class:`PUMLOperator`
+        :return: A pair of operator nodes for the start and end of the
+        operator block.
+        :rtype: `tuple[:class:`PUMLOperatorNode`, :class:`PUMLOperatorNode`]`
         """
         nodes = []
         for operator_node in operator.value[:2]:
             node = PUMLOperatorNode(
                 operator_type=operator_node,
-                occurrence=self.get_occurence_count(operator_node.value),
+                occurrence=self.get_occurrence_count(operator_node.value),
             )
             self.add_node(
                 node,
             )
-            self.increment_occurence_count(operator_node.value)
+            self.increment_occurrence_count(operator_node.value)
             nodes.append(node)
         return tuple(nodes)
 
@@ -285,16 +317,16 @@ class PUMLGraph(DiGraph):
         :type operator: :class:`PUMLOperator`
         """
         node = PUMLOperatorNode(
-            operator_type=operator.value[2].value,
-            occurrence=self.get_occurence_count(operator.value[2].value),
+            operator_type=operator.value[2],
+            occurrence=self.get_occurrence_count(operator.value[2].value),
         )
         self.add_node(
             node,
         )
-        self.increment_occurence_count(operator.value[2].value)
+        self.increment_occurrence_count(operator.value[2].value)
         return node
 
-    def get_occurence_count(self, node_type: Hashable) -> int:
+    def get_occurrence_count(self, node_type: Hashable) -> int:
         """Returns the occurrence count of a node type.
 
         :param node_type: The type of the node.
@@ -302,13 +334,13 @@ class PUMLGraph(DiGraph):
         """
         return self.node_counts.get(node_type, 0)
 
-    def increment_occurence_count(self, node_type: Hashable) -> None:
+    def increment_occurrence_count(self, node_type: Hashable) -> None:
         """Increments the occurrence count of a node type.
 
         :param node_type: The type of the node.
         :type node_type: `Hashable`
         """
-        self.node_counts[node_type] = self.get_occurence_count(node_type) + 1
+        self.node_counts[node_type] = self.get_occurrence_count(node_type) + 1
 
     def add_node(self, node: PUMLNode) -> None:
         """Adds a node to the PlantUML graph.
@@ -343,7 +375,10 @@ class PUMLGraph(DiGraph):
         :param tab_size: The size of the tab, defaults to 4.
         :type tab_size: `int`, optional
         """
-        sorted_nodes = topological_sort(self)
+        head_node = list(topological_sort(self))[0]
+        sorted_nodes = self.order_nodes_from_dfs_successors_dict(
+            head_node, dfs_successors(self, head_node)
+        )
         blocks = []
         for node in sorted_nodes:
             node_block, indent_diff = node.write_uml_blocks(
@@ -356,3 +391,38 @@ class PUMLGraph(DiGraph):
             blocks.extend(node_block)
             indent += indent_diff * tab_size
         return blocks
+
+    @staticmethod
+    def order_nodes_from_dfs_successors_dict(
+        node: PUMLNode,
+        dfs_successor_dict: dict[
+            PUMLEventNode | PUMLOperatorNode,
+            list[PUMLEventNode | PUMLOperatorNode]
+        ]
+    ) -> list[PUMLEventNode | PUMLOperatorNode]:
+        """Orders the nodes in the graph based on the depth-first search
+        successors.
+
+        :param node: The node to start the ordering from.
+        :type node: :class:`PUMLNode`
+        :param dfs_successor_dict: The depth-first search successors of the
+        nodes.
+        :type dfs_successor_dict: `dict[:class:`PUMLNode`,
+        list[:class:`PUMLNode`]]`
+        """
+        ordered_nodes = [node]
+        if node in dfs_successor_dict:
+            for i, successor in enumerate(reversed(dfs_successor_dict[node])):
+                if isinstance(node, PUMLOperatorNode):
+                    if node.operator_type in OPERATOR_PATH_FUNCTION_MAP:
+                        path_node = OPERATOR_PATH_FUNCTION_MAP[
+                            node.operator_type
+                        ](i)
+                        if path_node is not None:
+                            ordered_nodes.append(path_node)
+                ordered_nodes.extend(
+                    PUMLGraph.order_nodes_from_dfs_successors_dict(
+                        successor, dfs_successor_dict
+                    )
+                )
+        return ordered_nodes
