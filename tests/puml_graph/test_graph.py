@@ -2,12 +2,18 @@
 """
 
 import pytest
+from test_event_generator.io.parse_puml import parse_raw_job_def_lines
 
-from tel2puml.tel2puml_types import PUMLEvent, PUMLOperatorNodes
+from tel2puml.tel2puml_types import PUMLEvent, PUMLOperatorNodes, PUMLOperator
 from tel2puml.puml_graph.graph import (
+    PUMLGraph,
     PUMLEventNode,
     PUMLOperatorNode,
-    operator_node_puml_map
+    OPERATOR_NODE_PUML_MAP
+)
+from tel2puml.check_puml_equiv import (
+    create_networkx_graph_from_parsed_puml,
+    check_networkx_graph_equivalence
 )
 
 
@@ -25,9 +31,7 @@ class TestPUMLEventNode:
         assert event.node_id == ("event", 0)
         assert event.node_type == "event"
         assert event.extra_info == {
-            "is_branch": False,
-            "is_merge": False,
-            "is_break": False
+            "is_branch": False, "is_merge": False, "is_break": False
         }
 
     @staticmethod
@@ -41,23 +45,18 @@ class TestPUMLEventNode:
         assert event.node_id == ("event", 0)
         assert event.node_type == "event"
         assert event.extra_info == {
-            "is_branch": True,
-            "is_merge": True,
-            "is_break": True
+            "is_branch": True, "is_merge": True, "is_break": True
         }
 
     @staticmethod
     def test_write_uml_block_normal() -> None:
         """Tests the write_uml_block method.
         """
-        event = PUMLEventNode(
-            "event", 0
-        )
+        event = PUMLEventNode("event", 0)
         for indent in [0, 4]:
             for tab_size in [0, 4]:
                 assert event.write_uml_blocks(
-                    indent=indent,
-                    tab_size=tab_size
+                    indent=indent, tab_size=tab_size
                 ) == ([" " * indent + ":event;"], 0)
 
     @staticmethod
@@ -72,31 +71,46 @@ class TestPUMLEventNode:
         assert branch_event.write_uml_blocks(
             indent=4,
             tab_size=4
-        ) == (
-            ["    :event,BCNT,user=event,name=BC1;"],
-            0
-        )
+        ) == (["    :event,BCNT,user=event,name=BC1;"], 0)
         branch_event_no_branch_number = PUMLEventNode(
             "event", 0,
             (PUMLEvent.BRANCH,)
         )
         with pytest.raises(RuntimeError):
             branch_event_no_branch_number.write_uml_blocks(
-                indent=4,
-                tab_size=4
+                indent=4, tab_size=4
             )
 
-        break_event = PUMLEventNode(
+        break_event = PUMLEventNode("event", 0, (PUMLEvent.BREAK,))
+        assert break_event.write_uml_blocks(indent=4, tab_size=4) == (
+            ["    :event;", "    break"], 0
+        )
+
+    @staticmethod
+    def test_write_uml_block_sub_graph() -> None:
+        """Tests the write_uml_block method.
+        """
+        sub_graph = PUMLGraph()
+        event_node = sub_graph.create_event_node("event")
+        start_loop_node, end_loop_node = sub_graph.create_operator_node_pair(
+            PUMLOperator.LOOP
+        )
+        sub_graph.add_edge(start_loop_node, event_node)
+        sub_graph.add_edge(event_node, end_loop_node)
+
+        event = PUMLEventNode(
             "event", 0,
-            (PUMLEvent.BREAK,),
+            sub_graph=sub_graph
         )
-        assert break_event.write_uml_blocks(
-            indent=4,
-            tab_size=4
-        ) == (
-            ["    :event;", "    break"],
-            0
-        )
+        for indent in [0, 4]:
+            for tab_size in [0, 4]:
+                assert event.write_uml_blocks(
+                    indent=indent, tab_size=tab_size
+                ) == ([
+                    " " * indent + "repeat",
+                    " " * (indent + tab_size) + ":event;",
+                    " " * indent + "repeat while"
+                ], 0)
 
 
 class TestPUMLOperatorNode:
@@ -105,9 +119,7 @@ class TestPUMLOperatorNode:
     def test_init() -> None:
         """Tests the __init__ method."""
         for operator_type in PUMLOperatorNodes:
-            operator = PUMLOperatorNode(
-                operator_type, 0
-            )
+            operator = PUMLOperatorNode(operator_type, 0)
             assert operator.node_id == (*operator_type.value, 0)
             assert operator.node_type == "_".join(operator_type.value)
             assert operator.extra_info == {}
@@ -151,7 +163,7 @@ class TestPUMLOperatorNode:
                             tab_size=tab_size
                         ) == ([
                             " " * (indent - tab_size)
-                            + operator_node_puml_map[
+                            + OPERATOR_NODE_PUML_MAP[
                                 operator_type.value
                             ][0][0],
                         ], 0)
@@ -171,7 +183,7 @@ class TestPUMLOperatorNode:
                             tab_size=tab_size
                         ) == ([
                             " " * indent
-                            + operator_node_puml_map[
+                            + OPERATOR_NODE_PUML_MAP[
                                 operator_type.value
                             ][0][0],
                         ], 1)
@@ -187,11 +199,292 @@ class TestPUMLOperatorNode:
                 for indent in [0, 4]:
                     for tab_size in [0, 4]:
                         assert operator.write_uml_blocks(
-                            indent=indent,
-                            tab_size=tab_size
+                            indent=indent, tab_size=tab_size
                         ) == ([
                             " " * (indent - tab_size)
-                            + operator_node_puml_map[
+                            + OPERATOR_NODE_PUML_MAP[
                                 operator_type.value
                             ][0][0],
                         ], -1)
+
+
+class TestPUMLGraph:
+    @staticmethod
+    def test_add_node() -> None:
+        # test puml event node
+        graph = PUMLGraph()
+        event_node = PUMLEventNode(
+            "event", 0
+        )
+        graph.add_node(event_node)
+        assert len(graph.nodes) == 1
+        assert graph.nodes[event_node] == {
+            "node_type": "event",
+            "extra_info": {
+                "is_branch": False, "is_merge": False, "is_break": False
+            }
+        }
+        operator_node = PUMLOperatorNode(
+            PUMLOperatorNodes.START_XOR, 0
+        )
+        graph.add_node(operator_node)
+        assert len(graph.nodes) == 2
+        assert graph.nodes[operator_node] == {
+            "node_type": "START_XOR", "extra_info": {}
+        }
+
+    @staticmethod
+    def test_add_edge() -> None:
+        graph = PUMLGraph()
+        event_node_1 = PUMLEventNode("event", 0)
+        event_node_2 = PUMLEventNode("event", 1)
+        graph.add_node(event_node_1)
+        graph.add_node(event_node_2)
+        graph.add_edge(event_node_1, event_node_2)
+        assert len(graph.edges) == 1
+        assert graph.edges[event_node_1, event_node_2] == {
+            "start_node_attr": {
+                "node_type": "event",
+                "extra_info": {
+                    "is_branch": False, "is_merge": False, "is_break": False
+                }
+            },
+            "end_node_attr": {
+                "node_type": "event",
+                "extra_info": {
+                    "is_branch": False, "is_merge": False, "is_break": False
+                }
+            }
+        }
+
+    @staticmethod
+    def test_increment_occurrence_count() -> None:
+        graph = PUMLGraph()
+        assert len(graph.node_counts) == 0
+        graph.increment_occurrence_count("event")
+        assert len(graph.node_counts) == 1
+        assert graph.node_counts["event"] == 1
+        graph.increment_occurrence_count("event")
+        assert graph.node_counts["event"] == 2
+
+    @staticmethod
+    def test_get_occurrence_count() -> None:
+        graph = PUMLGraph()
+        assert graph.get_occurrence_count("event") == 0
+        graph.increment_occurrence_count("event")
+        assert graph.get_occurrence_count("event") == 1
+
+    @staticmethod
+    def test_create_event_node() -> None:
+        # test normal event
+        graph = PUMLGraph()
+        event_node = graph.create_event_node("event")
+        assert event_node.node_id == ("event", 0)
+        assert event_node.node_type == "event"
+        assert event_node.extra_info == {
+            "is_branch": False, "is_merge": False, "is_break": False
+        }
+        graph.get_occurrence_count("event") == 1
+        # test branch event
+        event_node = graph.create_event_node(
+            "branch_event", PUMLEvent.BRANCH
+        )
+        assert event_node.node_id == ("branch_event", 0)
+        assert event_node.node_type == "branch_event"
+        assert event_node.extra_info == {
+            "is_branch": True, "is_merge": False, "is_break": False
+        }
+        assert event_node.branch_number == 0
+        assert graph.branch_counts == 1
+        # test merge + break event
+        event_node = graph.create_event_node(
+            "merge_break_event", (PUMLEvent.MERGE, PUMLEvent.BREAK)
+        )
+        assert event_node.node_id == ("merge_break_event", 0)
+        assert event_node.node_type == "merge_break_event"
+        assert event_node.extra_info == {
+            "is_branch": False, "is_merge": True, "is_break": True
+        }
+
+    @staticmethod
+    def test_create_operator_node_pair() -> None:
+        for operator in PUMLOperator:
+            graph = PUMLGraph()
+            start_node, end_node = graph.create_operator_node_pair(operator)
+            assert start_node.node_id == ("START", operator.name, 0)
+            assert start_node.node_type == f"START_{operator.name}"
+            assert start_node.extra_info == {}
+            assert graph.get_occurrence_count(("START", operator.name)) == 1
+            assert end_node.node_id == ("END", operator.name, 0)
+            assert end_node.node_type == f"END_{operator.name}"
+            assert end_node.extra_info == {}
+            assert graph.get_occurrence_count(("END", operator.name)) == 1
+            assert len(graph.nodes) == 2
+            assert start_node in graph.nodes and end_node in graph.nodes
+
+    @staticmethod
+    def test_create_operator_path_node():
+        for operator in PUMLOperator:
+            if len(operator.value) == 3:
+                graph = PUMLGraph()
+                path_node = graph.create_operator_path_node(operator)
+                assert path_node.node_id == ("PATH", operator.name, 0)
+                assert path_node.node_type == f"PATH_{operator.name}"
+                assert path_node.extra_info == {}
+                assert graph.get_occurrence_count(("PATH", operator.name)) == 1
+                assert path_node in graph.nodes
+                assert len(graph.nodes) == 1
+
+    @staticmethod
+    def test_write_uml_blocks() -> None:
+        # test simple event sequence block
+        graph = PUMLGraph()
+        event_node_1 = graph.create_event_node("event")
+        event_node_2 = graph.create_event_node("event")
+        graph.add_edge(event_node_1, event_node_2)
+        assert graph.write_uml_blocks() == [":event;", ":event;"]
+
+        # test loop block
+        graph = PUMLGraph()
+        event_node = graph.create_event_node("event")
+        start_loop_node, end_loop_node = graph.create_operator_node_pair(
+            PUMLOperator.LOOP
+        )
+        graph.add_edge(start_loop_node, event_node)
+        graph.add_edge(event_node, end_loop_node)
+        assert graph.write_uml_blocks() == [
+            "repeat",
+            "    :event;",
+            "repeat while"
+        ]
+
+        # test nested XOR block
+        graph = PUMLGraph()
+        event_node_1 = graph.create_event_node("event")
+        event_node_2 = graph.create_event_node("event")
+        event_node_3 = graph.create_event_node("event")
+        start_xor_node_1, end_xor_node_1 = graph.create_operator_node_pair(
+            PUMLOperator.XOR
+        )
+        start_xor_node_2, end_xor_node_2 = graph.create_operator_node_pair(
+            PUMLOperator.XOR
+        )
+        graph.add_edge(start_xor_node_1, start_xor_node_2)
+        graph.add_edge(start_xor_node_2, event_node_1)
+        graph.add_edge(event_node_1, end_xor_node_2)
+        graph.add_edge(start_xor_node_2, event_node_3)
+        graph.add_edge(event_node_3, end_xor_node_2)
+        graph.add_edge(start_xor_node_1, event_node_2)
+        graph.add_edge(event_node_2, end_xor_node_1)
+        graph.add_edge(end_xor_node_2, end_xor_node_1)
+        block = graph.write_uml_blocks()
+        expected_block = [
+            "switch (XOR)",
+            "    case",
+            "        switch (XOR)",
+            "            case",
+            "                :event;",
+            "            case",
+            "                :event;",
+            "        endswitch",
+            "    case",
+            "        :event;",
+            "endswitch"
+        ]
+        # check equivalence of expected and actual blocks
+        actual_graph = create_networkx_graph_from_parsed_puml(
+            parse_raw_job_def_lines(block)
+        )
+        expected_graph = create_networkx_graph_from_parsed_puml(
+            parse_raw_job_def_lines(expected_block)
+        )
+        assert check_networkx_graph_equivalence(
+            actual_graph, expected_graph
+        )
+
+        # test other operators nested
+        for operator in PUMLOperator:
+            if operator == PUMLOperator.XOR or operator == PUMLOperator.LOOP:
+                continue
+            graph = PUMLGraph()
+            event_node_1 = graph.create_event_node("event")
+            event_node_2 = graph.create_event_node("event")
+            event_node_3 = graph.create_event_node("event")
+            start_xor_node_1, end_xor_node_1 = graph.create_operator_node_pair(
+                operator=operator
+            )
+            start_xor_node_2, end_xor_node_2 = graph.create_operator_node_pair(
+                operator=operator
+            )
+            graph.add_edge(start_xor_node_1, start_xor_node_2)
+            graph.add_edge(start_xor_node_2, event_node_1)
+            graph.add_edge(event_node_1, end_xor_node_2)
+            graph.add_edge(start_xor_node_2, event_node_3)
+            graph.add_edge(event_node_3, end_xor_node_2)
+            graph.add_edge(start_xor_node_1, event_node_2)
+            graph.add_edge(event_node_2, end_xor_node_1)
+            graph.add_edge(end_xor_node_2, end_xor_node_1)
+            block = graph.write_uml_blocks()
+            expected_block = [
+                OPERATOR_NODE_PUML_MAP[operator.value[0].value][0][0],
+                "    " + OPERATOR_NODE_PUML_MAP[operator.value[0].value][0][0],
+                "        :event;",
+                "    " + OPERATOR_NODE_PUML_MAP[operator.value[2].value][0][0],
+                "        :event;",
+                "    " + OPERATOR_NODE_PUML_MAP[operator.value[1].value][0][0],
+                OPERATOR_NODE_PUML_MAP[operator.value[2].value][0][0],
+                "    :event;",
+                OPERATOR_NODE_PUML_MAP[operator.value[1].value][0][0]
+            ]
+            # check equivalence of expected and actual blocks
+            actual_graph = create_networkx_graph_from_parsed_puml(
+                parse_raw_job_def_lines(block)
+            )
+            expected_graph = create_networkx_graph_from_parsed_puml(
+                parse_raw_job_def_lines(expected_block)
+            )
+            assert check_networkx_graph_equivalence(
+                actual_graph, expected_graph
+            )
+
+        # check case with event with subgraph
+        graph = PUMLGraph()
+        # create subgraph
+        sub_graph = PUMLGraph()
+        sub_graph_event_node = sub_graph.create_event_node("event")
+        start_loop_node, end_loop_node = sub_graph.create_operator_node_pair(
+            PUMLOperator.LOOP
+        )
+        sub_graph.add_edge(start_loop_node, sub_graph_event_node)
+        sub_graph.add_edge(sub_graph_event_node, end_loop_node)
+        # create event node with subgraph
+        event_node_1 = graph.create_event_node("event", sub_graph=sub_graph)
+        event_node_2 = graph.create_event_node("event")
+        start_xor_node, end_xor_node = graph.create_operator_node_pair(
+            PUMLOperator.XOR
+        )
+        graph.add_edge(start_xor_node, event_node_1)
+        graph.add_edge(event_node_1, end_xor_node)
+        graph.add_edge(start_xor_node, event_node_2)
+        graph.add_edge(event_node_2, end_xor_node)
+        block = graph.write_uml_blocks()
+        expected_block = [
+            "switch (XOR)",
+            "    case",
+            "        repeat",
+            "            :event;",
+            "        repeat while",
+            "    case",
+            "        :event;",
+            "endswitch"
+        ]
+        # check equivalence of expected and actual blocks
+        actual_graph = create_networkx_graph_from_parsed_puml(
+            parse_raw_job_def_lines(block)
+        )
+        expected_graph = create_networkx_graph_from_parsed_puml(
+            parse_raw_job_def_lines(expected_block)
+        )
+        assert check_networkx_graph_equivalence(
+            actual_graph, expected_graph
+        )
