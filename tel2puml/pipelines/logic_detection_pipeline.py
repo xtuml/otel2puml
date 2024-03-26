@@ -284,6 +284,8 @@ class Event:
             if event_type not in event_set
         }
 
+        self._update_since_logic_gate_tree = True
+
     def create_augmented_data_from_event_sets(
         self,
     ) -> Generator[dict[str, Any], Any, None]:
