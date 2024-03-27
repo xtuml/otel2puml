@@ -2,13 +2,24 @@
 from copy import deepcopy, copy
 
 from pm4py import ProcessTree
+import networkx as nx
 
 from tel2puml.node_map_to_puml.node import (
     Node,
     load_logic_tree_into_nodes,
     load_all_logic_trees_into_nodes,
+    create_event_node_ref,
+    create_networkx_graph_of_nodes_from_markov_graph,
+    merge_markov_without_loops_and_logic_detection_analysis
 )
-from tel2puml.pipelines.logic_detection_pipeline import Event
+from tel2puml.pipelines.logic_detection_pipeline import (
+    Event,
+    update_all_connections_from_clustered_events
+)
+from tel2puml.pipelines.data_creation import (
+    generate_test_data_event_sequences_from_puml
+)
+from tel2puml.jAlergiaPipeline import audit_event_sequences_to_network_x
 
 
 class TestNode:
@@ -338,3 +349,142 @@ def test_load_all_logic_trees_into_nodes(
             )
             for direction_node in direction_node_list:
                 assert direction_node in operator_node_direction_logic_list
+
+
+def test_create_event_node_ref() -> None:
+    """Test the create_event_node_ref function."""
+    graph = nx.DiGraph()
+    node_1 = Node(uid="1", event_type="Event1")
+    node_2 = Node(uid="2", event_type="Event2")
+    node_3 = Node(uid="3", event_type="Event1")
+    nodes = [node_1, node_2, node_3]
+    for node in nodes:
+        graph.add_node(node)
+    event_node_references = create_event_node_ref(graph)
+    expected_event_node_references = {
+        "Event1": [node_1, node_3],
+        "Event2": [node_2],
+    }
+    assert event_node_references == expected_event_node_references
+
+
+def test_create_networkx_graph_of_nodes_from_markov_graph() -> None:
+    """Test the create_networkx_graph_of_nodes_from_markov_graph function.
+
+    The newly created graph should share the same nodes and edges as the but
+    with nodes as :class:`Node` instances.
+    """
+    # setup
+    test_data = generate_test_data_event_sequences_from_puml(
+        "puml_files/simple_test.puml"
+    )
+    markov_graph, event_node_reference = audit_event_sequences_to_network_x(
+        test_data
+    )
+    # function call
+    node_class_graph, _ = (
+        create_networkx_graph_of_nodes_from_markov_graph(
+            markov_graph,
+            event_node_reference["event_reference"]
+        )
+    )
+    # test
+    # check the graphs are mirrors of one another
+    assert len(node_class_graph.nodes) == len(markov_graph.nodes)
+    for node in node_class_graph.nodes:
+        assert node.uid in markov_graph.nodes
+        assert node.event_type == event_node_reference["event_reference"][
+            node.uid
+        ]
+    for edge in node_class_graph.edges:
+        assert (edge[0].uid, edge[1].uid) in markov_graph.edges
+
+
+def test_merge_markov_without_loops_and_logic_detection_analysis() -> None:
+    """Test the merge_markov_without_loops_and_logic_detection_analysis
+    function.
+
+    The function should merge the markov graph with the logic detection
+    analysis and return a graph with the expected connections and logic.
+    """
+    # setup
+    test_data_markov = generate_test_data_event_sequences_from_puml(
+        "puml_files/simple_test.puml"
+    )
+    markov_graph, node_event_reference = audit_event_sequences_to_network_x(
+        test_data_markov
+    )
+    test_data_logic = generate_test_data_event_sequences_from_puml(
+        "puml_files/simple_test.puml"
+    )
+    forward, backward = update_all_connections_from_clustered_events(
+        test_data_logic
+    )
+    # function call
+    node_class_graph = merge_markov_without_loops_and_logic_detection_analysis(
+        (markov_graph, node_event_reference["event_reference"]),
+        backward, forward
+    )
+    # test
+    expected_outgoing_event_type_logic = {
+        "A": {"XOR": ["B", "D"]},
+        "B": {},
+        "C": {},
+        "D": {}
+    }
+    expected_incoming_event_type_logic = {
+        "A": {},
+        "B": {},
+        "C": {},
+        "D": {}
+    }
+    expected_outgoing_event_type = {
+        "A": ["B", "D"],
+        "B": ["C"],
+        "C": [],
+        "D": []
+    }
+    expected_incoming_event_type = {
+        "A": [],
+        "B": ["A"],
+        "C": ["B"],
+        "D": ["A"]
+    }
+    # test that every node has the expected connections and logic inserted
+    for node in node_class_graph.nodes:
+        for outgoing_logic_node in node.outgoing_logic:
+            assert outgoing_logic_node.operator in (
+                expected_outgoing_event_type_logic[
+                    node.event_type
+                ]
+            )
+            assert [
+                logic_node.event_type
+                for logic_node in outgoing_logic_node.outgoing_logic
+            ] == (
+                expected_outgoing_event_type_logic[
+                    node.event_type
+                ][outgoing_logic_node.operator]
+            )
+        for incoming_logic_node in node.incoming_logic:
+            assert incoming_logic_node.operator in (
+                expected_incoming_event_type_logic[
+                    node.event_type
+                ]
+            )
+            assert [
+                logic_node.event_type
+                for logic_node in incoming_logic_node.incoming_logic
+            ] == (
+                expected_incoming_event_type_logic[
+                    node.event_type
+                ][incoming_logic_node.operator]
+            )
+        assert sorted([
+            direction_node.event_type
+            for direction_node in node.outgoing
+        ]) == expected_outgoing_event_type[node.event_type]
+        assert sorted([
+            direction_node.event_type
+            for direction_node in node.incoming
+        ]) == expected_incoming_event_type[node.event_type]
