@@ -1,3 +1,4 @@
+"""Tests for the detect_loops module."""
 from tel2puml.detect_loops import (
     Loop,
     detect_loops,
@@ -12,9 +13,11 @@ from tel2puml.pipelines.data_creation import (
 
 
 class TestLoop():
+    """Tests for the Loop class."""
 
     @staticmethod
     def test_init():
+        """Test the __init__ method of the Loop class."""
         loop = Loop(["A"])
         assert isinstance(loop.sub_loops, list)
         assert loop.nodes == ["A"]
@@ -22,6 +25,7 @@ class TestLoop():
 
     @staticmethod
     def test_get_node_cycles():
+        """Test the get_node_cycles method of the Loop class."""
         loop = Loop(["A"])
         assert loop.get_node_cycles() == [["A"]]
 
@@ -40,6 +44,7 @@ class TestLoop():
 
     @staticmethod
     def test_check_subloop():
+        """Test the check_subloop method of the Loop class."""
         loop = Loop(["A", "B", "C", "D"])
 
         other = Loop(["A", "B", "C", "D"])
@@ -65,6 +70,7 @@ class TestLoop():
 
     @staticmethod
     def test_get_sublist_of_length():
+        """Test the get_sublist_of_length method of the Loop class."""
         loop = Loop(["A"])
         assert loop.get_sublist_of_length(["A"], 1) == [["A"]]
 
@@ -94,6 +100,7 @@ class TestLoop():
 
     @staticmethod
     def test_add_subloop():
+        """Test the add_subloop method of the Loop class."""
         loop = Loop(["A", "B", "C"])
         sub_loop = Loop(["B"])
 
@@ -103,6 +110,7 @@ class TestLoop():
 
 
 def test_update_with_references() -> None:
+    """Test the update_with_references function."""
     references = {
         'node_reference': {
             'A': ['q0'], 'B': ['q1'], 'C': ['q2'],
@@ -117,6 +125,7 @@ def test_update_with_references() -> None:
 
 
 def test_add_loop_edges_to_remove() -> None:
+    """Test the add_loop_edges_to_remove function."""
     loops = [Loop(["B"])]
     edges = [("A", "B"), ("B", "C"), ("B", "B")]
     loops = add_loop_edges_to_remove(loops, edges)
@@ -131,6 +140,7 @@ def test_add_loop_edges_to_remove() -> None:
 
 
 def test_update_subloops() -> None:
+    """Test the update_subloops function."""
     loop1 = Loop(["A"])
     loop2 = Loop(["A", "B", "C"])
 
@@ -174,6 +184,7 @@ def test_update_subloops() -> None:
 
 
 def test_detect_loops_from_simple_puml():
+    """Test the detect_loops function with a simple puml file."""
     event_sequences = generate_test_data_event_sequences_from_puml(
         "puml_files/loop_loop_a.puml"
     )
@@ -187,9 +198,35 @@ def test_detect_loops_from_simple_puml():
     assert sub_loop.edge_to_remove == ("C", "C")
 
 
-def test_detect_loops_from_complex_puml():
+def test_detect_loops_from_XOR_puml():
+    """Test the detect_loops function with a XOR puml file."""
     event_sequences = generate_test_data_event_sequences_from_puml(
         "puml_files/loop_XORFork_a.puml"
     )
     graph, references = audit_event_sequences_to_network_x(event_sequences)
     loops = detect_loops(graph, references)
+    assert len(loops) == 2
+    for loop in loops:
+        assert loop.edge_to_remove == ("F", "B")
+        assert len(loop.sub_loops) == 0
+        if "C" in loop.nodes:
+            assert ["B", "C", "F"] in loop.get_node_cycles()
+        else:
+            assert ["B", "D", "E", "F"] in loop.get_node_cycles()
+
+
+def test_detect_loops_from_AND_puml():
+    """Test the detect_loops function with a AND puml file."""
+    event_sequences = generate_test_data_event_sequences_from_puml(
+        "puml_files/loop_ANDFork_a.puml"
+    )
+    graph, references = audit_event_sequences_to_network_x(event_sequences)
+    loops = detect_loops(graph, references)
+    assert len(loops) == 2
+    for loop in loops:
+        assert loop.edge_to_remove == ("E", "B")
+        assert len(loop.sub_loops) == 0
+        if "D" in loop.nodes:
+            assert ["B", "D", "E"] in loop.get_node_cycles()
+        else:
+            assert ["B", "C", "E"] in loop.get_node_cycles()
