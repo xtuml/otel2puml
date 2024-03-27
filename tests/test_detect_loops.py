@@ -107,4 +107,4 @@ def test_detect_loops_from_puml():
     assert loop.edge_to_remove == ("D", "B")
     sub_loop, = loop.sub_loops
     assert sub_loop.nodes == ["C"]
-    assert loop.edge_to_remove == ("C", "C")
+    assert sub_loop.edge_to_remove == ("C", "C")
