@@ -12,6 +12,7 @@ class TestLoop():
         loop = Loop(["A"])
         assert isinstance(loop.sub_loops, list)
         assert loop.nodes == ["A"]
+        assert loop.edge_to_remove is None
 
     @staticmethod
     def test_get_node_cycles():
@@ -103,6 +104,7 @@ def test_detect_loops_from_puml():
     loops = detect_loops(graph, references)
     loop, = loops
     assert ["B", "C", "D"] in loop.get_node_cycles()
-    assert len(loop.sub_loops) == 1
+    assert loop.edge_to_remove == ("D", "B")
     sub_loop, = loop.sub_loops
     assert sub_loop.nodes == ["C"]
+    assert loop.edge_to_remove == ("C", "C")

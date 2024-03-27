@@ -1,4 +1,4 @@
-from typing import Self
+from typing import Self, Optional
 
 from networkx import DiGraph, simple_cycles
 
@@ -8,6 +8,7 @@ class Loop:
     def __init__(self, nodes: list[str]):
         self.nodes = nodes
         self.sub_loops: list[Loop] = []
+        self.edge_to_remove: Optional[tuple[str, str]] = None
 
     def __len__(self) -> int:
         return len(self.nodes)
@@ -58,6 +59,13 @@ def detect_loops(
     ]
     loops_with_ref.sort(key=lambda x: len(x))
     loops = [Loop(res) for res in loops_with_ref]
+
+    edges = [
+        tuple(_update_with_references([u, v], references))
+        for u, v in graph.edges()
+    ]
+
+    loops = _add_loop_edges_to_remove(loops, edges)
     return _update_subloops(loops)
 
 
@@ -68,7 +76,32 @@ def _update_with_references(
     return [references["event_reference"][label] for label in loop_list]
 
 
-def _update_subloops(loops: list[Loop]) -> None:
+def _add_loop_edges_to_remove(
+        loops: list[Loop],
+        edges: list[tuple[str, str]]
+) -> list[Loop]:
+
+    for loop in loops:
+        if len(loop) == 1:
+            loop.edge_to_remove = (loop.nodes[0], loop.nodes[0])
+        else:
+            entry: Optional[str] = None
+            exits: list[str] = []
+            for u, v in edges:
+                if u not in loop.nodes and v in loop.nodes:
+                    entry = v
+                elif u in loop.nodes and v not in loop.nodes:
+                    exits.append(u)
+                continue
+            if entry and exits:
+                if len(exits) == 1:
+                    loop.edge_to_remove = (exits[0], entry)
+                else:
+                    raise ValueError("Multiple exits found")
+    return loops
+
+
+def _update_subloops(loops: list[Loop]) -> list[Loop]:
     subloop_indices = []
     for loop in loops:
         for sub_loop in loops:
