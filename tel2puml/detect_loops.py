@@ -54,29 +54,29 @@ def detect_loops(
         references: dict[str, dict]
 ) -> list[Loop]:
     loops_with_ref = [
-        _update_with_references(loop_list, references)
+        update_with_references(loop_list, references)
         for loop_list in simple_cycles(graph)
     ]
     loops_with_ref.sort(key=lambda x: len(x))
     loops = [Loop(res) for res in loops_with_ref]
 
     edges = [
-        tuple(_update_with_references([u, v], references))
+        tuple(update_with_references([u, v], references))
         for u, v in graph.edges()
     ]
 
-    loops = _add_loop_edges_to_remove(loops, edges)
-    return _update_subloops(loops)
+    loops = add_loop_edges_to_remove(loops, edges)
+    return update_subloops(loops)
 
 
-def _update_with_references(
+def update_with_references(
         loop_list: list,
         references: dict[str, dict]
 ) -> None:
     return [references["event_reference"][label] for label in loop_list]
 
 
-def _add_loop_edges_to_remove(
+def add_loop_edges_to_remove(
         loops: list[Loop],
         edges: list[tuple[str, str]]
 ) -> list[Loop]:
@@ -101,12 +101,26 @@ def _add_loop_edges_to_remove(
     return loops
 
 
-def _update_subloops(loops: list[Loop]) -> list[Loop]:
-    subloop_indices = []
-    for loop in loops:
-        for sub_loop in loops:
-            if loop.check_subloop(sub_loop):
-                loop.add_subloop(sub_loop)
-                subloop_indices.append(loops.index(sub_loop))
+def update_subloops(loops: list[Loop]) -> list[Loop]:
+    updated_loops = []
+    loops.sort(key=lambda x: len(x))
 
-    return [loop for i, loop in enumerate(loops) if i not in subloop_indices]
+    while len(loops) > 0:
+        potential_subloop = loops.pop(0)
+        is_subloop = False
+        current_filter_length: Optional[int] = None
+        for loop in loops:
+            if loop.check_subloop(potential_subloop):
+                if not is_subloop:
+                    loop.add_subloop(potential_subloop)
+                    is_subloop = True
+                    current_filter_length = len(loop)
+                elif len(loop) <= current_filter_length:
+                    loop.add_subloop(potential_subloop)
+                else:
+                    break
+
+        if not is_subloop:
+            updated_loops.append(potential_subloop)
+
+    return updated_loops
