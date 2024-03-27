@@ -96,7 +96,7 @@ class TestLoop():
         assert loop.sub_loops == [sub_loop]
 
 
-def test_detect_loops_from_puml():
+def test_detect_loops_from_simple_puml():
     event_sequences = generate_test_data_event_sequences_from_puml(
         "puml_files/loop_loop_a.puml"
     )
@@ -108,3 +108,11 @@ def test_detect_loops_from_puml():
     sub_loop, = loop.sub_loops
     assert sub_loop.nodes == ["C"]
     assert sub_loop.edge_to_remove == ("C", "C")
+
+
+def test_detect_loops_from_complex_puml():
+    event_sequences = generate_test_data_event_sequences_from_puml(
+        "puml_files/loop_XORFork_a.puml"
+    )
+    graph, references = audit_event_sequences_to_network_x(event_sequences)
+    loops = detect_loops(graph, references)

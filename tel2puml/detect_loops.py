@@ -85,19 +85,19 @@ def _add_loop_edges_to_remove(
         if len(loop) == 1:
             loop.edge_to_remove = (loop.nodes[0], loop.nodes[0])
         else:
-            entry: Optional[str] = None
-            exits: list[str] = []
+            entries = []
+            exits = []
             for u, v in edges:
                 if u not in loop.nodes and v in loop.nodes:
-                    entry = v
+                    entries.append(v)
                 elif u in loop.nodes and v not in loop.nodes:
                     exits.append(u)
                 continue
-            if entry and exits:
-                if len(exits) == 1:
-                    loop.edge_to_remove = (exits[0], entry)
+            if entries and exits:
+                if len(exits) == 1 and len(entries) == 1:
+                    loop.edge_to_remove = (exits[0], entries[0])
                 else:
-                    raise ValueError("Multiple exits found")
+                    raise ValueError("Multiple entries/exits found")
     return loops
 
 
