@@ -124,11 +124,28 @@ class Testread_uml_file(unittest.TestCase):
 def test_get_markov_sequence_lines_from_audit_event_stream() -> None:
     """Test the `get_markov_sequence_lines_from_audit_event_stream` function.
     """
+    # check for a simple case
     event_sequences = generate_test_data_event_sequences_from_puml(
         "puml_files/simple_test.puml"
     )
     result = get_markov_sequence_lines_from_audit_event_stream(event_sequences)
     assert result == "A,D\nA,B,C"
+
+    # check for a more complex case
+    event_sequences = generate_test_data_event_sequences_from_puml(
+            "puml_files/and_with repeated_pattern.puml"
+        )
+    result = get_markov_sequence_lines_from_audit_event_stream(event_sequences)
+    expected_lines = [
+        "A,G,H",
+        "A,B,C,D",
+        "A,B,C,D",
+        "A,E,C,D",
+    ]
+    for line in result.split("\n"):
+        assert line in expected_lines
+        expected_lines.remove(line)
+    assert len(expected_lines) == 0
 
 
 if __name__ == "__main__":
