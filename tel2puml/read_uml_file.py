@@ -27,7 +27,8 @@ Functions:
 from typing import Iterable, Generator, Any
 import re
 
-
+import networkx as nx
+from networkx import DiGraph
 from test_event_generator.solutions.graph_solution import (
     get_audit_event_jsons_and_templates_all_topological_permutations,
     GraphSolution,
@@ -348,43 +349,113 @@ def stringify_events_generator(
 
 
 def yield_markov_sequence_lines_from_audit_event_stream(
-    audit_event_stream: Iterable[Iterable[PVEvent]], debug: bool
+    audit_event_stream: Iterable[Iterable[PVEvent]]
 ) -> Generator[str, Any, None]:
     """
     Retrieves event sequences from a stream of audit event job sequences.
 
     :param audit_event_stream: A stream of audit event lists.
     :type audit_event_stream: `Iterable`[`Iterable`[:class:`PVEvent`]]
-    :param debug: A flag indicating whether to enable debugging.
-    :type debug: `bool`
     :return: A generator that yields the event list as a string.
     :rtype: `Generator`[`str`, `Any`, `None`]
     """
+    for event_list in audit_event_stream:
+        yield from get_markov_lines_from_audit_event_sequence(event_list)
 
-    audit_event_nested_jsons = format_events_stream_as_nested_json(
-        audit_event_stream, debug
+
+def get_markov_lines_from_audit_event_sequence(
+    audit_event_sequence: Iterable[PVEvent]
+) -> Generator[str, Any, None]:
+    """Generates Markov lines from an audit event sequence by building a
+    networkx graph from the sequence and generating all simple paths from the
+    source nodes to the sink nodes.
+
+    :param audit_event_sequence: The audit event sequence.
+    :type audit_event_sequence: `Iterable`[:class:`PVEvent`]
+    """
+    graph = create_networkx_graph_from_audit_event_sequence(
+        audit_event_sequence
     )
+    all_paths = get_all_simple_paths_from_networkx_dag(graph)
+    yield from generate_markov_lines_from_paths(graph, all_paths)
 
-    for events in audit_event_nested_jsons:
-        yield from stringify_events_generator(events)
+
+def create_networkx_graph_from_audit_event_sequence(
+    audit_event_sequence: Iterable[PVEvent]
+) -> DiGraph:
+    """Creates a NetworkX graph from an audit event sequence using
+    previousEventIds for edges and eventType for node attributes with eventIds
+    as node ids.
+
+    :param audit_event_sequence: The audit event sequence.
+    :type audit_event_sequence: `Iterable`[:class:`PVEvent`]
+    :return: The NetworkX graph.
+    :rtype: :class:`DiGraph`
+    """
+    edges_to_add = []
+    graph = nx.DiGraph()
+    for event in audit_event_sequence:
+        graph.add_node(event["eventId"], event_type=event["eventType"])
+        if "previousEventIds" in event:
+            if isinstance(event["previousEventIds"], str):
+                edges_to_add.append(
+                    (event["previousEventIds"], event["eventId"])
+                )
+            else:
+                for prev in event["previousEventIds"]:
+                    edges_to_add.append((prev, event["eventId"]))
+    graph.add_edges_from(edges_to_add)
+    return graph
+
+
+def get_all_simple_paths_from_networkx_dag(
+    graph: DiGraph
+) -> Generator[list, Any, None]:
+    """Gets all simple paths from a NetworkX directed acyclic graph (DAG) from
+    the source nodes to the sink nodes.
+
+    :param graph: The NetworkX graph.
+    :type graph: :class:`DiGraph`
+    :return: A generator that yields the simple paths.
+    :rtype: `Generator`[`list`, `Any`, `None`]
+    """
+    source_nodes = [node for node in graph.nodes if graph.in_degree(node) == 0]
+    # get sink nodes
+    sink_nodes = [node for node in graph.nodes if graph.out_degree(node) == 0]
+    for source in source_nodes:
+        for sink in sink_nodes:
+            yield from nx.all_simple_paths(graph, source=source, target=sink)
+
+
+def generate_markov_lines_from_paths(
+    graph: DiGraph, paths: Iterable[Iterable[str]]
+) -> Generator[str, Any, None]:
+    """Generates Markov lines from a NetworkX graph and a list of paths.
+
+    :param graph: The NetworkX graph.
+    :type graph: :class:`DiGraph`
+    :param paths: The list of paths.
+    :type paths: `list`[`list`[`str`]]
+    :return: A generator that yields the Markov lines.
+    :rtype: `Generator`[`str`, `Any`, `None`]
+    """
+    for path in paths:
+        yield ",".join(graph.nodes[node]["event_type"] for node in path)
 
 
 def get_markov_sequence_lines_from_audit_event_stream(
     audit_event_stream: Iterable[Iterable[PVEvent]],
-    debug: bool = False
 ) -> str:
     """
     Retrieves event sequences from a stream of audit event job sequences.
 
     :param audit_event_stream: A stream of audit event lists.
     :type audit_event_stream: `Iterable`[`Iterable`[:class:`PVEvent`]]
-    :param debug: A flag indicating whether to enable debugging.
-    :type debug: `bool`
     :return: The event list as a string.
     :rtype: `str`
     """
     return "\n".join(yield_markov_sequence_lines_from_audit_event_stream(
-        audit_event_stream, debug
+        audit_event_stream
     ))
 
 
