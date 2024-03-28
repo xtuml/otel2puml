@@ -507,7 +507,7 @@ def create_puml_graph_from_node_class_graph(
     while True:
         if (
             not previous_node_class.outgoing_logic
-            and previous_node_class.operator is None
+            and previous_node_class.event_type is not None
         ):
             if not previous_node_class.outgoing:
                 next_node_class = None
@@ -545,10 +545,12 @@ def create_puml_graph_from_node_class_graph(
                     continue
             if next_node_class is None:
                 break
-            previous_puml_node = update_puml_graph_with_event_node(
-                puml_graph,
-                next_node_class,
-                previous_puml_node
+            previous_puml_node, previous_node_class = (
+                update_puml_graph_with_event_node(
+                    puml_graph,
+                    next_node_class,
+                    previous_puml_node
+                )
             )
             previous_node_class = next_node_class
             continue
@@ -592,12 +594,13 @@ def handle_logic_list_next_path(
         previous_node_class = next_node_class
         previous_puml_node = logic_list[-1].start_node
     else:
-        previous_puml_node = update_puml_graph_with_event_node(
-            puml_graph,
-            next_node_class,
-            logic_list[-1].start_node
+        previous_puml_node, previous_node_class = (
+            update_puml_graph_with_event_node(
+                puml_graph,
+                next_node_class,
+                logic_list[-1].start_node
+            )
         )
-        previous_node_class = next_node_class
     return previous_puml_node, previous_node_class
 
 
@@ -605,10 +608,11 @@ def update_puml_graph_with_event_node(
     puml_graph: PUMLGraph,
     event_node: Node,
     previous_puml_node: PUMLNode,
-) -> PUMLEventNode:
+) -> tuple[PUMLEventNode, Node]:
     """Updates the PlantUML graph with an event node connecting the previous
     PlantUML node to a newly created node and then returns the newly created
-    node.
+    node and the event node which will be set as the previous in the next
+    iteration
 
     :param puml_graph: The PlantUML graph to update.
     :type puml_graph: :class:`PUMLGraph`
@@ -616,8 +620,9 @@ def update_puml_graph_with_event_node(
     :type event_node: :class:`Node`
     :param previous_puml_node: The previous PlantUML node.
     :type previous_puml_node: :class:`PUMLNode`
-    :return: The newly created PlantUML node.
-    :rtype: :class:`PUMLEventNode`
+    :return: A tuple containing the newly created PlantUML node and the event
+    node.
+    :rtype: `tuple`[:class:`PUMLEventNode`, :class:`Node`]
     """
     if event_node.event_type is None:
         raise ValueError(
@@ -631,7 +636,7 @@ def update_puml_graph_with_event_node(
         previous_puml_node,
         next_puml_node
     )
-    return next_puml_node
+    return next_puml_node, event_node
 
 
 def check_has_different_path_to_logic_node(
