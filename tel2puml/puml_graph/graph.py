@@ -127,9 +127,12 @@ class PUMLEventNode(PUMLNode):
             event_types if event_types is not None else (PUMLEvent.NORMAL,)
         )
         extra_info = {
-            "is_branch": PUMLEvent.BRANCH in self.event_types,
-            "is_break": PUMLEvent.BREAK in self.event_types,
-            "is_merge": PUMLEvent.MERGE in self.event_types,
+            field: True
+            for field, event_type in zip(
+                ["is_branch", "is_break", "is_merge"],
+                [PUMLEvent.BRANCH, PUMLEvent.BREAK, PUMLEvent.MERGE],
+            )
+            if event_type in self.event_types
         }
         super().__init__(
             node_id=node_id, node_type=node_type, extra_info=extra_info
@@ -177,7 +180,8 @@ class PUMLEventNode(PUMLNode):
     ) -> list[str]:
         """Writes the PlantUML block for the event node."""
         branch_info = ""
-        if self.extra_info["is_branch"]:
+
+        if self.extra_info.get("is_branch", False):
             if self.branch_number is None:
                 raise RuntimeError(
                     "Branch number is not provided but event is a branch event"
@@ -187,7 +191,7 @@ class PUMLEventNode(PUMLNode):
             )
         blocks = []
         blocks.append(f"{' ' * indent}:{self.node_type}{branch_info};")
-        if self.extra_info["is_break"]:
+        if self.extra_info.get("is_break", False):
             blocks.append(f"{' ' * indent}break")
         return blocks
 
@@ -244,6 +248,45 @@ class PUMLOperatorNode(PUMLNode):
         )
 
 
+class PUMLKillNode(PUMLNode):
+    """Class for creating PlantUML kill node.
+
+    :param occurrence: The occurrence of the kill node.
+    :type occurrence: `int`
+    """
+    def __init__(
+        self,
+        occurrence: int
+    ) -> None:
+        """Constructor method."""
+        node_type = "KILL"
+        node_id = (node_type, occurrence)
+        super().__init__(node_id, node_type)
+
+    def write_uml_blocks(
+        self,
+        indent: int = 0,
+        tab_size: int = 4,
+    ) -> tuple[list[str], int]:
+        """Writes the PlantUML block for the node and returns the number of
+        indents to be added to the next line.
+
+        :param indent: The number of indents to be added to the block.
+        :type indent: `int`
+        :param tab_size: The size of the tab, defaults to 4.
+        :type tab_size: `int`, optional
+        :return: The PlantUML blocks for the node and the number of indents to
+        be added to the next line.
+        :rtype: `tuple[list[str], int]`
+        """
+        blocks = [f"{' ' * indent}kill"]
+        next_indent_diff_total = 0 * tab_size
+        return (
+            blocks,
+            next_indent_diff_total,
+        )
+
+
 class PUMLGraph(DiGraph):
     """Class for creating PlantUML graph."""
 
@@ -251,6 +294,7 @@ class PUMLGraph(DiGraph):
         """Initializes the PlantUML graph."""
         self.node_counts: dict[Hashable, int] = {}
         self.branch_counts: int = 0
+        self.kill_counts: int = 0
         super().__init__()
 
     def create_event_node(
@@ -332,6 +376,17 @@ class PUMLGraph(DiGraph):
             node,
         )
         self.increment_occurrence_count(operator.value[2].value)
+        return node
+
+    def create_kill_node(self) -> PUMLKillNode:
+        """Creates a kill node.
+
+        :return: The kill node.
+        :rtype: :class:`PUMLKillNode`
+        """
+        node = PUMLKillNode(self.kill_counts)
+        self.add_node(node)
+        self.kill_counts += 1
         return node
 
     def get_occurrence_count(self, node_type: Hashable) -> int:
