@@ -535,20 +535,13 @@ def create_puml_graph_from_node_class_graph(
                         previous_puml_node,
                         logic_list[-1].end_node,
                     )
-                    next_node_class = logic_list[-1].set_path_node()
-                    if next_node_class is None:
-                        prev_logic_list = logic_list.pop()
-                        previous_puml_node = prev_logic_list.end_node
-                    elif next_node_class.operator is not None:
-                        previous_node_class = next_node_class
-                        previous_puml_node = logic_list[-1].start_node
-                    else:
-                        previous_puml_node = update_puml_graph_with_event_node(
+                    previous_puml_node, previous_node_class = (
+                        handle_logic_list_next_path(
                             puml_graph,
-                            next_node_class,
-                            logic_list[-1].start_node
+                            logic_list,
+                            previous_node_class
                         )
-                        previous_node_class = next_node_class
+                    )
                     continue
             if next_node_class is None:
                 break
@@ -577,17 +570,13 @@ def create_puml_graph_from_node_class_graph(
             previous_puml_node,
             start_operator
         )
-        next_node_class = logic_list[-1].set_path_node()
-        if next_node_class.operator is not None:
-            previous_puml_node = start_operator
-            previous_node_class = next_node_class
-            continue
-        previous_puml_node = update_puml_graph_with_event_node(
-            puml_graph,
-            next_node_class,
-            start_operator
+        previous_puml_node, previous_node_class = (
+            handle_logic_list_next_path(
+                puml_graph,
+                logic_list,
+                previous_node_class
+            )
         )
-        previous_node_class = next_node_class
     return puml_graph
 
 
