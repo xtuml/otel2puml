@@ -138,6 +138,23 @@ def test_add_loop_edges_to_remove() -> None:
     loop, = loops
     assert loop.edge_to_remove == ("D", "B")
 
+    loops = [Loop(["B", "C", "D"])]
+    edges = [("D", "B"), ("D", "E"), ("A", "B"), ("C", "D"), ("B", "C")]
+    loops = add_loop_edges_to_remove(loops, edges)
+    loop, = loops
+    assert loop.edge_to_remove == ("D", "B")
+
+    loops = [Loop(["B", "C", "E"]), Loop(["B", "D", "E"])]
+    edges = [
+        ("A", "B"), ("B", "C"), ("C", "E"),
+        ("D", "E"), ("B", "D"), ("E", "F"),
+        ("E", "B")
+    ]
+    loops = add_loop_edges_to_remove(loops, edges)
+    assert len(loops) == 2
+    for loop in loops:
+        loop.edge_to_remove == ("E", "B")
+
 
 def test_update_subloops() -> None:
     """Test the update_subloops function."""

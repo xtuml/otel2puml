@@ -145,25 +145,26 @@ def add_loop_edges_to_remove(
         if len(loop) == 1:
             loop.edge_to_remove = (loop.nodes[0], loop.nodes[0])
         else:
-            entries = []
-            exits = []
+            entries = set()
+            exits = set()
             for u, v in edges:
                 if u not in loop.nodes and v in loop.nodes:
-                    entries.append(v)
+                    entries.add(v)
                 elif u in loop.nodes and v not in loop.nodes:
-                    exits.append(u)
+                    exits.add(u)
                 continue
             if entries and exits:
                 if len(exits) == 1 and len(entries) == 1:
-                    loop.edge_to_remove = (exits[0], entries[0])
+                    loop.edge_to_remove = (exits.pop(), entries.pop())
+                elif len(exits) == 2 and exits == entries:
+                    if (edge := tuple(entries)) in edges:
+                        loop.edge_to_remove = edge
+                    elif edge[::-1] in edges:
+                        loop.edge_to_remove = edge[::-1]
+                    else:
+                        raise ValueError("Non-matching entries/exits")
                 else:
-                    if len(exits) == 2 and exits == entries:
-                        if (edge := tuple(entries)) in edges:
-                            loop.edge_to_remove = edge
-                        elif (edge := tuple(entries[::-1])) in edges:
-                            loop.edge_to_remove = edge
-                        else:
-                            raise ValueError("Non-matching entries/exits")
+                    raise ValueError("Non-matching entries/exits")
     return loops
 
 
