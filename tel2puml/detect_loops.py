@@ -11,6 +11,7 @@ class Loop:
         self.nodes = nodes
         self.sub_loops: list[Loop] = []
         self.edges_to_remove: set[tuple[str, str]] = set()
+        self.merge_processed = False
 
     def __len__(self) -> int:
         """Return the length of the loop.
@@ -26,6 +27,8 @@ class Loop:
         :return: A list of all possible cycles of the loop.
         :rtype: `list`[`str`]
         """
+        if self.merge_processed:
+            raise RuntimeError("Method not available after merge")
         index = 0
         cycles = []
         while index < len(self.nodes):
@@ -42,6 +45,8 @@ class Loop:
         :return: whether is a subloop or not.
         :rtype: `bool`
         """
+        if self.merge_processed:
+            raise RuntimeError("Method not available after merge")
         if other.nodes in self.get_node_cycles():
             return False
         for sublist in self.get_sublist_of_length(self.nodes, len(other)):
@@ -55,6 +60,8 @@ class Loop:
         :param edge: The edge to remove.
         :type edge: `tuple`[`str`, `str`]
         """
+        if self.merge_processed:
+            raise RuntimeError("Method not available after merge")
         self.edges_to_remove.add(edge)
 
     @staticmethod
@@ -87,7 +94,13 @@ class Loop:
         :param sub_loop: The subloop to add.
         :type sub_loop: `Loop`
         """
+        if self.merge_processed:
+            raise RuntimeError("Method not available after merge")
         self.sub_loops.append(sub_loop)
+
+    def set_merged(self) -> None:
+        """Set the merge_processed property to True."""
+        self.merge_processed = True
 
 
 def detect_loops(
@@ -114,7 +127,8 @@ def detect_loops(
     ]
 
     loops = add_loop_edges_to_remove(loops_with_ref, edges)
-    return update_subloops(loops)
+    loops = update_subloops(loops)
+    return merge_loops(loops)
 
 
 def update_with_references(
@@ -203,3 +217,35 @@ def update_subloops(loops: list[Loop]) -> list[Loop]:
             updated_loops.append(potential_subloop)
 
     return updated_loops
+
+
+def merge_loops(loops: list[Loop]) -> list[Loop]:
+    """Merge the loops which have common edges to remove.
+
+    :param loops: The loops to merge.
+    :type loops: `list`[`Loop`]
+    :return: The merged loops.
+    :rtype: `list`[`Loop`]
+    """
+    merged_loops: list[Loop] = []
+    while len(loops) > 0:
+        loop = loops.pop(0)
+        loop.sub_loops = merge_loops(loop.sub_loops)
+        merged = False
+        for merged_loop in merged_loops:
+            if loop.edges_to_remove.issubset(merged_loop.edges_to_remove):
+                for node in loop.nodes:
+                    if node not in merged_loop.nodes:
+                        merged_loop.nodes.append(node)
+                for sub_loop in loop.sub_loops:
+                    if sub_loop not in merged_loop.sub_loops:
+                        merged_loop.sub_loops.append(sub_loop)
+                loop.set_merged()
+                merged = True
+                break
+
+        if not merged:
+            loop.set_merged()
+            merged_loops.append(loop)
+
+    return merged_loops

@@ -1,10 +1,13 @@
 """Tests for the detect_loops module."""
+import pytest
+
 from tel2puml.detect_loops import (
     Loop,
     detect_loops,
     update_with_references,
     add_loop_edges_to_remove,
     update_subloops,
+    merge_loops
 )
 from tel2puml.jAlergiaPipeline import audit_event_sequences_to_network_x
 from tel2puml.pipelines.data_creation import (
@@ -42,6 +45,10 @@ class TestLoop():
             ["C", "A", "B"]
         ]
 
+        loop.set_merged()
+        with pytest.raises(RuntimeError):
+            loop.get_node_cycles()
+
     @staticmethod
     def test_check_subloop():
         """Test the check_subloop method of the Loop class."""
@@ -68,12 +75,20 @@ class TestLoop():
         other = Loop(["B", "D", "C"])
         assert not loop.check_subloop(other)
 
+        loop.set_merged()
+        with pytest.raises(RuntimeError):
+            loop.check_subloop(other)
+
     def test_add_edge_to_remove(self):
         """Test the add_edge_to_remove method of the Loop class."""
         loop = Loop(["A", "B", "C"])
         assert len(loop.edges_to_remove) == 0
         loop.add_edge_to_remove(("A", "B"))
         assert loop.edges_to_remove == {("A", "B")}
+
+        loop.set_merged()
+        with pytest.raises(RuntimeError):
+            loop.add_edge_to_remove(("A", "B"))
 
     @staticmethod
     def test_get_sublist_of_length():
@@ -114,6 +129,18 @@ class TestLoop():
         assert loop.sub_loops == []
         loop.add_subloop(sub_loop)
         assert loop.sub_loops == [sub_loop]
+
+        loop.set_merged()
+        with pytest.raises(RuntimeError):
+            loop.add_subloop(sub_loop)
+
+    @staticmethod
+    def test_set_merge():
+        """Test the set_merge method of the Loop class."""
+        loop = Loop(["A", "B", "C"])
+        assert not loop.merge_processed
+        loop.set_merged()
+        assert loop.merge_processed
 
 
 def test_update_with_references() -> None:
@@ -224,6 +251,51 @@ def test_update_subloops() -> None:
     assert loops[1] == loop2
 
 
+def test_merge_loops() -> None:
+    """Test the merge_loops function."""
+    loop1 = Loop(["A", "B", "D"])
+    loop1.add_edge_to_remove(("D", "A"))
+    loop2 = Loop(["A", "C", "D"])
+    loop2.add_edge_to_remove(("D", "A"))
+
+    loops = [loop1, loop2]
+    loops = update_subloops(loops)
+    loops = merge_loops(loops)
+
+    loop, = loops
+    assert set(loop.nodes) == {"A", "B", "C", "D"}
+    assert loop.edges_to_remove == {("D", "A")}
+
+    loop1 = Loop(["B", "D"])
+    loop1.add_edge_to_remove(("D", "B"))
+    loop2 = Loop(["C", "E"])
+    loop2.add_edge_to_remove(("E", "C"))
+    loop3 = Loop(["B", "D", "C", "E"])
+    loop3.add_edge_to_remove(("D", "C"))
+    loop3.add_edge_to_remove(("D", "B"))
+    loop3.add_edge_to_remove(("E", "C"))
+    loop3.add_edge_to_remove(("E", "B"))
+
+    loops = [loop1, loop2, loop3]
+    loops = update_subloops(loops)
+    loops = merge_loops(loops)
+
+    loop, = loops
+    assert set(loop.nodes) == {"B", "C", "D", "E"}
+    assert loop.edges_to_remove == {
+        ("D", "B"), ("E", "C"), ("E", "B"), ("D", "C")
+    }
+
+    assert len(loop.sub_loops) == 2
+    for subloop in loop.sub_loops:
+        assert len(subloop.sub_loops) == 0
+        if set(subloop.nodes) == {"B", "D"}:
+            assert subloop.edges_to_remove == {("D", "B")}
+        else:
+            assert set(subloop.nodes) == {"C", "E"}
+            assert subloop.edges_to_remove == {("E", "C")}
+
+
 def test_detect_loops_from_simple_puml():
     """Test the detect_loops function with a simple puml file."""
     event_sequences = generate_test_data_event_sequences_from_puml(
@@ -232,6 +304,7 @@ def test_detect_loops_from_simple_puml():
     graph, references = audit_event_sequences_to_network_x(event_sequences)
     loops = detect_loops(graph, references)
     loop, = loops
+    loop.merge_processed = False
     assert ["B", "C", "D"] in loop.get_node_cycles()
     assert loop.edges_to_remove == {("D", "B")}
     sub_loop, = loop.sub_loops
@@ -246,14 +319,10 @@ def test_detect_loops_from_XOR_puml():
     )
     graph, references = audit_event_sequences_to_network_x(event_sequences)
     loops = detect_loops(graph, references)
-    assert len(loops) == 2
-    for loop in loops:
-        assert loop.edges_to_remove == {("F", "B")}
-        assert len(loop.sub_loops) == 0
-        if "C" in loop.nodes:
-            assert ["B", "C", "F"] in loop.get_node_cycles()
-        else:
-            assert ["B", "D", "E", "F"] in loop.get_node_cycles()
+    loop, = loops
+    assert set(loop.nodes) == {"B", "C", "D", "E", "F"}
+    assert loop.edges_to_remove == {("F", "B")}
+    assert len(loop.sub_loops) == 0
 
 
 def test_detect_loops_from_AND_puml():
@@ -263,11 +332,7 @@ def test_detect_loops_from_AND_puml():
     )
     graph, references = audit_event_sequences_to_network_x(event_sequences)
     loops = detect_loops(graph, references)
-    assert len(loops) == 2
-    for loop in loops:
-        assert loop.edges_to_remove == {("E", "B")}
-        assert len(loop.sub_loops) == 0
-        if "D" in loop.nodes:
-            assert ["B", "D", "E"] in loop.get_node_cycles()
-        else:
-            assert ["B", "C", "E"] in loop.get_node_cycles()
+    loop, = loops
+    assert set(loop.nodes) == {"B", "C", "D", "E"}
+    assert loop.edges_to_remove == {("E", "B")}
+    assert len(loop.sub_loops) == 0
