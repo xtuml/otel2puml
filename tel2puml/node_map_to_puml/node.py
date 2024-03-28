@@ -9,7 +9,12 @@ from pm4py import ProcessTree
 from pm4py.objects.process_tree.obj import Operator
 
 from tel2puml.pipelines.logic_detection_pipeline import Event
-from tel2puml.puml_graph.graph import PUMLGraph, PUMLOperatorNode
+from tel2puml.puml_graph.graph import (
+    PUMLEventNode,
+    PUMLGraph,
+    PUMLOperatorNode,
+    PUMLNode,
+)
 from tel2puml.tel2puml_types import PUMLEvent, PUMLOperator
 
 
@@ -534,35 +539,25 @@ def create_puml_graph_from_node_class_graph(
                     if next_node_class is None:
                         prev_logic_list = logic_list.pop()
                         previous_puml_node = prev_logic_list.end_node
-                        continue
-                    previous_puml_node = logic_list[-1].start_node
-                    if next_node_class.operator is not None:
+                    elif next_node_class.operator is not None:
                         previous_node_class = next_node_class
-                        continue
+                        previous_puml_node = logic_list[-1].start_node
                     else:
-                        next_puml_node = puml_graph.create_event_node(
-                            next_node_class.event_type,
-                            next_node_class.get_puml_event_types()
-                        )
-                        puml_graph.add_edge(
-                            previous_puml_node,
-                            next_puml_node
+                        previous_puml_node = update_puml_graph_with_event_node(
+                            puml_graph,
+                            next_node_class,
+                            logic_list[-1].start_node
                         )
                         previous_node_class = next_node_class
-                        previous_puml_node = next_puml_node
-                        continue
+                    continue
             if next_node_class is None:
                 break
-            next_puml_node = puml_graph.create_event_node(
-                next_node_class.event_type,
-                next_node_class.get_puml_event_types()
-            )
-            puml_graph.add_edge(
-                previous_puml_node,
-                next_puml_node
+            previous_puml_node = update_puml_graph_with_event_node(
+                puml_graph,
+                next_node_class,
+                previous_puml_node
             )
             previous_node_class = next_node_class
-            previous_puml_node = next_puml_node
             continue
         if previous_node_class.operator is None:
             logic_node = previous_node_class.outgoing_logic[0]
@@ -587,17 +582,67 @@ def create_puml_graph_from_node_class_graph(
             previous_puml_node = start_operator
             previous_node_class = next_node_class
             continue
-        next_puml_node = puml_graph.create_event_node(
-                next_node_class.event_type,
-                next_node_class.get_puml_event_types()
-            )
-        puml_graph.add_edge(
-            start_operator,
-            next_puml_node
+        previous_puml_node = update_puml_graph_with_event_node(
+            puml_graph,
+            next_node_class,
+            start_operator
         )
         previous_node_class = next_node_class
-        previous_puml_node = next_puml_node
     return puml_graph
+
+
+def handle_logic_list_next_path(
+    puml_graph: PUMLGraph,
+    logic_list: list[LogicBlockHolder],
+    previous_node_class: Node,
+) -> tuple[PUMLOperatorNode | PUMLEventNode, Node]:
+    next_node_class = logic_list[-1].set_path_node()
+    if next_node_class is None:
+        previous_puml_node = logic_list.pop().end_node
+    elif next_node_class.operator is not None:
+        previous_node_class = next_node_class
+        previous_puml_node = logic_list[-1].start_node
+    else:
+        previous_puml_node = update_puml_graph_with_event_node(
+            puml_graph,
+            next_node_class,
+            logic_list[-1].start_node
+        )
+        previous_node_class = next_node_class
+    return previous_puml_node, previous_node_class
+
+
+def update_puml_graph_with_event_node(
+    puml_graph: PUMLGraph,
+    event_node: Node,
+    previous_puml_node: PUMLNode,
+) -> PUMLEventNode:
+    """Updates the PlantUML graph with an event node connecting the previous
+    PlantUML node to a newly created node and then returns the newly created
+    node.
+
+    :param puml_graph: The PlantUML graph to update.
+    :type puml_graph: :class:`PUMLGraph`
+    :param event_node: The event node to add.
+    :type event_node: :class:`Node`
+    :param previous_puml_node: The previous PlantUML node.
+    :type previous_puml_node: :class:`PUMLNode`
+    :return: The newly created PlantUML node.
+    :rtype: :class:`PUMLEventNode`
+    """
+    if event_node.event_type is None:
+        raise ValueError(
+            f"Node event type is not set for node with uid {event_node.uid}"
+        )
+    next_puml_node = puml_graph.create_event_node(
+        event_node.event_type,
+        event_node.get_puml_event_types()
+    )
+    puml_graph.add_edge(
+        previous_puml_node,
+        next_puml_node
+    )
+    return next_puml_node
 
 
 def check_has_different_path_to_logic_node(
