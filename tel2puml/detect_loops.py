@@ -10,7 +10,7 @@ class Loop:
     def __init__(self, nodes: list[str]):
         self.nodes = nodes
         self.sub_loops: list[Loop] = []
-        self.edge_to_remove: Optional[tuple[str, str]] = None
+        self.edges_to_remove: set[tuple[str, str]] = set()
 
     def __len__(self) -> int:
         """Return the length of the loop.
@@ -48,6 +48,14 @@ class Loop:
             if sublist == other.nodes:
                 return True
         return False
+
+    def add_edge_to_remove(self, edge: tuple[str, str]) -> None:
+        """Add an edge to remove from the loop.
+
+        :param edge: The edge to remove.
+        :type edge: `tuple`[`str`, `str`]
+        """
+        self.edges_to_remove.add(edge)
 
     @staticmethod
     def get_sublist_of_length(
@@ -96,18 +104,16 @@ def detect_loops(
     :rtype: `list`[`Loop`]
     """
     loops_with_ref = [
-        update_with_references(loop_list, references)
+        Loop(update_with_references(loop_list, references))
         for loop_list in simple_cycles(graph)
     ]
-    loops_with_ref.sort(key=lambda x: len(x))
-    loops = [Loop(res) for res in loops_with_ref]
 
     edges = [
         tuple(update_with_references([u, v], references))
         for u, v in graph.edges()
     ]
 
-    loops = add_loop_edges_to_remove(loops, edges)
+    loops = add_loop_edges_to_remove(loops_with_ref, edges)
     return update_subloops(loops)
 
 
@@ -143,28 +149,26 @@ def add_loop_edges_to_remove(
     """
     for loop in loops:
         if len(loop) == 1:
-            loop.edge_to_remove = (loop.nodes[0], loop.nodes[0])
+            loop.add_edge_to_remove((loop.nodes[0], loop.nodes[0]))
         else:
-            entries = set()
-            exits = set()
+            entries: set[str] = set()
+            exits: set[str] = set()
             for u, v in edges:
                 if u not in loop.nodes and v in loop.nodes:
                     entries.add(v)
                 elif u in loop.nodes and v not in loop.nodes:
                     exits.add(u)
-                continue
+
             if entries and exits:
-                if len(exits) == 1 and len(entries) == 1:
-                    loop.edge_to_remove = (exits.pop(), entries.pop())
-                elif len(exits) == 2 and exits == entries:
-                    if (edge := tuple(entries)) in edges:
-                        loop.edge_to_remove = edge
-                    elif edge[::-1] in edges:
-                        loop.edge_to_remove = edge[::-1]
-                    else:
-                        raise ValueError("Non-matching entries/exits")
-                else:
-                    raise ValueError("Non-matching entries/exits")
+                possible_edges = {
+                    (u, v)
+                    for u, v in edges
+                    if v in entries and u in exits
+                }
+
+                for edge in possible_edges:
+                    loop.add_edge_to_remove(edge)
+
     return loops
 
 

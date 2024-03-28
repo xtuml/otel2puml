@@ -21,7 +21,7 @@ class TestLoop():
         loop = Loop(["A"])
         assert isinstance(loop.sub_loops, list)
         assert loop.nodes == ["A"]
-        assert loop.edge_to_remove is None
+        assert loop.edges_to_remove == set()
 
     @staticmethod
     def test_get_node_cycles():
@@ -67,6 +67,13 @@ class TestLoop():
 
         other = Loop(["B", "D", "C"])
         assert not loop.check_subloop(other)
+
+    def test_add_edge_to_remove(self):
+        """Test the add_edge_to_remove method of the Loop class."""
+        loop = Loop(["A", "B", "C"])
+        assert len(loop.edges_to_remove) == 0
+        loop.add_edge_to_remove(("A", "B"))
+        assert loop.edges_to_remove == {("A", "B")}
 
     @staticmethod
     def test_get_sublist_of_length():
@@ -130,19 +137,19 @@ def test_add_loop_edges_to_remove() -> None:
     edges = [("A", "B"), ("B", "C"), ("B", "B")]
     loops = add_loop_edges_to_remove(loops, edges)
     loop, = loops
-    assert loop.edge_to_remove == ("B", "B")
+    assert loop.edges_to_remove == {("B", "B")}
 
     loops = [Loop(["B", "C", "D"])]
     edges = [("A", "B"), ("B", "C"), ("C", "D"), ("D", "B"), ("D", "E")]
     loops = add_loop_edges_to_remove(loops, edges)
     loop, = loops
-    assert loop.edge_to_remove == ("D", "B")
+    assert loop.edges_to_remove == {("D", "B")}
 
     loops = [Loop(["B", "C", "D"])]
     edges = [("D", "B"), ("D", "E"), ("A", "B"), ("C", "D"), ("B", "C")]
     loops = add_loop_edges_to_remove(loops, edges)
     loop, = loops
-    assert loop.edge_to_remove == ("D", "B")
+    assert loop.edges_to_remove == {("D", "B")}
 
     loops = [Loop(["B", "C", "E"]), Loop(["B", "D", "E"])]
     edges = [
@@ -153,7 +160,24 @@ def test_add_loop_edges_to_remove() -> None:
     loops = add_loop_edges_to_remove(loops, edges)
     assert len(loops) == 2
     for loop in loops:
-        loop.edge_to_remove == ("E", "B")
+        loop.edges_to_remove == {("E", "B")}
+
+    loops = [Loop(["B", "D"]), Loop(["C", "E"]), Loop(["B", "D", "C", "E"])]
+    edges = [
+        ("A", "B"), ("A", "C"), ("B", "D"), ("D", "B"), ("C", "E"),
+        ("E", "C"), ("D", "C"), ("E", "B"), ("D", "F"), ("E", "F")
+    ]
+    loops = add_loop_edges_to_remove(loops, edges)
+    assert len(loops) == 3
+    for loop in loops:
+        if ["B", "D"] in loop.get_node_cycles():
+            assert loop.edges_to_remove == {("D", "B")}
+        elif ["C", "E"] in loop.get_node_cycles():
+            assert loop.edges_to_remove == {("E", "C")}
+        else:
+            assert loop.edges_to_remove == {
+                ("E", "B"), ("D", "C"), ("D", "B"), ("E", "C")
+            }
 
 
 def test_update_subloops() -> None:
@@ -209,10 +233,10 @@ def test_detect_loops_from_simple_puml():
     loops = detect_loops(graph, references)
     loop, = loops
     assert ["B", "C", "D"] in loop.get_node_cycles()
-    assert loop.edge_to_remove == ("D", "B")
+    assert loop.edges_to_remove == {("D", "B")}
     sub_loop, = loop.sub_loops
     assert sub_loop.nodes == ["C"]
-    assert sub_loop.edge_to_remove == ("C", "C")
+    assert sub_loop.edges_to_remove == {("C", "C")}
 
 
 def test_detect_loops_from_XOR_puml():
@@ -224,7 +248,7 @@ def test_detect_loops_from_XOR_puml():
     loops = detect_loops(graph, references)
     assert len(loops) == 2
     for loop in loops:
-        assert loop.edge_to_remove == ("F", "B")
+        assert loop.edges_to_remove == {("F", "B")}
         assert len(loop.sub_loops) == 0
         if "C" in loop.nodes:
             assert ["B", "C", "F"] in loop.get_node_cycles()
@@ -241,7 +265,7 @@ def test_detect_loops_from_AND_puml():
     loops = detect_loops(graph, references)
     assert len(loops) == 2
     for loop in loops:
-        assert loop.edge_to_remove == ("E", "B")
+        assert loop.edges_to_remove == {("E", "B")}
         assert len(loop.sub_loops) == 0
         if "D" in loop.nodes:
             assert ["B", "D", "E"] in loop.get_node_cycles()
