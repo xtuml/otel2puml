@@ -497,10 +497,16 @@ def test_merge_markov_without_loops_and_logic_detection_analysis() -> None:
 
 
 class TestCreatePumlGraphFromNodeClassGraph:
+    """Tests for the create_puml_graph_from_node_class_graph function."""
     @staticmethod
     def load_and_check(
         puml_file: str
     ) -> None:
+        """Load the puml file, create puml graph and check the graph
+        equivalence.
+
+        :param puml_file: The puml file to load.
+        :type puml_file: `str`"""
         # setup
         test_data_markov = generate_test_data_event_sequences_from_puml(
             puml_file
