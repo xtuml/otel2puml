@@ -4,11 +4,13 @@ from typing import Literal
 from uuid import uuid4
 import logging
 
-from networkx import DiGraph
+from networkx import DiGraph, topological_sort, has_path
 from pm4py import ProcessTree
 from pm4py.objects.process_tree.obj import Operator
 
 from tel2puml.pipelines.logic_detection_pipeline import Event
+from tel2puml.puml_graph.graph import PUMLGraph, PUMLOperatorNode
+from tel2puml.tel2puml_types import PUMLEvent, PUMLOperator
 
 
 operator_name_map = {
@@ -264,6 +266,50 @@ class Node:
             ),
         )
 
+    def traverse_logic(
+        self,
+        direction: Literal["incoming", "outgoing"],
+    ) -> list["Node"]:
+        """Traverses the logic list.
+
+        :param direction: The direction to traverse the logic list.
+        :type direction: `Literal`[`"incoming"`, `"outgoing"`]
+        :return: The list of nodes.
+        :rtype: `list`[:class:`Node`]
+        """
+        nodes: list[Node] = []
+        for node in getattr(self, direction + "_logic"):
+            if node.operator is None:
+                nodes.append(node)
+            else:
+                nodes.extend(
+                    node.traverse_logic(
+                        direction
+                    )
+                )
+        return nodes
+
+    def get_puml_event_types(self) -> tuple[PUMLEvent] | None:
+        """Gets the PUML event types for the node if it is an event node or
+        `None` otherwise.
+
+        :return: The PUML event types for the node.
+        :rtype: `tuple`[:class:`PUMLEvent`] | `None`
+        """
+        return None
+
+    def get_operator_type(self) -> PUMLOperator | None:
+        """Gets the PUML operator type for the node if it is a logic node or
+        `None` otherwise.
+
+        :return: The PUML operator type for the node.
+        :rtype: :class:`PUMLOperator` | `None`
+        """
+        for operator in PUMLOperator:
+            if self.operator == operator.name:
+                return operator
+        return None
+
 
 def load_all_logic_trees_into_nodes(
     events: dict[str, Event],
@@ -397,3 +443,186 @@ def merge_markov_without_loops_and_logic_detection_analysis(
         outgoing_logic_events, event_node_map, "outgoing"
     )
     return node_class_graph
+
+
+class LogicBlockHolder:
+    """Holds a logic block that keeps track of the logic blocks.
+
+    :param start_node: The start node of the logic block.
+    :type start_node: :class:`PUMLOperatorNode`
+    :param end_node: The end node of the logic block.
+    :type end_node: :class:`PUMLOperatorNode`
+    :param logic_node: The logic node of the logic block.
+    :type logic_node: :class:`Node`
+    """
+    def __init__(
+        self,
+        start_node: PUMLOperatorNode,
+        end_node: PUMLOperatorNode,
+        logic_node: Node
+    ) -> None:
+        """Constructor method."""
+        self.start_node = start_node
+        self.end_node = end_node
+        self.logic_node = logic_node
+        self.paths = logic_node.outgoing_logic.copy()
+        self.current_path: Node | None = None
+
+    def set_path_node(self) -> Node | None:
+        """Gets the next path in the block and returns it
+
+        :return: The path node.
+        :rtype: :class:`Node` | `None`
+        """
+        if self.paths:
+            self.current_path = self.paths.pop()
+        else:
+            self.current_path = None
+        return self.current_path
+
+
+def create_puml_graph_from_node_class_graph(
+    node_class_graph: DiGraph,
+) -> PUMLGraph:
+    """Creates a PlantUML graph from a node class graph using the logic
+    held on each node and the connections between the nodes.
+
+    :param node_class_graph: The node class graph.
+    :type node_class_graph: :class:`DiGraph`
+    :return: The PlantUML graph.
+    :rtype: :class:`PUMLGraph`
+    """
+    head_node: Node = list(topological_sort(node_class_graph))[0]
+    puml_graph = PUMLGraph()
+    previous_puml_node = puml_graph.create_event_node(
+        head_node.event_type
+    )
+    previous_node_class: Node = head_node
+    logic_list: list[LogicBlockHolder] = []
+    while True:
+        if (
+            not previous_node_class.outgoing_logic
+            and previous_node_class.operator is None
+        ):
+            if not previous_node_class.outgoing:
+                next_node_class = None
+            else:
+                next_node_class = previous_node_class.outgoing[0]
+            if logic_list:
+                # check if the next node has an alternative path back to the
+                # logic node
+                continue_path = True
+                if next_node_class is not None:
+                    if check_has_different_path_to_logic_node(
+                        next_node_class, logic_list[-1], node_class_graph
+                    ):
+                        continue_path = False
+                else:
+                    kill_node = puml_graph.create_kill_node()
+                    puml_graph.add_edge(
+                        previous_puml_node,
+                        kill_node
+                    )
+                    previous_puml_node = kill_node
+                    continue_path = False
+                if not continue_path:
+                    puml_graph.add_edge(
+                        previous_puml_node,
+                        logic_list[-1].end_node,
+                    )
+                    next_node_class = logic_list[-1].set_path_node()
+                    if next_node_class is None:
+                        prev_logic_list = logic_list.pop()
+                        previous_puml_node = prev_logic_list.end_node
+                        continue
+                    previous_puml_node = logic_list[-1].start_node
+                    if next_node_class.operator is not None:
+                        previous_node_class = next_node_class
+                        continue
+                    else:
+                        next_puml_node = puml_graph.create_event_node(
+                            next_node_class.event_type,
+                            next_node_class.get_puml_event_types()
+                        )
+                        puml_graph.add_edge(
+                            previous_puml_node,
+                            next_puml_node
+                        )
+                        previous_node_class = next_node_class
+                        previous_puml_node = next_puml_node
+                        continue
+            if next_node_class is None:
+                break
+            next_puml_node = puml_graph.create_event_node(
+                next_node_class.event_type,
+                next_node_class.get_puml_event_types()
+            )
+            puml_graph.add_edge(
+                previous_puml_node,
+                next_puml_node
+            )
+            previous_node_class = next_node_class
+            previous_puml_node = next_puml_node
+            continue
+        if previous_node_class.operator is None:
+            logic_node = previous_node_class.outgoing_logic[0]
+        else:
+            logic_node = previous_node_class
+        start_operator, end_operator = puml_graph.create_operator_node_pair(
+            logic_node.get_operator_type()
+        )
+        logic_list.append(
+            LogicBlockHolder(
+                start_operator,
+                end_operator,
+                logic_node
+            )
+        )
+        puml_graph.add_edge(
+            previous_puml_node,
+            start_operator
+        )
+        next_node_class = logic_list[-1].set_path_node()
+        if next_node_class.operator is not None:
+            previous_puml_node = start_operator
+            previous_node_class = next_node_class
+            continue
+        next_puml_node = puml_graph.create_event_node(
+                next_node_class.event_type,
+                next_node_class.get_puml_event_types()
+            )
+        puml_graph.add_edge(
+            start_operator,
+            next_puml_node
+        )
+        previous_node_class = next_node_class
+        previous_puml_node = next_puml_node
+    return puml_graph
+
+
+def check_has_different_path_to_logic_node(
+    node: Node,
+    logic_block_holder: LogicBlockHolder,
+    node_class_graph: DiGraph,
+) -> bool:
+    """Checks if a node has a different path to the logic node other than the
+    current path of the logic block.
+
+    :param node: The node to check.
+    :type node: :class:`Node`
+    :param logic_block_holder: The logic block holder.
+    :type logic_block_holder: :class:`LogicBlockHolder`
+    :param node_class_graph: The node class graph.
+    :type node_class_graph: :class:`DiGraph`
+    :return: `True` if the node has a different path to the logic node other
+    than the current path of the logic block, `False` otherwise.
+    :rtype: `bool`
+    """
+    for path_node in logic_block_holder.logic_node.traverse_logic(
+        "outgoing"
+    ):
+        if path_node == logic_block_holder.current_path:
+            continue
+        if has_path(node_class_graph, path_node, node):
+            return True
+    return False

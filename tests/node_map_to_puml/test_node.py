@@ -3,6 +3,7 @@ from copy import deepcopy, copy
 
 from pm4py import ProcessTree
 import networkx as nx
+import pytest
 
 from tel2puml.node_map_to_puml.node import (
     Node,
@@ -10,7 +11,8 @@ from tel2puml.node_map_to_puml.node import (
     load_all_logic_trees_into_nodes,
     create_event_node_ref,
     create_networkx_graph_of_nodes_from_markov_graph,
-    merge_markov_without_loops_and_logic_detection_analysis
+    merge_markov_without_loops_and_logic_detection_analysis,
+    create_puml_graph_from_node_class_graph
 )
 from tel2puml.pipelines.logic_detection_pipeline import (
     Event,
@@ -20,6 +22,10 @@ from tel2puml.pipelines.data_creation import (
     generate_test_data_event_sequences_from_puml
 )
 from tel2puml.jAlergiaPipeline import audit_event_sequences_to_network_x
+from tel2puml.check_puml_equiv import (
+    get_network_x_graph_from_puml_string,
+    check_networkx_graph_equivalence
+)
 
 
 class TestNode:
@@ -488,3 +494,75 @@ def test_merge_markov_without_loops_and_logic_detection_analysis() -> None:
             direction_node.event_type
             for direction_node in node.incoming
         ]) == expected_incoming_event_type[node.event_type]
+
+
+class TestCreatePumlGraphFromNodeClassGraph:
+    @staticmethod
+    def load_and_check(
+        puml_file: str
+    ) -> None:
+        # setup
+        test_data_markov = generate_test_data_event_sequences_from_puml(
+            puml_file
+        )
+        markov_graph, node_event_reference = (
+            audit_event_sequences_to_network_x(
+                test_data_markov
+            )
+        )
+        test_data_logic = generate_test_data_event_sequences_from_puml(
+            puml_file
+        )
+        forward, backward = update_all_connections_from_clustered_events(
+            test_data_logic
+        )
+        node_class_graph = (
+            merge_markov_without_loops_and_logic_detection_analysis(
+                (markov_graph, node_event_reference["event_reference"]),
+                backward, forward
+            )
+        )
+        # function call
+        puml_graph = create_puml_graph_from_node_class_graph(node_class_graph)
+        # test
+        # load in the expected graph
+        with open(
+            puml_file, "r", encoding="utf-8"
+        ) as file:
+            expected_puml_string = file.read()
+        expected_puml_graph = next(get_network_x_graph_from_puml_string(
+            expected_puml_string
+        ))
+        # check graph equivalence
+        assert check_networkx_graph_equivalence(
+            puml_graph, expected_puml_graph
+        )
+
+    def test_create_puml_graph_from_node_class_graph(self) -> None:
+        """Test the create_puml_graph_from_node_class_graph function.
+        """
+        # cases to check in order of complexity
+        # * nested and logic case
+        # * nested deep xor logic case
+        # * bunched logic case
+        cases = [
+            "puml_files/ANDFork_ANDFork_a.puml",
+            "puml_files/complicated_test.puml",
+            "puml_files/bunched_XOR_AND.puml"
+        ]
+        for puml_file in cases:
+            self.load_and_check(puml_file)
+
+    @pytest.mark.xfail(
+        reason=(
+            "Functionality to handle bunched logic of same type not"
+            "implemented yet"
+        ),
+        strict=True
+    )
+    def test_create_puml_graph_from_node_class_graph_bunched_xor(self) -> None:
+        """Tests a bunched XOR logic case with and event ending one of the
+        branches"""
+        self.load_and_check(
+            "puml_files/bunched_XOR_with_event_ending_logic.puml"
+        )
