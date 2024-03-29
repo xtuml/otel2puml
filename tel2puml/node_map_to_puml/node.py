@@ -597,15 +597,19 @@ def handle_logic_node_cases(
     node.
     :rtype: `tuple`[:class:`PUMLOperatorNode`, :class:`Node`]
     """
+    # sets the logic node to the previous node class if it is a logic node or
+    # the first node in the logic list if it is not
     if previous_node_class.operator is None:
         logic_node = previous_node_class.outgoing_logic[0]
     else:
         logic_node = previous_node_class
+    # create the PUMLOperator node pairs and add them to the graph
     start_operator, end_operator = (
         puml_graph.create_operator_node_pair(
             logic_node.get_operator_type()
         )
     )
+    # create and add the logic block holder to the logic list
     logic_list.append(
         LogicBlockHolder(
             start_operator,
@@ -613,10 +617,14 @@ def handle_logic_node_cases(
             logic_node
         )
     )
+    # add the edge between the previous PUMLNode and the start node
+    # of the PUMLOperatorNode pair
     puml_graph.add_edge(
         previous_puml_node,
         start_operator
     )
+    # handle the next path in the logic list and return updated previous puml
+    # node and node class
     return handle_logic_list_next_path(
         puml_graph,
         logic_list,
@@ -644,10 +652,14 @@ def handle_reach_logic_merge_point(
     node.
     :rtype: `tuple`[:class:`PUMLOperatorNode`, :class:`Node`]
     """
+    # when there is a merge point we must add an edge from the previous node
+    # to the end node of the logic block
     puml_graph.add_edge(
         previous_puml_node,
         logic_list[-1].end_node,
     )
+    # handle the next path in the logic list and return updated previous puml
+    # node and node class
     previous_puml_node, previous_node_class = (
         handle_logic_list_next_path(
             puml_graph,
@@ -655,6 +667,7 @@ def handle_reach_logic_merge_point(
             previous_node_class
         )
     )
+    # return the updated previous puml node and node class
     return previous_puml_node, previous_node_class
 
 
@@ -675,12 +688,24 @@ def handle_logic_list_next_path(
     node.
     :rtype: `tuple`[:class:`PUMLOperatorNode`, :class:`Node`]
     """
+    # get the next path node in the logic block using the logic block holder
     next_node_class = logic_list[-1].set_path_node()
+    # if there is no next path node then we must handle the end of the logic
+    # block and return the updated previous puml node as the end node of the
+    # logic block
     if next_node_class is None:
         previous_puml_node = logic_list.pop().end_node
+    # the next blocks handle the case where there is a next path node
+    # if the next node is an operator node then we must make the it the next
+    # node class and reset the previous puml node to the start of the logic
+    # block
     elif next_node_class.operator is not None:
         previous_node_class = next_node_class
         previous_puml_node = logic_list[-1].start_node
+    # if the next node is an event node then we must create a PUML node for it
+    # and create an edge between this node and the start PUML node of the logic
+    # block. Then we must update the previous puml node to the newly created
+    # node and the previous node class to the event node
     else:
         previous_puml_node, previous_node_class = (
             update_puml_graph_with_event_node(
@@ -745,6 +770,10 @@ def check_has_different_path_to_logic_node(
     than the current path of the logic block, `False` otherwise.
     :rtype: `bool`
     """
+    # traverse the logic node of the logic block holder to get all leaf nodes
+    # which will not be logic nodes. Loop over these nodes and check if there
+    # is a path from the node to the logic node that is not the current path of
+    # the logic block holder
     for path_node in logic_block_holder.logic_node.traverse_logic(
         "outgoing"
     ):
