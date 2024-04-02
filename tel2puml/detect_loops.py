@@ -116,35 +116,12 @@ def detect_loops(
     :return: A list of all loops in the graph.
     :rtype: `list`[`Loop`]
     """
-    loops_with_ref = [
-        Loop(update_with_references(loop_list, references))
-        for loop_list in simple_cycles(graph)
-    ]
-
-    edges = [
-        tuple(update_with_references([u, v], references))
-        for u, v in graph.edges()
-    ]
+    loops_with_ref = [Loop(loop_list) for loop_list in simple_cycles(graph)]
+    edges = [(u, v) for u, v in graph.edges()]
 
     loops = add_loop_edges_to_remove(loops_with_ref, edges)
     loops = update_subloops(loops)
     return merge_loops(loops)
-
-
-def update_with_references(
-        loop_list: list[str],
-        references: dict[str, dict]
-) -> list[str]:
-    """Update the loop list with the references.
-
-    :param loop_list: The loop list to update.
-    :type loop_list: `list`[`str`]
-    :param references: The references to update the loop list.
-    :type references: `dict`[`str`, `dict`]
-    :return: The updated loop list.
-    :rtype: `list`[`str`]
-    """
-    return [references["event_reference"][label] for label in loop_list]
 
 
 def add_loop_edges_to_remove(

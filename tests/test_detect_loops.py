@@ -1,10 +1,10 @@
 """Tests for the detect_loops module."""
+from typing import Iterable
 import pytest
 
 from tel2puml.detect_loops import (
     Loop,
     detect_loops,
-    update_with_references,
     add_loop_edges_to_remove,
     update_subloops,
     merge_loops
@@ -143,19 +143,29 @@ class TestLoop():
         assert loop.merge_processed
 
 
-def test_update_with_references() -> None:
-    """Test the update_with_references function."""
-    references = {
-        'node_reference': {
-            'A': ['q0'], 'B': ['q1'], 'C': ['q2'],
-        },
-        'event_reference': {
-            'q0': 'A', 'q1': 'B', 'q2': 'C',
-        }
-    }
-    loop_list = ["q0", "q1", "q2"]
-    loop = update_with_references(loop_list, references)
-    assert loop == ["A", "B", "C"]
+def _get_referenced_iterable(
+        iterable: Iterable,
+        references: dict[str, dict[str, str]]
+) -> Iterable:
+    """Return referenced iterator.
+
+    :param iterable: The iterable to get the references for.
+    :type iterable: `Iterable`
+    :param references: The references to use.
+    :type references: `dict`[`str`, `dict`[`str`, `str`]]
+    :return: The referenced iterable.
+    :rtype: `Iterable`
+    """
+    if isinstance(iterable, list):
+        return [references["node_reference"][item][0] for item in iterable]
+    elif isinstance(iterable, tuple):
+        return tuple(
+            references["node_reference"][item][0] for item in iterable
+            )
+    elif isinstance(iterable, set):
+        return {references["node_reference"][item][0] for item in iterable}
+    else:
+        raise TypeError("Unsupported type")
 
 
 def test_add_loop_edges_to_remove() -> None:
@@ -305,11 +315,17 @@ def test_detect_loops_from_simple_puml():
     loops = detect_loops(graph, references)
     loop, = loops
     loop.merge_processed = False
-    assert ["B", "C", "D"] in loop.get_node_cycles()
-    assert loop.edges_to_remove == {("D", "B")}
+    assert _get_referenced_iterable(
+        ["B", "C", "D"], references
+        ) in loop.get_node_cycles()
+    assert loop.edges_to_remove == {
+        _get_referenced_iterable(("D", "B"), references)
+    }
     sub_loop, = loop.sub_loops
-    assert sub_loop.nodes == ["C"]
-    assert sub_loop.edges_to_remove == {("C", "C")}
+    assert sub_loop.nodes == _get_referenced_iterable(["C"], references)
+    assert sub_loop.edges_to_remove == {
+        _get_referenced_iterable(("C", "C"), references)
+    }
 
 
 def test_detect_loops_from_XOR_puml():
@@ -320,8 +336,12 @@ def test_detect_loops_from_XOR_puml():
     graph, references = audit_event_sequences_to_network_x(event_sequences)
     loops = detect_loops(graph, references)
     loop, = loops
-    assert set(loop.nodes) == {"B", "C", "D", "E", "F"}
-    assert loop.edges_to_remove == {("F", "B")}
+    assert set(loop.nodes) == _get_referenced_iterable(
+        {"B", "C", "D", "E", "F"}, references
+    )
+    assert loop.edges_to_remove == {
+        _get_referenced_iterable(("F", "B"), references)
+    }
     assert len(loop.sub_loops) == 0
 
 
@@ -333,6 +353,10 @@ def test_detect_loops_from_AND_puml():
     graph, references = audit_event_sequences_to_network_x(event_sequences)
     loops = detect_loops(graph, references)
     loop, = loops
-    assert set(loop.nodes) == {"B", "C", "D", "E"}
-    assert loop.edges_to_remove == {("E", "B")}
+    assert set(loop.nodes) == _get_referenced_iterable(
+        {"B", "C", "D", "E"}, references
+    )
+    assert loop.edges_to_remove == {
+        _get_referenced_iterable(("E", "B"), references)
+    }
     assert len(loop.sub_loops) == 0
