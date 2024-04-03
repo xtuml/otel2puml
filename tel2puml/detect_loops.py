@@ -103,16 +103,11 @@ class Loop:
         self.merge_processed = True
 
 
-def detect_loops(
-        graph: DiGraph,
-        references: dict[str, dict]
-) -> list[Loop]:
+def detect_loops(graph: DiGraph) -> list[Loop]:
     """Detect all loops in a graph.
 
     :param graph: The graph to detect the loops from.
     :type graph: `DiGraph`
-    :param references: The references to update the loops.
-    :type references: `dict`[`str`, `dict`]
     :return: A list of all loops in the graph.
     :rtype: `list`[`Loop`]
     """

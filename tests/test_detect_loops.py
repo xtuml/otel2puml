@@ -312,7 +312,7 @@ def test_detect_loops_from_simple_puml():
         "puml_files/loop_loop_a.puml"
     )
     graph, references = audit_event_sequences_to_network_x(event_sequences)
-    loops = detect_loops(graph, references)
+    loops = detect_loops(graph)
     loop, = loops
     loop.merge_processed = False
     assert _get_referenced_iterable(
@@ -334,7 +334,7 @@ def test_detect_loops_from_XOR_puml():
         "puml_files/loop_XORFork_a.puml"
     )
     graph, references = audit_event_sequences_to_network_x(event_sequences)
-    loops = detect_loops(graph, references)
+    loops = detect_loops(graph)
     loop, = loops
     assert set(loop.nodes) == _get_referenced_iterable(
         {"B", "C", "D", "E", "F"}, references
@@ -351,7 +351,7 @@ def test_detect_loops_from_AND_puml():
         "puml_files/loop_ANDFork_a.puml"
     )
     graph, references = audit_event_sequences_to_network_x(event_sequences)
-    loops = detect_loops(graph, references)
+    loops = detect_loops(graph)
     loop, = loops
     assert set(loop.nodes) == _get_referenced_iterable(
         {"B", "C", "D", "E"}, references
