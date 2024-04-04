@@ -91,7 +91,6 @@ def test_create_networkx_graph_from_parsed_puml_break_and_branch() -> None:
         else:
             assert attributes == {
                 "extra_info": {
-                    "is_break": False,
                     "is_branch": True,
                 },
                 "node_type": "B"

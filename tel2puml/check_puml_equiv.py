@@ -90,9 +90,10 @@ def update_collected_attributes(
     """
     if event_data.event_tuple not in collected_attributes:
         collected_attributes[event_data.event_tuple] = {}
-    collected_attributes[event_data.event_tuple]["is_break"] = (
-        event_data.is_break
-    )
+    if event_data.is_break:
+        collected_attributes[event_data.event_tuple]["is_break"] = (
+            event_data.is_break
+        )
     for branch_count in event_data.branch_counts.values():
         if branch_count["user"] not in collected_attributes:
             collected_attributes[branch_count["user"]] = {}

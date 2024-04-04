@@ -30,9 +30,7 @@ class TestPUMLEventNode:
         )
         assert event.node_id == ("event", 0)
         assert event.node_type == "event"
-        assert event.extra_info == {
-            "is_branch": False, "is_merge": False, "is_break": False
-        }
+        assert event.extra_info == {}
 
     @staticmethod
     def test_init_event_types() -> None:
@@ -241,9 +239,7 @@ class TestPUMLGraph:
         assert len(graph.nodes) == 1
         assert graph.nodes[event_node] == {
             "node_type": "event",
-            "extra_info": {
-                "is_branch": False, "is_merge": False, "is_break": False
-            }
+            "extra_info": {}
         }
         operator_node = PUMLOperatorNode(
             PUMLOperatorNodes.START_XOR, 0
@@ -267,15 +263,11 @@ class TestPUMLGraph:
         assert graph.edges[event_node_1, event_node_2] == {
             "start_node_attr": {
                 "node_type": "event",
-                "extra_info": {
-                    "is_branch": False, "is_merge": False, "is_break": False
-                }
+                "extra_info": {}
             },
             "end_node_attr": {
                 "node_type": "event",
-                "extra_info": {
-                    "is_branch": False, "is_merge": False, "is_break": False
-                }
+                "extra_info": {}
             }
         }
 
@@ -306,9 +298,7 @@ class TestPUMLGraph:
         event_node = graph.create_event_node("event")
         assert event_node.node_id == ("event", 0)
         assert event_node.node_type == "event"
-        assert event_node.extra_info == {
-            "is_branch": False, "is_merge": False, "is_break": False
-        }
+        assert event_node.extra_info == {}
         graph.get_occurrence_count("event") == 1
         # test branch event
         event_node = graph.create_event_node(
@@ -316,9 +306,7 @@ class TestPUMLGraph:
         )
         assert event_node.node_id == ("branch_event", 0)
         assert event_node.node_type == "branch_event"
-        assert event_node.extra_info == {
-            "is_branch": True, "is_merge": False, "is_break": False
-        }
+        assert event_node.extra_info == {"is_branch": True}
         assert event_node.branch_number == 0
         assert graph.branch_counts == 1
         # test merge + break event
@@ -327,9 +315,7 @@ class TestPUMLGraph:
         )
         assert event_node.node_id == ("merge_break_event", 0)
         assert event_node.node_type == "merge_break_event"
-        assert event_node.extra_info == {
-            "is_branch": False, "is_merge": True, "is_break": True
-        }
+        assert event_node.extra_info == {"is_merge": True, "is_break": True}
 
     @staticmethod
     def test_create_operator_node_pair() -> None:
