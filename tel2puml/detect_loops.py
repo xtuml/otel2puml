@@ -144,6 +144,11 @@ def add_loop_edges_to_remove_and_breaks(
     :return: The updated loops.
     :rtype: `list`[`Loop`]
     """
+    loop_edges = {
+        edge
+        for loop in loops
+        for edge in loop.get_edges()
+    }
     for loop in loops:
         if len(loop) == 1:
             loop.add_edge_to_remove((loop.nodes[0], loop.nodes[0]))
@@ -170,6 +175,7 @@ def add_loop_edges_to_remove_and_breaks(
                     (u, v)
                     for u, v in edges
                     if u in exits and v not in loop.nodes
+                    and (u, v) not in loop_edges
                     and u not in {u for u, _ in edges_to_remove}
                 }
 

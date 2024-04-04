@@ -217,9 +217,9 @@ def test_add_loop_edges_to_remove_and_breaks() -> None:
     loops = add_loop_edges_to_remove_and_breaks(loops, edges)
     assert len(loops) == 3
     for loop in loops:
-        if ("B", "D") in loop.get_edges():
+        if {("B", "D"), ("D", "B")} == loop.get_edges():
             assert loop.edges_to_remove == {("D", "B")}
-        elif ("C", "E") in loop.get_edges():
+        elif {("C", "E"), ("E", "C")} == loop.get_edges():
             assert loop.edges_to_remove == {("E", "C")}
         else:
             assert loop.edges_to_remove == {
