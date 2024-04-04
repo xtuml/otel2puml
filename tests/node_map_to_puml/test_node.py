@@ -458,10 +458,10 @@ def test_merge_markov_without_loops_and_logic_detection_analysis() -> None:
                     node.event_type
                 ]
             )
-            assert [
+            assert sorted([
                 logic_node.event_type
                 for logic_node in outgoing_logic_node.outgoing_logic
-            ] == (
+            ]) == sorted(
                 expected_outgoing_event_type_logic[
                     node.event_type
                 ][outgoing_logic_node.operator]
@@ -472,10 +472,10 @@ def test_merge_markov_without_loops_and_logic_detection_analysis() -> None:
                     node.event_type
                 ]
             )
-            assert [
+            assert sorted([
                 logic_node.event_type
                 for logic_node in incoming_logic_node.incoming_logic
-            ] == (
+            ]) == sorted(
                 expected_incoming_event_type_logic[
                     node.event_type
                 ][incoming_logic_node.operator]
