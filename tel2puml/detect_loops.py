@@ -1,5 +1,5 @@
 """A module to detect all loops in a graph."""
-from typing import Self, Optional
+from typing import Self, Optional, Union
 
 from networkx import DiGraph, simple_cycles
 
@@ -127,7 +127,8 @@ def detect_loops(graph: DiGraph) -> list[Loop]:
         loops_with_ref, edges
     )
     loops = update_subloops(loops)
-    return merge_loops(loops)
+    loops = merge_loops(loops)
+    return update_break_points(loops)
 
 
 def add_loop_edges_to_remove_and_breaks(
@@ -248,3 +249,35 @@ def merge_loops(loops: list[Loop]) -> list[Loop]:
             merged_loops.append(loop)
 
     return merged_loops
+
+
+def update_break_points(
+        loops: list[Loop],
+        sub_loop: bool = False,
+    ) -> Union[list[Loop], list[str]]:
+    """Update the break points of the loops. Add any break points from subloops
+    by recursively calling this function.
+
+    :param loops: The loops to update the break points.
+    :type loops: `list`[`Loop`]
+    :param sub_loop: Whether the loops are subloops or not.
+    :type sub_loop: `bool`
+    :return: The updated loops.
+    :rtype: `list`[`Loop`]
+    """
+    breaks_from_subloops = []
+    for loop in loops:
+        from_subloops = update_break_points(loop.sub_loops, sub_loop=True)
+        for node in from_subloops:
+            if node not in loop.nodes:
+                loop.nodes.append(node)
+                breaks_from_subloops.append(node)
+
+        for _, v in loop.break_points:
+            if v not in loop.nodes:
+                loop.nodes.append(v)
+                breaks_from_subloops.append(v)
+
+    if sub_loop:
+        return breaks_from_subloops
+    return loops

@@ -7,7 +7,8 @@ from tel2puml.detect_loops import (
     detect_loops,
     add_loop_edges_to_remove_and_breaks,
     update_subloops,
-    merge_loops
+    merge_loops,
+    update_break_points,
 )
 from tel2puml.jAlergiaPipeline import audit_event_sequences_to_network_x
 from tel2puml.pipelines.data_creation import (
@@ -326,6 +327,32 @@ def test_merge_loops() -> None:
         else:
             assert set(subloop.nodes) == {"C", "E"}
             assert subloop.edges_to_remove == {("E", "C")}
+
+
+def test_update_break_points() -> None:
+    """Test the update_break_points function."""
+    loop = Loop(["A", "B", "D"])
+    loop.add_break_point(("B", "C"))
+
+    loops = [loop]
+    loops = update_break_points(loops)
+    loop, = loops
+    assert loop.break_points == {("B", "C")}
+    assert set(loop.nodes) == {"A", "B", "C", "D"}
+
+    loop = Loop(["B", "D"])
+    sub_loop = Loop(["B"])
+    sub_loop.add_break_point(("B", "C"))
+    loop.sub_loops = [sub_loop]
+
+    loops = [loop]
+    loops = update_break_points(loops)
+    loop, = loops
+    assert set(loop.nodes) == {"B", "C", "D"}
+    sub_loop, = loop.sub_loops
+    assert sub_loop.break_points == {("B", "C")}
+    assert set(sub_loop.nodes) == {"B", "C"}
+
 
 
 def test_detect_loops_from_simple_puml():
