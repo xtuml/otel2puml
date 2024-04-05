@@ -389,6 +389,20 @@ def test_merge_break_points() -> None:
     assert set(loop.nodes) == {"A", "B", "C", "D"}
     assert loop.sub_loops == [loop2]
 
+    loop1 = Loop(["A", "B", "C", "D"])
+    loop2 = Loop(["C", "D"])
+    loop1.sub_loops = [loop2]
+    loop3 = Loop(["C"])
+
+    loops = [loop1, loop3]
+    loops = merge_break_points(loops)
+    loop, = loops
+    assert set(loop.nodes) == {"A", "B", "C", "D"}
+    sub_loop, = loop.sub_loops
+    assert set(sub_loop.nodes) == {"C", "D"}
+    sub_sub_loop, = sub_loop.sub_loops
+    assert set(sub_sub_loop.nodes) == {"C"}
+
 
 def test_detect_loops_from_simple_puml():
     """Test the detect_loops function with a simple puml file."""

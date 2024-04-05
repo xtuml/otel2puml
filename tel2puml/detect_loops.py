@@ -332,6 +332,9 @@ def merge_break_points(loops: list[Loop]) -> list[Loop]:
         for merged_loop in merged_loops:
             if set(loop.nodes).issubset(set(merged_loop.nodes)):
                 merged_loop.add_subloop(loop)
+                merged_loop.sub_loops = merge_break_points(
+                    merged_loop.sub_loops
+                )
                 merged = True
                 break
 
