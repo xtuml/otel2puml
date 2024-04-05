@@ -354,7 +354,6 @@ def test_update_break_points() -> None:
     assert set(sub_loop.nodes) == {"B", "C"}
 
 
-
 def test_detect_loops_from_simple_puml():
     """Test the detect_loops function with a simple puml file."""
     event_sequences = generate_test_data_event_sequences_from_puml(
@@ -413,7 +412,7 @@ def test_detect_loops_from_AND_puml():
     assert len(loop.sub_loops) == 0
 
 
-def test_detect_loops_from_break_puml() -> None:
+def test_detect_loops_from_simple_break_puml() -> None:
     """Test the detect_loops function with a simple loop and break puml
     file."""
     event_sequences = generate_test_data_event_sequences_from_puml(
@@ -432,3 +431,73 @@ def test_detect_loops_from_break_puml() -> None:
         _get_referenced_iterable(("B", "C"), references)
     }
     assert len(loop.sub_loops) == 0
+
+
+def test_detect_loops_from_complex_break_puml() -> None:
+    """Test the detect_loops function with a complex loop and break puml
+    file"""
+    event_sequences = generate_test_data_event_sequences_from_puml(
+        "puml_files/complex_loop_with_break.puml"
+    )
+    graph, references = audit_event_sequences_to_network_x(event_sequences)
+    loops = detect_loops(graph)
+    loop, = loops
+    assert set(loop.nodes) == _get_referenced_iterable(
+        {"B", "C", "D", "E", "F"}, references
+    )
+    assert loop.edges_to_remove == {
+        _get_referenced_iterable(("F", "B"), references)
+    }
+    assert loop.break_points == {
+        _get_referenced_iterable(("B", "C"), references),
+    }
+
+    for sub_loop in loop.sub_loops:
+        if set(sub_loop.nodes) == _get_referenced_iterable(
+            {"C"}, references
+        ):
+            assert sub_loop.edges_to_remove == {
+                _get_referenced_iterable(("C", "C"), references)
+            }
+            assert sub_loop.break_points == set()
+        else:
+            assert set(sub_loop.nodes) == _get_referenced_iterable(
+                {"F"}, references
+            )
+            assert sub_loop.edges_to_remove == {
+                _get_referenced_iterable(("F", "F"), references)
+            }
+            assert sub_loop.break_points == set()
+
+
+@pytest.mark.skip("audit_event_sequences_to_network_x fails for this puml")
+def test_detect_loops_from_break_loop_in_break_loop_puml() -> None:
+    """Test the detect_loops function with a break loop in break loop puml
+    file"""
+    event_sequences = generate_test_data_event_sequences_from_puml(
+        "puml_files/break_loop_in_break_loop.puml"
+    )
+    graph, references = audit_event_sequences_to_network_x(event_sequences)
+    loops = detect_loops(graph)
+    loop, = loops
+    assert set(loop.nodes) == _get_referenced_iterable(
+        {"B", "C", "D", "E", "F", "G", "H"}, references
+    )
+    assert loop.edges_to_remove == {
+        _get_referenced_iterable(("H", "B"), references)
+    }
+    assert loop.break_points == {
+        _get_referenced_iterable(("B", "C"), references),
+    }
+
+    sub_loop, = loop.sub_loops
+    assert set(sub_loop.nodes) == _get_referenced_iterable(
+        {"C", "D", "E", "F"}, references
+    )
+    assert sub_loop.edges_to_remove == {
+        _get_referenced_iterable(("F", "C"), references)
+    }
+    assert sub_loop.break_points == {
+        _get_referenced_iterable(("C", "D"), references),
+    }
+    assert len(sub_loop.sub_loops) == 0

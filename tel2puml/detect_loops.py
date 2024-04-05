@@ -254,7 +254,7 @@ def merge_loops(loops: list[Loop]) -> list[Loop]:
 def update_break_points(
         loops: list[Loop],
         sub_loop: bool = False,
-    ) -> Union[list[Loop], list[str]]:
+) -> Union[list[Loop], list[str]]:
     """Update the break points of the loops. Add any break points from subloops
     by recursively calling this function.
 
