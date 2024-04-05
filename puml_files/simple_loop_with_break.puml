@@ -6,13 +6,14 @@ partition "simple_loop_with_break" {
             :B;
             if (XOR) then (true)
                 :C;
+                :D;
                 break
             else (false)
-                :D;
                 :E;
+                :F;
             endif
         repeat while
-        #red:F; 
+        #red:G; 
     end group
 }
 @enduml

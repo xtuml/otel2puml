@@ -1,7 +1,7 @@
 """A module to detect all loops in a graph."""
 from typing import Self, Optional, Union
 
-from networkx import DiGraph, simple_cycles
+from networkx import DiGraph, simple_cycles, all_simple_paths
 
 
 class Loop:
@@ -12,6 +12,7 @@ class Loop:
         self.sub_loops: list[Loop] = []
         self.edges_to_remove: set[tuple[str, str]] = set()
         self.break_points: set[tuple[str, str]] = set()
+        self.exit_point: Optional[str] = None
         self.merge_processed = False
 
     def __len__(self) -> int:
@@ -103,13 +104,19 @@ class Loop:
         :param sub_loop: The subloop to add.
         :type sub_loop: `Loop`
         """
-        if self.merge_processed:
-            raise RuntimeError("Method not available after merge")
         self.sub_loops.append(sub_loop)
 
     def set_merged(self) -> None:
         """Set the merge_processed property to True."""
         self.merge_processed = True
+
+    def set_exit_point(self, exit_point: str) -> None:
+        """Set the exit point of the loop.
+
+        :param exit_point: The exit point of the loop.
+        :type exit_point: `str`
+        """
+        self.exit_point = exit_point
 
 
 def detect_loops(graph: DiGraph) -> list[Loop]:
@@ -128,7 +135,8 @@ def detect_loops(graph: DiGraph) -> list[Loop]:
     )
     loops = update_subloops(loops)
     loops = merge_loops(loops)
-    return update_break_points(loops)
+    loops = update_break_points(graph, loops)
+    return merge_break_points(loops)
 
 
 def add_loop_edges_to_remove_and_breaks(
@@ -155,33 +163,44 @@ def add_loop_edges_to_remove_and_breaks(
             loop.add_edge_to_remove((loop.nodes[0], loop.nodes[0]))
         else:
             entries: set[str] = set()
-            exits: set[str] = set()
+            exits: set[tuple[str, str]] = set()
             for u, v in edges:
                 if u not in loop.nodes and v in loop.nodes:
                     entries.add(v)
                 elif u in loop.nodes and v not in loop.nodes:
-                    exits.add(u)
+                    exits.add((u, v))
 
             if entries and exits:
                 edges_to_remove = {
                     (u, v)
                     for u, v in edges
-                    if v in entries and u in exits
+                    if v in entries
+                    and u in {u for u, _ in exits}
                 }
-
-                for edge in edges_to_remove:
-                    loop.add_edge_to_remove(edge)
 
                 breaks = {
                     (u, v)
-                    for u, v in edges
-                    if u in exits and v not in loop.nodes
-                    and (u, v) not in loop_edges
+                    for u, v in set(edges).difference(loop_edges)
+                    if u in {u for u, _ in exits}
+                    and u in loop.nodes
+                    and v not in loop.nodes
                     and u not in {u for u, _ in edges_to_remove}
                 }
 
                 for break_point in breaks:
                     loop.add_break_point(break_point)
+
+                exit_points = set()
+                for u, v in edges_to_remove:
+                    loop.add_edge_to_remove((u, v))
+                    for loop_exit, exit_point in exits.difference(loop_edges):
+                        if u == loop_exit:
+                            exit_points.add(exit_point)
+
+                if len(exit_points) == 1:
+                    loop.set_exit_point(exit_points.pop())
+                else:
+                    raise ValueError("Multiple exit points")
 
     return loops
 
@@ -252,12 +271,15 @@ def merge_loops(loops: list[Loop]) -> list[Loop]:
 
 
 def update_break_points(
+        graph: DiGraph,
         loops: list[Loop],
         sub_loop: bool = False,
 ) -> Union[list[Loop], list[str]]:
     """Update the break points of the loops. Add any break points from subloops
     by recursively calling this function.
 
+    :param graph: The graph to get the paths from.
+    :type graph: `DiGraph`
     :param loops: The loops to update the break points.
     :type loops: `list`[`Loop`]
     :param sub_loop: Whether the loops are subloops or not.
@@ -267,17 +289,53 @@ def update_break_points(
     """
     breaks_from_subloops = []
     for loop in loops:
-        from_subloops = update_break_points(loop.sub_loops, sub_loop=True)
+        from_subloops = update_break_points(
+            graph,
+            loop.sub_loops,
+            sub_loop=True
+        )
         for node in from_subloops:
             if node not in loop.nodes:
                 loop.nodes.append(node)
                 breaks_from_subloops.append(node)
 
         for _, v in loop.break_points:
-            if v not in loop.nodes:
-                loop.nodes.append(v)
-                breaks_from_subloops.append(v)
+            paths = list(all_simple_paths(graph, v, loop.exit_point))
+            if len(paths) == 1:
+                path, = paths
+                for node in path:
+                    if node not in loop.nodes and node != loop.exit_point:
+                        loop.nodes.append(node)
+                        breaks_from_subloops.append(node)
+            elif len(paths) > 1:
+                raise ValueError("Multiple paths")
 
     if sub_loop:
         return breaks_from_subloops
     return loops
+
+
+def merge_break_points(loops: list[Loop]) -> list[Loop]:
+    """Merge the break points of the loops.
+
+    :param loops: The loops to merge the break points.
+    :type loops: `list`[`Loop`]
+    :return: The merged loops.
+    :rtype: `list`[`Loop`]
+    """
+    merged_loops: list[Loop] = []
+    loops.sort(key=lambda x: len(x), reverse=True)
+    while len(loops) > 0:
+        loop = loops.pop(0)
+        loop.sub_loops = merge_break_points(loop.sub_loops)
+        merged = False
+        for merged_loop in merged_loops:
+            if set(loop.nodes).issubset(set(merged_loop.nodes)):
+                merged_loop.add_subloop(loop)
+                merged = True
+                break
+
+        if not merged:
+            merged_loops.append(loop)
+
+    return merged_loops

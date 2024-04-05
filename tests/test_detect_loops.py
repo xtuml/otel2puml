@@ -2,6 +2,8 @@
 from typing import Iterable
 import pytest
 
+from networkx import DiGraph
+
 from tel2puml.detect_loops import (
     Loop,
     detect_loops,
@@ -9,6 +11,7 @@ from tel2puml.detect_loops import (
     update_subloops,
     merge_loops,
     update_break_points,
+    merge_break_points,
 )
 from tel2puml.jAlergiaPipeline import audit_event_sequences_to_network_x
 from tel2puml.pipelines.data_creation import (
@@ -27,6 +30,7 @@ class TestLoop():
         assert loop.nodes == ["A"]
         assert loop.edges_to_remove == set()
         assert loop.break_points == set()
+        assert loop.exit_point is None
         assert not loop.merge_processed
 
     @staticmethod
@@ -137,10 +141,6 @@ class TestLoop():
         loop.add_subloop(sub_loop)
         assert loop.sub_loops == [sub_loop]
 
-        loop.set_merged()
-        with pytest.raises(RuntimeError):
-            loop.add_subloop(sub_loop)
-
     @staticmethod
     def test_set_merge():
         """Test the set_merge method of the Loop class."""
@@ -148,6 +148,14 @@ class TestLoop():
         assert not loop.merge_processed
         loop.set_merged()
         assert loop.merge_processed
+
+    @staticmethod
+    def test_set_exit_point():
+        """Test the set_exit_point method of the Loop class."""
+        loop = Loop(["A", "B", "C"])
+        assert loop.exit_point is None
+        loop.set_exit_point("A")
+        assert loop.exit_point == "A"
 
 
 def _get_referenced_iterable(
@@ -331,27 +339,55 @@ def test_merge_loops() -> None:
 
 def test_update_break_points() -> None:
     """Test the update_break_points function."""
+    graph = DiGraph(
+        [
+            ("A", "B"), ("B", "D"), ("B", "C"),
+            ("C", "E"), ("D", "A"), ("D", "E")
+        ]
+    )
+
     loop = Loop(["A", "B", "D"])
     loop.add_break_point(("B", "C"))
+    loop.exit_point = "E"
 
     loops = [loop]
-    loops = update_break_points(loops)
+    loops = update_break_points(graph, loops)
     loop, = loops
     assert loop.break_points == {("B", "C")}
     assert set(loop.nodes) == {"A", "B", "C", "D"}
 
+    graph = DiGraph(
+        [
+            ("A", "B"), ("B", "D"), ("D", "B"),
+            ("B", "B"), ("B", "C"), ("D", "E"),
+            ("C", "E"),
+        ]
+    )
     loop = Loop(["B", "D"])
-    sub_loop = Loop(["B"])
-    sub_loop.add_break_point(("B", "C"))
+    sub_loop = Loop(["D"])
+    sub_loop.exit_point = "B"
+    loop.add_break_point(("B", "C"))
     loop.sub_loops = [sub_loop]
+    loop.exit_point = "E"
 
     loops = [loop]
-    loops = update_break_points(loops)
+    loops = update_break_points(graph, loops)
     loop, = loops
     assert set(loop.nodes) == {"B", "C", "D"}
     sub_loop, = loop.sub_loops
-    assert sub_loop.break_points == {("B", "C")}
-    assert set(sub_loop.nodes) == {"B", "C"}
+    assert set(sub_loop.nodes) == {"D"}
+
+
+def test_merge_break_points() -> None:
+    """Test the merge_break_points function."""
+    loop1 = Loop(["A", "B", "C", "D"])
+    loop2 = Loop(["C"])
+
+    loops = [loop1, loop2]
+    loops = merge_break_points(loops)
+    loop, = loops
+    assert set(loop.nodes) == {"A", "B", "C", "D"}
+    assert loop.sub_loops == [loop2]
 
 
 def test_detect_loops_from_simple_puml():
@@ -422,10 +458,10 @@ def test_detect_loops_from_simple_break_puml() -> None:
     loops = detect_loops(graph)
     loop, = loops
     assert set(loop.nodes) == _get_referenced_iterable(
-        {"B", "C", "D", "E"}, references
+        {"B", "C", "D", "E", "F"}, references
     )
     assert loop.edges_to_remove == {
-        _get_referenced_iterable(("E", "B"), references)
+        _get_referenced_iterable(("F", "B"), references)
     }
     assert loop.break_points == {
         _get_referenced_iterable(("B", "C"), references)
