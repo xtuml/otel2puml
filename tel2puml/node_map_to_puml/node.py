@@ -8,7 +8,10 @@ from networkx import DiGraph, topological_sort, has_path
 from pm4py import ProcessTree
 from pm4py.objects.process_tree.obj import Operator
 
-from tel2puml.pipelines.logic_detection_pipeline import Event
+from tel2puml.pipelines.logic_detection_pipeline import (
+    Event,
+    Operator as Logic_operator,
+)
 from tel2puml.puml_graph.graph import (
     PUMLEventNode,
     PUMLGraph,
@@ -59,7 +62,7 @@ class Node:
         incoming_logic: list["Node"] | None = None,
         outgoing_logic: list["Node"] | None = None,
         is_stub: bool = False,
-        event_types: set["Operator"] | None = None,
+        event_types: set["PUMLEvent"] | None = None,
     ) -> None:
         """Constructor method."""
         self.data = data if data is not None else operator
@@ -75,7 +78,7 @@ class Node:
         self.event_type = event_type
         self.is_stub = is_stub
 
-        self.event_types = event_types if event_types is not None else set()
+        self.event_types = set() if event_types is None else event_types
 
         self.branch_enum = ["AND", "OR", "XOR", "LOOP", "BRANCH"]
 
@@ -187,6 +190,16 @@ class Node:
         :param direction: The direction to load the logic.
         :type direction: `Literal`[`"incoming"`, `"outgoing"`]
         """
+        if (
+            logic_tree.label is None
+            and logic_tree.operator.value == Logic_operator.BRANCH.name
+        ):
+            self.event_types.add(PUMLEvent.BRANCH)
+            for child in logic_tree.children:
+                self._load_logic_into_logic_list(
+                    child, event_node_map, direction, root_node
+                )
+
         if direction == "incoming":
             logic_list = self.incoming_logic
         else:
@@ -199,7 +212,6 @@ class Node:
                     uid=node_id,
                     event_type=logic_tree.label,
                     is_stub=True,
-                    operator=logic_tree.operator,
                 )
                 # Add the node to the appropriate node list
                 getattr(root_node, direction).append(node_to_add)

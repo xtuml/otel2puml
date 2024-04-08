@@ -1,7 +1,6 @@
 """Tests for the node module."""
 
 from copy import deepcopy, copy
-import unittest
 
 from pm4py import ProcessTree
 import networkx as nx
@@ -18,7 +17,6 @@ from tel2puml.node_map_to_puml.node import (
 )
 from tel2puml.pipelines.logic_detection_pipeline import (
     Event,
-    Operator,
     update_all_connections_from_clustered_events,
 )
 from tel2puml.pipelines.data_creation import (
@@ -29,7 +27,7 @@ from tel2puml.check_puml_equiv import (
     get_network_x_graph_from_puml_string,
     check_networkx_graph_equivalence,
 )
-from tel2puml.tel2puml_types import PUMLOperator
+from tel2puml.tel2puml_types import PUMLEvent, PUMLOperator
 
 
 class TestNode:
@@ -611,72 +609,61 @@ class TestCreatePumlGraphFromNodeClassGraph:
         )
 
 
-class Test_load_logic_into_logic_list(unittest.TestCase):
+class Test_load_logic_into_logic_list:
+    """
+    Test class for the _load_logic_into_logic_list method of a node.
+    """
 
-    def logic_tree(self, event_node_map):
-        # Create a sample logic tree for testing
-        return ProcessTree(
-            operator=Operator.XOR,
-            label="A-Branch",
-            parent=event_node_map["A"],
-            children=[event_node_map["B"], event_node_map["C"]],
-        )
-
-    def event_node_map(self):
-        # Create a sample event node map for testing
-        event_node_map = {
-            "A": Node(data="A", uid="A", event_type=set[Operator.SEQUENCE]),
-            "B": Node(data="B", uid="B", event_type=set[Operator.SEQUENCE]),
-            "C": Node(data="C", uid="C", event_type=set[Operator.SEQUENCE]),
-        }
-        return event_node_map
-
-    def test_load_logic_into_logic_list_incoming(self):
-
-        event_node_map = self.event_node_map()
-        logic_tree = self.logic_tree(event_node_map)
+    def test_load_logic_into_logic_list_incoming(
+        self, event_node_map, logic_tree_XOR
+    ):
+        """
+        Test loading logic into the incoming logic list of a node.
+        """
 
         # Set a node instance for testing
         node_to_test = event_node_map["B"]
         node_to_test._load_logic_into_logic_list(
-            logic_tree, event_node_map, "incoming", node_to_test
+            logic_tree=logic_tree_XOR,
+            event_node_map=event_node_map,
+            direction="incoming",
+            root_node=node_to_test,
         )
 
         # Check if the logic is loaded correctly
-        assert len(node_to_test.event_node_map_incoming) == 1
-        assert logic_tree.label in node_to_test.event_node_map_incoming
-        assert len(node_to_test.incoming) == 1
-        assert node_to_test.incoming[0].event_type == logic_tree.label
-        assert node_to_test.incoming[0].operator == Operator.XOR
+        assert len(node_to_test.incoming_logic) == 1
+        assert node_to_test.incoming_logic[0].data == "XOR"
 
-        # Check if the stub node is created correctly
-        assert logic_tree.label in event_node_map
-        assert event_node_map[logic_tree.label].is_stub == True
-        assert event_node_map[logic_tree.label] in node_to_test.incoming
-
-    def test_load_logic_into_logic_list_outgoing(self):
-
-        event_node_map = self.event_node_map()
-        logic_tree = self.logic_tree(event_node_map)
+    def test_load_logic_into_logic_list_outgoing(
+        self, event_node_map, logic_tree_XOR
+    ):
+        """
+        Test loading logic into the outgoing logic list of a node.
+        """
 
         # Select a node instance for testing
         node_to_test = event_node_map["A"]
         node_to_test._load_logic_into_logic_list(
-            logic_tree, event_node_map, "outgoing", node_to_test
+            logic_tree_XOR, event_node_map, "outgoing", node_to_test
         )
 
         # Check if the logic is loaded correctly
-        assert len(node_to_test.event_node_map_outgoing) == 1
-        assert logic_tree.label in node_to_test.event_node_map_outgoing
-        assert len(node_to_test.outgoing) == 1
-        assert node_to_test.outgoing[0].event_type == logic_tree.label
-        assert node_to_test.outgoing[0].operator == Operator.XOR
+        assert len(node_to_test.outgoing_logic) == 1
+        assert node_to_test.outgoing_logic[0].data == "XOR"
 
-        # Check if the stub node is created correctly
-        assert logic_tree.label in event_node_map
-        assert event_node_map[logic_tree.label].is_stub == True
-        assert event_node_map[logic_tree.label] in node_to_test.outgoing
+    def test_load_logic_into_logic_list_branch(
+        self, event_node_map, logic_tree_BRANCH
+    ):
+        """
+        Test loading logic into the incoming logic list of a node with branch
+            event type.
+        """
 
+        # Set a node instance for testing
+        node_to_test = event_node_map["B"]
+        node_to_test._load_logic_into_logic_list(
+            logic_tree_BRANCH, event_node_map, "incoming", node_to_test
+        )
 
-if __name__ == "__main__":
-    unittest.main()
+        assert len(node_to_test.event_types) > 0
+        assert PUMLEvent.BRANCH in node_to_test.event_types

@@ -7,6 +7,7 @@ from pm4py.objects.process_tree.obj import Operator
 
 from tel2puml.pipelines.logic_detection_pipeline import Event
 from tel2puml.node_map_to_puml.node import Node
+from tel2puml.tel2puml_types import PUMLEvent
 
 
 @pytest.fixture
@@ -213,3 +214,62 @@ def node_map(
         node.update_node_list_with_nodes(nodes, "outgoing")
         node_map[event_type] = [node]
     return node_map
+
+
+@pytest.fixture
+def logic_tree_XOR(event_node_map: dict[str, list[Node]]) -> ProcessTree:
+    """
+    Creates a logic tree with XOR operator.
+
+    Args:
+        event_node_map (dict[str, list[Node]]): A dictionary mapping event
+            names to lists of nodes.
+
+    Returns:
+        ProcessTree: The logic tree with XOR operator.
+    """
+    return ProcessTree(
+        operator=Operator.XOR,
+        parent=event_node_map["A"],
+        children=[
+            ProcessTree(label=event_node_map["B"].data),
+            ProcessTree(label=event_node_map["C"].data),
+        ],
+    )
+
+
+@pytest.fixture
+def logic_tree_BRANCH(event_node_map: dict[str, list[Node]]) -> ProcessTree:
+    """
+    Creates a ProcessTree node representing a branch in the logic tree.
+
+    Args:
+        event_node_map (dict[str, list[Node]]): A dictionary mapping event
+            names to lists of nodes.
+
+    Returns:
+        ProcessTree: The ProcessTree node representing the branch.
+    """
+    return ProcessTree(
+        operator=PUMLEvent.BRANCH,
+        parent=event_node_map["A"],
+        children=[
+            ProcessTree(label=event_node_map["B"].data)
+        ],
+    )
+
+
+@pytest.fixture
+def event_node_map() -> dict[str, list[Node]]:
+    """
+    Creates a dictionary mapping event names to lists of nodes.
+
+    Returns:
+        dict[str, list[Node]]: The dictionary mapping event names to lists of
+            nodes.
+    """
+    return {
+        "A": Node(data="A", uid="A", event_type=set[Operator.SEQUENCE]),
+        "B": Node(data="B", uid="B", event_type=set[Operator.SEQUENCE]),
+        "C": Node(data="C", uid="C", event_type=set[Operator.SEQUENCE]),
+    }
