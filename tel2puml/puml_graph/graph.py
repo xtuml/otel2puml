@@ -303,6 +303,7 @@ class PUMLGraph(DiGraph):
         self.parent_graph_nodes_to_node_ref: dict[
             Hashable, list[PUMLEventNode]
         ] = {}
+        self.subgraph_nodes: set[PUMLEventNode] = set()
         super().__init__()
 
     def create_event_node(
@@ -537,7 +538,8 @@ class PUMLGraph(DiGraph):
             node_set.add(graph_node)
 
     def replace_subgraph_node_from_start_and_end_nodes(
-        self, start_node: PUMLNode, end_node: PUMLNode, node_name: str
+        self, start_node: PUMLNode, end_node: PUMLNode, node_name: str,
+        event_types: PUMLEvent | tuple[PUMLEvent, ...] | None = None
     ) -> PUMLEventNode:
         copy_graph = copy(self)
         if len(self.in_edges(start_node)) > 1:
@@ -575,11 +577,13 @@ class PUMLGraph(DiGraph):
         subgraph_node = self.create_event_node(
             node_name,
             sub_graph=copy_graph,
+            event_types=event_types
         )
         for edge in start_node_in_edge:
             self.add_edge(edge[0], subgraph_node)
         for edge in end_node_out_edge:
             self.add_edge(subgraph_node, edge[1])
+        self.subgraph_nodes.add(subgraph_node)
         return subgraph_node
 
     def __copy__(self) -> "PUMLGraph":
