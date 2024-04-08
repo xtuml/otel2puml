@@ -173,18 +173,15 @@ def add_loop_edges_to_remove_and_breaks(
             if entries and exits:
                 edges_to_remove = {
                     (u, v)
-                    for u, v in edges
+                    for u, v in loop_edges
                     if v in entries
                     and u in {u for u, _ in exits}
                 }
 
                 breaks = {
                     (u, v)
-                    for u, v in set(edges).difference(loop_edges)
-                    if u in {u for u, _ in exits}
-                    and u in loop.nodes
-                    and v not in loop.nodes
-                    and u not in {u for u, _ in edges_to_remove}
+                    for u, v in exits.difference(loop_edges)
+                    if u not in {u for u, _ in edges_to_remove}
                 }
 
                 for break_point in breaks:
@@ -201,6 +198,8 @@ def add_loop_edges_to_remove_and_breaks(
                     loop.set_exit_point(exit_points.pop())
                 else:
                     raise ValueError("Multiple exit points")
+            else:
+                raise ValueError("No entries or no exits")
 
     return loops
 
@@ -309,6 +308,8 @@ def update_break_points(
                         breaks_from_subloops.append(node)
             elif len(paths) > 1:
                 raise ValueError("Multiple paths")
+            else:
+                raise ValueError("No paths")
 
     if sub_loop:
         return breaks_from_subloops
