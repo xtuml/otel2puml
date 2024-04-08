@@ -532,7 +532,7 @@ class TestPUMLGraph:
     @staticmethod
     def test_replace_subgraph_node_from_start_and_end_nodes() -> None:
         """Tests the replace_subgraph_node_from_start_and_end_nodes method."""
-        # setup
+        # test case where start and end nodes are the same
         graph = PUMLGraph()
         A = graph.create_event_node("A")
         B = graph.create_event_node("B")
