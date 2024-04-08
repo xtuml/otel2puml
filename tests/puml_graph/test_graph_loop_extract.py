@@ -200,6 +200,7 @@ def test_calc_loop_end_node(
     loop_1: Loop,
     loop_2: Loop,
 ) -> None:
+    """Tests the calc_loop_end_node method for the given graph and loops."""
     graph, event_nodes = puml_graph
     # test case where there are two loops in the graph that are from loop_1
     loop_starts_and_ends = get_event_nodes_from_loop(graph, loop_1)
@@ -246,7 +247,8 @@ def test_get_loop_starts_and_ends(
     puml_graph: tuple[PUMLGraph, dict[tuple[str, int], PUMLEventNode]],
     loop_1: Loop,
 ) -> None:
-    """Tests the get_loop_starts_and_ends method."""
+    """Tests the get_loop_starts_and_ends method returns the correct list of
+    unique loops with the correct start and end nodes."""
     graph, event_nodes = puml_graph
     # test case where there are two loops in the graph that are from loop_1
     loop_starts_and_ends = get_event_nodes_from_loop(graph, loop_1)
@@ -277,10 +279,14 @@ def test_get_loop_starts_and_ends(
 
 
 class TestGetLoopStartAndEnd:
+    """Tests for methods that get the unique loops with a helper method to
+    check that the correct unique loops were found."""
     @staticmethod
     def check_correct_start_and_end_nodes(
         unique_loops: list[tuple[PUMLEventNode, PUMLEventNode]],
     ) -> None:
+        """Helper method for checking the correct unique loops were
+        found"""
         expected_loop_start_end_ids = [
             (("START", "XOR", 0), ("END", "XOR", 0)),
             (("START", "XOR", 1), ("END", "XOR", 1)),
@@ -302,7 +308,9 @@ class TestGetLoopStartAndEnd:
         puml_graph: tuple[PUMLGraph, dict[tuple[str, int], PUMLEventNode]],
         loop_1: Loop,
     ) -> None:
-        """Tests the get_unique_loops_from_start_and_end_nodes method."""
+        """Tests the get_unique_loops_from_start_and_end_nodes method gets the
+        correct start and end nodes for the given mixed loop starts and ends.
+        The loop appears twice in the given graph"""
         graph, _ = puml_graph
         # test case where there are two loops in the graph that are from loop_1
         loop_starts_and_ends = get_event_nodes_from_loop(graph, loop_1)
@@ -316,6 +324,9 @@ class TestGetLoopStartAndEnd:
         puml_graph: tuple[PUMLGraph, dict[tuple[str, int], PUMLEventNode]],
         loop_1: Loop,
     ) -> None:
+        """Tests the extract_loops_starts_and_ends_from_loop method gets the
+        correct start and end nodes for the given loop of Markov nodes. The
+        loop appears twice in the given graph"""
         graph, _ = puml_graph
         # test case where there are two loops in the graph that are from loop_1
         unique_loops = extract_loops_starts_and_ends_from_loop(

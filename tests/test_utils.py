@@ -1,3 +1,4 @@
+"""Tests for the tel2puml.utils module."""
 from networkx import DiGraph
 
 from tel2puml.utils import check_has_path_not_through_nodes

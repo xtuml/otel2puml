@@ -530,6 +530,14 @@ class PUMLGraph(DiGraph):
     def add_graph_node_to_set_from_reference(
         self, node_set: set[PUMLEventNode], node_ref: Hashable
     ) -> None:
+        """Adds graph nodes to a set from a reference given that relates to the
+        parent graph.
+
+        :param node_set: The set to add the graph nodes to.
+        :type node_set: `set[:class:`PUMLEventNode`]`
+        :param node_ref: The reference to the parent graph.
+        :type node_ref: `Hashable`
+        """
         if node_ref not in self.parent_graph_nodes_to_node_ref:
             raise KeyError(
                 "Node not found in parent graph nodes to node ref"
@@ -541,6 +549,25 @@ class PUMLGraph(DiGraph):
         self, start_node: PUMLNode, end_node: PUMLNode, node_name: str,
         event_types: PUMLEvent | tuple[PUMLEvent, ...] | None = None
     ) -> PUMLEventNode:
+        """Extracts and replaces a subgraph inclusively between the start and
+        end nodes given with a new subgraph node created. The extraction
+        removes the edge into the start node and out of the end node. The
+        subgraph node contains the extracted subgraph. A name for the nodes
+        must be specified. Can add event types if required.
+
+        :param start_node: The start node of the subgraph.
+        :type start_node: :class:`PUMLNode`
+        :param end_node: The end node of the subgraph.
+        :type end_node: :class:`PUMLNode`
+        :param node_name: The name of the new subgraph node.
+        :type node_name: `str`
+        :param event_types: The event types of the new subgraph node, defaults
+        to `None`.
+        :type event_types: :class:`PUMLEvent` |
+        `tuple[:class:`PUMLEvent`, `...`]` | `None`, optional
+        :return: The new subgraph node.
+        :rtype: :class:`PUMLEventNode`
+        """
         copy_graph = copy(self)
         if len(self.in_edges(start_node)) > 1:
             raise RuntimeError(
@@ -587,6 +614,7 @@ class PUMLGraph(DiGraph):
         return subgraph_node
 
     def __copy__(self) -> "PUMLGraph":
+        """Creates a copy of the PlantUML graph. This is a shallow copy."""
         copy_graph = self.copy()
         copy_graph.node_counts = self.node_counts
         copy_graph.branch_counts = self.branch_counts

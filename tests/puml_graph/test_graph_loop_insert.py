@@ -15,6 +15,7 @@ def test_insert_loops(
     expected_loop_1_graph: PUMLGraph,
     expected_loop_2_graph: PUMLGraph,
 ) -> None:
+    """"Test the insert_loops function acting on a PUMLGraph instance."""
     # setup
     graph, _ = puml_graph
     # test for test graph

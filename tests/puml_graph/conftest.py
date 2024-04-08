@@ -10,6 +10,17 @@ from tel2puml.detect_loops import Loop
 @pytest.fixture
 def puml_graph() -> tuple[PUMLGraph, dict[tuple[str, int], PUMLEventNode]]:
     """Return a PUMLGraph instance.
+
+    The graph paths are as follows:
+    ```
+    A -> AND -> XOR1 -> B0 -> D0 -> XOR1 -> AND -> F
+    A -> AND -> XOR1 -> C0 -> E0 -> XOR1 -> AND -> F
+    A -> AND -> XOR2 -> B1 -> D1 -> XOR2 -> AND -> F
+    A -> AND -> XOR2 -> C1 -> E1 -> XOR2 -> AND -> F
+    A -> AND -> G -> H -> I -> AND -> F
+    ```
+    :return: PUMLGraph instance
+    :rtype: :class:`PUMLGraph`
     """
     graph = PUMLGraph()
     event_nodes: dict[tuple[str, int], PUMLEventNode] = {}
@@ -83,6 +94,9 @@ def puml_graph() -> tuple[PUMLGraph, dict[tuple[str, int], PUMLEventNode]]:
 @pytest.fixture
 def loop_1() -> Loop:
     """Return a Loop instance.
+
+    :return: Loop instance
+    :rtype: :class:`Loop`
     """
     loop = Loop(nodes=["q1", "q2", "q3", "q4"])
     for end in ["q3", "q4"]:
@@ -93,6 +107,11 @@ def loop_1() -> Loop:
 
 @pytest.fixture
 def subloop() -> Loop:
+    """Return a Loop instance that is a subloop.
+
+    :return: Loop instance
+    :rtype: :class:`Loop`
+    """
     loop = Loop(nodes=["q6"])
     loop.add_edge_to_remove(("q6", "q6"))
     return loop
@@ -100,7 +119,12 @@ def subloop() -> Loop:
 
 @pytest.fixture
 def loop_2(subloop: Loop) -> Loop:
-    """Return a Loop instance.
+    """Return a Loop instance with a subloop.
+
+    :param subloop: The subloop to add to the loop.
+    :type subloop: :class:`Loop`
+    :return: Loop instance
+    :rtype: :class:`Loop`
     """
     loop = Loop(nodes=["q5", "q6", "q7"])
     loop.add_edge_to_remove(("q7", "q5"))
@@ -111,6 +135,15 @@ def loop_2(subloop: Loop) -> Loop:
 @pytest.fixture
 def expected_puml_graph_post_loop_insertion() -> PUMLGraph:
     """Return a PUMLGraph instance after loop insertion.
+
+    The graph is as follows:
+    ```
+    A -> AND -> LOOP1 -> AND -> F
+    A -> AND -> LOOP2 -> AND -> F
+    A -> AND -> LOOP3 -> AND -> F
+    ```
+    :return: PUMLGraph instance
+    :rtype: :class:`PUMLGraph`
     """
     graph = PUMLGraph()
     A = graph.create_event_node(
@@ -142,6 +175,17 @@ def expected_puml_graph_post_loop_insertion() -> PUMLGraph:
 
 @pytest.fixture
 def expected_loop_1_graph() -> PUMLGraph:
+    """Return a PUMLGraph instance for loop 1 that can be checked against the
+    actual graph obtained in the test.
+
+    The graph is as follows:
+    ```
+    XOR -> B -> D -> XOR
+    XOR -> C -> E -> XOR
+    ```
+    :return: PUMLGraph instance
+    :rtype: :class:`PUMLGraph`
+    """
     graph = PUMLGraph()
     xor_start, xor_end = graph.create_operator_node_pair(PUMLOperator.XOR)
     B = graph.create_event_node("B", parent_graph_node="q1")
@@ -159,6 +203,17 @@ def expected_loop_1_graph() -> PUMLGraph:
 
 @pytest.fixture
 def expected_loop_2_graph() -> PUMLGraph:
+    """Return a PUMLGraph instance for loop 2 that can be checked against the
+    actual graph obtained in the test.
+
+    The graph is as follows:
+    ```
+    G -> LOOP -> I
+    ```
+
+    :return: PUMLGraph instance
+    :rtype: :class:`PUMLGraph`
+    """
     graph = PUMLGraph()
     G = graph.create_event_node("G", parent_graph_node="q5")
     LOOP = graph.create_event_node(
