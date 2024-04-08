@@ -123,8 +123,6 @@ def check_has_path_not_through_nodes(
     :rtype: `bool`
     """
     if source_node == target_node:
-        if source_node in nodes_to_avoid:
-            return False
         return True
     if not nx.has_path(graph, source_node, target_node):
         return False
