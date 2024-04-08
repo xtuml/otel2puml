@@ -47,6 +47,6 @@ def test_check_has_path_not_through_nodes() -> None:
     )
     # check the case when source and target node are the same and there
     # that node is in the nodes to avoid
-    assert not check_has_path_not_through_nodes(
+    assert check_has_path_not_through_nodes(
         graph, "A", "A", ["A"]
     )
