@@ -207,7 +207,10 @@ class Node:
             logic_list = self.outgoing_logic
 
         if logic_tree.label is not None:
-            if logic_tree.label not in event_node_map:
+            if (
+                logic_tree.label not in event_node_map
+                and logic_tree.label != self.event_type
+            ):
                 node_id = str(uuid4())
                 node_to_add = Node(
                     data=node_id,

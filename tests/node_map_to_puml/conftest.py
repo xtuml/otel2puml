@@ -232,13 +232,10 @@ def process_tree_with_BRANCH(
         ProcessTree: The process tree with the BRANCH operator.
 
     """
-    children = []
-    for _, event_type in uids_and_event_types[1:]:
-        children.append(ProcessTree(label=event_type))
 
     process_tree = ProcessTree(
         operator=PUMLEvent.BRANCH,
-        children=[ProcessTree(label="A", children=children)],
+        children=[ProcessTree(label="A")],
     )
     return process_tree
 

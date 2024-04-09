@@ -304,39 +304,86 @@ class TestNode:
     ) -> None:
         """Test the load_logic_into_list method for a branch event."""
 
-        node = Node(
-            uid="A", event_type="A", outgoing=[Node(uid="B", event_type="B")]
-        )
         for direction in ["incoming", "outgoing"]:
+            node = Node(
+                uid="A", event_type="A"
+            )
+            getattr(node, direction).append(Node(uid="B", event_type="B"))
+
             node.load_logic_into_list(process_tree_with_BRANCH, direction)
-            assert len(node.event_types) > 0
+
+            assert len(node.event_types) == 1
             assert PUMLEvent.BRANCH in node.event_types
 
+            match direction:
+                case "incoming":
+                    assert len(node.incoming) == 1
+                    assert node.incoming[0].uid == "B"
+                case "outgoing":
+                    assert len(node.outgoing) == 1
+                    assert node.outgoing[0].uid == "B"
 
-def test_load_logic_into_list_branch_plus_xor(
-    process_tree_with_BRANCH_plus_XOR: ProcessTree,
-    node_for_BRANCH_plus_XOR: Node,
-) -> None:
-    """
-    Test the load_logic_into_list method for a branch with a nested xor event.
-    """
+    def test_load_logic_into_list_branch_plus_xor(
+        self,
+        process_tree_with_BRANCH_plus_XOR: ProcessTree,
+        node_for_BRANCH_plus_XOR: Node,
+    ) -> None:
+        """
+        Test the load_logic_into_list method for a branch with a nested xor
+            event.
+        """
 
-    node = node_for_BRANCH_plus_XOR
+        node = node_for_BRANCH_plus_XOR
 
-    direction = "outgoing"
-    node.load_logic_into_list(process_tree_with_BRANCH_plus_XOR, direction)
-    assert len(node.event_types) == 1
-    assert PUMLEvent.BRANCH in node.event_types
-    assert len(node.outgoing_logic) == 1
-    assert len(node.outgoing) == 2
-    assert (
-        len([outgoing for outgoing in node.outgoing if outgoing.uid == "uid2"])
-        == 1
-    )
-    assert (
-        len([outgoing for outgoing in node.outgoing if outgoing.uid == "uid3"])
-        == 1
-    )
+        direction = "outgoing"
+        node.load_logic_into_list(process_tree_with_BRANCH_plus_XOR, direction)
+        assert len(node.event_types) == 1
+        assert PUMLEvent.BRANCH in node.event_types
+        assert len(node.outgoing_logic) == 1
+        assert node.outgoing_logic[0].operator == "XOR"
+        assert len(node.outgoing_logic[0].outgoing_logic) == 2
+        assert (
+            len(
+                [
+                    outgoing
+                    for outgoing in node.outgoing_logic[0].outgoing
+                    if outgoing.uid == "uid2"
+                ]
+            )
+            == 1
+        )
+        assert (
+            len(
+                [
+                    outgoing
+                    for outgoing in node.outgoing_logic[0].outgoing
+                    if outgoing.uid == "uid3"
+                ]
+            )
+            == 1
+        )
+
+        assert len(node.outgoing) == 2
+        assert (
+            len(
+                [
+                    outgoing
+                    for outgoing in node.outgoing
+                    if outgoing.uid == "uid2"
+                ]
+            )
+            == 1
+        )
+        assert (
+            len(
+                [
+                    outgoing
+                    for outgoing in node.outgoing
+                    if outgoing.uid == "uid3"
+                ]
+            )
+            == 1
+        )
 
     @staticmethod
     def test_traverse_logic():
