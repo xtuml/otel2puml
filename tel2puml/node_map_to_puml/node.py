@@ -8,7 +8,10 @@ from networkx import DiGraph, topological_sort, has_path
 from pm4py import ProcessTree
 from pm4py.objects.process_tree.obj import Operator
 
-from tel2puml.pipelines.logic_detection_pipeline import Event
+from tel2puml.pipelines.logic_detection_pipeline import (
+    Event,
+    Operator as Logic_operator,
+)
 from tel2puml.puml_graph.graph import (
     PUMLEventNode,
     PUMLGraph,
@@ -59,6 +62,7 @@ class Node:
         incoming_logic: list["Node"] | None = None,
         outgoing_logic: list["Node"] | None = None,
         is_stub: bool = False,
+        event_types: set["PUMLEvent"] | None = None,
     ) -> None:
         """Constructor method."""
         self.data = data if data is not None else operator
@@ -73,6 +77,8 @@ class Node:
         self.operator = operator
         self.event_type = event_type
         self.is_stub = is_stub
+
+        self.event_types = set() if event_types is None else event_types
 
         self.branch_enum = ["AND", "OR", "XOR", "LOOP", "BRANCH"]
 
@@ -184,12 +190,27 @@ class Node:
         :param direction: The direction to load the logic.
         :type direction: `Literal`[`"incoming"`, `"outgoing"`]
         """
+        if (
+            logic_tree.label is None
+            and logic_tree.operator == Logic_operator.BRANCH
+        ):
+            self.event_types.add(PUMLEvent.BRANCH)
+            for child in logic_tree.children:
+                self._load_logic_into_logic_list(
+                    child, event_node_map, direction, root_node
+                )
+            return
+
         if direction == "incoming":
             logic_list = self.incoming_logic
         else:
             logic_list = self.outgoing_logic
+
         if logic_tree.label is not None:
-            if logic_tree.label not in event_node_map:
+            if (
+                logic_tree.label not in event_node_map
+                and logic_tree.label != self.event_type
+            ):
                 node_id = str(uuid4())
                 node_to_add = Node(
                     data=node_id,
@@ -197,6 +218,7 @@ class Node:
                     event_type=logic_tree.label,
                     is_stub=True,
                 )
+
                 # Add the node to the appropriate node list
                 getattr(root_node, direction).append(node_to_add)
                 # Add the node to the event node map
@@ -206,6 +228,7 @@ class Node:
                     f"The stub node has:\nEvent type: {logic_tree.label}\n"
                     f"Node ID: {node_id}"
                 )
+
             # Add the node to the logic list and the appropriate node list if
             # the operator is a logic node
             if self.operator is not None:
@@ -213,6 +236,7 @@ class Node:
                     event_node_map[logic_tree.label]
                 )
                 logic_list.append(event_node_map[logic_tree.label])
+
         elif logic_tree.operator == Operator.SEQUENCE:
             for child in logic_tree.children:
                 self._load_logic_into_logic_list(
@@ -287,11 +311,7 @@ class Node:
             if node.operator is None:
                 nodes.append(node)
             else:
-                nodes.extend(
-                    node.traverse_logic(
-                        direction
-                    )
-                )
+                nodes.extend(node.traverse_logic(direction))
         return nodes
 
     def get_puml_event_types(self) -> tuple[PUMLEvent] | None:
@@ -460,11 +480,12 @@ class LogicBlockHolder:
     :param logic_node: The logic node of the logic block.
     :type logic_node: :class:`Node`
     """
+
     def __init__(
         self,
         start_node: PUMLOperatorNode,
         end_node: PUMLOperatorNode,
-        logic_node: Node
+        logic_node: Node,
     ) -> None:
         """Constructor method."""
         self.start_node = start_node
@@ -499,9 +520,7 @@ def create_puml_graph_from_node_class_graph(
     """
     head_node: Node = list(topological_sort(node_class_graph))[0]
     puml_graph = PUMLGraph()
-    previous_puml_node = puml_graph.create_event_node(
-        head_node.event_type
-    )
+    previous_puml_node = puml_graph.create_event_node(head_node.event_type)
     previous_node_class: Node = head_node
     logic_list: list[LogicBlockHolder] = []
     while True:
@@ -526,16 +545,13 @@ def create_puml_graph_from_node_class_graph(
                 # continue
                 if next_node_class is None:
                     kill_node = puml_graph.create_kill_node()
-                    puml_graph.add_edge(
-                        previous_puml_node,
-                        kill_node
-                    )
+                    puml_graph.add_edge(previous_puml_node, kill_node)
                     previous_puml_node, previous_node_class = (
                         handle_reach_logic_merge_point(
                             puml_graph,
                             logic_list,
                             kill_node,
-                            previous_node_class
+                            previous_node_class,
                         )
                     )
                     continue
@@ -550,7 +566,7 @@ def create_puml_graph_from_node_class_graph(
                             puml_graph,
                             logic_list,
                             previous_puml_node,
-                            previous_node_class
+                            previous_node_class,
                         )
                     )
                     continue
@@ -559,19 +575,14 @@ def create_puml_graph_from_node_class_graph(
             # handle the next node if it there is just a straight line sequence
             previous_puml_node, previous_node_class = (
                 update_puml_graph_with_event_node(
-                    puml_graph,
-                    next_node_class,
-                    previous_puml_node
+                    puml_graph, next_node_class, previous_puml_node
                 )
             )
         else:
             # handle the case where there is an immediately following logic
             # node or a logic node as the previous node class
             previous_puml_node, previous_node_class = handle_logic_node_cases(
-                puml_graph,
-                logic_list,
-                previous_puml_node,
-                previous_node_class
+                puml_graph, logic_list, previous_puml_node, previous_node_class
             )
     return puml_graph
 
@@ -604,31 +615,20 @@ def handle_logic_node_cases(
     else:
         logic_node = previous_node_class
     # create the PUMLOperator node pairs and add them to the graph
-    start_operator, end_operator = (
-        puml_graph.create_operator_node_pair(
-            logic_node.get_operator_type()
-        )
+    start_operator, end_operator = puml_graph.create_operator_node_pair(
+        logic_node.get_operator_type()
     )
     # create and add the logic block holder to the logic list
     logic_list.append(
-        LogicBlockHolder(
-            start_operator,
-            end_operator,
-            logic_node
-        )
+        LogicBlockHolder(start_operator, end_operator, logic_node)
     )
     # add the edge between the previous PUMLNode and the start node
     # of the PUMLOperatorNode pair
-    puml_graph.add_edge(
-        previous_puml_node,
-        start_operator
-    )
+    puml_graph.add_edge(previous_puml_node, start_operator)
     # handle the next path in the logic list and return updated previous puml
     # node and node class
     return handle_logic_list_next_path(
-        puml_graph,
-        logic_list,
-        previous_node_class
+        puml_graph, logic_list, previous_node_class
     )
 
 
@@ -660,12 +660,8 @@ def handle_reach_logic_merge_point(
     )
     # handle the next path in the logic list and return updated previous puml
     # node and node class
-    previous_puml_node, previous_node_class = (
-        handle_logic_list_next_path(
-            puml_graph,
-            logic_list,
-            previous_node_class
-        )
+    previous_puml_node, previous_node_class = handle_logic_list_next_path(
+        puml_graph, logic_list, previous_node_class
     )
     # return the updated previous puml node and node class
     return previous_puml_node, previous_node_class
@@ -709,9 +705,7 @@ def handle_logic_list_next_path(
     else:
         previous_puml_node, previous_node_class = (
             update_puml_graph_with_event_node(
-                puml_graph,
-                next_node_class,
-                logic_list[-1].start_node
+                puml_graph, next_node_class, logic_list[-1].start_node
             )
         )
     return previous_puml_node, previous_node_class
@@ -742,13 +736,9 @@ def update_puml_graph_with_event_node(
             f"Node event type is not set for node with uid {event_node.uid}"
         )
     next_puml_node = puml_graph.create_event_node(
-        event_node.event_type,
-        event_node.get_puml_event_types()
+        event_node.event_type, event_node.get_puml_event_types()
     )
-    puml_graph.add_edge(
-        previous_puml_node,
-        next_puml_node
-    )
+    puml_graph.add_edge(previous_puml_node, next_puml_node)
     return next_puml_node, event_node
 
 
@@ -774,9 +764,7 @@ def check_has_different_path_to_logic_node(
     # which will not be logic nodes. Loop over these nodes and check if there
     # is a path from the node to the logic node that is not the current path of
     # the logic block holder
-    for path_node in logic_block_holder.logic_node.traverse_logic(
-        "outgoing"
-    ):
+    for path_node in logic_block_holder.logic_node.traverse_logic("outgoing"):
         if path_node == logic_block_holder.current_path:
             continue
         if has_path(node_class_graph, path_node, node):

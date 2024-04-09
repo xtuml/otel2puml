@@ -1,11 +1,15 @@
 """Configuration for the tests in the node_map_to_puml directory."""
+
 from copy import deepcopy
 
 import pytest
 from pm4py import ProcessTree
 from pm4py.objects.process_tree.obj import Operator
 
-from tel2puml.pipelines.logic_detection_pipeline import Event
+from tel2puml.pipelines.logic_detection_pipeline import (
+    Event,
+    Operator as Logic_operator
+)
 from tel2puml.node_map_to_puml.node import Node
 
 
@@ -213,3 +217,79 @@ def node_map(
         node.update_node_list_with_nodes(nodes, "outgoing")
         node_map[event_type] = [node]
     return node_map
+
+
+@pytest.fixture
+def process_tree_with_BRANCH(
+    uids_and_event_types: list[tuple[str, str]],
+) -> ProcessTree:
+    """
+    Creates a process tree with a BRANCH operator.
+
+    Args:
+        uids_and_event_types (list[tuple[str, str]]): A list of tuples
+            containing uids and event types.
+
+    Returns:
+        ProcessTree: The process tree with the BRANCH operator.
+
+    """
+
+    process_tree = ProcessTree(
+        operator=Logic_operator.BRANCH,
+        children=[ProcessTree(label="A")],
+    )
+    return process_tree
+
+
+@pytest.fixture
+def process_tree_with_BRANCH_plus_XOR(
+    uids_and_event_types: list[tuple[str, str]],
+) -> ProcessTree:
+    """
+    Creates a ProcessTree node representing a branch in the logic tree.
+
+    Args:
+        event_node_map (dict[str, list[Node]]): A dictionary mapping event
+            names to lists of nodes.
+
+    Returns:
+        ProcessTree: The ProcessTree node representing the branch.
+    """
+
+    xor_children = []
+    for _, event_type in uids_and_event_types[1:]:
+        xor_children.append(ProcessTree(label=event_type))
+
+    process_tree = ProcessTree(
+        operator=Logic_operator.BRANCH,
+        children=[
+            ProcessTree(operator=Operator.XOR, children=xor_children),
+        ],
+    )
+    return process_tree
+
+
+@pytest.fixture
+def node_for_BRANCH_plus_XOR(
+    uids_and_event_types: list[tuple[str, str]],
+) -> Node:
+    """
+    Creates a Node object representing a branch in the logic tree.
+
+    Args:
+        event_node_map (dict[str, list[Node]]): A dictionary mapping event
+            names to lists of nodes.
+
+    Returns:
+        Node: The Node object representing the branch.
+    """
+    node = Node(
+        uid=uids_and_event_types[0][0], event_type=uids_and_event_types[0][1]
+    )
+    for uid, event_type in uids_and_event_types[1:]:
+        node.update_node_list_with_nodes(
+            [Node(uid=uid, event_type=event_type, incoming=[node])],
+            "outgoing",
+        )
+    return node
