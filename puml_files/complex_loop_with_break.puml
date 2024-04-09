@@ -1,0 +1,23 @@
+@startuml
+partition "complex_loop_with_break" {
+    group "complex_loop_with_break"
+        #green:A;
+        repeat
+            :B;
+            if (XOR) then (true)
+                repeat
+                    :C;
+                repeat while
+                :D;
+                break
+            else (false)
+                :E;
+                repeat
+                    :F;
+                repeat while
+            endif
+        repeat while
+        #red:G; 
+    end group
+}
+@enduml
