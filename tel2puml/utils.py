@@ -1,7 +1,7 @@
 """Utils for the tel2puml package."""
 
 from itertools import permutations
-from typing import Optional, Generator, Any, TypeVar
+from typing import Optional, Generator, Any, TypeVar, Iterable, Hashable
 
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -100,3 +100,58 @@ def get_graphviz_plot(
         edge_color="C0",
     )
     return fig
+
+
+def check_has_path_not_through_nodes(
+    graph: nx.DiGraph,
+    source_node: Hashable,
+    target_node: Hashable,
+    nodes_to_avoid: Iterable[Hashable]
+) -> bool:
+    """Checks if there is a path between the source and target nodes that
+    does not pass through any of the nodes to avoid.
+
+    :param source_node: The source node to check.
+    :type source_node: :class:`Hashable`
+    :param target_node: The target node to check.
+    :type target_node: :class:`Hashable`
+    :param nodes_to_avoid: The nodes to avoid.
+    :type nodes_to_avoid: `Iterable[:class:`Hashable`]`
+    :return: Whether there is a path between the source and target nodes
+    that does not pass through any
+    of the nodes to avoid.
+    :rtype: `bool`
+    """
+    if source_node == target_node:
+        return True
+    if not nx.has_path(graph, source_node, target_node):
+        return False
+    for node_to_avoid in nodes_to_avoid:
+        if (
+            nx.has_path(graph, source_node, node_to_avoid)
+        ) and (
+            nx.has_path(graph, node_to_avoid, target_node)
+        ):
+            return False
+    return True
+
+
+def check_has_path_between_all_nodes(
+    graph: nx.DiGraph, source_nodes: Iterable[Hashable],
+    target_nodes: Iterable[Hashable]
+) -> bool:
+    """Checks if there is a path between all source and target nodes.
+
+    :param source_nodes: The source nodes to check.
+    :type source_nodes: `Iterable[:class:`Hashable`]`
+    :param target_nodes: The target nodes to check.
+    :type target_nodes: `Iterable[:class:`Hashable`]`
+    :rtype: `bool`
+    """
+    for source_node in source_nodes:
+        for target_node in target_nodes:
+            if source_node == target_node:
+                continue
+            if not nx.has_path(graph, source_node, target_node):
+                return False
+    return True

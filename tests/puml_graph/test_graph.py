@@ -502,3 +502,186 @@ class TestPUMLGraph:
         assert check_networkx_graph_equivalence(
             actual_graph, expected_graph
         )
+
+    @staticmethod
+    def test_add_graph_node_to_set_from_reference(
+        puml_graph: tuple[PUMLGraph, dict[tuple[str, int], PUMLEventNode]],
+    ) -> None:
+        """Tests the add_graph_node_to_set_from_reference method."""
+        graph, event_nodes = puml_graph
+        node_set = set()
+        # test case where node_ref is in event_nodes
+        graph.add_graph_node_to_set_from_reference(
+            node_set=node_set, node_ref="q0"
+        )
+        assert len(node_set) == 1
+        assert event_nodes[("A", 0)] in node_set
+        # test case where two nodes have same node ref
+        graph.add_graph_node_to_set_from_reference(
+            node_set=node_set, node_ref="q1"
+        )
+        assert len(node_set) == 3
+        for i in range(2):
+            assert event_nodes[("B", i)] in node_set
+        # test case where node_ref is not in event_nodes
+        with pytest.raises(KeyError):
+            graph.add_graph_node_to_set_from_reference(
+                node_set=node_set, node_ref="q9"
+            )
+
+    @staticmethod
+    def test_replace_subgraph_node_from_start_and_end_nodes() -> None:
+        """Tests the replace_subgraph_node_from_start_and_end_nodes method."""
+        # test case where start and end nodes are the same
+        graph = PUMLGraph()
+        A = graph.create_event_node("A")
+        B = graph.create_event_node("B")
+        C = graph.create_event_node("C")
+        graph.add_edge(A, B)
+        graph.add_edge(B, C)
+        # test case where start and end nodes are the same
+        sub_graph_node = graph.replace_subgraph_node_from_start_and_end_nodes(
+            B, B, "sub_graph_node"
+        )
+        expected_graph_nodes = [A, sub_graph_node, C]
+        expected_graph_edges = [(A, sub_graph_node), (sub_graph_node, C)]
+        assert len(graph.nodes) == 3
+        assert len(graph.edges) == 2
+        for node in graph.nodes:
+            assert node in expected_graph_nodes
+            expected_graph_nodes.remove(node)
+        assert len(expected_graph_nodes) == 0
+        for edge in graph.edges:
+            assert edge in expected_graph_edges
+            expected_graph_edges.remove(edge)
+        assert len(expected_graph_edges) == 0
+        assert len(sub_graph_node.sub_graph.nodes) == 1
+        assert B in sub_graph_node.sub_graph.nodes
+        assert len(sub_graph_node.sub_graph.edges) == 0
+        # test case where start node has no incoming edges
+        graph = PUMLGraph()
+        A = graph.create_event_node("A")
+        B = graph.create_event_node("B")
+        C = graph.create_event_node("C")
+        graph.add_edge(A, B)
+        graph.add_edge(B, C)
+        sub_graph_node = (
+            graph.replace_subgraph_node_from_start_and_end_nodes(
+                A, B, "sub_graph_node"
+            )
+        )
+        expected_graph_nodes = [sub_graph_node, C]
+        expected_graph_edges = [(sub_graph_node, C)]
+        assert len(graph.nodes) == 2
+        assert len(graph.edges) == 1
+        for node in graph.nodes:
+            assert node in expected_graph_nodes
+            expected_graph_nodes.remove(node)
+        assert len(expected_graph_nodes) == 0
+        for edge in graph.edges:
+            assert edge in expected_graph_edges
+            expected_graph_edges.remove(edge)
+        assert len(expected_graph_edges) == 0
+        assert len(sub_graph_node.sub_graph.nodes) == 2
+        assert (
+            A in sub_graph_node.sub_graph.nodes
+            and B in sub_graph_node.sub_graph.nodes
+        )
+        assert len(sub_graph_node.sub_graph.edges) == 1
+        assert (
+            (A, B) in sub_graph_node.sub_graph.edges
+        )
+        # test case where end node has no outgoing edges
+        graph = PUMLGraph()
+        A = graph.create_event_node("A")
+        B = graph.create_event_node("B")
+        C = graph.create_event_node("C")
+        graph.add_edge(A, B)
+        graph.add_edge(B, C)
+        sub_graph_node = (
+            graph.replace_subgraph_node_from_start_and_end_nodes(
+                B, C, "sub_graph_node"
+            )
+        )
+        expected_graph_nodes = [sub_graph_node, A]
+        expected_graph_edges = [(A, sub_graph_node)]
+        assert len(graph.nodes) == 2
+        assert len(graph.edges) == 1
+        for node in graph.nodes:
+            assert node in expected_graph_nodes
+            expected_graph_nodes.remove(node)
+        assert len(expected_graph_nodes) == 0
+        for edge in graph.edges:
+            assert edge in expected_graph_edges
+            expected_graph_edges.remove(edge)
+        assert len(expected_graph_edges) == 0
+        assert len(sub_graph_node.sub_graph.nodes) == 2
+        assert (
+            B in sub_graph_node.sub_graph.nodes
+            and C in sub_graph_node.sub_graph.nodes
+        )
+        assert len(sub_graph_node.sub_graph.edges) == 1
+        assert (
+            (B, C) in sub_graph_node.sub_graph.edges
+        )
+        # setup for next tests
+        graph = PUMLGraph()
+        A = graph.create_event_node("A")
+        B = graph.create_event_node("B")
+        C = graph.create_event_node("C")
+        D = graph.create_event_node("D")
+        E = graph.create_event_node("E")
+        F = graph.create_event_node("F")
+        graph.add_edge(A, C)
+        graph.add_edge(B, C)
+        graph.add_edge(C, D)
+        graph.add_edge(D, E)
+        graph.add_edge(D, F)
+        # test raises error when there is more than one incoming edge to start
+        # node
+        with pytest.raises(RuntimeError) as exc_info:
+            graph.replace_subgraph_node_from_start_and_end_nodes(
+                C, C, "sub_graph_node"
+            )
+        assert str(exc_info.value) == (
+            "Start node has more than one incoming edge"
+        )
+        # test raises and error when more than one outgoing edge from end node
+        with pytest.raises(RuntimeError) as exc_info:
+            graph.replace_subgraph_node_from_start_and_end_nodes(
+                D, D, "sub_graph_node"
+            )
+        assert str(exc_info.value) == (
+            "End node has more than one outgoing edge"
+        )
+        # test case where start node has no incoming edges and end node has no
+        # outgoing edges
+        with pytest.raises(RuntimeError) as exc_info:
+            graph.replace_subgraph_node_from_start_and_end_nodes(
+                A, F, "sub_graph_node"
+            )
+        assert str(exc_info.value) == (
+            "Start and end nodes have no incoming or outgoing edges and "
+            "there will be no subgraph to create"
+        )
+        # test case in which start and end nodes do not disconnect the graph
+        graph = PUMLGraph()
+        A = graph.create_event_node("A")
+        B = graph.create_event_node("B")
+        C = graph.create_event_node("C")
+        D = graph.create_event_node("D")
+        E = graph.create_event_node("E")
+        graph.add_edge(A, B)
+        graph.add_edge(B, C)
+        graph.add_edge(C, D)
+        graph.add_edge(D, E)
+        graph.add_edge(A, C)
+        graph.add_edge(C, E)
+        with pytest.raises(RuntimeError) as exc_info:
+            graph.replace_subgraph_node_from_start_and_end_nodes(
+                B, D, "sub_graph_node"
+            )
+        assert str(exc_info.value) == (
+            "Graph is not disconnected after removing start node in edges "
+            "and end node out edges so there is no subgraph to create"
+        )
