@@ -1,4 +1,5 @@
 """Configuration for the tests in the node_map_to_puml directory."""
+
 from copy import deepcopy
 
 import pytest
@@ -217,29 +218,35 @@ def node_map(
 
 
 @pytest.fixture
-def logic_tree_XOR(event_node_map: dict[str, list[Node]]) -> ProcessTree:
+def process_tree_with_BRANCH(
+    uids_and_event_types: list[tuple[str, str]],
+) -> ProcessTree:
     """
-    Creates a logic tree with XOR operator.
+    Creates a process tree with a BRANCH operator.
 
     Args:
-        event_node_map (dict[str, list[Node]]): A dictionary mapping event
-            names to lists of nodes.
+        uids_and_event_types (list[tuple[str, str]]): A list of tuples
+            containing uids and event types.
 
     Returns:
-        ProcessTree: The logic tree with XOR operator.
+        ProcessTree: The process tree with the BRANCH operator.
+
     """
-    return ProcessTree(
-        operator=Operator.XOR,
-        parent=event_node_map["A"],
-        children=[
-            ProcessTree(label=event_node_map["B"].data),
-            ProcessTree(label=event_node_map["C"].data),
-        ],
+    children = []
+    for _, event_type in uids_and_event_types[1:]:
+        children.append(ProcessTree(label=event_type))
+
+    process_tree = ProcessTree(
+        operator=PUMLEvent.BRANCH,
+        children=[ProcessTree(label="A", children=children)],
     )
+    return process_tree
 
 
 @pytest.fixture
-def logic_tree_BRANCH(event_node_map: dict[str, list[Node]]) -> ProcessTree:
+def process_tree_with_BRANCH_plus_XOR(
+    uids_and_event_types: list[tuple[str, str]],
+) -> ProcessTree:
     """
     Creates a ProcessTree node representing a branch in the logic tree.
 
@@ -250,26 +257,40 @@ def logic_tree_BRANCH(event_node_map: dict[str, list[Node]]) -> ProcessTree:
     Returns:
         ProcessTree: The ProcessTree node representing the branch.
     """
-    return ProcessTree(
+
+    xor_children = []
+    for _, event_type in uids_and_event_types[1:]:
+        xor_children.append(ProcessTree(label=event_type))
+
+    process_tree = ProcessTree(
         operator=PUMLEvent.BRANCH,
-        parent=event_node_map["A"],
         children=[
-            ProcessTree(label=event_node_map["B"].data)
+            ProcessTree(operator=Operator.XOR, children=xor_children),
         ],
     )
+    return process_tree
 
 
 @pytest.fixture
-def event_node_map() -> dict[str, list[Node]]:
+def node_for_BRANCH_plus_XOR(
+    uids_and_event_types: list[tuple[str, str]],
+) -> Node:
     """
-    Creates a dictionary mapping event names to lists of nodes.
+    Creates a Node object representing a branch in the logic tree.
+
+    Args:
+        event_node_map (dict[str, list[Node]]): A dictionary mapping event
+            names to lists of nodes.
 
     Returns:
-        dict[str, list[Node]]: The dictionary mapping event names to lists of
-            nodes.
+        Node: The Node object representing the branch.
     """
-    return {
-        "A": Node(data="A", uid="A", event_type=set[Operator.SEQUENCE]),
-        "B": Node(data="B", uid="B", event_type=set[Operator.SEQUENCE]),
-        "C": Node(data="C", uid="C", event_type=set[Operator.SEQUENCE]),
-    }
+    node = Node(
+        uid=uids_and_event_types[0][0], event_type=uids_and_event_types[0][1]
+    )
+    for uid, event_type in uids_and_event_types[1:]:
+        node.update_node_list_with_nodes(
+            [Node(data=uid, event_type=event_type, incoming=[node])],
+            "outgoing",
+        )
+    return node

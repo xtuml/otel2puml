@@ -298,6 +298,46 @@ class TestNode:
             assert len(getattr(node, direction)) == 0
             assert len(getattr(node, f"{direction}_logic")) == 0
 
+    def test_load_logic_into_list_branch(
+        self,
+        process_tree_with_BRANCH: ProcessTree,
+    ) -> None:
+        """Test the load_logic_into_list method for a branch event."""
+
+        node = Node(
+            uid="A", event_type="A", outgoing=[Node(uid="B", event_type="B")]
+        )
+        for direction in ["incoming", "outgoing"]:
+            node.load_logic_into_list(process_tree_with_BRANCH, direction)
+            assert len(node.event_types) > 0
+            assert PUMLEvent.BRANCH in node.event_types
+
+
+def test_load_logic_into_list_branch_plus_xor(
+    process_tree_with_BRANCH_plus_XOR: ProcessTree,
+    node_for_BRANCH_plus_XOR: Node,
+) -> None:
+    """
+    Test the load_logic_into_list method for a branch with a nested xor event.
+    """
+
+    node = node_for_BRANCH_plus_XOR
+
+    direction = "outgoing"
+    node.load_logic_into_list(process_tree_with_BRANCH_plus_XOR, direction)
+    assert len(node.event_types) == 1
+    assert PUMLEvent.BRANCH in node.event_types
+    assert len(node.outgoing_logic) == 1
+    assert len(node.outgoing) == 2
+    assert (
+        len([outgoing for outgoing in node.outgoing if outgoing.uid == "uid2"])
+        == 1
+    )
+    assert (
+        len([outgoing for outgoing in node.outgoing if outgoing.uid == "uid3"])
+        == 1
+    )
+
     @staticmethod
     def test_traverse_logic():
         """Test the traverse_logic method."""
@@ -607,63 +647,3 @@ class TestCreatePumlGraphFromNodeClassGraph:
         self.load_and_check(
             "puml_files/bunched_XOR_with_event_ending_logic.puml"
         )
-
-
-class Test_load_logic_into_logic_list:
-    """
-    Test class for the _load_logic_into_logic_list method of a node.
-    """
-
-    def test_load_logic_into_logic_list_incoming(
-        self, event_node_map, logic_tree_XOR
-    ):
-        """
-        Test loading logic into the incoming logic list of a node.
-        """
-
-        # Set a node instance for testing
-        node_to_test = event_node_map["B"]
-        node_to_test._load_logic_into_logic_list(
-            logic_tree=logic_tree_XOR,
-            event_node_map=event_node_map,
-            direction="incoming",
-            root_node=node_to_test,
-        )
-
-        # Check if the logic is loaded correctly
-        assert len(node_to_test.incoming_logic) == 1
-        assert node_to_test.incoming_logic[0].data == "XOR"
-
-    def test_load_logic_into_logic_list_outgoing(
-        self, event_node_map, logic_tree_XOR
-    ):
-        """
-        Test loading logic into the outgoing logic list of a node.
-        """
-
-        # Select a node instance for testing
-        node_to_test = event_node_map["A"]
-        node_to_test._load_logic_into_logic_list(
-            logic_tree_XOR, event_node_map, "outgoing", node_to_test
-        )
-
-        # Check if the logic is loaded correctly
-        assert len(node_to_test.outgoing_logic) == 1
-        assert node_to_test.outgoing_logic[0].data == "XOR"
-
-    def test_load_logic_into_logic_list_branch(
-        self, event_node_map, logic_tree_BRANCH
-    ):
-        """
-        Test loading logic into the incoming logic list of a node with branch
-            event type.
-        """
-
-        # Set a node instance for testing
-        node_to_test = event_node_map["B"]
-        node_to_test._load_logic_into_logic_list(
-            logic_tree_BRANCH, event_node_map, "incoming", node_to_test
-        )
-
-        assert len(node_to_test.event_types) > 0
-        assert PUMLEvent.BRANCH in node_to_test.event_types

@@ -199,11 +199,13 @@ class Node:
                 self._load_logic_into_logic_list(
                     child, event_node_map, direction, root_node
                 )
+            return
 
         if direction == "incoming":
             logic_list = self.incoming_logic
         else:
             logic_list = self.outgoing_logic
+
         if logic_tree.label is not None:
             if logic_tree.label not in event_node_map:
                 node_id = str(uuid4())
@@ -213,6 +215,7 @@ class Node:
                     event_type=logic_tree.label,
                     is_stub=True,
                 )
+
                 # Add the node to the appropriate node list
                 getattr(root_node, direction).append(node_to_add)
                 # Add the node to the event node map
@@ -222,6 +225,7 @@ class Node:
                     f"The stub node has:\nEvent type: {logic_tree.label}\n"
                     f"Node ID: {node_id}"
                 )
+
             # Add the node to the logic list and the appropriate node list if
             # the operator is a logic node
             if self.operator is not None:
@@ -229,6 +233,7 @@ class Node:
                     event_node_map[logic_tree.label]
                 )
                 logic_list.append(event_node_map[logic_tree.label])
+
         elif logic_tree.operator == Operator.SEQUENCE:
             for child in logic_tree.children:
                 self._load_logic_into_logic_list(
