@@ -192,7 +192,7 @@ class Node:
         """
         if (
             logic_tree.label is None
-            and logic_tree.operator.value == Logic_operator.BRANCH.name
+            and logic_tree.operator == Logic_operator.BRANCH
         ):
             self.event_types.add(PUMLEvent.BRANCH)
             for child in logic_tree.children:

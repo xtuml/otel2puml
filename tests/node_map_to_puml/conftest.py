@@ -6,9 +6,11 @@ import pytest
 from pm4py import ProcessTree
 from pm4py.objects.process_tree.obj import Operator
 
-from tel2puml.pipelines.logic_detection_pipeline import Event
+from tel2puml.pipelines.logic_detection_pipeline import (
+    Event,
+    Operator as Logic_operator
+)
 from tel2puml.node_map_to_puml.node import Node
-from tel2puml.tel2puml_types import PUMLEvent
 
 
 @pytest.fixture
@@ -234,7 +236,7 @@ def process_tree_with_BRANCH(
     """
 
     process_tree = ProcessTree(
-        operator=PUMLEvent.BRANCH,
+        operator=Logic_operator.BRANCH,
         children=[ProcessTree(label="A")],
     )
     return process_tree
@@ -260,7 +262,7 @@ def process_tree_with_BRANCH_plus_XOR(
         xor_children.append(ProcessTree(label=event_type))
 
     process_tree = ProcessTree(
-        operator=PUMLEvent.BRANCH,
+        operator=Logic_operator.BRANCH,
         children=[
             ProcessTree(operator=Operator.XOR, children=xor_children),
         ],
