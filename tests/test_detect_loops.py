@@ -520,6 +520,29 @@ def test_detect_loops_from_complex_break_puml() -> None:
             assert sub_loop.break_points == set()
 
 
+def test_detect_loops_from_2_break_puml() -> None:
+    """Test the detect_loops function with a loop with 2 breaks puml
+    file"""
+    event_sequences = generate_test_data_event_sequences_from_puml(
+        "puml_files/loop_with_2_breaks.puml"
+    )
+    graph, references = audit_event_sequences_to_network_x(event_sequences)
+    loops = detect_loops(graph)
+    loop, = loops
+    assert set(loop.nodes) == _get_referenced_iterable(
+        {"B", "C", "D", "E", "F", "G", "H"}, references
+    )
+    assert loop.edges_to_remove == {
+        _get_referenced_iterable(("H", "B"), references)
+    }
+    assert loop.break_points == {
+        _get_referenced_iterable(("B", "C"), references),
+        _get_referenced_iterable(("D", "E"), references),
+    }
+
+    assert len(loop.sub_loops) == 0
+
+
 @pytest.mark.skip("audit_event_sequences_to_network_x fails for this puml")
 def test_detect_loops_from_break_loop_in_break_loop_puml() -> None:
     """Test the detect_loops function with a break loop in break loop puml
