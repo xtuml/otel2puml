@@ -290,7 +290,7 @@ def node_for_BRANCH_plus_XOR(
     )
     for uid, event_type in uids_and_event_types[1:]:
         node.update_node_list_with_nodes(
-            [Node(data=uid, event_type=event_type, incoming=[node])],
+            [Node(uid=uid, event_type=event_type, incoming=[node])],
             "outgoing",
         )
     return node
