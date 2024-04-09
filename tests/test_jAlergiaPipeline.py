@@ -121,6 +121,7 @@ class TestMarkovPipelineTest:
 
 
 class TestLoopRemoval:
+    """Test the loop removal functions."""
     def create_graph_with_loops(self) -> tuple[MultiDiGraph, Loop]:
         """Create a graph with loops for testing.
 
