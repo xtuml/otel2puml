@@ -11,7 +11,8 @@ class Loop:
         self.nodes = nodes
         self.sub_loops: list[Loop] = []
         self.edges_to_remove: set[tuple[str, str]] = set()
-        self.break_points: set[tuple[str, str]] = set()
+        self.break_edges: set[tuple[str, str]] = set()
+        self.break_points: set[str] = set()
         self.exit_point: Optional[str] = None
         self.merge_processed = False
 
@@ -64,14 +65,22 @@ class Loop:
             raise RuntimeError("Method not available after merge")
         self.edges_to_remove.add(edge)
 
-    def add_break_point(self, break_point: tuple[str, str]) -> None:
-        """Add a break point to the loop.
+    def add_break_edge(self, break_edge: tuple[str, str]) -> None:
+        """Add a break edge to the loop.
 
-        :param break_point: The break point to add.
+        :param break_point: The break edge to add.
         :type break_point: `tuple`[`str`, `str`]
         """
         if self.merge_processed:
             raise RuntimeError("Method not available after merge")
+        self.break_edges.add(break_edge)
+
+    def add_break_point(self, break_point: str) -> None:
+        """Add a break point to the loop.
+
+        :param break_point: The break point to add.
+        :type break_point: `str`
+        """
         self.break_points.add(break_point)
 
     @staticmethod
@@ -185,7 +194,7 @@ def add_loop_edges_to_remove_and_breaks(
                 }
 
                 for break_point in breaks:
-                    loop.add_break_point(break_point)
+                    loop.add_break_edge(break_point)
 
                 exit_points = set()
                 for u, v in edges_to_remove:
@@ -298,14 +307,16 @@ def update_break_points(
                 loop.nodes.append(node)
                 breaks_from_subloops.append(node)
 
-        for _, v in loop.break_points:
+        for _, v in loop.break_edges:
             paths = list(all_simple_paths(graph, v, loop.exit_point))
             if len(paths) == 1:
                 path, = paths
-                for node in path:
-                    if node not in loop.nodes and node != loop.exit_point:
+                for node in path[:-1]:
+                    if node not in loop.nodes:
                         loop.nodes.append(node)
                         breaks_from_subloops.append(node)
+                loop.add_break_point(path[-2])
+
             elif len(paths) > 1:
                 raise ValueError("Multiple paths")
             else:

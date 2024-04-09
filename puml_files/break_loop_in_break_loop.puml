@@ -12,9 +12,9 @@ partition "break_loop_in_break_loop" {
                         break
                     else (false)
                         :E;
-                        :F;
                     endif
                 repeat while
+                :F;
                 break
             else (false)
                 :G;

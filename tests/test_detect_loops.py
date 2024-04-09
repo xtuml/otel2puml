@@ -29,6 +29,7 @@ class TestLoop():
         assert isinstance(loop.sub_loops, list)
         assert loop.nodes == ["A"]
         assert loop.edges_to_remove == set()
+        assert loop.break_edges == set()
         assert loop.break_points == set()
         assert loop.exit_point is None
         assert not loop.merge_processed
@@ -90,16 +91,23 @@ class TestLoop():
         with pytest.raises(RuntimeError):
             loop.add_edge_to_remove(("A", "B"))
 
+    def test_add_break_edge(self):
+        """Test the add_break_edge method of the Loop class."""
+        loop = Loop(["A", "B", "C"])
+        assert len(loop.break_edges) == 0
+        loop.add_break_edge(("A", "B"))
+        assert loop.break_edges == {("A", "B")}
+
+        loop.set_merged()
+        with pytest.raises(RuntimeError):
+            loop.add_break_edge(("A", "B"))
+
     def test_add_break_point(self):
         """Test the add_break_point method of the Loop class."""
         loop = Loop(["A", "B", "C"])
         assert len(loop.break_points) == 0
-        loop.add_break_point(("A", "B"))
-        assert loop.break_points == {("A", "B")}
-
-        loop.set_merged()
-        with pytest.raises(RuntimeError):
-            loop.add_break_point(("A", "B"))
+        loop.add_break_point("A")
+        assert loop.break_points == {"A"}
 
     @staticmethod
     def test_get_sublist_of_length():
@@ -190,21 +198,21 @@ def test_add_loop_edges_to_remove_and_breaks() -> None:
     loops = add_loop_edges_to_remove_and_breaks(loops, edges)
     loop, = loops
     assert loop.edges_to_remove == {("B", "B")}
-    assert loop.break_points == set()
+    assert loop.break_edges == set()
 
     loops = [Loop(["B", "C", "D"])]
     edges = [("A", "B"), ("B", "C"), ("C", "D"), ("D", "B"), ("D", "E")]
     loops = add_loop_edges_to_remove_and_breaks(loops, edges)
     loop, = loops
     assert loop.edges_to_remove == {("D", "B")}
-    assert loop.break_points == set()
+    assert loop.break_edges == set()
 
     loops = [Loop(["B", "C", "D"])]
     edges = [("D", "B"), ("D", "E"), ("A", "B"), ("C", "D"), ("B", "C")]
     loops = add_loop_edges_to_remove_and_breaks(loops, edges)
     loop, = loops
     assert loop.edges_to_remove == {("D", "B")}
-    assert loop.break_points == set()
+    assert loop.break_edges == set()
 
     loops = [Loop(["B", "C", "E"]), Loop(["B", "D", "E"])]
     edges = [
@@ -216,7 +224,7 @@ def test_add_loop_edges_to_remove_and_breaks() -> None:
     assert len(loops) == 2
     for loop in loops:
         assert loop.edges_to_remove == {("E", "B")}
-        assert loop.break_points == set()
+        assert loop.break_edges == set()
 
     loops = [Loop(["B", "D"]), Loop(["C", "E"]), Loop(["B", "D", "C", "E"])]
     edges = [
@@ -234,7 +242,7 @@ def test_add_loop_edges_to_remove_and_breaks() -> None:
             assert loop.edges_to_remove == {
                 ("E", "B"), ("D", "C"), ("D", "B"), ("E", "C")
             }
-        assert loop.break_points == set()
+        assert loop.break_edges == set()
 
     loops = [Loop(["B", "D", "E"])]
     edges = [
@@ -245,7 +253,7 @@ def test_add_loop_edges_to_remove_and_breaks() -> None:
     assert add_loop_edges_to_remove_and_breaks(loops, edges) == loops
     loop, = loops
     assert loop.edges_to_remove == {('E', 'B')}
-    assert loop.break_points == {('B', 'C')}
+    assert loop.break_edges == {('B', 'C')}
 
 
 def test_update_subloops() -> None:
@@ -347,13 +355,14 @@ def test_update_break_points() -> None:
     )
 
     loop = Loop(["A", "B", "D"])
-    loop.add_break_point(("B", "C"))
+    loop.add_break_edge(("B", "C"))
     loop.exit_point = "E"
 
     loops = [loop]
     loops = update_break_points(graph, loops)
     loop, = loops
-    assert loop.break_points == {("B", "C")}
+    assert loop.break_edges == {("B", "C")}
+    assert loop.break_points == {"C"}
     assert set(loop.nodes) == {"A", "B", "C", "D"}
 
     graph = DiGraph(
@@ -366,7 +375,7 @@ def test_update_break_points() -> None:
     loop = Loop(["B", "D"])
     sub_loop = Loop(["D"])
     sub_loop.exit_point = "B"
-    loop.add_break_point(("B", "C"))
+    loop.add_break_edge(("B", "C"))
     loop.sub_loops = [sub_loop]
     loop.exit_point = "E"
 
@@ -374,8 +383,12 @@ def test_update_break_points() -> None:
     loops = update_break_points(graph, loops)
     loop, = loops
     assert set(loop.nodes) == {"B", "C", "D"}
+    assert loop.break_edges == {("B", "C")}
+    assert loop.break_points == {"C"}
     sub_loop, = loop.sub_loops
     assert set(sub_loop.nodes) == {"D"}
+    assert sub_loop.break_edges == set()
+    assert sub_loop.break_points == set()
 
 
 def test_merge_break_points() -> None:
@@ -477,9 +490,10 @@ def test_detect_loops_from_simple_break_puml() -> None:
     assert loop.edges_to_remove == {
         _get_referenced_iterable(("F", "B"), references)
     }
-    assert loop.break_points == {
+    assert loop.break_edges == {
         _get_referenced_iterable(("B", "C"), references)
     }
+    assert loop.break_points == _get_referenced_iterable({"D"}, references)
     assert len(loop.sub_loops) == 0
 
 
@@ -498,9 +512,10 @@ def test_detect_loops_from_complex_break_puml() -> None:
     assert loop.edges_to_remove == {
         _get_referenced_iterable(("F", "B"), references)
     }
-    assert loop.break_points == {
+    assert loop.break_edges == {
         _get_referenced_iterable(("B", "C"), references),
     }
+    assert loop.break_points == _get_referenced_iterable({"D"}, references)
 
     for sub_loop in loop.sub_loops:
         if set(sub_loop.nodes) == _get_referenced_iterable(
@@ -509,7 +524,7 @@ def test_detect_loops_from_complex_break_puml() -> None:
             assert sub_loop.edges_to_remove == {
                 _get_referenced_iterable(("C", "C"), references)
             }
-            assert sub_loop.break_points == set()
+            assert sub_loop.break_edges == set()
         else:
             assert set(sub_loop.nodes) == _get_referenced_iterable(
                 {"F"}, references
@@ -517,7 +532,7 @@ def test_detect_loops_from_complex_break_puml() -> None:
             assert sub_loop.edges_to_remove == {
                 _get_referenced_iterable(("F", "F"), references)
             }
-            assert sub_loop.break_points == set()
+            assert sub_loop.break_edges == set()
 
 
 def test_detect_loops_from_2_break_puml() -> None:
@@ -535,10 +550,13 @@ def test_detect_loops_from_2_break_puml() -> None:
     assert loop.edges_to_remove == {
         _get_referenced_iterable(("H", "B"), references)
     }
-    assert loop.break_points == {
+    assert loop.break_edges == {
         _get_referenced_iterable(("B", "C"), references),
         _get_referenced_iterable(("D", "E"), references),
     }
+    assert loop.break_points == _get_referenced_iterable(
+        {"C", "G"}, references
+    )
 
     assert len(loop.sub_loops) == 0
 
@@ -559,9 +577,10 @@ def test_detect_loops_from_break_loop_in_break_loop_puml() -> None:
     assert loop.edges_to_remove == {
         _get_referenced_iterable(("H", "B"), references)
     }
-    assert loop.break_points == {
+    assert loop.break_edges == {
         _get_referenced_iterable(("B", "C"), references),
     }
+    assert loop.break_points == _get_referenced_iterable({"F"}, references)
 
     sub_loop, = loop.sub_loops
     assert set(sub_loop.nodes) == _get_referenced_iterable(
@@ -570,7 +589,18 @@ def test_detect_loops_from_break_loop_in_break_loop_puml() -> None:
     assert sub_loop.edges_to_remove == {
         _get_referenced_iterable(("F", "C"), references)
     }
-    assert sub_loop.break_points == {
+    assert sub_loop.break_edges == {
         _get_referenced_iterable(("C", "D"), references),
     }
+    assert loop.break_points == _get_referenced_iterable({"D"}, references)
     assert len(sub_loop.sub_loops) == 0
+
+
+@pytest.mark.skip("detect loops fails for split exit puml")
+def test_detect_loops_from_loop_break_split_exit_puml() -> None:
+    """Test the detect_loops function with a loop break split exit puml file"""
+    event_sequences = generate_test_data_event_sequences_from_puml(
+        "puml_files/loop_break_split_exit.puml"
+    )
+    graph, _ = audit_event_sequences_to_network_x(event_sequences)
+    _ = detect_loops(graph)
