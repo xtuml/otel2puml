@@ -16,6 +16,7 @@ from tel2puml.read_uml_file import (
     get_event_list_from_puml, get_markov_sequence_lines_from_audit_event_stream
 )
 from tel2puml.tel2puml_types import PVEvent
+from tel2puml.detect_loops import Loop
 
 
 def process_puml_into_graphs(
@@ -130,6 +131,38 @@ def audit_event_sequences_to_network_x(
         )
     )
     return markov_lines_to_network_x(markov_lines)
+
+
+def remove_loop_data_from_graph(
+    graph: MultiDiGraph,
+    loops: list[Loop],
+) -> None:
+    """Removes the loop data from the given graph. Removes the indicated edges
+    and recursively removes the loop data from the sub loops.
+
+    :param graph: The graph to remove the loop data from
+    :type graph: :class:`MultiDiGraph`
+    :param loops: The loops used to remove the loop data from the graph
+    :type loops: `list`[:class:`Loop`]
+    """
+    for loop in loops:
+        remove_loop_edges_from_graph(graph, loop)
+        remove_loop_data_from_graph(graph, loop.sub_loops)
+
+
+def remove_loop_edges_from_graph(
+    graph: MultiDiGraph,
+    loop: Loop,
+) -> None:
+    """Removes the given loop's edges to remove from the given graph.
+
+    :param graph: The graph to remove the edges from
+    :type graph: :class:`MultiDiGraph`
+    :param loop: The loop containing the edges to remove
+    :type loop: :class:`Loop`
+    """
+    for edge in loop.edges_to_remove:
+        graph.remove_edge(*edge)
 
 
 if __name__ == "__main__":
