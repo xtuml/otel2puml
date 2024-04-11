@@ -1305,6 +1305,7 @@ def test_get_logic_from_and_under_or_puml_file() -> None:
 
 
 class TestLoopEdgeRemoval:
+    """Tests functionality for loop edge removal from Event class"""
     def get_loop_ref_and_events(
         self
     ) -> tuple[list[Loop], dict[str, str], dict[str, Event]]:

@@ -1,4 +1,16 @@
 """Main function to call test harness
+
+This module is the main entry point for the tel2puml package. It provides a
+command line interface to convert a folder of job json files or a list of job
+json files to a PlantUML sequence diagram file.
+
+Example:
+```bash
+    $ python -m tel2puml -fp /path/to/folder -o /path/to/output.puml
+    $ python -m tel2puml file1.json file2.json -o /path/to/output.puml
+    $ python -m tel2puml -fp /path/to/folder -o /path/to/output.puml \
+        -sn "My Sequence Diagram"
+```
 """
 import argparse
 from tel2puml.pv_to_puml import (

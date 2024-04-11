@@ -101,6 +101,13 @@ def pv_to_puml_file(
 def pv_job_file_to_event_sequence(
     file_path: str,
 ) -> list[PVEvent]:
+    """Reads a PV job json array file and returns the event sequence
+
+    :param file_path: The path to the PV job json file
+    :type file_path: `str`
+    :return: The event sequence
+    :rtype: `list`[:class:`PVEvent`]
+    """
     with open(file_path, "r", encoding="utf-8") as file:
         data = json.load(file)
     return data
@@ -109,6 +116,14 @@ def pv_job_file_to_event_sequence(
 def pv_job_files_to_event_sequence_streams(
     file_paths: list[str],
 ) -> Generator[list[PVEvent], Any, None]:
+    """Reads a list of PV job json array files and yields the event sequences
+    when iterated over
+
+    :param file_paths: The paths to the PV job json files
+    :type file_paths: `list`[`str`]
+    :return: A generator of event sequences
+    :rtype: `Generator`[`list`[:class:`PVEvent`], Any, None]
+    """
     for file_path in file_paths:
         yield pv_job_file_to_event_sequence(file_path)
 
@@ -116,6 +131,14 @@ def pv_job_files_to_event_sequence_streams(
 def pv_jobs_from_folder_to_event_sequence_streams(
     folder_path: str,
 ) -> Generator[list[PVEvent], Any, None]:
+    """Reads a folder of PV job json array files and yields the event sequences
+    when iterated over
+
+    :param folder_path: The path to the folder containing the PV job json files
+    :type folder_path: `str`
+    :return: A generator of event sequences
+    :rtype: `Generator`[`list`[:class:`PVEvent`], Any, None]
+    """
     for file_name in os.listdir(folder_path):
         if file_name.endswith(".json"):
             yield pv_job_file_to_event_sequence(
@@ -128,6 +151,16 @@ def pv_jobs_from_folder_to_puml_file(
     puml_file_path: str = "default.puml",
     puml_name: str = "default_name",
 ) -> None:
+    """Reads a folder of PV job json array files and writes the PlantUML
+    sequence diagram to a file
+
+    :param folder_path: The path to the folder containing the PV job json files
+    :type folder_path: `str`
+    :param puml_file_path: The path to save the PlantUML file to
+    :type puml_file_path: `str`
+    :param puml_name: The name of the PlantUML group to create
+    :type puml_name: `str`
+    """
     pv_stream = pv_jobs_from_folder_to_event_sequence_streams(folder_path)
     pv_to_puml_file(pv_stream, puml_file_path, puml_name)
 
@@ -137,5 +170,15 @@ def pv_jobs_from_files_to_puml_file(
     puml_file_path: str = "default.puml",
     puml_name: str = "default_name",
 ) -> None:
+    """Reads a list of PV job json array files and writes the PlantUML
+    sequence diagram to a file
+
+    :param file_paths: The paths to the PV job json files
+    :type file_paths: `list`[`str`]
+    :param puml_file_path: The path to save the PlantUML file to
+    :type puml_file_path: `str`
+    :param puml_name: The name of the PlantUML group to create
+    :type puml_name: `str`
+    """
     pv_stream = pv_job_files_to_event_sequence_streams(file_paths)
     pv_to_puml_file(pv_stream, puml_file_path, puml_name)
