@@ -160,4 +160,5 @@ cython_debug/
 #.idea/
 *.png
 events_list*
-outputs/*.dot
+outputs
+
