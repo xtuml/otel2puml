@@ -504,6 +504,25 @@ class TestPUMLGraph:
         )
 
     @staticmethod
+    def test_write_puml_string():
+        """Tests the write_uml_string method."""
+        graph = PUMLGraph()
+        event_node_1 = graph.create_event_node("event")
+        event_node_2 = graph.create_event_node("event")
+        graph.add_edge(event_node_1, event_node_2)
+        for tab_size in range(5):
+            assert graph.write_puml_string(tab_size=tab_size) == (
+                "@startuml\n" +
+                tab_size * " " + 'partition "default_name" ' + "{\n" +
+                2 * tab_size * " " + "group " + '"default_name"\n' +
+                3 * tab_size * " " + ":event;\n" +
+                3 * tab_size * " " + ":event;\n" +
+                2 * tab_size * " " + "end group\n"
+                + tab_size * " " + "}\n"
+                "@enduml"
+            )
+
+    @staticmethod
     def test_add_graph_node_to_set_from_reference(
         puml_graph: tuple[PUMLGraph, dict[tuple[str, int], PUMLEventNode]],
     ) -> None:
