@@ -3,6 +3,7 @@ from tel2puml.pv_to_puml import pv_to_puml_string
 from tel2puml.pipelines.data_creation import (
     generate_test_data_event_sequences_from_puml
 )
+from tel2puml.check_puml_equiv import check_puml_equivalence
 
 
 def test_pv_to_puml_string():
@@ -16,8 +17,26 @@ def test_pv_to_puml_string():
     with open(
         "puml_files/complicated_test.puml", "r", encoding="utf-8"
     ) as file:
-        expected_puml_lines = file.readlines()
-    puml_string_lines = puml_string.splitlines(keepends=True)
-    assert len(puml_string_lines) == len(expected_puml_lines)
-    assert puml_string_lines[0] == expected_puml_lines[0]
-    assert puml_string_lines[-1] == expected_puml_lines[-1]
+        expected_puml_string = file.read()
+    assert check_puml_equivalence(puml_string, expected_puml_string)
+    # test with a loop
+    test_data = generate_test_data_event_sequences_from_puml(
+        "puml_files/loop_ANDFork_a.puml"
+    )
+    puml_string = pv_to_puml_string(test_data)
+    with open(
+        "puml_files/loop_ANDFork_a.puml", "r", encoding="utf-8"
+    ) as file:
+        expected_puml_string = file.read()
+    assert check_puml_equivalence(puml_string, expected_puml_string)
+    # test with branch counts
+    test_data = generate_test_data_event_sequences_from_puml(
+        "puml_files/sequence_branch_counts.puml",
+        is_branch_puml=True
+    )
+    puml_string = pv_to_puml_string(test_data)
+    with open(
+        "puml_files/sequence_branch_counts.puml", "r", encoding="utf-8"
+    ) as file:
+        expected_puml_string = file.read()
+    assert check_puml_equivalence(puml_string, expected_puml_string)
