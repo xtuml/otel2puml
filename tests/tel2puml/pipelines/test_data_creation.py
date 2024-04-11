@@ -7,6 +7,7 @@ from tel2puml.pipelines.data_creation import (
     generate_valid_jobs_from_puml_file,
     generate_event_jsons,
     generate_test_data,
+    generate_test_data_event_sequences_from_puml
 )
 
 
@@ -129,6 +130,29 @@ def test_generate_test_data_template_all_paths_false_large_num_paths():
     assert sum(event_types_count.values()) == num_templates
     for prob in count_prob.values():
         assert 0.32 <= prob < 0.3466
+
+
+def test_generate_test_data_event_sequences_from_puml_branch_counts():
+    """tests for function generate_test_data_event_sequences_from_puml with
+    branch counts"""
+    input_puml_file = "puml_files/simple_branch_count.puml"
+    result = list(
+        generate_test_data_event_sequences_from_puml(
+            input_puml_file, is_branch_puml=True
+        )
+    )
+    # two sequences should be generated
+    assert len(result) == 2
+    # the sequences generated should have 2 or 3 events of type C, exclusively
+    expected_numbers_of_event_c = [2, 3]
+    for event_sequence in result:
+        num_c = 0
+        for event in event_sequence:
+            if event["eventType"] == "C":
+                num_c += 1
+        assert num_c in expected_numbers_of_event_c
+        expected_numbers_of_event_c.remove(num_c)
+    assert len(expected_numbers_of_event_c) == 0
 
 
 def test_puml_conversion_to_markov_chain():

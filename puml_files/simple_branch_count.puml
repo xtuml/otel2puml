@@ -1,0 +1,9 @@
+@startuml
+    partition "Branch_Counts" {
+        group "Branch_Counts"
+            :A;
+            :B,BCNT,user=B,name=BC1;
+            :C;
+        end group
+    }
+@enduml
