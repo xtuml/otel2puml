@@ -194,12 +194,13 @@ class Node:
             logic_tree.label is None
             and logic_tree.operator == Logic_operator.BRANCH
         ):
-            self.event_types.add(PUMLEvent.BRANCH)
-            for child in logic_tree.children:
-                self._load_logic_into_logic_list(
-                    child, event_node_map, direction, root_node
-                )
-            return
+            if direction == "outgoing":
+                root_node.event_types.add(PUMLEvent.BRANCH)
+                for child in logic_tree.children:
+                    self._load_logic_into_logic_list(
+                        child, event_node_map, direction, root_node
+                    )
+                return
 
         if direction == "incoming":
             logic_list = self.incoming_logic
@@ -321,6 +322,8 @@ class Node:
         :return: The PUML event types for the node.
         :rtype: `tuple`[:class:`PUMLEvent`] | `None`
         """
+        if self.event_types:
+            return tuple(self.event_types)
         return None
 
     def get_operator_type(self) -> PUMLOperator | None:
@@ -736,7 +739,8 @@ def update_puml_graph_with_event_node(
             f"Node event type is not set for node with uid {event_node.uid}"
         )
     next_puml_node = puml_graph.create_event_node(
-        event_node.event_type, event_node.get_puml_event_types()
+        event_node.event_type, event_node.get_puml_event_types(),
+        parent_graph_node=event_node.uid
     )
     puml_graph.add_edge(previous_puml_node, next_puml_node)
     return next_puml_node, event_node

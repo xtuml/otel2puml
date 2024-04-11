@@ -304,24 +304,18 @@ class TestNode:
     ) -> None:
         """Test the load_logic_into_list method for a branch event."""
 
-        for direction in ["incoming", "outgoing"]:
-            node = Node(
-                uid="A", event_type="A"
-            )
-            getattr(node, direction).append(Node(uid="B", event_type="B"))
+        node = Node(
+            uid="A", event_type="A"
+        )
+        getattr(node, "outgoing").append(Node(uid="B", event_type="B"))
 
-            node.load_logic_into_list(process_tree_with_BRANCH, direction)
+        node.load_logic_into_list(process_tree_with_BRANCH, "outgoing")
 
-            assert len(node.event_types) == 1
-            assert PUMLEvent.BRANCH in node.event_types
+        assert len(node.event_types) == 1
+        assert PUMLEvent.BRANCH in node.event_types
 
-            match direction:
-                case "incoming":
-                    assert len(node.incoming) == 1
-                    assert node.incoming[0].uid == "B"
-                case "outgoing":
-                    assert len(node.outgoing) == 1
-                    assert node.outgoing[0].uid == "B"
+        assert len(node.outgoing) == 1
+        assert node.outgoing[0].uid == "B"
 
     def test_load_logic_into_list_branch_plus_xor(
         self,

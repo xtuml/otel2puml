@@ -459,13 +459,17 @@ class PUMLGraph(DiGraph):
         )
         super().add_edge(start_node, end_node, **attrs)
 
-    def write_uml_blocks(self, indent: int = 0, tab_size: int = 4) -> str:
+    def write_uml_blocks(
+        self, indent: int = 0, tab_size: int = 4
+    ) -> list[str]:
         """Writes the PlantUML block for the graph.
 
         :param indent: The number of indents to be added to the block.
         :type indent: `int`
         :param tab_size: The size of the tab, defaults to 4.
         :type tab_size: `int`, optional
+        :return: The PlantUML blocks for the graph.
+        :rtype: `list[str]`
         """
         # get the head node of the graph
         head_node = list(topological_sort(self))[0]
@@ -482,6 +486,24 @@ class PUMLGraph(DiGraph):
             blocks.extend(node_block)
             indent += indent_diff * tab_size
         return blocks
+
+    def write_puml_string(
+        self,
+        name: str = "default_name",
+        tab_size: int = 4
+    ) -> str:
+        """Writes the PlantUML string for the graph.
+
+        :return: The PlantUML string for the graph.
+        :rtype: `str`
+        """
+        lines = [
+            "@startuml", tab_size * " " + f'partition "{name}" ' + "{",
+            2 * tab_size * " " + "group " + f'"{name}"',
+            *self.write_uml_blocks(indent=3 * tab_size, tab_size=tab_size),
+            2 * tab_size * " " + "end group", tab_size * " " + "}", "@enduml"
+        ]
+        return "\n".join(lines)
 
     @staticmethod
     def _order_nodes_from_dfs_successors_dict(
