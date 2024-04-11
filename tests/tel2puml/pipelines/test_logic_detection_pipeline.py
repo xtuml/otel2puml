@@ -649,6 +649,13 @@ class TestEvent:
         }
         _check_or_case(event)
 
+        event.event_sets = {
+            EventSet(["B", "C", "D"]),
+            EventSet(["B", "C"]),
+            EventSet(["B"]),
+        }
+        _check_or_case(event)
+
     @staticmethod
     def test_process_or_gates() -> None:
         """Tests for method process_or_gates"""
