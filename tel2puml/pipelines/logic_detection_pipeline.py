@@ -22,6 +22,7 @@ from test_event_generator.solutions.event_solution import EventSolution
 
 from tel2puml.utils import get_weighted_cover
 from tel2puml.tel2puml_types import PVEvent
+from tel2puml.detect_loops import Loop
 
 
 class Operator(Enum):
@@ -896,8 +897,8 @@ def get_graph_solutions_from_clustered_events(
 
 
 def remove_detected_loop_events(
-        mapping: dict[str, list[str]],
-        events: dict[str, Event]
+    mapping: dict[str, list[str]],
+    events: dict[str, Event]
 ) -> None:
     """This function removes the detected loop events from the events.
 
@@ -909,3 +910,47 @@ def remove_detected_loop_events(
     for event_type, loop_events in mapping.items():
         for loop_event in loop_events:
             events[event_type].remove_event_type_from_event_sets(loop_event)
+
+
+def get_loop_events_to_remove_mapping(
+    loops: list[Loop],
+    node_event_name_reference: dict[str, str],
+) -> dict[str, list[str]]:
+    """This function gets the mapping of event types to loop events to remove.
+
+    :param loops: The loops.
+    :type loops: `list`[:class:`Loop`]
+    :param node_event_name_reference: The node event name reference.
+    :type node_event_name_reference: `dict`[`str`, `str`]
+    :return: The mapping of event types to loop events to remove.
+    :rtype: `dict`[`str`, `list`[`str`]]
+    """
+    mapping: dict[str, list[str]] = {}
+    for loop in loops:
+        for node_from, node_to in loop.edges_to_remove:
+            event_from = node_event_name_reference[node_from]
+            event_to = node_event_name_reference[node_to]
+            if event_from not in mapping:
+                mapping[event_from] = []
+            mapping[event_from].append(event_to)
+    return mapping
+
+
+def remove_detected_loop_data_from_events(
+    loops: list[Loop],
+    events: dict[str, Event],
+    node_event_name_reference: dict[str, str],
+) -> None:
+    """This function removes the detected loop data from the events.
+
+    :param loops: The loops.
+    :type loops: `list`[:class:`Loop`]
+    :param events: The events.
+    :type events: `dict`[`str`, :class:`Event`]
+    :param node_event_name_reference: The node event name reference.
+    :type node_event_name_reference: `dict`[`str`, `str`]
+    """
+    loop_events_to_remove = get_loop_events_to_remove_mapping(
+        loops, node_event_name_reference
+    )
+    remove_detected_loop_events(loop_events_to_remove, events)
