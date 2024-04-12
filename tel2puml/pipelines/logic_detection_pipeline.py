@@ -456,17 +456,19 @@ class Event:
                 return
 
             updated_children = []
-            for children in (removed_tau_children, non_tau_children):
-                if len(children) == 1:
-                    updated_children.append(children[0])
-                else:
-                    updated_children.append(
-                        ProcessTree(
-                            Operator.PARALLEL,
-                            node,
-                            children,
-                        )
+
+            updated_children.extend(removed_tau_children)
+
+            if len(non_tau_children) == 1:
+                updated_children.append(non_tau_children[0])
+            else:
+                updated_children.append(
+                    ProcessTree(
+                        Operator.PARALLEL,
+                        node,
+                        non_tau_children,
                     )
+                )
 
             node.children = updated_children
 
