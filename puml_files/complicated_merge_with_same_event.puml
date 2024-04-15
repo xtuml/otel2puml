@@ -1,0 +1,24 @@
+@startuml
+    partition "complicated_merge" {
+        group "complicated_merge"
+            :A;
+            switch (XOR)
+                case ("case")
+                    :B;
+                    :E;
+                case ("")
+                    :C;
+                    :D;
+                    switch (XOR)
+                        case ("")
+                            :E;
+                        case ("")
+                            :F;
+                    endswitch
+                case ("")
+                    :G;
+            endswitch
+            :H;
+        end group
+    }
+@enduml
