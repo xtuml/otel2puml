@@ -19,6 +19,7 @@ from tel2puml.puml_graph.graph import (
     PUMLNode,
 )
 from tel2puml.tel2puml_types import PUMLEvent, PUMLOperator
+from tel2puml.utils import check_has_path_not_through_nodes
 
 
 operator_name_map = {
@@ -561,7 +562,7 @@ def create_puml_graph_from_node_class_graph(
                 # check if the next node has an alternative path back to the
                 # logic node and then handle a merge into the end of the logic
                 # block and continue
-                elif check_has_different_path_to_logic_node(
+                elif check_is_merge_node_for_current_path(
                     next_node_class, logic_list[-1], node_class_graph
                 ):
                     previous_puml_node, previous_node_class = (
@@ -746,13 +747,16 @@ def update_puml_graph_with_event_node(
     return next_puml_node, event_node
 
 
-def check_has_different_path_to_logic_node(
+def check_is_merge_node_for_current_path(
     node: Node,
     logic_block_holder: LogicBlockHolder,
     node_class_graph: DiGraph,
 ) -> bool:
     """Checks if a node has a different path to the logic node other than the
-    current path of the logic block.
+    current path of the logic block. Subsequently checks that
+    the penultimate node in the paths, i.e. the node immediately previous to
+    the node to check, has out going logic or not and therefore can or cannot
+    be, respectively, a merge point of the current path.
 
     :param node: The node to check.
     :type node: :class:`Node`
@@ -772,5 +776,20 @@ def check_has_different_path_to_logic_node(
         if path_node == logic_block_holder.current_path:
             continue
         if has_path(node_class_graph, path_node, node):
+            # check if there is at least one incoming node that has a path to
+            # the path_node and not through the current path of the logic block
+            # holder and does not have outgoing logic
+            in_nodes_with_path_and_no_logic = []
+            for in_node, _ in node_class_graph.in_edges(node):
+                if check_has_path_not_through_nodes(
+                    node_class_graph,
+                    path_node,
+                    in_node,
+                    [logic_block_holder.current_path],
+                ):
+                    if not in_node.outgoing_logic:
+                        in_nodes_with_path_and_no_logic.append(in_node)
+            if len(in_nodes_with_path_and_no_logic) == 0:
+                continue
             return True
     return False
