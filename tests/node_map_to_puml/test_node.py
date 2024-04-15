@@ -14,6 +14,8 @@ from tel2puml.node_map_to_puml.node import (
     create_networkx_graph_of_nodes_from_markov_graph,
     merge_markov_without_loops_and_logic_detection_analysis,
     create_puml_graph_from_node_class_graph,
+    check_is_merge_node_for_current_path,
+    LogicBlockHolder
 )
 from tel2puml.pipelines.logic_detection_pipeline import (
     Event,
@@ -27,6 +29,7 @@ from tel2puml.check_puml_equiv import (
     get_network_x_graph_from_puml_string,
     check_networkx_graph_equivalence,
 )
+from tel2puml.puml_graph.graph import PUMLOperatorNode, PUMLOperatorNodes
 from tel2puml.tel2puml_types import PUMLEvent, PUMLOperator
 
 
@@ -688,3 +691,65 @@ class TestCreatePumlGraphFromNodeClassGraph:
         self.load_and_check(
             "puml_files/bunched_XOR_with_event_ending_logic.puml"
         )
+
+
+def test_check_is_merge_node_for_current_path() -> None:
+    """Test the check_is_merge_node_for_current_path function."""
+    # setup
+    # get the node class graph for the given puml
+    test_data_markov = generate_test_data_event_sequences_from_puml(
+        "puml_files/complicated_merge_with_same_event.puml"
+    )
+    markov_graph, node_event_reference = (
+        audit_event_sequences_to_network_x(test_data_markov)
+    )
+    test_data_logic = generate_test_data_event_sequences_from_puml(
+        "puml_files/complicated_merge_with_same_event.puml"
+    )
+    forward, backward = update_all_connections_from_clustered_events(
+        test_data_logic
+    )
+    node_class_graph = (
+        merge_markov_without_loops_and_logic_detection_analysis(
+            (markov_graph, node_event_reference["event_reference"]),
+            backward,
+            forward,
+        )
+    )
+    # setup the test logic holder
+    A = [node for node in node_class_graph.nodes if node.event_type == "A"][0]
+    logic_holder = LogicBlockHolder(
+        PUMLOperatorNode(PUMLOperatorNodes.START_AND, 1),
+        PUMLOperatorNode(PUMLOperatorNodes.END_AND, 1),
+        logic_node=A.outgoing_logic[0],
+    )
+    B = [node for node in node_class_graph.nodes if node.event_type == "B"][0]
+    logic_holder.paths.remove(B)
+    logic_holder.current_path = B
+
+    # tests
+    # check when the selected node has a different path to the logic node and
+    # can therefore be a merge point
+    H = [node for node in node_class_graph.nodes if node.event_type == "H"][0]
+    assert check_is_merge_node_for_current_path(
+        H,
+        logic_holder,
+        node_class_graph,
+    )
+    # check when the selected node has no different path to the logic node
+    # and therefore can't be a merge point
+    assert not check_is_merge_node_for_current_path(
+        A,
+        logic_holder,
+        node_class_graph,
+    )
+    # check when the selected node has is a different path to the logic node
+    # than the current path of the logic node but the penultimate node in that
+    # path has outgoing logic and therefore the selected node can't be a merge
+    # point for that path
+    E = [node for node in node_class_graph.nodes if node.event_type == "E"][0]
+    assert not check_is_merge_node_for_current_path(
+        E,
+        logic_holder,
+        node_class_graph,
+    )
