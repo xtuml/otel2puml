@@ -833,6 +833,11 @@ def handle_reach_logic_merge_point(
     # node class
     if next_node_class is None:
         previous_puml_node = logic_list.pop().end_node
+    elif logic_list[-1].current_path_puml_node == logic_list[-1].start_node:
+        previous_puml_node, previous_node_class = handle_logic_list_next_path(
+            puml_graph, logic_list, previous_node_class
+        )
+        logic_list[-1].current_path_puml_node = previous_puml_node
     else:
         previous_puml_node = logic_list[-1].current_path_puml_node
         previous_node_class = next_node_class
