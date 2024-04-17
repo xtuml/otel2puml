@@ -1,7 +1,6 @@
 """Test the logic detection pipeline."""
 
 from datetime import datetime, timedelta
-import pytest
 from pm4py import ProcessTree
 
 
@@ -601,7 +600,6 @@ class TestEvent:
         assert len(labels) == 0
 
     @staticmethod
-    @pytest.mark.skip("Failing test due to issues with reduced set")
     def test_process_missing_and_gates() -> None:
         """Test for method process_missing_and_gates"""
         def _process(event: Event) -> ProcessTree:
