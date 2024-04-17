@@ -153,11 +153,11 @@ def add_loop_edges_to_remove_and_breaks(
         edges: list[tuple[str, str]]
 ) -> list[Loop]:
     """Add the edges to remove from the loops to the edge_to_remove property of
-    the Loop.
+    the Loop, along with the break points and associated exit point.
 
     :param loops: The loops to add the edges to remove.
     :type loops: `list`[`Loop`]
-    :param edges: The edges to add to the loops.
+    :param edges: The edges from the graph.
     :type edges: `list`[`tuple`[`str`, `str`]]
     :return: The updated loops.
     :rtype: `list`[`Loop`]
