@@ -672,11 +672,21 @@ class TestCreatePumlGraphFromNodeClassGraph:
         # * bunched logic case
         # * complicated merge case with same event that is not mergeable
         cases = [
+            # test nested logic case
             "puml_files/ANDFork_ANDFork_a.puml",
+            # test a complicated nested xor logic case
             "puml_files/complicated_test.puml",
+            # test a bunched logic case of different types
             "puml_files/bunched_XOR_AND.puml",
+            # test a merge point that is not mergeable at events E or I as they
+            # are in a sub logic path that is closed.
             "puml_files/complicated_merge_with_same_event.puml",
+            # test a case with kill statements directly after a start node in a
+            # branched logic case to confirm that start nodes are added
             "puml_files/branched_kill.puml",
+            # test a case where a logic block merges for some paths but the
+            # other paths have kill statements.
+            "puml_files/merge_with_kills.puml"
         ]
         for puml_file in cases:
             self.load_and_check(puml_file)

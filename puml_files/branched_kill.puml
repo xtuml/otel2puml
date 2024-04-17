@@ -6,7 +6,7 @@ partition "branch_kill" {
             :B;
             kill
         fork again
-                :C;
+            :C;
             kill
         end fork
     end group
