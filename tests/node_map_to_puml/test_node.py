@@ -675,7 +675,8 @@ class TestCreatePumlGraphFromNodeClassGraph:
             "puml_files/ANDFork_ANDFork_a.puml",
             "puml_files/complicated_test.puml",
             "puml_files/bunched_XOR_AND.puml",
-            "puml_files/complicated_merge_with_same_event.puml"
+            "puml_files/complicated_merge_with_same_event.puml",
+            "puml_files/branched_kill.puml",
         ]
         for puml_file in cases:
             self.load_and_check(puml_file)

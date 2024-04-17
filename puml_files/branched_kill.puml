@@ -1,0 +1,14 @@
+@startuml
+partition "branch_kill" {
+    group "branch_kill"
+        #green:A;
+        fork
+            :B;
+            kill
+        fork again
+                :C;
+            kill
+        end fork
+    end group
+}
+@enduml
