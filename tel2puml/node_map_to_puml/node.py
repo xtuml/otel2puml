@@ -3,6 +3,7 @@
 from typing import Literal
 from uuid import uuid4
 import logging
+from itertools import chain
 
 from networkx import DiGraph, topological_sort, has_path
 from pm4py import ProcessTree
@@ -496,19 +497,71 @@ class LogicBlockHolder:
         self.end_node = end_node
         self.logic_node = logic_node
         self.paths = logic_node.outgoing_logic.copy()
+        self.merge_nodes = [None] * len(self.paths)
+        self.puml_nodes = [start_node] * len(self.paths)
         self.current_path: Node | None = None
+        self.will_merge = False
+        self.merge_counter = 0
+        self.previous_merge_nodes = self.merge_nodes.copy()
 
-    def set_path_node(self) -> Node | None:
+    def set_path_node(self, pop: bool = False) -> Node | None:
         """Gets the next path in the block and returns it
 
         :return: The path node.
         :rtype: :class:`Node` | `None`
         """
+        if self.will_merge:
+            pop = True
+        if self.paths and pop:
+            self.paths.pop()
+            self.merge_nodes.pop()
+            self.puml_nodes.pop()
         if self.paths:
-            self.current_path = self.paths.pop()
+            self.current_path = self.paths[-1]
         else:
             self.current_path = None
         return self.current_path
+
+    def rotate_path(
+        self, current_node_in_path: Node, current_puml_node_in_path: PUMLNode
+    ) -> tuple[PUMLOperatorNode | PUMLNode, Node]:
+        """Rotates the path by moving the current path to the end of the paths
+        list.
+
+        :return: The path node.
+        :rtype: :class:`Node` | `None`
+        """
+        self.paths = [current_node_in_path] + self.paths[:-1]
+        self.merge_nodes = [self.merge_nodes[-1]] + self.merge_nodes[:-1]
+        self.previous_merge_nodes = self.merge_nodes.copy()
+        self.puml_nodes = [current_puml_node_in_path] + self.puml_nodes[:-1]
+        self.current_path = self.paths[-1]
+        return self.puml_nodes[-1], self.current_path,
+
+    def handle_path_merge(self, potential_merge_node: Node) -> bool:
+        """Handles a path merge.
+
+        :param potential_merge_node: The potential merge node.
+        :type potential_merge_node: :class:`Node`
+        :return: Whether the merge was successful.
+        :rtype: `bool`
+        """
+        if self.will_merge:
+            return True
+        if self.current_path is None:
+            raise ValueError("No current path to merge")
+        self.merge_nodes[-1] = potential_merge_node
+        # increment the merge counter if nothing has changed
+        if self.merge_nodes == self.previous_merge_nodes:
+            self.merge_counter += 1
+        else:
+            self.merge_counter = 0
+        # set previous merge nodes to the current merge nodes
+        self.previous_merge_nodes = self.merge_nodes.copy()
+        if len(set(self.merge_nodes)) == 1:
+            self.will_merge = True
+            return True
+        return False
 
 
 def create_puml_graph_from_node_class_graph(
@@ -562,15 +615,16 @@ def create_puml_graph_from_node_class_graph(
                 # check if the next node has an alternative path back to the
                 # logic node and then handle a merge into the end of the logic
                 # block and continue
-                elif check_is_merge_node_for_current_path(
+                elif check_is_merge_node_for_logic_block(
                     next_node_class, logic_list[-1], node_class_graph
                 ):
                     previous_puml_node, previous_node_class = (
-                        handle_reach_logic_merge_point(
+                        handle_reach_potential_merge_point(
                             puml_graph,
                             logic_list,
                             previous_puml_node,
                             previous_node_class,
+                            next_node_class,
                         )
                     )
                     continue
@@ -636,6 +690,79 @@ def handle_logic_node_cases(
     )
 
 
+def handle_reach_potential_merge_point(
+    puml_graph: PUMLGraph,
+    logic_list: list[LogicBlockHolder],
+    previous_puml_node: PUMLNode,
+    previous_node_class: Node,
+    next_node_class: Node,
+) -> tuple[PUMLOperatorNode, Node]:
+    """Handles reaching a potential merge point in the logic block.
+
+    :param puml_graph: The PlantUML graph to update.
+    :type puml_graph: :class:`PUMLGraph`
+    :param logic_block: The logic block to handle.
+    :type logic_block: :class:`LogicBlock
+    :param previous_puml_node: The previous PlantUML node.
+    :type previous_puml_node: :class:`PUMLOperatorNode`
+    :param previous_node_class: The previous node class.
+    :type previous_node_class: :class:`Node`
+    :param next_node_class: The next node class.
+    :type next_node_class: :class:`Node`
+    :return: A tuple containing the newly created PlantUML node and the event
+    node.
+    :rtype: `tuple`[:class:`PUMLOperatorNode`, :class:`Node`]
+    """
+    if logic_list[-1].handle_path_merge(next_node_class):
+        previous_puml_node, previous_node_class = (
+            handle_reach_logic_merge_point(
+                puml_graph, logic_list, previous_puml_node, previous_node_class
+            )
+        )
+    else:
+        # check if we are caught in an infinite loop when there are multiple
+        # merge nodes
+        if logic_list[-1].merge_counter > len(logic_list[-1].merge_nodes):
+            return update_puml_graph_with_event_node(
+                puml_graph, next_node_class, previous_puml_node
+            )
+        previous_puml_node, previous_node_class = handle_rotate_path(
+            puml_graph, logic_list, previous_puml_node, previous_node_class
+        )
+    return previous_puml_node, previous_node_class
+
+
+def handle_rotate_path(
+    puml_graph: PUMLGraph,
+    logic_list: list[LogicBlockHolder],
+    previous_puml_node: PUMLOperatorNode,
+    previous_node_class: Node,
+) -> tuple[PUMLOperatorNode, Node]:
+    """Handles rotating the path in the logic block.
+
+    :param puml_graph: The PlantUML graph to update.
+    :type puml_graph: :class:`PUMLGraph`
+    :param logic_block: The logic block to handle.
+    :type logic_block: :class:`LogicBlock
+    :param previous_puml_node: The previous PlantUML node.
+    :type previous_puml_node: :class:`PUMLOperatorNode`
+    :param previous_node_class: The previous node class.
+    :type previous_node_class: :class:`Node`
+    :return: A tuple containing the newly created PlantUML node and the event
+    node.
+    :rtype: `tuple`[:class:`PUMLOperatorNode`, :class:`Node`]
+    """
+    previous_puml_node, previous_node_class = logic_list[-1].rotate_path(
+        previous_node_class, previous_puml_node
+    )
+    if previous_puml_node == logic_list[-1].start_node:
+        previous_puml_node, previous_node_class = handle_logic_list_next_path(
+            puml_graph, logic_list, previous_node_class
+        )
+        logic_list[-1].puml_nodes[-1] = previous_puml_node
+    return previous_puml_node, previous_node_class
+
+
 def handle_reach_logic_merge_point(
     puml_graph: PUMLGraph,
     logic_list: list[LogicBlockHolder],
@@ -664,9 +791,12 @@ def handle_reach_logic_merge_point(
     )
     # handle the next path in the logic list and return updated previous puml
     # node and node class
-    previous_puml_node, previous_node_class = handle_logic_list_next_path(
-        puml_graph, logic_list, previous_node_class
-    )
+    next_node_class = logic_list[-1].set_path_node(pop=True)
+    if next_node_class is None:
+        previous_puml_node = logic_list.pop().end_node
+    else:
+        previous_puml_node = logic_list[-1].puml_nodes[-1]
+        previous_node_class = next_node_class
     # return the updated previous puml node and node class
     return previous_puml_node, previous_node_class
 
@@ -747,7 +877,7 @@ def update_puml_graph_with_event_node(
     return next_puml_node, event_node
 
 
-def check_is_merge_node_for_current_path(
+def check_is_merge_node_for_logic_block(
     node: Node,
     logic_block_holder: LogicBlockHolder,
     node_class_graph: DiGraph,
@@ -768,24 +898,38 @@ def check_is_merge_node_for_current_path(
     than the current path of the logic block, `False` otherwise.
     :rtype: `bool`
     """
-    # traverse the logic node of the logic block holder to get all leaf nodes
-    # which will not be logic nodes. Loop over these nodes and check if there
-    # is a path from the node to the logic node that is not the current path of
-    # the logic block holder
-    for path_node in logic_block_holder.logic_node.traverse_logic("outgoing"):
-        if path_node == logic_block_holder.current_path:
+    if logic_block_holder.will_merge:
+        return True
+    # get all leaf nodes of the node classes of all the paths of the logic
+    # block holder apart from the current path. Then check if there is a path
+    # from the node to the node class that is not through the current path of
+    # the logic block holder and does not have outgoing logic
+    for path_node in chain(
+        *[
+            child.traverse_logic("outgoing") if child.operator is not None
+            else [child]
+            for child in logic_block_holder.paths[:-1]
+        ]
+    ):
+        if path_node == node:
             continue
         if has_path(node_class_graph, path_node, node):
             # check if there is at least one incoming node that has a path to
             # the path_node and not through the current path of the logic block
             # holder and does not have outgoing logic
             in_nodes_with_path_and_no_logic = []
+            # make sure we handle bunched logic within the current path
+            nodes_to_avoid = (
+                logic_block_holder.current_path.traverse_logic("outgoing")
+                if logic_block_holder.current_path.operator is not None
+                else [logic_block_holder.current_path]
+            )
             for in_node, _ in node_class_graph.in_edges(node):
                 if check_has_path_not_through_nodes(
                     node_class_graph,
                     path_node,
                     in_node,
-                    [logic_block_holder.current_path],
+                    nodes_to_avoid,
                 ):
                     if not in_node.outgoing_logic:
                         in_nodes_with_path_and_no_logic.append(in_node)
