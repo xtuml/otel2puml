@@ -516,10 +516,9 @@ class Event:
                     break
 
             if not insoluble:
-                reduced_event_set = self.get_reduced_event_set()
                 recursive_event_set = {
                     event_set
-                    for event_set in reduced_event_set
+                    for event_set in self.get_reduced_event_set()
                     if event_set.issubset(universe)
                 }
                 if universe in recursive_event_set:
