@@ -6,12 +6,14 @@
                 case ("case")
                     :B;
                     :E;
+                    :I;
                 case ("")
                     :C;
                     :D;
                     switch (XOR)
                         case ("")
                             :E;
+                            :I;
                         case ("")
                             :F;
                     endswitch

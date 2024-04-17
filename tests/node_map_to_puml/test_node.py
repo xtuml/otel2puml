@@ -14,7 +14,7 @@ from tel2puml.node_map_to_puml.node import (
     create_networkx_graph_of_nodes_from_markov_graph,
     merge_markov_without_loops_and_logic_detection_analysis,
     create_puml_graph_from_node_class_graph,
-    check_is_merge_node_for_current_path,
+    check_is_merge_node_for_logic_block,
     LogicBlockHolder
 )
 from tel2puml.pipelines.logic_detection_pipeline import (
@@ -670,10 +670,12 @@ class TestCreatePumlGraphFromNodeClassGraph:
         # * nested and logic case
         # * nested deep xor logic case
         # * bunched logic case
+        # * complicated merge case with same event that is not mergeable
         cases = [
             "puml_files/ANDFork_ANDFork_a.puml",
             "puml_files/complicated_test.puml",
             "puml_files/bunched_XOR_AND.puml",
+            "puml_files/complicated_merge_with_same_event.puml"
         ]
         for puml_file in cases:
             self.load_and_check(puml_file)
@@ -693,7 +695,7 @@ class TestCreatePumlGraphFromNodeClassGraph:
         )
 
 
-def test_check_is_merge_node_for_current_path() -> None:
+def test_check_is_merge_node_for_logic_block() -> None:
     """Test the check_is_merge_node_for_current_path function."""
     # setup
     # get the node class graph for the given puml
@@ -723,22 +725,26 @@ def test_check_is_merge_node_for_current_path() -> None:
         PUMLOperatorNode(PUMLOperatorNodes.END_AND, 1),
         logic_node=A.outgoing_logic[0],
     )
+    logic_holder.set_path_node()
     B = [node for node in node_class_graph.nodes if node.event_type == "B"][0]
-    logic_holder.paths.remove(B)
-    logic_holder.current_path = B
+    # make sure current path is B
+    while logic_holder.current_path != B:
+        logic_holder.rotate_path(
+            logic_holder.current_path, logic_holder.start_node
+        )
 
     # tests
     # check when the selected node has a different path to the logic node and
     # can therefore be a merge point
     H = [node for node in node_class_graph.nodes if node.event_type == "H"][0]
-    assert check_is_merge_node_for_current_path(
+    assert check_is_merge_node_for_logic_block(
         H,
         logic_holder,
         node_class_graph,
     )
     # check when the selected node has no different path to the logic node
     # and therefore can't be a merge point
-    assert not check_is_merge_node_for_current_path(
+    assert not check_is_merge_node_for_logic_block(
         A,
         logic_holder,
         node_class_graph,
@@ -748,8 +754,28 @@ def test_check_is_merge_node_for_current_path() -> None:
     # path has outgoing logic and therefore the selected node can't be a merge
     # point for that path
     E = [node for node in node_class_graph.nodes if node.event_type == "E"][0]
-    assert not check_is_merge_node_for_current_path(
+    assert not check_is_merge_node_for_logic_block(
         E,
+        logic_holder,
+        node_class_graph,
+    )
+    # check the case when the selected node has been traversed on one of the
+    # paths and cannot be a merge point when the path node is the same as the
+    # selected node
+    C = [node for node in node_class_graph.nodes if node.event_type == "C"][0]
+    I_ = [node for node in node_class_graph.nodes if node.event_type == "I"][0]
+    index = logic_holder.paths.index(C)
+    logic_holder.paths[index] = I_
+    assert not check_is_merge_node_for_logic_block(
+        I_,
+        logic_holder,
+        node_class_graph,
+    )
+    # check above case when selected node is different to the path node
+    F = [node for node in node_class_graph.nodes if node.event_type == "F"][0]
+    logic_holder.paths[index] = F
+    assert not check_is_merge_node_for_logic_block(
+        I_,
         logic_holder,
         node_class_graph,
     )
