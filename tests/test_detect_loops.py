@@ -1,5 +1,5 @@
 """Tests for the detect_loops module."""
-from typing import Iterable
+from typing import Iterable, Any
 import pytest
 
 from networkx import DiGraph
@@ -23,7 +23,7 @@ class TestLoop():
     """Tests for the Loop class."""
 
     @staticmethod
-    def test_init():
+    def test_init() -> None:
         """Test the __init__ method of the Loop class."""
         loop = Loop(["A"])
         assert isinstance(loop.sub_loops, list)
@@ -35,7 +35,7 @@ class TestLoop():
         assert not loop.merge_processed
 
     @staticmethod
-    def test_get_edges():
+    def test_get_edges() -> None:
         """Test the get_edges method of the Loop class."""
         loop = Loop(["A"])
         assert loop.get_edges() == {("A", "A")}
@@ -51,7 +51,7 @@ class TestLoop():
             loop.get_edges()
 
     @staticmethod
-    def test_check_subloop():
+    def test_check_subloop() -> None:
         """Test the check_subloop method of the Loop class."""
         loop = Loop(["A", "B", "C", "D"])
 
@@ -80,7 +80,8 @@ class TestLoop():
         with pytest.raises(RuntimeError):
             loop.check_subloop(other)
 
-    def test_add_edge_to_remove(self):
+    @staticmethod
+    def test_add_edge_to_remove() -> None:
         """Test the add_edge_to_remove method of the Loop class."""
         loop = Loop(["A", "B", "C"])
         assert len(loop.edges_to_remove) == 0
@@ -91,7 +92,8 @@ class TestLoop():
         with pytest.raises(RuntimeError):
             loop.add_edge_to_remove(("A", "B"))
 
-    def test_add_break_edge(self):
+    @staticmethod
+    def test_add_break_edge() -> None:
         """Test the add_break_edge method of the Loop class."""
         loop = Loop(["A", "B", "C"])
         assert len(loop.break_edges) == 0
@@ -102,7 +104,8 @@ class TestLoop():
         with pytest.raises(RuntimeError):
             loop.add_break_edge(("A", "B"))
 
-    def test_add_break_point(self):
+    @staticmethod
+    def test_add_break_point() -> None:
         """Test the add_break_point method of the Loop class."""
         loop = Loop(["A", "B", "C"])
         assert len(loop.break_points) == 0
@@ -110,7 +113,7 @@ class TestLoop():
         assert loop.break_points == {"A"}
 
     @staticmethod
-    def test_get_sublist_of_length():
+    def test_get_sublist_of_length() -> None:
         """Test the get_sublist_of_length method of the Loop class."""
         loop = Loop(["A"])
         assert loop.get_sublist_of_length(["A"], 1) == [["A"]]
@@ -140,7 +143,7 @@ class TestLoop():
         ]
 
     @staticmethod
-    def test_add_subloop():
+    def test_add_subloop() -> None:
         """Test the add_subloop method of the Loop class."""
         loop = Loop(["A", "B", "C"])
         sub_loop = Loop(["B"])
@@ -150,7 +153,7 @@ class TestLoop():
         assert loop.sub_loops == [sub_loop]
 
     @staticmethod
-    def test_set_merge():
+    def test_set_merge() -> None:
         """Test the set_merge method of the Loop class."""
         loop = Loop(["A", "B", "C"])
         assert not loop.merge_processed
@@ -158,7 +161,7 @@ class TestLoop():
         assert loop.merge_processed
 
     @staticmethod
-    def test_set_exit_point():
+    def test_set_exit_point() -> None:
         """Test the set_exit_point method of the Loop class."""
         loop = Loop(["A", "B", "C"])
         assert loop.exit_point is None
@@ -167,9 +170,9 @@ class TestLoop():
 
 
 def _get_referenced_iterable(
-        iterable: Iterable,
+        iterable: Iterable[Any],
         references: dict[str, dict[str, str]]
-) -> Iterable:
+) -> Iterable[Any]:
     """Return referenced iterator.
 
     :param iterable: The iterable to get the references for.
@@ -435,7 +438,7 @@ def test_merge_break_points() -> None:
     assert set(sub_sub_loop.nodes) == {"C"}
 
 
-def test_detect_loops_from_simple_puml():
+def test_detect_loops_from_simple_puml() -> None:
     """Test the detect_loops function with a simple puml file."""
     event_sequences = generate_test_data_event_sequences_from_puml(
         "puml_files/loop_loop_a.puml"
@@ -459,7 +462,7 @@ def test_detect_loops_from_simple_puml():
     }
 
 
-def test_detect_loops_from_XOR_puml():
+def test_detect_loops_from_XOR_puml() -> None:
     """Test the detect_loops function with a XOR puml file."""
     event_sequences = generate_test_data_event_sequences_from_puml(
         "puml_files/loop_XORFork_a.puml"
@@ -476,7 +479,7 @@ def test_detect_loops_from_XOR_puml():
     assert len(loop.sub_loops) == 0
 
 
-def test_detect_loops_from_AND_puml():
+def test_detect_loops_from_AND_puml() -> None:
     """Test the detect_loops function with a AND puml file."""
     event_sequences = generate_test_data_event_sequences_from_puml(
         "puml_files/loop_ANDFork_a.puml"

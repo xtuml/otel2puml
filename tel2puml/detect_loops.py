@@ -139,7 +139,7 @@ def detect_loops(graph: DiGraph) -> list[Loop]:
     loops_with_ref = [Loop(loop_list) for loop_list in simple_cycles(graph)]
     edges = [(u, v) for u, v in graph.edges()]
 
-    loops = add_loop_edges_to_remove_and_breaks(
+    loops: list[Loop] = add_loop_edges_to_remove_and_breaks(
         loops_with_ref, edges
     )
     loops = update_subloops(loops)
@@ -235,7 +235,10 @@ def update_subloops(loops: list[Loop]) -> list[Loop]:
                     loop.add_subloop(potential_subloop)
                     is_subloop = True
                     current_filter_length = len(loop)
-                elif len(loop) <= current_filter_length:
+                elif (
+                        current_filter_length is not None
+                        and len(loop) <= current_filter_length
+                ):
                     loop.add_subloop(potential_subloop)
                 else:
                     break
@@ -292,12 +295,12 @@ def update_break_points(
     :type loops: `list`[`Loop`]
     :param sub_loop: Whether the loops are subloops or not.
     :type sub_loop: `bool`
-    :return: The updated loops.
-    :rtype: `list`[`Loop`]
+    :return: The updated loops or the nodes from the subloops.
+    :rtype: `list`[`Loop`] | `list`[`str`]
     """
-    breaks_from_subloops = []
+    breaks_from_subloops: list[str] = []
     for loop in loops:
-        from_subloops = update_break_points(
+        from_subloops: list[str] = update_break_points(
             graph,
             loop.sub_loops,
             sub_loop=True
