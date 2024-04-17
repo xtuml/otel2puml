@@ -103,7 +103,7 @@ def test_generate_test_data_template_all_paths_true_num_paths_zero():
 def test_generate_test_data_template_all_paths_false_large_num_paths():
     """tests for function generate_test_data"""
     input_puml_file = "puml_files/sequence_xor_fork.puml"
-    num_templates = 10000
+    num_templates = 100000
     result = list(
         generate_test_data(
             input_puml_file,
