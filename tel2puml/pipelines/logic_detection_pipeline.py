@@ -387,8 +387,12 @@ class Event:
         # calculate OR gates
         Event.process_or_gates(logic_gate_tree)
         # process missing AND gates
-        self.process_missing_and_gates(logic_gate_tree)
-        return logic_gate_tree
+        try:
+            tree_copy = deepcopy(logic_gate_tree)
+            self.process_missing_and_gates(tree_copy)
+            return tree_copy
+        except KeyError:
+            return logic_gate_tree
 
     @staticmethod
     def process_or_gates(
