@@ -40,3 +40,14 @@ def test_pv_to_puml_string():
     ) as file:
         expected_puml_string = file.read()
     assert check_puml_equivalence(puml_string, expected_puml_string)
+    # test with a merge on the same event under the same parent logic block
+    test_data = generate_test_data_event_sequences_from_puml(
+        "puml_files/complicated_merge_with_same_event.puml"
+    )
+    puml_string = pv_to_puml_string(test_data)
+    with open(
+        "puml_files/complicated_merge_with_same_event.puml", "r",
+        encoding="utf-8"
+    ) as file:
+        expected_puml_string = file.read()
+    assert check_puml_equivalence(puml_string, expected_puml_string)

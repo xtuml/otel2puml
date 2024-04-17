@@ -101,6 +101,12 @@ def test_create_networkx_graph_from_parsed_puml() -> None:
     """Test the `create_networkx_graph_from_parsed_puml` function creates the
     correct networkx graph from the parsed puml
     """
+    def check_edges_in_graph(graph, expected_edges) -> None:
+        for edge in graph.edges:
+            edge_tuple = (edge[0].node_id, edge[1].node_id)
+            assert edge_tuple in expected_edges
+            expected_edges.remove(edge_tuple)
+        assert len(expected_edges) == 0
     # setup events
     events = {}
     for event_string in ["A", "B", "C", "D", "E", "F", "G"]:
@@ -135,11 +141,36 @@ def test_create_networkx_graph_from_parsed_puml() -> None:
         (('F', 0), ('END', 'LOOP', 1)),
         (('END', 'LOOP', 1), ('G', 0))
     ]
-    for edge in graph.edges:
-        edge_tuple = (edge[0].node_id, edge[1].node_id)
-        assert edge_tuple in expected_edges
-        expected_edges.remove(edge_tuple)
-    assert len(expected_edges) == 0
+    check_edges_in_graph(graph, expected_edges)
+    # case with kill/detach event
+    # setup
+    kill_event = EventData()
+    kill_event.event_type = "kill_event"
+    kill_event.is_end = True
+    kill_event.occurence_id = 0
+    parsed_puml = [kill_event]
+    # create graph
+    graph = create_networkx_graph_from_parsed_puml(parsed_puml)
+    expected_edges = [(("kill_event", 0), ("KILL", 0))]
+    check_edges_in_graph(graph, expected_edges)
+    # case with kill/detach event in logic block
+    # setup
+    parsed_puml = [
+        events[("A", 0)],
+        ("START", "XOR"), ("PATH", "XOR"), events[("B", 0)],
+        ("PATH", "XOR"), kill_event, ("END", "XOR"), events[("C", 0)]
+    ]
+    graph = create_networkx_graph_from_parsed_puml(parsed_puml)
+    expected_edges = [
+        (('A', 0), ('START', 'XOR', 1)),
+        (('START', 'XOR', 1), ('B', 0)),
+        (('B', 0), ('END', 'XOR', 1)),
+        (('END', 'XOR', 1), ('C', 0)),
+        (('START', 'XOR', 1), ('kill_event', 0)),
+        (('kill_event', 0), ("KILL", 0)),
+        (("KILL", 0), ('END', 'XOR', 1))
+    ]
+    check_edges_in_graph(graph, expected_edges)
 
 
 def test_check_networkx_graph_equivalence_same_graph() -> None:

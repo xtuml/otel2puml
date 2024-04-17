@@ -122,7 +122,9 @@ def create_networkx_graph_from_parsed_puml(
     prev_node = None
     prev_parsed_line = None
     graph = DiGraph()
-    counters = {"XOR": 0, "AND": 0, "OR": 0, "LOOP": 0}
+    counters = {
+        "XOR": 0, "AND": 0, "OR": 0, "LOOP": 0, "KILL": 0
+    }
     prev_parsed_lines = [None] + parsed_puml[:-1]
     collected_attributes = {}
     for parsed_line, prev_parsed_line in zip(parsed_puml, prev_parsed_lines):
@@ -180,6 +182,16 @@ def create_networkx_graph_from_parsed_puml(
                 prev_node, node,
             )
         prev_node = node
+        # handle kill/detach nodes
+        if isinstance(parsed_line, EventData):
+            if parsed_line.is_end:
+                node = NXNode(("KILL", counters["KILL"]), "KILL")
+                collected_attributes[node.node_id] = {}
+                counters["KILL"] += 1
+                graph.add_edge(
+                    prev_node, node,
+                )
+                prev_node = node
     for node in graph.nodes:
         if isinstance(node, NXNode):
             node.update_extra_info(collected_attributes.get(node.node_id, {}))
