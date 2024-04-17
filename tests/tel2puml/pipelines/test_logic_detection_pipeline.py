@@ -609,15 +609,6 @@ class TestEvent:
             event.process_missing_and_gates(logic_gates_tree)
             return logic_gates_tree
 
-        def _check_or_case(event: Event) -> None:
-            logic_gates_tree = _process(event)
-            assert logic_gates_tree.operator.value == Operator.OR.value
-            assert len(logic_gates_tree.children) == 3
-            labels = ["B", "C", "D"]
-            for child in logic_gates_tree.children:
-                labels.remove(child.label)
-            assert len(labels) == 0
-
         def _check_and_case(event: Event) -> None:
             logic_gates_tree = _process(event)
             assert logic_gates_tree.operator.value == Operator.OR.value
@@ -633,33 +624,6 @@ class TestEvent:
                         labels.remove(grandchild.label)
             assert len(labels) == 0
 
-        def _check_complex_case(event: Event) -> None:
-            logic_gates_tree = _process(event)
-            assert logic_gates_tree.operator.value == Operator.XOR.value
-            assert len(logic_gates_tree.children) == 2
-            for operator_child in logic_gates_tree.children:
-                if operator_child.operator.value == Operator.PARALLEL.value:
-                    assert len(operator_child.children) == 2
-                    labels_bc = ["B", "C"]
-                    for child in operator_child.children:
-                        labels_bc.remove(child.label)
-                    assert len(labels_bc) == 0
-                else:
-                    assert operator_child.operator.value == Operator.OR.value
-                    assert len(operator_child.children) == 2
-                    labels = ["D", "E", "F"]
-                    for child in operator_child.children:
-                        if child.label == "D":
-                            labels.remove(child.label)
-                        else:
-                            assert (
-                                child.operator.value == Operator.PARALLEL.value
-                            )
-                            assert len(child.children) == 2
-                            for grandchild in child.children:
-                                labels.remove(grandchild.label)
-                    assert len(labels) == 0
-
         event = Event("A")
         event.event_sets = {
             EventSet(["B", "C", "D"]),
@@ -668,6 +632,15 @@ class TestEvent:
 
         }
         _check_and_case(event)
+
+        def _check_or_case(event: Event) -> None:
+            logic_gates_tree = _process(event)
+            assert logic_gates_tree.operator.value == Operator.OR.value
+            assert len(logic_gates_tree.children) == 3
+            labels = ["B", "C", "D"]
+            for child in logic_gates_tree.children:
+                labels.remove(child.label)
+            assert len(labels) == 0
 
         event.event_sets = {
             EventSet(["B", "C", "D"]),
@@ -700,6 +673,33 @@ class TestEvent:
         }
         _check_or_case(event)
 
+        def _check_recursive_case(event: Event) -> None:
+            logic_gates_tree = _process(event)
+            assert logic_gates_tree.operator.value == Operator.XOR.value
+            assert len(logic_gates_tree.children) == 2
+            for operator_child in logic_gates_tree.children:
+                if operator_child.operator.value == Operator.PARALLEL.value:
+                    assert len(operator_child.children) == 2
+                    labels_bc = ["B", "C"]
+                    for child in operator_child.children:
+                        labels_bc.remove(child.label)
+                    assert len(labels_bc) == 0
+                else:
+                    assert operator_child.operator.value == Operator.OR.value
+                    assert len(operator_child.children) == 2
+                    labels = ["D", "E", "F"]
+                    for child in operator_child.children:
+                        if child.label == "D":
+                            labels.remove(child.label)
+                        else:
+                            assert (
+                                child.operator.value == Operator.PARALLEL.value
+                            )
+                            assert len(child.children) == 2
+                            for grandchild in child.children:
+                                labels.remove(grandchild.label)
+                    assert len(labels) == 0
+
         event.event_sets = {
             EventSet(["B", "C"]),
             EventSet(["D", "E", "F"]),
@@ -707,7 +707,7 @@ class TestEvent:
             EventSet(["D"]),
 
         }
-        _check_complex_case(event)
+        _check_recursive_case(event)
 
     @staticmethod
     def test_process_or_gates() -> None:

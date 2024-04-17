@@ -521,9 +521,13 @@ class Event:
                     event_set
                     for event_set in reduced_event_set
                     if event_set.issubset(universe)
-                    and event_set != universe
                 }
+                if universe in recursive_event_set:
+                    recursive_event_set.remove(universe)
+                else:
+                    insoluble = True
 
+            if not insoluble:
                 weighted_cover = get_weighted_cover(
                     recursive_event_set,
                     universe
