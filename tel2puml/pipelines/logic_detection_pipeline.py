@@ -391,7 +391,7 @@ class Event:
             tree_copy = deepcopy(logic_gate_tree)
             self.process_missing_and_gates(tree_copy)
             return tree_copy
-        except Exception:
+        except KeyError:
             return logic_gate_tree
 
     @staticmethod
