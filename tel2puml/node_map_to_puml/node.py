@@ -828,16 +828,19 @@ def handle_reach_logic_merge_point(
     next_node_class = logic_list[-1].set_path_node(pop=True)
     # if there is no next path node then we must handle the end of the logic
     # block and return the updated previous puml node as the end node of the
-    # logic block. Otherwise we grab the last puml node in the logic block and
-    # set it as the previous puml node and the next node class as the previous
-    # node class
+    # logic block
     if next_node_class is None:
         previous_puml_node = logic_list.pop().end_node
+    # if the next path node is a start node then we must handle the start of
+    # the next path
     elif logic_list[-1].current_path_puml_node == logic_list[-1].start_node:
         previous_puml_node, previous_node_class = handle_logic_list_next_path(
             puml_graph, logic_list, previous_node_class
         )
         logic_list[-1].current_path_puml_node = previous_puml_node
+    # Otherwise we grab the last puml node in the logic block and
+    # set it as the previous puml node and the next node class as the previous
+    # node class
     else:
         previous_puml_node = logic_list[-1].current_path_puml_node
         previous_node_class = next_node_class
