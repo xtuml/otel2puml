@@ -1,0 +1,21 @@
+@startuml
+partition "bunched_XOR_switch" {
+    group "bunched_XOR_switch"
+        #green:A;
+        switch (XOR)
+            case ("1")
+            if (XOR) then (true)
+                :B;
+            else
+                :C;
+            endif
+            :D;
+            case ("2")
+            :E;
+            case ("3")
+            :F;
+        endswitch
+        :G;
+    end group
+}
+@enduml

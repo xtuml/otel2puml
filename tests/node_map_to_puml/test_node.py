@@ -4,7 +4,6 @@ from copy import deepcopy, copy
 
 from pm4py import ProcessTree
 import networkx as nx
-import pytest
 
 from tel2puml.node_map_to_puml.node import (
     Node,
@@ -720,19 +719,17 @@ class TestCreatePumlGraphFromNodeClassGraph:
         for puml_file in cases:
             self.load_and_check(puml_file)
 
-    @pytest.mark.xfail(
-        reason=(
-            "Functionality to handle bunched logic of same type not"
-            "implemented yet"
-        ),
-        strict=True,
-    )
     def test_create_puml_graph_from_node_class_graph_bunched_xor(self) -> None:
         """Tests a bunched XOR logic case with and event ending one of the
         branches"""
-        self.load_and_check(
+        cases = [
+            # test simple nested XOR
+            "puml_files/bunched_XOR_simple.puml",
+            # test a complicated nested XOR logic case
             "puml_files/bunched_XOR_with_event_ending_logic.puml"
-        )
+        ]
+        for puml_file in cases:
+            self.load_and_check(puml_file)
 
     def test_create_puml_graph_from_node_class_graph_with_dummy_start(
         self
