@@ -520,7 +520,6 @@ class Event:
                 if universe in recursive_event_set:
                     recursive_event_set.remove(universe)
 
-            if not insoluble:
                 weighted_cover = get_weighted_cover(
                     recursive_event_set,
                     universe
