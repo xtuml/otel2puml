@@ -168,44 +168,46 @@ def add_loop_edges_to_remove_and_breaks(
         for edge in loop.get_edges()
     }
     for loop in loops:
-        if len(loop) == 1:
-            loop.add_edge_to_remove((loop.nodes[0], loop.nodes[0]))
-        else:
-            entries: set[str] = set()
-            exits: set[tuple[str, str]] = set()
-            for u, v in edges:
-                if u not in loop.nodes and v in loop.nodes:
-                    entries.add(v)
-                elif u in loop.nodes and v not in loop.nodes:
-                    exits.add((u, v))
+        entries: set[str] = set()
+        exits: set[tuple[str, str]] = set()
+        for u, v in edges:
+            if u not in loop.nodes and v in loop.nodes:
+                entries.add(v)
+            elif u in loop.nodes and v not in loop.nodes:
+                exits.add((u, v))
 
-            if entries and exits:
-                edges_to_remove = {
-                    (u, v)
-                    for u, v in loop_edges
-                    if v in entries
-                    and u in {u for u, _ in exits}
-                }
+        if entries and exits:
+            edges_to_remove = {
+                (u, v)
+                for u, v in loop_edges
+                if v in entries
+                and u in {u for u, _ in exits}
+            }
 
-                breaks = {
-                    (u, v)
-                    for u, v in exits.difference(loop_edges)
-                    if u not in {u for u, _ in edges_to_remove}
-                }
+            breaks = {
+                (u, v)
+                for u, v in exits.difference(loop_edges)
+                if u not in {u for u, _ in edges_to_remove}
+            }
 
-                for break_point in breaks:
-                    loop.add_break_edge(break_point)
+            for break_point in breaks:
+                loop.add_break_edge(break_point)
 
-                exit_points = set()
+            exit_points = set()
+            if len(loop) == 1:
+                loop.add_edge_to_remove(edges_to_remove.pop())
+                for _, exit_point in exits:
+                    exit_points.add(exit_point)
+            else:
                 for u, v in edges_to_remove:
                     loop.add_edge_to_remove((u, v))
                     for loop_exit, exit_point in exits.difference(loop_edges):
                         if u == loop_exit:
                             exit_points.add(exit_point)
 
-                loop.set_exit_points(exit_points)
-            else:
-                raise ValueError("No entries or no exits")
+            loop.set_exit_points(exit_points)
+        else:
+            raise ValueError("No entries or no exits")
 
     return loops
 

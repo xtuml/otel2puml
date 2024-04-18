@@ -202,7 +202,7 @@ def test_add_loop_edges_to_remove_and_breaks() -> None:
     loop, = loops
     assert loop.edges_to_remove == {("B", "B")}
     assert loop.break_edges == set()
-    assert loop.exit_points == set()
+    assert loop.exit_points == {"C"}
 
     loops = [Loop(["B", "C", "D"])]
     edges = [("A", "B"), ("B", "C"), ("C", "D"), ("D", "B"), ("D", "E")]
@@ -455,11 +455,13 @@ def test_detect_loops_from_simple_puml() -> None:
     assert loop.edges_to_remove == {
         _get_referenced_iterable(("D", "B"), references)
     }
+    assert loop.exit_points == _get_referenced_iterable({"E"}, references)
     sub_loop, = loop.sub_loops
     assert sub_loop.nodes == _get_referenced_iterable(["C"], references)
     assert sub_loop.edges_to_remove == {
         _get_referenced_iterable(("C", "C"), references)
     }
+    assert sub_loop.exit_points == _get_referenced_iterable({"D"}, references)
 
 
 def test_detect_loops_from_XOR_puml() -> None:
@@ -476,6 +478,8 @@ def test_detect_loops_from_XOR_puml() -> None:
     assert loop.edges_to_remove == {
         _get_referenced_iterable(("F", "B"), references)
     }
+    assert loop.break_edges == set()
+    assert loop.exit_points == _get_referenced_iterable({"G"}, references)
     assert len(loop.sub_loops) == 0
 
 
@@ -493,6 +497,8 @@ def test_detect_loops_from_AND_puml() -> None:
     assert loop.edges_to_remove == {
         _get_referenced_iterable(("E", "B"), references)
     }
+    assert loop.break_edges == set()
+    assert loop.exit_points == _get_referenced_iterable({"F"}, references)
     assert len(loop.sub_loops) == 0
 
 
@@ -515,6 +521,7 @@ def test_detect_loops_from_simple_break_puml() -> None:
         _get_referenced_iterable(("B", "C"), references)
     }
     assert loop.break_points == _get_referenced_iterable({"D"}, references)
+    assert loop.exit_points == _get_referenced_iterable({"G"}, references)
     assert len(loop.sub_loops) == 0
 
 
@@ -537,6 +544,7 @@ def test_detect_loops_from_complex_break_puml() -> None:
         _get_referenced_iterable(("B", "C"), references),
     }
     assert loop.break_points == _get_referenced_iterable({"D"}, references)
+    assert loop.exit_points == _get_referenced_iterable({"G"}, references)
 
     for sub_loop in loop.sub_loops:
         if set(sub_loop.nodes) == _get_referenced_iterable(
@@ -546,6 +554,10 @@ def test_detect_loops_from_complex_break_puml() -> None:
                 _get_referenced_iterable(("C", "C"), references)
             }
             assert sub_loop.break_edges == set()
+            assert sub_loop.break_points == set()
+            assert sub_loop.exit_points == _get_referenced_iterable(
+                {"D"}, references
+            )
         else:
             assert set(sub_loop.nodes) == _get_referenced_iterable(
                 {"F"}, references
@@ -554,6 +566,10 @@ def test_detect_loops_from_complex_break_puml() -> None:
                 _get_referenced_iterable(("F", "F"), references)
             }
             assert sub_loop.break_edges == set()
+            assert sub_loop.break_points == set()
+            assert sub_loop.exit_points == _get_referenced_iterable(
+                {"B", "G"}, references
+            )
 
 
 def test_detect_loops_from_2_break_puml() -> None:
@@ -578,6 +594,7 @@ def test_detect_loops_from_2_break_puml() -> None:
     assert loop.break_points == _get_referenced_iterable(
         {"C", "G"}, references
     )
+    assert loop.exit_points == _get_referenced_iterable({"I"}, references)
 
     assert len(loop.sub_loops) == 0
 
@@ -602,18 +619,20 @@ def test_detect_loops_from_break_loop_in_break_loop_puml() -> None:
         _get_referenced_iterable(("B", "C"), references),
     }
     assert loop.break_points == _get_referenced_iterable({"F"}, references)
+    assert loop.exit_points == _get_referenced_iterable({"I"}, references)
 
     sub_loop, = loop.sub_loops
     assert set(sub_loop.nodes) == _get_referenced_iterable(
-        {"C", "D", "E", "F"}, references
+        {"C", "D", "E"}, references
     )
     assert sub_loop.edges_to_remove == {
-        _get_referenced_iterable(("F", "C"), references)
+        _get_referenced_iterable(("E", "C"), references)
     }
     assert sub_loop.break_edges == {
         _get_referenced_iterable(("C", "D"), references),
     }
-    assert loop.break_points == _get_referenced_iterable({"D"}, references)
+    assert sub_loop.break_points == _get_referenced_iterable({"D"}, references)
+    assert sub_loop.exit_points == _get_referenced_iterable({"F"}, references)
     assert len(sub_loop.sub_loops) == 0
 
 
@@ -622,5 +641,23 @@ def test_detect_loops_from_loop_break_split_exit_puml() -> None:
     event_sequences = generate_test_data_event_sequences_from_puml(
         "puml_files/loop_break_split_exit.puml"
     )
-    graph, _ = audit_event_sequences_to_network_x(event_sequences)
-    _ = detect_loops(graph)
+    graph, references = audit_event_sequences_to_network_x(event_sequences)
+    loops = detect_loops(graph)
+    loop, = loops
+    assert set(loop.nodes) == _get_referenced_iterable(
+        {"B", "C", "D"}, references
+    )
+    assert loop.edges_to_remove == {
+        _get_referenced_iterable(("D", "B"), references)
+    }
+    assert loop.break_edges == {
+        _get_referenced_iterable(("B", "C"), references),
+    }
+    assert loop.break_points == _get_referenced_iterable(
+        {"C"}, references
+    )
+    assert loop.exit_points == _get_referenced_iterable(
+        {"E", "F"}, references
+    )
+
+    assert len(loop.sub_loops) == 0
