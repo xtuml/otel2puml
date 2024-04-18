@@ -12,7 +12,7 @@ partition "bunched_XOR_switch" {
         else
             :E;
         endif
-        :G;
+        #red:F;
     end group
 }
 @enduml
