@@ -387,12 +387,8 @@ class Event:
         # calculate OR gates
         Event.process_or_gates(logic_gate_tree)
         # process missing AND gates
-        try:
-            tree_copy = deepcopy(logic_gate_tree)
-            self.process_missing_and_gates(tree_copy)
-            return tree_copy
-        except KeyError:
-            return logic_gate_tree
+        self.process_missing_and_gates(logic_gate_tree)
+        return logic_gate_tree
 
     @staticmethod
     def process_or_gates(
@@ -506,22 +502,26 @@ class Event:
                 process_tree.operator is not None
                 and process_tree.operator.value == Operator.OR.value
         ):
-            labels = []
+            universe = set()
             insoluble = False
             for child in process_tree.children:
                 if child.operator is None:
-                    labels.append(child.label)
+                    universe.add(child.label)
                 else:
                     insoluble = True
                     break
 
             if not insoluble:
-                universe = set(labels)
-                reduced_event_set = self.get_reduced_event_set()
-                reduced_event_set.remove(universe)
+                recursive_event_set = {
+                    event_set
+                    for event_set in self.get_reduced_event_set()
+                    if event_set.issubset(universe)
+                }
+                if universe in recursive_event_set:
+                    recursive_event_set.remove(universe)
 
                 weighted_cover = get_weighted_cover(
-                    reduced_event_set,
+                    recursive_event_set,
                     universe
                 )
 
