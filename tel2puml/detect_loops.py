@@ -181,13 +181,13 @@ def add_loop_edges_to_remove_and_breaks(
                 (u, v)
                 for u, v in loop_edges
                 if v in entries
-                and u in {u for u, _ in exits}
+                and u in {w for w, _ in exits}
             }
 
             breaks = {
                 (u, v)
                 for u, v in exits.difference(loop_edges)
-                if u not in {u for u, _ in edges_to_remove}
+                if u not in {w for w, _ in edges_to_remove}
             }
 
             for break_point in breaks:
