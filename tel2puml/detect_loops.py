@@ -13,7 +13,7 @@ class Loop:
         self.edges_to_remove: set[tuple[str, str]] = set()
         self.break_edges: set[tuple[str, str]] = set()
         self.break_points: set[str] = set()
-        self.exit_point: Optional[str] = None
+        self.exit_points: set[str] = set()
         self.merge_processed = False
 
     def __len__(self) -> int:
@@ -119,13 +119,13 @@ class Loop:
         """Set the merge_processed property to True."""
         self.merge_processed = True
 
-    def set_exit_point(self, exit_point: str) -> None:
+    def set_exit_points(self, exit_points: set[str]) -> None:
         """Set the exit point of the loop.
 
-        :param exit_point: The exit point of the loop.
-        :type exit_point: `str`
+        :param exit_points: The exit point of the loop.
+        :type exit_points: `set`[`str`]
         """
-        self.exit_point = exit_point
+        self.exit_points = exit_points
 
 
 def detect_loops(graph: DiGraph) -> list[Loop]:
@@ -203,10 +203,7 @@ def add_loop_edges_to_remove_and_breaks(
                         if u == loop_exit:
                             exit_points.add(exit_point)
 
-                if len(exit_points) == 1:
-                    loop.set_exit_point(exit_points.pop())
-                else:
-                    raise ValueError("Multiple exit points")
+                loop.set_exit_points(exit_points)
             else:
                 raise ValueError("No entries or no exits")
 
@@ -311,16 +308,24 @@ def update_break_points(
                 breaks_from_subloops.append(node)
 
         for _, v in loop.break_edges:
-            paths = list(all_simple_paths(graph, v, loop.exit_point))
-            if len(paths) == 1:
-                path, = paths
-                for node in path[:-1]:
+            if len(loop.exit_points) == 0:
+                raise ValueError("No exit points")
+            paths_to_exits = [
+                all_simple_paths(graph, v, exit_point)
+                for exit_point in loop.exit_points
+            ]
+            unique_path = {
+                tuple(path[:-1])
+                for paths in paths_to_exits
+                for path in paths
+            }
+            if len(unique_path) == 1:
+                for node in (path := unique_path.pop()):
                     if node not in loop.nodes:
                         loop.nodes.append(node)
                         breaks_from_subloops.append(node)
-                loop.add_break_point(path[-2])
-
-            elif len(paths) > 1:
+                loop.add_break_point(path[-1])
+            elif len(unique_path) > 1:
                 raise ValueError("Multiple paths")
             else:
                 raise ValueError("No paths")

@@ -31,7 +31,7 @@ class TestLoop():
         assert loop.edges_to_remove == set()
         assert loop.break_edges == set()
         assert loop.break_points == set()
-        assert loop.exit_point is None
+        assert loop.exit_points == set()
         assert not loop.merge_processed
 
     @staticmethod
@@ -164,9 +164,9 @@ class TestLoop():
     def test_set_exit_point() -> None:
         """Test the set_exit_point method of the Loop class."""
         loop = Loop(["A", "B", "C"])
-        assert loop.exit_point is None
-        loop.set_exit_point("A")
-        assert loop.exit_point == "A"
+        assert loop.exit_points == set()
+        loop.set_exit_points({"A"})
+        assert loop.exit_points == {"A"}
 
 
 def _get_referenced_iterable(
@@ -202,7 +202,7 @@ def test_add_loop_edges_to_remove_and_breaks() -> None:
     loop, = loops
     assert loop.edges_to_remove == {("B", "B")}
     assert loop.break_edges == set()
-    assert loop.exit_point is None
+    assert loop.exit_points == set()
 
     loops = [Loop(["B", "C", "D"])]
     edges = [("A", "B"), ("B", "C"), ("C", "D"), ("D", "B"), ("D", "E")]
@@ -210,7 +210,7 @@ def test_add_loop_edges_to_remove_and_breaks() -> None:
     loop, = loops
     assert loop.edges_to_remove == {("D", "B")}
     assert loop.break_edges == set()
-    assert loop.exit_point == "E"
+    assert loop.exit_points == {"E"}
 
     loops = [Loop(["B", "C", "D"])]
     edges = [("D", "B"), ("D", "E"), ("A", "B"), ("C", "D"), ("B", "C")]
@@ -218,7 +218,7 @@ def test_add_loop_edges_to_remove_and_breaks() -> None:
     loop, = loops
     assert loop.edges_to_remove == {("D", "B")}
     assert loop.break_edges == set()
-    assert loop.exit_point == "E"
+    assert loop.exit_points == {"E"}
 
     loops = [Loop(["B", "C", "E"]), Loop(["B", "D", "E"])]
     edges = [
@@ -231,7 +231,7 @@ def test_add_loop_edges_to_remove_and_breaks() -> None:
     for loop in loops:
         assert loop.edges_to_remove == {("E", "B")}
         assert loop.break_edges == set()
-        assert loop.exit_point == "F"
+        assert loop.exit_points == {"F"}
 
     loops = [Loop(["B", "D"]), Loop(["C", "E"]), Loop(["B", "D", "C", "E"])]
     edges = [
@@ -250,7 +250,7 @@ def test_add_loop_edges_to_remove_and_breaks() -> None:
                 ("E", "B"), ("D", "C"), ("D", "B"), ("E", "C")
             }
         assert loop.break_edges == set()
-        assert loop.exit_point == "F"
+        assert loop.exit_points == {"F"}
 
     loops = [Loop(["B", "D", "E"])]
     edges = [
@@ -262,7 +262,7 @@ def test_add_loop_edges_to_remove_and_breaks() -> None:
     loop, = loops
     assert loop.edges_to_remove == {('E', 'B')}
     assert loop.break_edges == {('B', 'C')}
-    assert loop.exit_point == "F"
+    assert loop.exit_points == {"F"}
 
     loops = [Loop(["B", "D", "E"])]
     edges = [
@@ -274,7 +274,7 @@ def test_add_loop_edges_to_remove_and_breaks() -> None:
     loop, = loops
     assert loop.edges_to_remove == {('E', 'B')}
     assert loop.break_edges == {('B', 'C')}
-    assert loop.exit_point == "F"
+    assert loop.exit_points == {"F"}
 
 
 def test_update_subloops() -> None:
@@ -377,7 +377,7 @@ def test_update_break_points() -> None:
 
     loop = Loop(["A", "B", "D"])
     loop.add_break_edge(("B", "C"))
-    loop.exit_point = "E"
+    loop.exit_points = {"E"}
 
     loops = [loop]
     loops = update_break_points(graph, loops)
@@ -395,10 +395,10 @@ def test_update_break_points() -> None:
     )
     loop = Loop(["B", "D"])
     sub_loop = Loop(["D"])
-    sub_loop.exit_point = "B"
+    sub_loop.exit_points = {"B"}
     loop.add_break_edge(("B", "C"))
     loop.sub_loops = [sub_loop]
-    loop.exit_point = "E"
+    loop.exit_points = {"E"}
 
     loops = [loop]
     loops = update_break_points(graph, loops)
