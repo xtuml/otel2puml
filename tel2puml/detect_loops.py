@@ -13,7 +13,7 @@ class Loop:
         self.edges_to_remove: set[tuple[str, str]] = set()
         self.break_edges: set[tuple[str, str]] = set()
         self.break_points: set[str] = set()
-        self.exit_point: Optional[str] = None
+        self.exit_points: set[str] = set()
         self.merge_processed = False
 
     def __len__(self) -> int:
@@ -119,13 +119,13 @@ class Loop:
         """Set the merge_processed property to True."""
         self.merge_processed = True
 
-    def set_exit_point(self, exit_point: str) -> None:
+    def set_exit_points(self, exit_points: set[str]) -> None:
         """Set the exit point of the loop.
 
-        :param exit_point: The exit point of the loop.
-        :type exit_point: `str`
+        :param exit_points: The exit point of the loop.
+        :type exit_points: `set`[`str`]
         """
-        self.exit_point = exit_point
+        self.exit_points = exit_points
 
 
 def detect_loops(graph: DiGraph) -> list[Loop]:
@@ -139,7 +139,7 @@ def detect_loops(graph: DiGraph) -> list[Loop]:
     loops_with_ref = [Loop(loop_list) for loop_list in simple_cycles(graph)]
     edges = [(u, v) for u, v in graph.edges()]
 
-    loops = add_loop_edges_to_remove_and_breaks(
+    loops: list[Loop] = add_loop_edges_to_remove_and_breaks(
         loops_with_ref, edges
     )
     loops = update_subloops(loops)
@@ -153,11 +153,11 @@ def add_loop_edges_to_remove_and_breaks(
         edges: list[tuple[str, str]]
 ) -> list[Loop]:
     """Add the edges to remove from the loops to the edge_to_remove property of
-    the Loop.
+    the Loop, along with the break points and associated exit point.
 
     :param loops: The loops to add the edges to remove.
     :type loops: `list`[`Loop`]
-    :param edges: The edges to add to the loops.
+    :param edges: The edges from the graph.
     :type edges: `list`[`tuple`[`str`, `str`]]
     :return: The updated loops.
     :rtype: `list`[`Loop`]
@@ -168,47 +168,46 @@ def add_loop_edges_to_remove_and_breaks(
         for edge in loop.get_edges()
     }
     for loop in loops:
-        if len(loop) == 1:
-            loop.add_edge_to_remove((loop.nodes[0], loop.nodes[0]))
-        else:
-            entries: set[str] = set()
-            exits: set[tuple[str, str]] = set()
-            for u, v in edges:
-                if u not in loop.nodes and v in loop.nodes:
-                    entries.add(v)
-                elif u in loop.nodes and v not in loop.nodes:
-                    exits.add((u, v))
+        entries: set[str] = set()
+        exits: set[tuple[str, str]] = set()
+        for u, v in edges:
+            if u not in loop.nodes and v in loop.nodes:
+                entries.add(v)
+            elif u in loop.nodes and v not in loop.nodes:
+                exits.add((u, v))
 
-            if entries and exits:
-                edges_to_remove = {
-                    (u, v)
-                    for u, v in loop_edges
-                    if v in entries
-                    and u in {u for u, _ in exits}
-                }
+        if entries and exits:
+            edges_to_remove = {
+                (u, v)
+                for u, v in loop_edges
+                if v in entries
+                and u in {w for w, _ in exits}
+            }
 
-                breaks = {
-                    (u, v)
-                    for u, v in exits.difference(loop_edges)
-                    if u not in {u for u, _ in edges_to_remove}
-                }
+            breaks = {
+                (u, v)
+                for u, v in exits.difference(loop_edges)
+                if u not in {w for w, _ in edges_to_remove}
+            }
 
-                for break_point in breaks:
-                    loop.add_break_edge(break_point)
+            for break_point in breaks:
+                loop.add_break_edge(break_point)
 
-                exit_points = set()
+            exit_points = set()
+            if len(loop) == 1:
+                loop.add_edge_to_remove(edges_to_remove.pop())
+                for _, exit_point in exits:
+                    exit_points.add(exit_point)
+            else:
                 for u, v in edges_to_remove:
                     loop.add_edge_to_remove((u, v))
                     for loop_exit, exit_point in exits.difference(loop_edges):
                         if u == loop_exit:
                             exit_points.add(exit_point)
 
-                if len(exit_points) == 1:
-                    loop.set_exit_point(exit_points.pop())
-                else:
-                    raise ValueError("Multiple exit points")
-            else:
-                raise ValueError("No entries or no exits")
+            loop.set_exit_points(exit_points)
+        else:
+            raise ValueError("No entries or no exits")
 
     return loops
 
@@ -235,7 +234,10 @@ def update_subloops(loops: list[Loop]) -> list[Loop]:
                     loop.add_subloop(potential_subloop)
                     is_subloop = True
                     current_filter_length = len(loop)
-                elif len(loop) <= current_filter_length:
+                elif (
+                        current_filter_length is not None
+                        and len(loop) <= current_filter_length
+                ):
                     loop.add_subloop(potential_subloop)
                 else:
                     break
@@ -292,12 +294,12 @@ def update_break_points(
     :type loops: `list`[`Loop`]
     :param sub_loop: Whether the loops are subloops or not.
     :type sub_loop: `bool`
-    :return: The updated loops.
-    :rtype: `list`[`Loop`]
+    :return: The updated loops or the nodes from the subloops.
+    :rtype: `list`[`Loop`] | `list`[`str`]
     """
-    breaks_from_subloops = []
+    breaks_from_subloops: list[str] = []
     for loop in loops:
-        from_subloops = update_break_points(
+        from_subloops: list[str] = update_break_points(
             graph,
             loop.sub_loops,
             sub_loop=True
@@ -308,16 +310,24 @@ def update_break_points(
                 breaks_from_subloops.append(node)
 
         for _, v in loop.break_edges:
-            paths = list(all_simple_paths(graph, v, loop.exit_point))
-            if len(paths) == 1:
-                path, = paths
-                for node in path[:-1]:
+            if len(loop.exit_points) == 0:
+                raise ValueError("No exit points")
+            paths_to_exits = [
+                all_simple_paths(graph, v, exit_point)
+                for exit_point in loop.exit_points
+            ]
+            unique_path = {
+                tuple(path[:-1])
+                for paths in paths_to_exits
+                for path in paths
+            }
+            if len(unique_path) == 1:
+                for node in (path := unique_path.pop()):
                     if node not in loop.nodes:
                         loop.nodes.append(node)
                         breaks_from_subloops.append(node)
-                loop.add_break_point(path[-2])
-
-            elif len(paths) > 1:
+                loop.add_break_point(path[-1])
+            elif len(unique_path) > 1:
                 raise ValueError("Multiple paths")
             else:
                 raise ValueError("No paths")
