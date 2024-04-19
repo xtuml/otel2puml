@@ -709,6 +709,7 @@ class TestPUMLGraph:
 
     @staticmethod
     def test_remove_dummy_start_event_nodes() -> None:
+        """Tests the remove_dummy_start_event_nodes method."""
         # setup
         graph = PUMLGraph()
         dummy_start = graph.create_event_node(DUMMY_START_EVENT)

@@ -631,6 +631,18 @@ class TestCreatePumlGraphFromNodeClassGraph:
         remove_dummy_start_from_test_data: bool = False,
         add_dummy_start: bool = False,
     ) -> PUMLGraph:
+        """Load the puml file, create puml graph and return the puml graph.
+
+        :param puml_file: The puml file to load.
+        :type puml_file: `str`
+        :param remove_dummy_start_from_test_data: Whether to remove the dummy
+        start event from the test data, defaults to False
+        :type remove_dummy_start_from_test_data: `bool`, optional
+        :param add_dummy_start: Whether to add a dummy start event to the
+        sequences, defaults to False
+        :type add_dummy_start: `bool`, optional
+        :return: The puml graph.
+        :rtype: :class:`PUMLGraph`"""
         # setup
         test_data_markov = generate_test_data_event_sequences_from_puml(
             puml_file,
