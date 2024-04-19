@@ -18,7 +18,7 @@ from tel2puml.jAlergiaPipeline import (
 )
 from tel2puml.node_map_to_puml.node import (
     merge_markov_without_loops_and_logic_detection_analysis,
-    create_puml_graph_from_node_class_graph
+    create_puml_graph_from_node_class_graph,
 )
 from tel2puml.detect_loops import detect_loops
 from tel2puml.puml_graph.graph_loop_insert import insert_loops
@@ -45,11 +45,15 @@ def pv_to_puml_string(
     )
     # run the logic detection pipeline
     forward_logic, backward_logic = (
-        update_all_connections_from_clustered_events(pv_stream_logic)
+        update_all_connections_from_clustered_events(
+            pv_stream_logic,
+            add_dummy_start=True
+        )
     )
     # run the markov chain analysis
     markov_graph, event_node_references = audit_event_sequences_to_network_x(
-        pv_stream_markov
+        pv_stream_markov,
+        add_dummy_start=True
     )
     # run the loop detection pipeline
     loops = detect_loops(markov_graph)
@@ -73,6 +77,8 @@ def pv_to_puml_string(
     )
     # insert the detected loops into the PlantUML graph
     insert_loops(puml_graph, loops)
+    # remove the dummy start event
+    puml_graph.remove_dummy_start_event_nodes()
     # convert the PlantUML graph to a PlantUML string
     return puml_graph.write_puml_string(puml_name)
 

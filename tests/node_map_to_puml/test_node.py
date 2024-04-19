@@ -15,7 +15,7 @@ from tel2puml.node_map_to_puml.node import (
     merge_markov_without_loops_and_logic_detection_analysis,
     create_puml_graph_from_node_class_graph,
     check_is_merge_node_for_logic_block,
-    LogicBlockHolder
+    LogicBlockHolder,
 )
 from tel2puml.pipelines.logic_detection_pipeline import (
     Event,
@@ -29,8 +29,10 @@ from tel2puml.check_puml_equiv import (
     get_network_x_graph_from_puml_string,
     check_networkx_graph_equivalence,
 )
-from tel2puml.puml_graph.graph import PUMLOperatorNode, PUMLOperatorNodes
-from tel2puml.tel2puml_types import PUMLEvent, PUMLOperator
+from tel2puml.puml_graph.graph import (
+    PUMLGraph, PUMLOperatorNode, PUMLOperatorNodes
+)
+from tel2puml.tel2puml_types import PUMLEvent, PUMLOperator, DUMMY_START_EVENT
 
 
 class TestNode:
@@ -624,24 +626,29 @@ class TestCreatePumlGraphFromNodeClassGraph:
     """Tests for the create_puml_graph_from_node_class_graph function."""
 
     @staticmethod
-    def load_and_check(puml_file: str) -> None:
-        """Load the puml file, create puml graph and check the graph
-        equivalence.
-
-        :param puml_file: The puml file to load.
-        :type puml_file: `str`"""
+    def load(
+        puml_file: str,
+        remove_dummy_start_from_test_data: bool = False,
+        add_dummy_start: bool = False,
+    ) -> PUMLGraph:
         # setup
         test_data_markov = generate_test_data_event_sequences_from_puml(
-            puml_file
+            puml_file,
+            remove_dummy_start_event=remove_dummy_start_from_test_data
         )
         markov_graph, node_event_reference = (
-            audit_event_sequences_to_network_x(test_data_markov)
+            audit_event_sequences_to_network_x(
+                test_data_markov,
+                add_dummy_start=add_dummy_start
+            )
         )
         test_data_logic = generate_test_data_event_sequences_from_puml(
-            puml_file
+            puml_file,
+            remove_dummy_start_event=remove_dummy_start_from_test_data
         )
         forward, backward = update_all_connections_from_clustered_events(
-            test_data_logic
+            test_data_logic,
+            add_dummy_start=add_dummy_start
         )
         node_class_graph = (
             merge_markov_without_loops_and_logic_detection_analysis(
@@ -652,6 +659,16 @@ class TestCreatePumlGraphFromNodeClassGraph:
         )
         # function call
         puml_graph = create_puml_graph_from_node_class_graph(node_class_graph)
+        return puml_graph
+
+    def load_and_check(self, puml_file: str) -> None:
+        """Load the puml file, create puml graph and check the graph
+        equivalence.
+
+        :param puml_file: The puml file to load.
+        :type puml_file: `str`"""
+        # setup
+        puml_graph = self.load(puml_file)
         # test
         # load in the expected graph
         with open(puml_file, "r", encoding="utf-8") as file:
@@ -704,6 +721,27 @@ class TestCreatePumlGraphFromNodeClassGraph:
         self.load_and_check(
             "puml_files/bunched_XOR_with_event_ending_logic.puml"
         )
+
+    def test_create_puml_graph_from_node_class_graph_with_dummy_start(
+        self
+    ) -> None:
+        """Tests the create_puml_graph_from_node_class_graph function with a
+        dummy start event."""
+        puml_graph = self.load(
+            "puml_files/two_start_events.puml",
+            remove_dummy_start_from_test_data=True,
+            add_dummy_start=True,
+        )
+        dummy_start_events = [
+            node for node in puml_graph.nodes
+            if node.node_type == DUMMY_START_EVENT
+        ]
+        assert len(dummy_start_events) == 1
+        puml_graph.remove_dummy_start_event_nodes()
+        assert dummy_start_events[0] not in puml_graph.nodes
+        head_node = list(nx.topological_sort(puml_graph))[0]
+        assert isinstance(head_node, PUMLOperatorNode)
+        assert head_node.operator_type == PUMLOperatorNodes.START_AND
 
 
 def test_check_is_merge_node_for_logic_block() -> None:
