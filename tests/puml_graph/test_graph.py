@@ -4,7 +4,9 @@
 import pytest
 from test_event_generator.io.parse_puml import parse_raw_job_def_lines
 
-from tel2puml.tel2puml_types import PUMLEvent, PUMLOperatorNodes, PUMLOperator
+from tel2puml.tel2puml_types import (
+    PUMLEvent, PUMLOperatorNodes, PUMLOperator, DUMMY_START_EVENT
+)
 from tel2puml.puml_graph.graph import (
     PUMLGraph,
     PUMLEventNode,
@@ -704,3 +706,25 @@ class TestPUMLGraph:
             "Graph is not disconnected after removing start node in edges "
             "and end node out edges so there is no subgraph to create"
         )
+
+    @staticmethod
+    def test_remove_dummy_start_event_nodes() -> None:
+        # setup
+        graph = PUMLGraph()
+        dummy_start = graph.create_event_node(DUMMY_START_EVENT)
+        A = graph.create_event_node("A")
+        B = graph.create_event_node("B")
+        C = graph.create_event_node("C")
+        graph.add_edge(dummy_start, A)
+        graph.add_edge(dummy_start, B)
+        graph.add_edge(A, C)
+        graph.add_edge(B, C)
+        assert (
+            (dummy_start, A) in graph.edges and (dummy_start, B) in graph.edges
+        )
+        assert dummy_start in graph.nodes
+        # test
+        graph.remove_dummy_start_event_nodes()
+        assert (dummy_start, A) not in graph.edges
+        assert (dummy_start, B) not in graph.edges
+        assert dummy_start not in graph.nodes
