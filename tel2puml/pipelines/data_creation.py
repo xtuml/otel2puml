@@ -8,6 +8,7 @@ from test_harness.protocol_verifier.simulator_data import (
     generate_single_events,
 )
 from test_event_generator.io.run import puml_file_to_test_events
+from tel2puml.tel2puml_types import DUMMY_START_EVENT
 
 
 def generate_test_data(
@@ -47,6 +48,7 @@ def generate_test_data_event_sequences_from_puml(
     template_all_paths: bool = True,
     num_paths_to_template: int = 1,
     is_branch_puml: bool = False,
+    remove_dummy_start_event: bool = False,
 ) -> Generator[Generator[dict, Any, None], Any, None]:
     """This function creates test data from a puml file as distinct sequences.
     It uses the test_event_generator package to create the test data.
@@ -82,15 +84,68 @@ def generate_test_data_event_sequences_from_puml(
     counter = 0
     if template_all_paths:
         for job in test_job_templates:
-            yield generate_event_jsons([job])
+            event_jsons = generate_event_jsons([job])
+            if remove_dummy_start_event:
+                event_jsons = remove_dummy_start_event_from_event_sequence(
+                    event_jsons
+                )
+            yield event_jsons
         counter = len(test_job_templates)
     while counter < num_paths_to_template:
         job_in_list = random.choices(test_job_templates, k=1)
         counter += 1
-        yield generate_event_jsons(job_in_list)
+        event_jsons = generate_event_jsons(job_in_list)
+        if remove_dummy_start_event:
+            event_jsons = remove_dummy_start_event_from_event_sequence(
+                event_jsons
+            )
+        yield event_jsons
 
 
-def generate_event_jsons(jobs: list[Job]) -> Generator[dict, Any, None]:
+def remove_dummy_start_event_from_event_sequence(
+    event_sequence: Generator[dict, Any, None]
+) -> Generator[dict, Any, None]:
+    """This function removes the dummy start event from an event sequence that
+    is given the appropriate event type.
+
+    :param event_sequence: The event sequence.
+    :type event_sequence: `Generator[dict, Any, None]`
+    :return: A generator that yields the event sequence without the dummy
+    start event.
+    :rtype: `Generator[dict, Any, None]`
+    """
+    dummy_start_event_id = None
+    prev_event_id_map: dict[str, list[str]] = {}
+    events: dict[str, dict] = {}
+    for event in event_sequence:
+        events[event["eventId"]] = event
+        if "previousEventIds" in event:
+            previous_event_ids = event["previousEventIds"]
+            if isinstance(previous_event_ids, str):
+                previous_event_ids = [previous_event_ids]
+            for previous_event_id in previous_event_ids:
+                if previous_event_id not in prev_event_id_map:
+                    prev_event_id_map[previous_event_id] = []
+                prev_event_id_map[previous_event_id].append(event["eventId"])
+        if event["eventType"] == DUMMY_START_EVENT:
+            dummy_start_event_id = event["eventId"]
+    if dummy_start_event_id is not None:
+        for event_id in prev_event_id_map[dummy_start_event_id]:
+            previous_event_ids = events[event_id]["previousEventIds"]
+            if isinstance(previous_event_ids, str):
+                previous_event_ids = [previous_event_ids]
+            previous_event_ids.remove(dummy_start_event_id)
+            if len(previous_event_ids) == 0:
+                del events[event_id]["previousEventIds"]
+            else:
+                event["previousEventIds"] = previous_event_ids
+        del events[dummy_start_event_id]
+    yield from events.values()
+
+
+def generate_event_jsons(
+    jobs: list[Job],
+) -> Generator[dict, Any, None]:
     """This function generates event jsons from a list of jobs.
 
     :param jobs: A list of jobs.
