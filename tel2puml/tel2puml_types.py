@@ -81,3 +81,6 @@ class PlantUMLEventAttributes(TypedDict):
     is_branch: NotRequired[bool]
     is_break: NotRequired[bool]
     is_merge: NotRequired[bool]
+
+
+DUMMY_START_EVENT = "|||START|||"
