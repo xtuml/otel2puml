@@ -10,8 +10,8 @@ partition "bunched_XOR_switch" {
                 else (false)
                     :C;
                 endif
-            else
                 :D;
+            else
                 :E;
             endif
             :F;
