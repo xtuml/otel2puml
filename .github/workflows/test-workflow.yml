@@ -41,7 +41,7 @@ jobs:
         uses: s-weigand/setup-conda@v1
         with:
           update-conda: true
-          python-version: 3.11
+          python-version: 3.11.8
           conda-channels: conda-forge
 
       - name: Install pre-requisites
