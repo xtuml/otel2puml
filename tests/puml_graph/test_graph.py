@@ -155,7 +155,7 @@ class TestPUMLOperatorNode:
                     tab_size=tab_size
                 ) == ([
                     " " * indent + "switch (XOR)",
-                    " " * (indent + tab_size) + "case"
+                    " " * (indent + tab_size) + "case ()"
                 ], 2)
         # test END_XOR
         for indent in [0, 4]:
@@ -394,14 +394,14 @@ class TestPUMLGraph:
         block = graph.write_uml_blocks()
         expected_block = [
             "switch (XOR)",
-            "    case",
+            "    case ()",
             "        switch (XOR)",
-            "            case",
+            "            case ()",
             "                :event;",
-            "            case",
+            "            case ()",
             "                :event;",
             "        endswitch",
-            "    case",
+            "    case ()",
             "        :event;",
             "endswitch"
         ]
@@ -484,11 +484,11 @@ class TestPUMLGraph:
         block = graph.write_uml_blocks()
         expected_block = [
             "switch (XOR)",
-            "    case",
+            "    case ()",
             "        repeat",
             "            :event;",
             "        repeat while",
-            "    case",
+            "    case ()",
             "        :event;",
             "endswitch"
         ]
