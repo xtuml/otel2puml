@@ -35,7 +35,7 @@ from test_event_generator.solutions.graph_solution import (
 )
 from test_event_generator.io.run import puml_file_to_test_events
 
-from tel2puml.tel2puml_types import PVEvent, NestedEvent
+from tel2puml.tel2puml_types import PVEvent, NestedEvent, DUMMY_START_EVENT
 
 
 def format_events_list_as_nested_json(
@@ -445,18 +445,55 @@ def generate_markov_lines_from_paths(
 
 def get_markov_sequence_lines_from_audit_event_stream(
     audit_event_stream: Iterable[Iterable[PVEvent]],
+    add_dummy_start: bool = False,
 ) -> str:
     """
     Retrieves event sequences from a stream of audit event job sequences.
 
     :param audit_event_stream: A stream of audit event lists.
     :type audit_event_stream: `Iterable`[`Iterable`[:class:`PVEvent`]]
+    :param add_dummy_start: A flag indicating whether to add a dummy start
+    event to the start of each sequence, defaults to False.
+    :type add_dummy_start: `bool`, optional
     :return: The event list as a string.
     :rtype: `str`
     """
-    return "\n".join(yield_markov_sequence_lines_from_audit_event_stream(
+    markov_seq_lines = yield_markov_sequence_lines_from_audit_event_stream(
         audit_event_stream
-    ))
+    )
+    if add_dummy_start:
+        markov_seq_lines = yield_markov_sequence_lines_with_dummy_start(
+            markov_seq_lines
+        )
+    return "\n".join(markov_seq_lines)
+
+
+def add_dummy_event_to_start_of_sequence(
+    audit_event_sequence_line: str
+) -> str:
+    """Adds a dummy event to the start of a sequence of audit events.
+
+    :param audit_event_sequence_line: The sequence of audit events.
+    :type audit_event_sequence_line: `str`
+    :return: The sequence of audit events with the dummy event added.
+    :rtype: `str`
+    """
+    return f"{DUMMY_START_EVENT},{audit_event_sequence_line}"
+
+
+def yield_markov_sequence_lines_with_dummy_start(
+    markov_sequence_lines: Iterable[str],
+) -> Generator[str, Any, None]:
+    """Adds a dummy event to the start of each sequence of audit event types.
+
+    :param markov_sequence_lines: The sequence of audit event types.
+    :type markov_sequence_lines: `Iterable`[`str`]
+    :return: A generator that yields the sequence of audit event types with the
+    dummy event added.
+    :rtype: `Generator`[`str`, `Any`, `None`]
+    """
+    for sequence_line in markov_sequence_lines:
+        yield add_dummy_event_to_start_of_sequence(sequence_line)
 
 
 if __name__ == "__main__":

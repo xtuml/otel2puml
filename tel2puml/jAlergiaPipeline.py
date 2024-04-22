@@ -116,18 +116,23 @@ def markov_lines_to_network_x(
 
 def audit_event_sequences_to_network_x(
     audit_event_sequences: Iterable[Iterable[PVEvent]],
+    add_dummy_start: bool = False
 ) -> tuple[MultiDiGraph, dict[str, dict]]:
     """Converts the given audit event sequences into a NetworkX graph.
 
     :param audit_event_sequences: The audit event sequences to convert to the
     graph
     :type audit_event_sequences: `Iterable`[`Iterable`[:class:`PVEvent`]]
+    :param add_dummy_start: Whether to add a dummy start event to the sequences
+    , defaults to False
+    :type add_dummy_start: `bool`, optional
     :return: A tuple containing the NetworkX graph and the event reference
     :rtype: `tuple`[:class:`MultiDiGraph`, `dict`[`str`, `dict`]]
     """
     markov_lines = (
         get_markov_sequence_lines_from_audit_event_stream(
-            audit_event_sequences
+            audit_event_sequences,
+            add_dummy_start=add_dummy_start
         )
     )
     return markov_lines_to_network_x(markov_lines)

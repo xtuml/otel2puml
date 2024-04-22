@@ -14,6 +14,7 @@ from tel2puml.read_uml_file import (
 from tel2puml.pipelines.data_creation import (
     generate_test_data_event_sequences_from_puml
 )
+from tel2puml.tel2puml_types import DUMMY_START_EVENT
 
 
 class Testread_uml_file(unittest.TestCase):
@@ -136,11 +137,22 @@ def test_get_markov_sequence_lines_from_audit_event_stream() -> None:
             "puml_files/and_with repeated_pattern.puml"
         )
     result = get_markov_sequence_lines_from_audit_event_stream(event_sequences)
+    expected_lines = ["A,G,H", "A,B,C,D", "A,B,C,D", "A,E,C,D"]
+    for line in result.split("\n"):
+        assert line in expected_lines
+        expected_lines.remove(line)
+    assert len(expected_lines) == 0
+    # test case adding a dummy start event
+    event_sequences = generate_test_data_event_sequences_from_puml(
+        "puml_files/and_with repeated_pattern.puml"
+    )
+    result = get_markov_sequence_lines_from_audit_event_stream(
+        event_sequences,
+        add_dummy_start=True
+    )
     expected_lines = [
-        "A,G,H",
-        "A,B,C,D",
-        "A,B,C,D",
-        "A,E,C,D",
+        f"{DUMMY_START_EVENT},{expected_line}"
+        for expected_line in ["A,G,H", "A,B,C,D", "A,B,C,D", "A,E,C,D"]
     ]
     for line in result.split("\n"):
         assert line in expected_lines

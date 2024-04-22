@@ -21,7 +21,7 @@ from test_event_generator.solutions.graph_solution import GraphSolution
 from test_event_generator.solutions.event_solution import EventSolution
 
 from tel2puml.utils import get_weighted_cover
-from tel2puml.tel2puml_types import PVEvent
+from tel2puml.tel2puml_types import PVEvent, DUMMY_START_EVENT
 from tel2puml.detect_loops import Loop
 
 
@@ -772,18 +772,22 @@ def update_all_connections_from_data(
 
 def update_all_connections_from_clustered_events(
     clustered_events: Iterable[Iterable[PVEvent]],
+    add_dummy_start: bool = False,
 ) -> tuple[dict[str, Event], dict[str, Event]]:
     """This function detects the logic in a sequence of PV events and updates
     the forward and backward logic dictionaries of events.
 
     :param clustered_events: A sequence of PV events.
     :type clustered_events: `Iterable`[`Iterable`[:class:`PVEvent`]]
+    :param add_dummy_start: Whether to add a dummy start event.
+    :type add_dummy_start: `bool`
     :return: A tuple of the forward and backward logic dictionaries of events.
     :rtype: `tuple`[`dict`[`str`, :class:`Event`],
     `dict`[`str`, :class:`Event`]]
     """
     graph_solutions = get_graph_solutions_from_clustered_events(
-        clustered_events
+        clustered_events,
+        add_dummy_start=add_dummy_start,
     )
     return update_all_connections_from_graph_solutions(
         graph_solutions
@@ -889,17 +893,46 @@ def cluster_events_by_job_id(events: list[dict]) -> dict[str, list[dict]]:
 
 def get_graph_solutions_from_clustered_events(
     clustered_events: Iterable[Iterable[PVEvent]],
+    add_dummy_start: bool = False,
 ) -> Generator[GraphSolution, Any, None]:
     """This function gets the graph solutions from a sequence of clustered PV
     events.
 
     :param clustered_events: A sequence of clustered PV events.
     :type clustered_events: `Iterable`[`Iterable`[:class:`PVEvent`]]
+    :param add_dummy_start: Whether to add a dummy start event.
+    :type add_dummy_start: `bool`
     :return: A generator that yields the graph solutions.
     :rtype: `Generator`[:class:`GraphSolution`, `Any`, `None`]
     """
     for job_events in clustered_events:
-        yield GraphSolution.from_event_list(job_events)
+        graph_solution = GraphSolution.from_event_list(job_events)
+        if add_dummy_start:
+            update_graph_solution_with_dummy_start_event(graph_solution)
+        yield graph_solution
+
+
+def update_graph_solution_with_dummy_start_event(
+    graph_solution: GraphSolution,
+) -> None:
+    """This function updates a graph solution with a dummy start event with
+    event type as the constant `DUMMY_START_EVENT`. Removes all start events
+    and adds the dummy start event as the start event.
+
+    :param graph_solution: The graph solution.
+    :type graph_solution: :class:`GraphSolution`
+    """
+    dummy_start_event = EventSolution(
+        meta_data={"EventType": DUMMY_START_EVENT}
+    )
+    keys_to_remove = []
+    for key, start_event in graph_solution.start_events.items():
+        dummy_start_event.add_post_event(start_event)
+        keys_to_remove.append(key)
+    for key in keys_to_remove:
+        del graph_solution.start_events[key]
+    dummy_start_event.add_to_post_events()
+    graph_solution.add_event(dummy_start_event)
 
 
 def remove_detected_loop_events(

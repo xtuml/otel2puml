@@ -14,6 +14,7 @@ from tel2puml.tel2puml_types import (
     PUMLOperatorNodes,
     NXEdgeAttributes,
     NXNodeAttributes,
+    DUMMY_START_EVENT
 )
 from tel2puml.check_puml_equiv import NXNode
 
@@ -645,3 +646,18 @@ class PUMLGraph(DiGraph):
             self.parent_graph_nodes_to_node_ref
         )
         return copy_graph
+
+    def remove_dummy_start_event_nodes(
+        self
+    ) -> None:
+        """Loops through the nodes of the instance and removes any dummy start
+        event nodes that are present.
+        """
+        nodes_to_remove = [
+            node
+            for node in self.nodes
+            if isinstance(node, PUMLEventNode)
+            and node.node_type == DUMMY_START_EVENT
+        ]
+        for node in nodes_to_remove:
+            self.remove_node(node)

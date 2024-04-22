@@ -12,9 +12,14 @@ from tel2puml.pipelines.logic_detection_pipeline import (
     remove_detected_loop_events,
     get_loop_events_to_remove_mapping,
     remove_detected_loop_data_from_events,
+    get_graph_solutions_from_clustered_events
 )
-from tel2puml.pipelines.data_creation import generate_test_data
+from tel2puml.pipelines.data_creation import (
+    generate_test_data,
+    generate_test_data_event_sequences_from_puml
+)
 from tel2puml.detect_loops import Loop
+from tel2puml.tel2puml_types import DUMMY_START_EVENT
 
 
 class TestOperator:
@@ -1425,3 +1430,30 @@ class TestLoopEdgeRemoval:
         assert len(events["A"].event_sets) == 1
         assert len(events["B"].event_sets) == 1
         assert len(events["D"].event_sets) == 1
+
+
+def test_get_graph_solutions_from_clustered_events() -> None:
+    """Test for method get_graph_solutions_from_clustered_events specifically
+    for dual start events
+    """
+    # test for dual start event and add dummy start event
+    event_sequences = generate_test_data_event_sequences_from_puml(
+        "puml_files/two_start_events.puml",
+        remove_dummy_start_event=True
+    )
+    graph_solutions = get_graph_solutions_from_clustered_events(
+        event_sequences,
+        add_dummy_start=True
+    )
+    graph_solution = next(graph_solutions)
+    events = {
+        event.meta_data["EventType"]: event
+        for event in graph_solution.events.values()
+    }
+    assert len(events) == 4
+    assert DUMMY_START_EVENT in events
+    assert events[DUMMY_START_EVENT].post_events == [
+        events["A"], events["B"]
+    ]
+    assert events["A"].previous_events == [events[DUMMY_START_EVENT]]
+    assert events["B"].previous_events == [events[DUMMY_START_EVENT]]
