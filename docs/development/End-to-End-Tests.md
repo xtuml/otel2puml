@@ -49,6 +49,7 @@ The End to end tests will be categorised into the following
             * AND
             * XOR
             * OR
+        * Extremely nested
     * kill/detach cases
         * simple
         * no merge events
