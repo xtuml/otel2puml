@@ -7,6 +7,7 @@ import logging
 from itertools import chain
 
 from networkx import DiGraph, topological_sort, has_path
+from networkx.exception import NetworkXError
 from pm4py import ProcessTree
 from pm4py.objects.process_tree.obj import Operator
 
@@ -743,7 +744,6 @@ def handle_reach_potential_merge_point(
         # merge nodes
         if logic_block.merge_counter > len(logic_block.merge_nodes):
             logic_block.merge_counter = 0
-            new_node = logic_block.logic_node.copy_node()
 
             counter = Counter(logic_block.merge_nodes)
             most_common = counter.most_common(1)[0][0]
@@ -755,10 +755,6 @@ def handle_reach_potential_merge_point(
 
             new_node = Node(
                 operator=logic_block.logic_node.operator,
-                outgoing=[
-                    logic_block.logic_node.outgoing[index]
-                    for index in indices
-                ],
                 outgoing_logic=[
                     logic_block.logic_node.outgoing_logic[index]
                     for index in indices
@@ -773,10 +769,13 @@ def handle_reach_potential_merge_point(
                     logic_block.puml_nodes[index]
                     for index in indices
             ]:
-                puml_graph.remove_edge(
-                    logic_block.start_node,
-                    out_node
-                )
+                try:
+                    puml_graph.remove_edge(
+                        logic_block.start_node,
+                        out_node
+                    )
+                except NetworkXError:
+                    pass
                 puml_graph.add_edge(start_op, out_node)
 
             new_logic_block = LogicBlockHolder(
