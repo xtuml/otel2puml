@@ -814,7 +814,6 @@ def handle_reach_potential_merge_point(
             logic_block.paths.append(new_node)
             logic_block.puml_nodes.append(start_op)
             logic_block.merge_nodes.append(None)
-            logic_block.logic_node.outgoing.append(new_node)
             logic_block.logic_node.outgoing_logic.append(new_node)
 
             logic_list.append(new_logic_block)
