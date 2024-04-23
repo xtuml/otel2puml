@@ -165,3 +165,6 @@ outputs
 
 # Temp data store
 data/
+
+# vscode
+.vscode

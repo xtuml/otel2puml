@@ -53,6 +53,7 @@ The End to end tests will be categorised into the following
     * kill/detach cases
         * simple
         * no merge events
+        * in loops
     * edge cases
 * branch counts
     * simple

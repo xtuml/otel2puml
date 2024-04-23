@@ -1,0 +1,12 @@
+@startuml
+    partition "loop nested branch counts" {
+        group "loop nested branch counts"
+            :A;
+            repeat 
+                :B,BCNT,user=B,name=BC1;
+                :C;
+            repeat while 
+            :D;
+        end group
+    }
+@enduml
