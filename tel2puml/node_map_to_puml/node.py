@@ -743,10 +743,9 @@ def handle_reach_potential_merge_point(
         # check if we are caught in an infinite loop when there are multiple
         # merge nodes
         if logic_block.merge_counter > len(logic_block.merge_nodes):
-            logic_block.merge_counter = 0
-
             counter = Counter(logic_block.merge_nodes)
-            most_common = counter.most_common(1)[0][0]
+            (most_common, _), = counter.most_common(1)
+            logic_block.merge_counter = 0
             indices = [
                 i
                 for i, x in enumerate(logic_block.merge_nodes)

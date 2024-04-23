@@ -725,8 +725,12 @@ class TestCreatePumlGraphFromNodeClassGraph:
         cases = [
             # test simple nested XOR
             "puml_files/bunched_XOR_simple.puml",
+            # test medium difficulty nested XOR with AND
+            "puml_files/bunched_XOR_medium_AND.puml",
+            # test medium difficulty nested XOR
+            "puml_files/bunched_XOR_medium.puml",
             # test a complicated nested XOR logic case
-            "puml_files/bunched_XOR_with_event_ending_logic.puml"
+            "puml_files/bunched_XOR_with_event_ending_logic.puml",
         ]
         for puml_file in cases:
             self.load_and_check(puml_file)
