@@ -688,9 +688,13 @@ class TestCreatePumlGraphFromNodeClassGraph:
             get_network_x_graph_from_puml_string(expected_puml_string)
         )
         # check graph equivalence
-        assert check_networkx_graph_equivalence(
-            puml_graph, expected_puml_graph
-        )
+        try:
+            assert check_networkx_graph_equivalence(
+                puml_graph, expected_puml_graph
+            )
+        except AssertionError as exc:
+            print(puml_file)
+            raise exc
 
     def test_create_puml_graph_from_node_class_graph(self) -> None:
         """Test the create_puml_graph_from_node_class_graph function."""

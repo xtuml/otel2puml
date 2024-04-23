@@ -552,6 +552,11 @@ class LogicBlockHolder:
         self.paths = [current_node_in_path] + self.paths[:-1]
         self.merge_nodes = [self.merge_nodes[-1]] + self.merge_nodes[:-1]
         self.puml_nodes = [current_puml_node_in_path] + self.puml_nodes[:-1]
+        self.logic_node.outgoing_logic = (
+            [self.logic_node.outgoing_logic[-1]]
+            + self.logic_node.outgoing_logic[:-1]
+        )
+
         return self.current_path_puml_node, self.current_path,
 
     def handle_path_merge(self, potential_merge_node: Node) -> bool:
@@ -744,8 +749,8 @@ def handle_reach_potential_merge_point(
         # merge nodes
         if logic_block.merge_counter > len(logic_block.merge_nodes):
             counter = Counter(logic_block.merge_nodes)
-            (most_common, _), = counter.most_common(1)
-            logic_block.merge_counter = 0
+            (most_common, decrement), = counter.most_common(1)
+            logic_block.merge_counter -= decrement
             indices = [
                 i
                 for i, x in enumerate(logic_block.merge_nodes)
@@ -801,10 +806,16 @@ def handle_reach_potential_merge_point(
             logic_block.paths = [
                 logic_block.paths[index] for index in not_indices
             ]
+            logic_block.logic_node.outgoing_logic = [
+                logic_block.logic_node.outgoing_logic[index]
+                for index in not_indices
+            ]
 
             logic_block.paths.append(new_node)
             logic_block.puml_nodes.append(start_op)
             logic_block.merge_nodes.append(None)
+            logic_block.logic_node.outgoing.append(new_node)
+            logic_block.logic_node.outgoing_logic.append(new_node)
 
             logic_list.append(new_logic_block)
 
