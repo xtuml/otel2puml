@@ -1,0 +1,16 @@
+@startuml
+partition "kill_with_merge" {
+    group "kill_with_merge"
+        #green:A;
+        fork
+            :B;
+        fork again
+            :C;
+            kill
+        fork again
+            :D;
+        end fork
+        :E;
+    end group
+}
+@enduml

@@ -1,0 +1,17 @@
+@startuml
+partition "simple XOR" {
+    group "simple XOR"
+        #green:A;
+        switch
+            case ()
+                :B;
+            case ()
+                :D;
+            case ()
+                :E;
+        endswitch
+        :C;
+        #red:F;
+    end group
+}
+@enduml

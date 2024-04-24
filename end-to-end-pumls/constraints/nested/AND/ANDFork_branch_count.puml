@@ -1,0 +1,14 @@
+@startuml
+partition "ANDFork_branch_count" {
+    group "ANDFork_branch_count"
+        #green:A;
+        fork
+            :B,BCNT,user=B,name=BC1;
+            :D;
+        fork again
+            :C;
+        end fork
+        #red:F;
+    end group
+}
+@enduml

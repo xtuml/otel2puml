@@ -1,0 +1,14 @@
+@startuml
+partition "XORFork_branch_count" {
+    group "XORFork_branch_count"
+        #green:A;
+        if (XOR) then (true)
+            :B,BCNT,user=B,name=BC1;
+            :D;
+        else (false)
+            :C;
+        endif
+        #red:F;
+    end group
+}
+@enduml

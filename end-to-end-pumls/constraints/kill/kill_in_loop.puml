@@ -1,0 +1,21 @@
+@startuml
+partition "kill_in_loop" {
+    group "kill_in_loop"
+        #green:A;
+        repeat
+            :B;
+            fork
+                :C;
+            fork again
+                :D;
+                kill
+            fork again
+                :E;
+                kill
+            end fork
+            :F;
+        repeat while
+        :G;
+    end group
+}
+@enduml

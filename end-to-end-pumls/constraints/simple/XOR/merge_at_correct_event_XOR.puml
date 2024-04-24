@@ -1,0 +1,19 @@
+@startuml
+partition "merge at correct event XOR" {
+    group "merge at correct event XOR"
+        #green:A;
+        switch
+            case ()
+                :B;
+                :C;
+            case ()
+                :D;
+                :C;
+            case ()
+                :E;
+                :C;
+        endswitch
+        #red:F;
+    end group
+}
+@enduml
