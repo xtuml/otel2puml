@@ -1,21 +1,21 @@
 # End-to-end tests loops
 End to end test cases for cases involving loops.
 ## Contents
-* [Self Loops](/docs/development/end-to-end-tests/Loops#self-loops)
-* [Nested Loops](/docs/development/end-to-end-tests/Loops#nested-loops)
+* [Self Loops](./Loops#self-loops)
+* [Nested Loops](./Loops#nested-loops)
   * Nested Normal Loops
   * Nested Self Loops
-* [Nested Logic Blocks](/docs/development/end-to-end-tests/Loops#nested-logic-blocks)
+* [Nested Logic Blocks](./Loops#nested-logic-blocks)
   * Nested AND logic
   * Nested OR logic
   * Nested XOR logic
   * Nested bunched logic
-* [Break Points](/docs/development/end-to-end-tests/Loops#break-points)
+* [Break Points](./Loops#break-points)
   * Normal break in loop
   * Two breaks in loop
   * Break point in nested loop
-* [Nested Branch Counts](/docs/development/end-to-end-tests/Loops#nested-branch-counts)
-* [Edge Cases](/docs/development/end-to-end-tests/Loops#edge-cases)
+* [Nested Branch Counts](./Loops#nested-branch-counts)
+* [Edge Cases](./Loops#edge-cases)
   * Loop with break with logic directly after loop
 
 ## Cases
