@@ -694,7 +694,7 @@ class TestCreatePumlGraphFromNodeClassGraph:
             )
         except AssertionError as exc:
             print(puml_file)
-            raise exc
+            raise AssertionError(f"Graph not equivalent. {puml_file}") from exc
 
     def test_create_puml_graph_from_node_class_graph(self) -> None:
         """Test the create_puml_graph_from_node_class_graph function."""
