@@ -2,7 +2,7 @@
 partition "simple XOR" {
     group "simple XOR"
         #green:A;
-        switch
+        switch (XOR)
             case ()
                 :B;
             case ()

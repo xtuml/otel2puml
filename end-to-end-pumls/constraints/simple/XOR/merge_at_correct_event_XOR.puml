@@ -2,7 +2,7 @@
 partition "merge at correct event XOR" {
     group "merge at correct event XOR"
         #green:A;
-        switch
+        switch (XOR)
             case ()
                 :B;
                 :C;
