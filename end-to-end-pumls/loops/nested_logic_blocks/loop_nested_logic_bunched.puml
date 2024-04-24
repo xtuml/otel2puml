@@ -1,0 +1,15 @@
+@startuml
+partition "loop nested logic bunched" {
+    group "loop nested logic bunched"
+        #green:A;
+        repeat
+            fork
+                :C;
+            fork again
+                :D;
+            end fork
+        repeat while
+        #red:F;
+    end group
+}
+@enduml

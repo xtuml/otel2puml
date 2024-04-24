@@ -1,0 +1,28 @@
+@startuml
+partition "bunched_AND_3_levels" {
+    group "bunched_AND_3_levels"
+        #green:A;
+        fork
+            fork
+                fork
+                    :B;
+                fork again
+                    :C;
+                end fork
+                :D;
+            fork again
+                :E;
+            end fork
+            :F;
+        fork again
+            fork
+                :G;
+            fork again
+                :H;
+            end fork
+            :I;
+        end fork
+        #red:J;
+    end group
+}
+@enduml

@@ -1,0 +1,15 @@
+@startuml
+partition "multiple same event AND" {
+    group "multiple same event AND"
+        #green:A;
+        fork
+            :B;
+            :C;
+        fork again
+            :B;
+            :C;
+        end fork
+        #red:D;
+    end group
+}
+@enduml

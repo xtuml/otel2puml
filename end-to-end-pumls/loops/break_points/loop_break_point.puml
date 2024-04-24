@@ -1,0 +1,18 @@
+@startuml
+partition "loop break point" {
+    group "loop break point"
+        #green:A;
+        repeat
+            :B;
+            if (XOR) then (true)
+                    :C;
+                    break
+            else (false)
+                    :D;
+                    :F;
+            endif
+        repeat while
+        #red:E; 
+    end group
+}
+@enduml

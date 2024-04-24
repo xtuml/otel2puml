@@ -1,0 +1,16 @@
+@startuml
+partition "ANDFork_loop_a" {
+    group "ANDFork_loop_a"
+        #green:A;
+        fork
+            :B;
+            repeat
+                :D;
+            repeat while
+        fork again
+            :C;
+        end fork
+        #red:E;
+    end group
+}
+@enduml

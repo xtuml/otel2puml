@@ -26,16 +26,20 @@ The End to end tests will be categorised into the following
             * AND
             * XOR
             * OR
+            * loop
+            * branch counts
         * XOR
             * AND
             * XOR
             * OR
+            * loop
+            * branch counts
         * OR
             * AND
             * XOR
             * OR
-        * loop
-        * branch counts
+            * loop
+            * branch counts
     * bunched
         * AND
             * AND
@@ -45,7 +49,7 @@ The End to end tests will be categorised into the following
             * AND
             * XOR
             * OR
-        * AND
+        * OR
             * AND
             * XOR
             * OR
@@ -53,11 +57,9 @@ The End to end tests will be categorised into the following
     * kill/detach cases
         * simple
         * no merge events
+        * in loops
     * edge cases
 * branch counts
     * simple
     * doubled up
     * edge cases
-
-
-

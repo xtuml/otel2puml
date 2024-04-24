@@ -1,0 +1,18 @@
+@startuml
+partition "bunched_ANDFork_ORFork" {
+    group "bunched_ANDFork_ORFork"
+        #green:A;
+        fork
+            split
+                :D;
+            split again
+                :E;
+            end split
+            :B;
+        fork again
+            :C;
+        end fork
+        #red:F;
+    end group
+}
+@enduml
