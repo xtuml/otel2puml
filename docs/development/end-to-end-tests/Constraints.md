@@ -1,72 +1,72 @@
 # End-to-end tests Constraints
 End to end test cases for cases involving constraints.
 ## Contents
-* [Simple](./Constraints/Simple)
-    * [AND](./Constraints/Simple#and)
+* [Simple](./constraints/simple)
+    * [AND](./constraints/simple#and)
         * Basic
         * Multiple same events
         * Merge at correct event
-    * [XOR](./Constraints/Simple#xor)
+    * [XOR](./constraints/simple#xor)
         * Basic
         * Merge at correct event
-    * [OR](./Constraints/Simple#or)
+    * [OR](./constraints/simple#or)
         * Basic
         * Merge at correct event
-* [Nested](./Constraints/Nested)
-    * [AND](./Constraints/Nested#and)
+* [Nested](./constraints/nested)
+    * [AND](./constraints/nested#and)
         * AND
         * XOR
         * OR
         * Loop
         * Branch counts
-    * [XOR](./Constraints/Nested#xor)
+    * [XOR](./constraints/nested#xor)
         * AND
         * XOR
         * OR
         * Loop
         * Branch counts
-    * [OR](./Constraints/Nested#or)
+    * [OR](./constraints/nested#or)
         * AND
         * XOR
         * OR
         * Loop
         * Branch counts
-* [Kill/detach](./Constraints/Kill_detach)
-    * [No merge](./Constraints/Kill_detach#no-merge)
-    * [With merge](./Constraints/Kill_detach#with-merge)
-    * [Merge on parent](./Constraints/Kill_detach#merge-on-parent)
-    * [In loops](./Constraints/Kill_detach#in-loops)
-* [Bunched](./Constraints/Bunched)
-    * [Bunched with AND as highest level](./Constraints/Bunched#and)
-        * [Bunched with AND as next level](./Constraints/Bunched#and-and)
+* [Kill/detach](./constraints/kill_detach)
+    * [No merge](./constraints/kill_detach#no-merge)
+    * [With merge](./constraints/kill_detach#with-merge)
+    * [Merge on parent](./constraints/kill_detach#merge-on-parent)
+    * [In loops](./constraints/kill_detach#in-loops)
+* [Bunched](./constraints/bunched)
+    * [Bunched with AND as highest level](./constraints/bunched#and)
+        * [Bunched with AND as next level](./constraints/bunched#and-and)
             * With event in between merge and branch
             * Without event in between merge and branch
-        * [Bunched with XOR as next level](./Constraints/Bunched#and-xor)
+        * [Bunched with XOR as next level](./constraints/bunched#and-xor)
             * With event in between merge and branch
             * Without event in between merge and branch
-        * [Bunched with OR as next level](./Constraints/Bunched#and-or)
+        * [Bunched with OR as next level](./constraints/bunched#and-or)
             * With event in between merge and branch
             * Without event in between merge and branch
-    * [Bunched with XOR as highest level](./Constraints/Bunched#xor)
-        * [Bunched with AND as next level](./Constraints/Bunched#xor-and)
+    * [Bunched with XOR as highest level](./constraints/bunched#xor)
+        * [Bunched with AND as next level](./constraints/bunched#xor-and)
             * With event in between merge and branch
             * Without event in between merge and branch
-        * [Bunched with XOR as next level](./Constraints/Bunched#xor-xor)
+        * [Bunched with XOR as next level](./constraints/bunched#xor-xor)
             * With event in between merge and branch
             * Without event in between merge and branch
-        * [Bunched with OR as next level](./Constraints/Bunched#xor-or)
+        * [Bunched with OR as next level](./constraints/bunched#xor-or)
             * With event in between merge and branch
             * Without event in between merge and branch
-    * [Bunched with OR as highest level](./Constraints/Bunched#or)
-        * [Bunched with AND as next level](./Constraints/Bunched#or-and)
+    * [Bunched with OR as highest level](./constraints/bunched#or)
+        * [Bunched with AND as next level](./constraints/bunched#or-and)
             * With event in between merge and branch
             * Without event in between merge and branch
-        * [Bunched with XOR as next level](./Constraints/Bunched#or-xor)
+        * [Bunched with XOR as next level](./constraints/bunched#or-xor)
             * With event in between merge and branch
             * Without event in between merge and branch
-        * [Bunched with OR as next level](./Constraints/Bunched#or-or)
+        * [Bunched with OR as next level](./constraints/bunched#or-or)
             * With event in between merge and branch
             * Without event in between merge and branch
-    * [Three levels of bunching of same logic type](./Constraints/Bunched#three-levels-of-bunching-of-same-logic-type)
-        * [AND](./Constraints/Bunched#three-and)
-        * [XOR](./Constraints/Bunched#three-xor)
+    * [Three levels of bunching of same logic type](./constraints/bunched#three-levels-of-bunching-of-same-logic-type)
+        * [AND](./constraints/bunched#three-and)
+        * [XOR](./constraints/bunched#three-xor)
