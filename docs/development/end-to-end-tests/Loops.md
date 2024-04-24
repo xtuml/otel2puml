@@ -1,4 +1,5 @@
 # End-to-end tests loops
+End to end test cases for cases involving loops.
 ## Contents
 * [Self Loops](/docs/development/end-to-end-tests/Loops#self-loops)
 * [Nested Loops](/docs/development/end-to-end-tests/Loops#nested-loops)

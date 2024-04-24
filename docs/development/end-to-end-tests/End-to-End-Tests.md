@@ -63,6 +63,3 @@ The End to end tests will be categorised into the following
     * simple
     * doubled up
     * edge cases
-
-
-
