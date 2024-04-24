@@ -12,4 +12,4 @@ Tests a simple branch count as below
 ### Double branch count
 Tests a double branch count
 
-![](end-to-end-pumls/branch_counts/double_branch_count.svg)
+![](/end-to-end-pumls/branch_counts/double_branch_count.svg)
