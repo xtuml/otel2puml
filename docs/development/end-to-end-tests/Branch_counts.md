@@ -1,8 +1,8 @@
 # End-to-end tests branch counts
 End to end test cases for cases involving branch counts.
 ## Contents
-* [Simple single branch count](./branch_counts#simple-single-branch-count)
-* [Double branch count](./branch_counts#double-branch-count)
+* [Simple single branch count](./branch_counts.md#simple-single-branch-count)
+* [Double branch count](./branch_counts.md#double-branch-count)
 
 ## Cases
 ### Simple single branch count
