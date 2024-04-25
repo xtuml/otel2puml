@@ -27,7 +27,9 @@ def get_weighted_cover(
     """
     if universe in event_set:
         event_set.remove(universe)
-
+    # if the event set is empty, return None otherwise there is a zero division
+    if not event_set:
+        return None
     weighted_cover = set()
     while universe:
         subset = max(
