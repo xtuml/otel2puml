@@ -792,6 +792,11 @@ def handle_reach_potential_merge_point(
                         logic_block.logic_node.outgoing_logic[index]
                         for index in indices
                     ],
+                    outgoing=[
+                        logic_block.logic_node.outgoing_logic[index]
+                        for index in indices
+                    ],
+                    incoming_logic=[logic_block.logic_node],
                 )
 
                 not_indices = [
@@ -847,15 +852,11 @@ def handle_reach_potential_merge_point(
                 blocks = []
                 for sub_block_copy in block.sub_blocks_copy:
                     if (
-                            block.logic_node.operator 
+                            block.logic_node.operator
                             != sub_block_copy.logic_node.operator
                     ):
                         blocks.append(sub_block_copy)
-
-                for sub_block in block.sub_blocks:
-                    blocks.extend(_collect_fresh_blocks(sub_block))
-
-                block.sub_blocks_copy = []
+                    blocks.extend(_collect_fresh_blocks(sub_block_copy))
 
                 return blocks
 
