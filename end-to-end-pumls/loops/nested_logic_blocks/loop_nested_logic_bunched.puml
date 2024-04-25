@@ -3,6 +3,7 @@ partition "loop nested logic bunched" {
     group "loop nested logic bunched"
         #green:A;
         repeat
+            :E;
             fork
                 :C;
             fork again

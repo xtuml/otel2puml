@@ -467,9 +467,6 @@ def merge_markov_without_loops_and_logic_detection_analysis(
         )
     )
     load_all_logic_trees_into_nodes(
-        incoming_logic_events, event_node_map, "incoming"
-    )
-    load_all_logic_trees_into_nodes(
         outgoing_logic_events, event_node_map, "outgoing"
     )
     return node_class_graph

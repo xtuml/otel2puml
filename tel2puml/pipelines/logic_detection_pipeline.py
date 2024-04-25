@@ -993,3 +993,8 @@ def remove_detected_loop_data_from_events(
         loops, node_event_name_reference
     )
     remove_detected_loop_events(loop_events_to_remove, events)
+    for loop in loops:
+        if loop.sub_loops:
+            remove_detected_loop_data_from_events(
+                loop.sub_loops, events, node_event_name_reference
+            )
