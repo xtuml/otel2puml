@@ -65,6 +65,15 @@ class Operator(Enum):
         return self.value
 
 
+def get_non_operator_successor_labels(
+    node: ProcessTree
+) -> Generator[str, Any, None]:
+    if node.operator is None:
+        yield node.label
+    for child in node.children:
+        yield from get_non_operator_successor_labels(child)
+
+
 class EventSet(dict[str, int]):
     """Class to represent a set of unique events and their counts.
 
@@ -385,23 +394,23 @@ class Event:
         # remove first event and get subsequent tree
         logic_gate_tree: ProcessTree = process_tree.children[1]
         # calculate OR gates
-        Event.process_or_gates(logic_gate_tree)
+        self.process_or_gates(logic_gate_tree)
         # process missing AND gates
         self.process_missing_and_gates(logic_gate_tree)
         return logic_gate_tree
 
-    @staticmethod
     def process_or_gates(
+        self,
         process_tree: ProcessTree,
     ) -> None:
         """Static method to process the OR gates in a process tree by extending
         the OR gates and filtering the defunct OR gates.
         """
-        Event.get_extended_or_gates_from_process_tree(process_tree)
+        self.get_extended_or_gates_from_process_tree(process_tree)
         Event.filter_defunct_or_gates(process_tree)
 
-    @staticmethod
     def get_extended_or_gates_from_process_tree(
+        self,
         process_tree: ProcessTree,
     ) -> None:
         """Static method to get the extended OR gates from a process tree by
@@ -410,12 +419,12 @@ class Event:
         :param process_tree: The process tree.
         :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
         """
-        Event.infer_or_gate_from_node(process_tree)
+        self.infer_or_gate_from_node(process_tree)
         for node in process_tree.children:
-            Event.get_extended_or_gates_from_process_tree(node)
+            self.get_extended_or_gates_from_process_tree(node)
 
-    @staticmethod
     def infer_or_gate_from_node(
+        self,
         node: ProcessTree,
     ) -> None:
         """Static method to infer the OR gates from a node.
@@ -443,7 +452,7 @@ class Event:
                     non_tau_children.append(child)
 
         if len(tau_children) > 0:
-            node.operator = Operator.OR
+            # node.operator = Operator.OR
             removed_tau_children = []
             for child in tau_children:
                 for grandchild in child.children:
@@ -452,25 +461,51 @@ class Event:
                         removed_tau_children.append(grandchild)
 
             if len(non_tau_children) == 0:
+                node.operator = Operator.OR
                 node.children = removed_tau_children
                 return
+            # get the leaf successors of the non-tau children
+            # and get the leaf successors of the removed tau children
+            # and see if there is a case where any of the removed tau children
+            # don't appear with any of the non-tau children then we must have
+            # an OR
+            non_tau_successors_set = set(
+                label
+                for child in non_tau_children
+                for label in get_non_operator_successor_labels(child)
+            )
+            removed_tau_children_set = set(
+                label
+                for child in removed_tau_children
+                for label in get_non_operator_successor_labels(child)
+            )
+            for event_set in self.event_sets:
+                frozen_set = event_set.to_frozenset()
+                if non_tau_successors_set.intersection(frozen_set):
+                    if not removed_tau_children_set.intersection(frozen_set):
+                        node.operator = Operator.OR
+                        if len(non_tau_children) == 1:
+                            node.children = (
+                                removed_tau_children + non_tau_children
+                            )
+                        else:
+                            node.children = [
+                                *removed_tau_children,
+                                ProcessTree(
+                                    Operator.PARALLEL,
+                                    node,
+                                    non_tau_children,
+                                )
+                            ]
+                        return
 
-            updated_children = []
+            new_child_or = ProcessTree(
+                Operator.OR,
+                node,
+                removed_tau_children,
+            )
 
-            updated_children.extend(removed_tau_children)
-
-            if len(non_tau_children) == 1:
-                updated_children.append(non_tau_children[0])
-            else:
-                updated_children.append(
-                    ProcessTree(
-                        Operator.PARALLEL,
-                        node,
-                        non_tau_children,
-                    )
-                )
-
-            node.children = updated_children
+            node.children = non_tau_children + [new_child_or]
 
     @staticmethod
     def filter_defunct_or_gates(
