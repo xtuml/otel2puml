@@ -68,6 +68,12 @@ class Operator(Enum):
 def get_non_operator_successor_labels(
     node: ProcessTree
 ) -> Generator[str, Any, None]:
+    """Recursive method to get the leaf label nodes of a process tree.
+
+    :param node: The process tree node.
+    :type node: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+    :return: The leaf label nodes.
+    :rtype: `Generator`[`str`, `Any`, `None`]"""
     if node.operator is None:
         yield node.label
     for child in node.children:
@@ -423,6 +429,49 @@ class Event:
         for node in process_tree.children:
             self.get_extended_or_gates_from_process_tree(node)
 
+    def check_is_or_operator(
+        self,
+        non_tau_children: list[ProcessTree],
+        removed_tau_children: list[ProcessTree],
+    ) -> bool:
+        """Method to check if the operator is an OR operator from the non-tau
+        children and removed tau children.
+
+        :param non_tau_children: The non-tau children.
+        :type non_tau_children:
+        `list`[:class:`pm4py.objects.process_tree.obj.ProcessTree`]
+        :param removed_tau_children: The removed tau children.
+        :type removed_tau_children:
+        `list`[:class:`pm4py.objects.process_tree.obj.ProcessTree`]
+        :return: Whether the operator is an OR operator.
+        :rtype: `bool`
+        """
+        if len(non_tau_children) == 0:
+            return True
+        # get the leaf successors of the non-tau children
+        # and get the leaf successors of the removed tau children
+        # and see if there is a case where any of the removed tau children
+        # don't appear with any of the non-tau children then we must have
+        # an OR
+        non_tau_successors_set = set(
+            label
+            for child in non_tau_children
+            for label in get_non_operator_successor_labels(child)
+        )
+        removed_tau_children_set = set(
+            label
+            for child in removed_tau_children
+            for label in get_non_operator_successor_labels(child)
+        )
+        for event_set in self.event_sets:
+            frozen_set = event_set.to_frozenset()
+            if (
+                non_tau_successors_set.intersection(frozen_set) and
+                not removed_tau_children_set.intersection(frozen_set)
+            ):
+                return True
+        return False
+
     def infer_or_gate_from_node(
         self,
         node: ProcessTree,
@@ -459,46 +508,23 @@ class Event:
                     if str(grandchild) != "tau":
                         grandchild.parent = node
                         removed_tau_children.append(grandchild)
-
-            if len(non_tau_children) == 0:
+            if self.check_is_or_operator(
+                non_tau_children, removed_tau_children
+            ):
                 node.operator = Operator.OR
-                node.children = removed_tau_children
+                if len(non_tau_children) > 1:
+                    node.children = [
+                        *removed_tau_children,
+                        ProcessTree(
+                            Operator.PARALLEL,
+                            node,
+                            non_tau_children,
+                        )
+                    ]
+                else:
+                    node.children = removed_tau_children + non_tau_children
                 return
-            # get the leaf successors of the non-tau children
-            # and get the leaf successors of the removed tau children
-            # and see if there is a case where any of the removed tau children
-            # don't appear with any of the non-tau children then we must have
-            # an OR
-            non_tau_successors_set = set(
-                label
-                for child in non_tau_children
-                for label in get_non_operator_successor_labels(child)
-            )
-            removed_tau_children_set = set(
-                label
-                for child in removed_tau_children
-                for label in get_non_operator_successor_labels(child)
-            )
-            for event_set in self.event_sets:
-                frozen_set = event_set.to_frozenset()
-                if non_tau_successors_set.intersection(frozen_set):
-                    if not removed_tau_children_set.intersection(frozen_set):
-                        node.operator = Operator.OR
-                        if len(non_tau_children) == 1:
-                            node.children = (
-                                removed_tau_children + non_tau_children
-                            )
-                        else:
-                            node.children = [
-                                *removed_tau_children,
-                                ProcessTree(
-                                    Operator.PARALLEL,
-                                    node,
-                                    non_tau_children,
-                                )
-                            ]
-                        return
-
+            # if not OR we must have an AND with a nested OR
             new_child_or = ProcessTree(
                 Operator.OR,
                 node,
