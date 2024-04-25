@@ -15,9 +15,14 @@ partition "bunched_XOR_switch" {
             endif
             :F;
         else
-            :G;
+            fork
+                :G;
+            fork again
+                :H;
+            end fork
+            :I;
         endif
-        #red:H;
+        #red:J;
     end group
 }
 @enduml

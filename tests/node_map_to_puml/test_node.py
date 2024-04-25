@@ -733,9 +733,13 @@ class TestCreatePumlGraphFromNodeClassGraph:
             "puml_files/bunched_XOR_medium_AND.puml",
             # test medium difficulty nested XOR
             "puml_files/bunched_XOR_medium.puml",
-            # test a complex nested XOR logic case
+            # test a complex nested 3 layer XOR logic case
             "puml_files/bunched_XOR_complex.puml",
-            # test a complicated nested XOR logic case
+            # test a complex nested XOR logic case with AND
+            "puml_files/bunched_XOR_complex_AND.puml",
+            # test a complex nested XOR logic case with side XOR
+            "puml_files/bunched_XOR_complex_XOR.puml",
+            # test a very complicated nested XOR logic case
             "puml_files/bunched_XOR_with_event_ending_logic.puml",
         ]
         for puml_file in cases:

@@ -825,6 +825,12 @@ def handle_reach_potential_merge_point(
             def _collect_nodes_to_remove(block: LogicBlockHolder):
                 nodes = set()
                 for sub_block in block.sub_blocks:
+                    if (
+                            block.logic_node.operator
+                            == sub_block.logic_node.operator
+                    ):
+                        nodes.add(sub_block.start_node)
+                        nodes.add(sub_block.end_node)
                     nodes.update(_collect_nodes_to_remove(sub_block))
 
                 while len(block.processed_nodes) > 0:
@@ -839,9 +845,17 @@ def handle_reach_potential_merge_point(
 
             def _collect_fresh_blocks(block: LogicBlockHolder):
                 blocks = []
-                blocks.extend(block.sub_blocks_copy)
+                for sub_block_copy in block.sub_blocks_copy:
+                    if (
+                            block.logic_node.operator 
+                            != sub_block_copy.logic_node.operator
+                    ):
+                        blocks.append(sub_block_copy)
+
                 for sub_block in block.sub_blocks:
                     blocks.extend(_collect_fresh_blocks(sub_block))
+
+                block.sub_blocks_copy = []
 
                 return blocks
 
