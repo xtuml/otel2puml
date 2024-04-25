@@ -6,12 +6,14 @@ from tel2puml.utils_test import end_to_end_test
 
 
 def test_kill_with_no_merge() -> None:
+    """Test kill with no merge."""
     end_to_end_test(
         "end-to-end-pumls/constraints/kill/kill_with_no_merge.puml",
     )
 
 
 def test_kill_with_merge() -> None:
+    """Test kill with merge."""
     end_to_end_test(
         "end-to-end-pumls/constraints/kill/kill_with_merge.puml",
     )
@@ -23,6 +25,7 @@ def test_kill_with_merge() -> None:
     strict=True
 )
 def test_kill_with_merge_on_parent() -> None:
+    """Test kill with merge on parent."""
     end_to_end_test(
         "end-to-end-pumls/constraints/kill/kill_with_merge_on_parent.puml",
     )
@@ -35,6 +38,7 @@ def test_kill_with_merge_on_parent() -> None:
     strict=True
 )
 def test_kill_in_loop() -> None:
+    """Test kill in loop."""
     end_to_end_test(
         "end-to-end-pumls/constraints/kill/kill_in_loop.puml",
     )
