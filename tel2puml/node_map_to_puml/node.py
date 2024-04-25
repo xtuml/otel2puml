@@ -8,7 +8,6 @@ import logging
 from itertools import chain
 
 from networkx import DiGraph, topological_sort, has_path
-from networkx.exception import NetworkXError
 from pm4py import ProcessTree
 from pm4py.objects.process_tree.obj import Operator
 
@@ -590,7 +589,7 @@ class LogicBlockHolder:
             self.will_merge = True
             return True
         return False
-    
+
     def add_processed_node(self, node: PUMLNode) -> None:
         """Adds a processed node to the logic block.
 
@@ -605,12 +604,8 @@ class LogicBlockHolder:
         :param node: The node to add.
         :type node: :class:`PUMLNode`
         """
-        # self.sub_blocks_copy.append(_copy.copy(block))
-        # self.sub_blocks.append(block)
-
         self.sub_blocks = [block] + self.sub_blocks
         self.sub_blocks_copy = [_copy.copy(block)] + self.sub_blocks_copy
-
 
 
 def create_puml_graph_from_node_class_graph(
@@ -778,47 +773,55 @@ def handle_reach_potential_merge_point(
         # check if we are caught in an infinite loop when there are multiple
         # merge nodes
         if logic_block.merge_counter > len(logic_block.merge_nodes):
-            counter = Counter(logic_block.merge_nodes)
-            (most_common, _), = counter.most_common(1)
             logic_block.merge_counter = 0
-            indices = [
-                i
-                for i, x in enumerate(logic_block.merge_nodes)
-                if x == most_common
-            ]
 
-            new_node = Node(
-                operator=logic_block.logic_node.operator,
-                outgoing_logic=[
+            counter = Counter(logic_block.merge_nodes)
+            for (most_common, count) in counter.most_common():
+                if count < 2:
+                    break
+
+                indices = [
+                    i
+                    for i, x in enumerate(logic_block.merge_nodes)
+                    if x == most_common
+                ]
+
+                new_node = Node(
+                    operator=logic_block.logic_node.operator,
+                    outgoing_logic=[
+                        logic_block.logic_node.outgoing_logic[index]
+                        for index in indices
+                    ],
+                )
+
+                not_indices = [
+                    i
+                    for i, x in enumerate(logic_block.merge_nodes)
+                    if x != most_common
+                ]
+                logic_block.merge_nodes = [
+                    logic_block.merge_nodes[index] for index in not_indices
+                ]
+                logic_block.puml_nodes = [
+                    logic_block.start_node
+                ] * len(not_indices)
+                logic_block.paths = [
+                    logic_block.paths[index] for index in not_indices
+                ]
+                logic_block.logic_node.outgoing_logic = [
                     logic_block.logic_node.outgoing_logic[index]
-                    for index in indices
-                ],
-            )
+                    for index in not_indices
+                ]
 
-            not_indices = [
-                i
-                for i, x in enumerate(logic_block.merge_nodes)
-                if x != most_common
-            ]
-            logic_block.merge_nodes = [
-                logic_block.merge_nodes[index] for index in not_indices
-            ]
-            logic_block.puml_nodes = [
-                logic_block.start_node
-            ] * len(not_indices)
-            logic_block.paths = [
-                logic_block.paths[index] for index in not_indices
-            ]
-            logic_block.logic_node.outgoing_logic = [
-                logic_block.logic_node.outgoing_logic[index]
-                for index in not_indices
-            ]
+                logic_block.paths = [new_node] + logic_block.paths
+                logic_block.puml_nodes = (
+                    [logic_block.start_node] + logic_block.puml_nodes
+                )
+                logic_block.merge_nodes = [None] + logic_block.merge_nodes
+                logic_block.logic_node.outgoing_logic = (
+                    [new_node] + logic_block.logic_node.outgoing_logic
+                )
 
-            logic_block.paths = [new_node] + logic_block.paths
-            logic_block.puml_nodes = [logic_block.start_node] + logic_block.puml_nodes
-            logic_block.merge_nodes = [None] + logic_block.merge_nodes
-            logic_block.logic_node.outgoing_logic = [new_node] + logic_block.logic_node.outgoing_logic
-            
             def _collect_nodes_to_remove(block: LogicBlockHolder):
                 nodes = set()
                 for sub_block in block.sub_blocks:
@@ -826,9 +829,12 @@ def handle_reach_potential_merge_point(
 
                 while len(block.processed_nodes) > 0:
                     node = block.processed_nodes.pop()
-                    if "END" not in node.node_type:
+                    if (
+                            "END" not in node.node_type
+                            and "START" not in node.node_type
+                    ):
                         nodes.add(node)
-                
+
                 return nodes
 
             def _collect_fresh_blocks(block: LogicBlockHolder):
@@ -836,8 +842,6 @@ def handle_reach_potential_merge_point(
                 blocks.extend(block.sub_blocks_copy)
                 for sub_block in block.sub_blocks:
                     blocks.extend(_collect_fresh_blocks(sub_block))
-
-                block.sub_blocks_copy = []
 
                 return blocks
 
