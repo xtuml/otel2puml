@@ -671,12 +671,27 @@ class TestEvent:
         }
         _check_or_case(event)
 
+        def _check_and_or_case(event: Event) -> None:
+            logic_gates_tree = _process(event)
+            assert logic_gates_tree.operator.value == Operator.PARALLEL.value
+            assert len(logic_gates_tree.children) == 2
+            labels = ["B", "C", "D"]
+            for child in logic_gates_tree.children:
+                if child.label == "B":
+                    labels.remove(child.label)
+                else:
+                    assert child.operator.value == Operator.OR.value
+                    assert len(child.children) == 2
+                    for grandchild in child.children:
+                        labels.remove(grandchild.label)
+            assert len(labels) == 0
+
         event.event_sets = {
             EventSet(["B", "C", "D"]),
             EventSet(["B", "C"]),
             EventSet(["B", "D"]),
         }
-        _check_or_case(event)
+        _check_and_or_case(event)
 
         def _check_recursive_case(event: Event) -> None:
             logic_gates_tree = _process(event)

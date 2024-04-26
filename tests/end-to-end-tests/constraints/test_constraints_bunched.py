@@ -19,9 +19,6 @@ class TestConstraintBunchedAND:
         )
 
     @staticmethod
-    @pytest.mark.xfail(
-        reason="Currently a failing case needing fixing", strict=True
-    )
     def test_bunched_AND_OR() -> None:
         """Test bunched AND with OR."""
         end_to_end_test(
@@ -47,9 +44,6 @@ class TestConstraintBunchedAND:
         )
 
     @staticmethod
-    @pytest.mark.xfail(
-        reason="Currently a failing case needing fixing", strict=True
-    )
     def test_bunched_merge_AND_OR() -> None:
         """Test bunched merge AND with OR."""
         end_to_end_test(
