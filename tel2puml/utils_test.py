@@ -11,6 +11,7 @@ def end_to_end_test(
     puml_file: str,
     is_branch_puml: bool = False,
     dummy_start_event: bool = False,
+    should_pass: bool = True
 ) -> None:
     """End to end test for a given puml file.
 
@@ -22,6 +23,8 @@ def end_to_end_test(
     :param dummy_start_event: Whether to remove the dummy start event, defaults
     to False.
     :type dummy_start_event: `bool`, optional
+    :param should_pass: Whether the test should pass, defaults to True.
+    :type should_pass: `bool`, optional
     """
     test_data = generate_test_data_event_sequences_from_puml(
         puml_file, is_branch_puml=is_branch_puml,
@@ -32,4 +35,6 @@ def end_to_end_test(
         puml_file, "r", encoding="utf-8"
     ) as file:
         expected_puml_string = file.read()
-    assert check_puml_equivalence(puml_string, expected_puml_string)
+    assert check_puml_equivalence(
+        puml_string, expected_puml_string
+    ) == should_pass
