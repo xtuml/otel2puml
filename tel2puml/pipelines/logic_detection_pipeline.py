@@ -16,6 +16,7 @@ from pm4py import (
     ProcessTree,
     format_dataframe,
 )
+import networkx as nx
 
 from test_event_generator.solutions.graph_solution import GraphSolution
 from test_event_generator.solutions.event_solution import EventSolution
@@ -998,3 +999,39 @@ def remove_detected_loop_data_from_events(
             remove_detected_loop_data_from_events(
                 loop.sub_loops, events, node_event_name_reference
             )
+
+
+def events_to_markov_graph(
+    events: Iterable[Event],
+) -> nx.DiGraph:
+    """This function converts a sequence of events to a minimal Markov chain
+    or what could be termed as a directly follows graph.
+
+    :param events: A sequence of events.
+    :type events: `Iterable`[:class:`Event`]
+    :return: The Markov graph.
+    :rtype: :class:`nx.DiGraph`
+    """
+    graph = nx.DiGraph()
+    for event in events:
+        out_events = set(
+            event_type
+            for event_set in event.event_sets
+            for event_type in event_set.to_frozenset()
+        )
+        for out_event in out_events:
+            graph.add_edge(event.event_type, out_event)
+    return graph
+
+
+def get_event_reference_from_events(
+    events: Iterable[Event],
+) -> dict[str, Event]:
+    """This function gets an event reference from a sequence of events.
+
+    :param events: A sequence of events.
+    :type events: `Iterable`[:class:`Event`]
+    :return: The event reference.
+    :rtype: `dict`[`str`, :class:`Event`]
+    """
+    return {event.event_type: event.event_type for event in events}
