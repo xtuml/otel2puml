@@ -2,18 +2,17 @@
 diagram, inferring the logic from the PV event sequences.
 """
 from typing import Generator, Iterable, Any
-from itertools import tee
 import json
 import os
 
-from tel2puml.utils import convert_nested_generator_to_generator_of_list
 from tel2puml.tel2puml_types import PVEvent
 from tel2puml.pipelines.logic_detection_pipeline import (
     update_all_connections_from_clustered_events,
-    remove_detected_loop_data_from_events
+    remove_detected_loop_data_from_events,
+    events_to_markov_graph,
+    get_event_reference_from_events
 )
 from tel2puml.jAlergiaPipeline import (
-    audit_event_sequences_to_network_x,
     remove_loop_data_from_graph
 )
 from tel2puml.node_map_to_puml.node import (
@@ -37,36 +36,28 @@ def pv_to_puml_string(
     :param puml_name: The name of the PlantUML group to create
     :type puml_name: `str`
     """
-    pv_stream_logic, pv_stream_markov = tee(
-        convert_nested_generator_to_generator_of_list(
-            pv_stream
-        ),
-        2
-    )
     # run the logic detection pipeline
     forward_logic, backward_logic = (
         update_all_connections_from_clustered_events(
-            pv_stream_logic,
+            pv_stream,
             add_dummy_start=True
         )
     )
-    # run the markov chain analysis
-    markov_graph, event_node_references = audit_event_sequences_to_network_x(
-        pv_stream_markov,
-        add_dummy_start=True
-    )
+    # create the markov chain graph and event reference
+    markov_graph = events_to_markov_graph(forward_logic.values())
+    event_reference = get_event_reference_from_events(forward_logic.values())
     # run the loop detection pipeline
     loops = detect_loops(markov_graph)
     # remove the loop edges from the Markov graph
     remove_loop_data_from_graph(markov_graph, loops)
     # remove loop edges from the logic trees
     remove_detected_loop_data_from_events(
-        loops, forward_logic, event_node_references["event_reference"]
+        loops, forward_logic, event_reference
     )
     # merge the Markov graph and the logic trees
     merged_markov_and_logic = (
         merge_markov_without_loops_and_logic_detection_analysis(
-            (markov_graph, event_node_references["event_reference"]),
+            (markov_graph, event_reference),
             backward_logic,
             forward_logic
         )
