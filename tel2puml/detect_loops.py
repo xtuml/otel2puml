@@ -262,10 +262,22 @@ def merge_loops(loops: list[Loop]) -> list[Loop]:
         loop.sub_loops = merge_loops(loop.sub_loops)
         merged = False
         for merged_loop in merged_loops:
-            if loop.edges_to_remove.issubset(merged_loop.edges_to_remove):
+            # check that there are common nodes between the edges to remove
+            # if so they can be merged
+            if set(
+                node
+                for edge in loop.edges_to_remove
+                for node in edge
+            ).intersection(
+                node
+                for edge in merged_loop.edges_to_remove
+                for node in edge
+            ):
                 for node in loop.nodes:
                     if node not in merged_loop.nodes:
                         merged_loop.nodes.append(node)
+                merged_loop.edges_to_remove.update(loop.edges_to_remove)
+                merged_loop.exit_points.update(loop.exit_points)
                 for sub_loop in loop.sub_loops:
                     if sub_loop not in merged_loop.sub_loops:
                         merged_loop.sub_loops.append(sub_loop)
