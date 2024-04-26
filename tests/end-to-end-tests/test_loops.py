@@ -53,9 +53,6 @@ class TestNestedLogicBlocks:
         )
 
     @staticmethod
-    @pytest.mark.xfail(
-        reason="Bunched logic not working at end of loop", strict=True
-    )
     def test_logic_bunched() -> None:
         """Test nested bunched logic in loop"""
         end_to_end_test(
