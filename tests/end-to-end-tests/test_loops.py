@@ -64,10 +64,6 @@ class TestNestedLogicBlocks:
         )
 
 
-@pytest.mark.xfail(
-    reason="Markov chain is providing a straight chain rather than loop",
-    strict=True
-)
 def test_nested_branch_counts() -> None:
     """Test nested branch counts in loop."""
     end_to_end_test(
