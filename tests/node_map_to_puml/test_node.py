@@ -1,6 +1,7 @@
 """Tests for the node module."""
 
 from copy import deepcopy, copy
+import pytest
 
 from pm4py import ProcessTree
 import networkx as nx
@@ -724,8 +725,8 @@ class TestCreatePumlGraphFromNodeClassGraph:
             self.load_and_check(puml_file)
 
     def test_create_puml_graph_from_node_class_graph_bunched_xor(self) -> None:
-        """Tests a bunched XOR logic case with and event ending one of the
-        branches"""
+        """Test create_puml_graph_from_node_class_graph for several bunched XOR
+        logic cases."""
         cases = [
             # test simple nested XOR
             "puml_files/bunched_XOR_simple.puml",
@@ -739,8 +740,21 @@ class TestCreatePumlGraphFromNodeClassGraph:
             "puml_files/bunched_XOR_complex_AND.puml",
             # test a complex nested XOR logic case with side XOR
             "puml_files/bunched_XOR_complex_XOR.puml",
-            # test a very complicated nested XOR logic case
-            "puml_files/bunched_XOR_with_event_ending_logic.puml",
+            # test a very complicated nested XOR logic case switch
+            "puml_files/bunched_XOR_switch_not_case.puml",
+        ]
+        for puml_file in cases:
+            self.load_and_check(puml_file)
+
+    @pytest.mark.xfail(reason="Equivalent case checks not implemented.")
+    def test_create_puml_graph_from_node_class_graph_bunched_xor_equiv(
+            self
+    ) -> None:
+        """Test create_puml_graph_from_node_class_graph for bunched XOR
+        logic cases which are written equivalently (e.g. using switches)."""
+        cases = [
+            # test a very complicated (equivalent to above) nested XOR logic
+            "puml_files/bunched_XOR_switch_case.puml",
         ]
         for puml_file in cases:
             self.load_and_check(puml_file)
