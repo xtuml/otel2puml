@@ -1,7 +1,6 @@
 """Tests for the node module."""
 
 from copy import deepcopy, copy
-import pytest
 
 from pm4py import ProcessTree
 import networkx as nx
@@ -26,8 +25,8 @@ from tel2puml.pipelines.data_creation import (
 )
 from tel2puml.jAlergiaPipeline import audit_event_sequences_to_network_x
 from tel2puml.check_puml_equiv import (
-    get_network_x_graph_from_puml_string,
-    check_networkx_graph_equivalence,
+    check_puml_graph_equivalence_to_expected_graphs,
+    gen_puml_graphs_from_files
 )
 from tel2puml.puml_graph.graph import (
     PUMLGraph, PUMLOperatorNode, PUMLOperatorNodes
@@ -673,25 +672,30 @@ class TestCreatePumlGraphFromNodeClassGraph:
         puml_graph = create_puml_graph_from_node_class_graph(node_class_graph)
         return puml_graph
 
-    def load_and_check(self, puml_file: str) -> None:
+    def load_and_check(
+        self, puml_file: str, equivalent_pumls: list[str] | None = None
+    ) -> None:
         """Load the puml file, create puml graph and check the graph
         equivalence.
 
         :param puml_file: The puml file to load.
-        :type puml_file: `str`"""
+        :type puml_file: `str`
+        :param equivalent_pumls: The equivalent pumls to check against,
+        defaults to `None`
+        :type equivalent_pumls: `list`[`str`] | `None`, optional
+        """
+        expected_puml_files = set(
+            [puml_file, *equivalent_pumls] if equivalent_pumls else [puml_file]
+        )
         # setup
         puml_graph = self.load(puml_file)
         # test
-        # load in the expected graph
-        with open(puml_file, "r", encoding="utf-8") as file:
-            expected_puml_string = file.read()
-        expected_puml_graph = next(
-            get_network_x_graph_from_puml_string(expected_puml_string)
-        )
+        # load in the expected graphs
+        expected_puml_graphs = gen_puml_graphs_from_files(expected_puml_files)
         # check graph equivalence
         try:
-            assert check_networkx_graph_equivalence(
-                puml_graph, expected_puml_graph
+            assert check_puml_graph_equivalence_to_expected_graphs(
+                puml_graph, expected_puml_graphs
             )
         except AssertionError as exc:
             print(puml_file)
@@ -704,6 +708,8 @@ class TestCreatePumlGraphFromNodeClassGraph:
         # * nested deep xor logic case
         # * bunched logic case
         # * complicated merge case with same event that is not mergeable
+        # * branched kill case
+        # * merge with kills case
         cases = [
             # test nested logic case
             "puml_files/ANDFork_ANDFork_a.puml",
@@ -746,18 +752,18 @@ class TestCreatePumlGraphFromNodeClassGraph:
         for puml_file in cases:
             self.load_and_check(puml_file)
 
-    @pytest.mark.xfail(reason="Equivalent case checks not implemented.")
     def test_create_puml_graph_from_node_class_graph_bunched_xor_equiv(
             self
     ) -> None:
         """Test create_puml_graph_from_node_class_graph for bunched XOR
         logic cases which are written equivalently (e.g. using switches)."""
-        cases = [
-            # test a very complicated (equivalent to above) nested XOR logic
+        # test a very complicated (equivalent to above) nested XOR logic
+        self.load_and_check(
             "puml_files/bunched_XOR_switch_case.puml",
-        ]
-        for puml_file in cases:
-            self.load_and_check(puml_file)
+            equivalent_pumls=[
+                "puml_files/bunched_XOR_switch_not_case.puml"
+            ]
+        )
 
     def test_create_puml_graph_from_node_class_graph_with_dummy_start(
         self
