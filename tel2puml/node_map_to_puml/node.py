@@ -1,11 +1,12 @@
 """This module holds the 'node' class"""
 
+from collections import Counter
 from typing import Literal
 from uuid import uuid4
 import logging
 from itertools import chain
 
-from networkx import DiGraph, topological_sort, has_path
+from networkx import DiGraph, topological_sort, has_path, all_simple_paths
 from pm4py import ProcessTree
 from pm4py.objects.process_tree.obj import Operator
 
@@ -340,6 +341,34 @@ class Node:
                 return operator
         return None
 
+    def rotate_path(self) -> None:
+        """Rotates the path."""
+        self.outgoing_logic = (
+            [self.outgoing_logic[-1]] + self.outgoing_logic[:-1]
+        )
+        self.outgoing = [self.outgoing[-1]] + self.outgoing[:-1]
+
+    def get_outgoing_logic_by_indices(
+            self,
+            indices: list[int]
+    ) -> list["Node"]:
+        """Gets the outgoing logic by indices.
+
+        :param indices: The indices to get the outgoing logic by.
+        :type indices: `list`[`int`]
+        :return: The outgoing logic by indices.
+        :rtype: `list`[:class:`Node`]
+        """
+        return [self.outgoing_logic[index] for index in indices]
+
+    def set_outgoing_logic(self, outgoing_logic: list["Node"]) -> None:
+        """Sets the outgoing logic.
+
+        :param outgoing_logic: The outgoing logic to set.
+        :type outgoing_logic: `list`[:class:`Node`]
+        """
+        self.outgoing_logic = outgoing_logic
+
 
 def load_all_logic_trees_into_nodes(
     events: dict[str, Event],
@@ -498,7 +527,6 @@ class LogicBlockHolder:
         self.puml_nodes = [start_node] * len(self.paths)
         self.will_merge = False
         self.merge_counter = 0
-        self.previous_merge_nodes = self.merge_nodes.copy()
 
     @property
     def current_path(self) -> Node | None:
@@ -550,8 +578,9 @@ class LogicBlockHolder:
         """
         self.paths = [current_node_in_path] + self.paths[:-1]
         self.merge_nodes = [self.merge_nodes[-1]] + self.merge_nodes[:-1]
-        self.previous_merge_nodes = self.merge_nodes.copy()
         self.puml_nodes = [current_puml_node_in_path] + self.puml_nodes[:-1]
+        self.logic_node.rotate_path()
+
         return self.current_path_puml_node, self.current_path,
 
     def handle_path_merge(self, potential_merge_node: Node) -> bool:
@@ -570,18 +599,84 @@ class LogicBlockHolder:
             return True
         if self.current_path is None:
             raise ValueError("No current path to merge")
-        self.merge_nodes[-1] = potential_merge_node
         # increment the merge counter if nothing has changed
-        if self.merge_nodes == self.previous_merge_nodes:
+        if self.merge_nodes[-1] == potential_merge_node:
             self.merge_counter += 1
         else:
             self.merge_counter = 0
+        self.merge_nodes[-1] = potential_merge_node
         # set previous merge nodes to the current merge nodes
-        self.previous_merge_nodes = self.merge_nodes.copy()
         if len(set(self.merge_nodes)) == 1:
             self.will_merge = True
             return True
         return False
+
+    def create_logic_merge(
+            self,
+            puml_graph: PUMLGraph,
+            merge_node: Node
+    ) -> set[PUMLNode]:
+        """Creates a logic merge for a given merge node.
+
+        :param puml_graph: The PlantUML graph.
+        :type puml_graph: :class:`PUMLGraph`
+        :param merge_node: The merge node.
+        :type merge_node: :class:`Node`
+        :return: The nodes to remove.
+        :rtype: `set`[:class:`PUMLNode`]
+        """
+        indices = [
+            i
+            for i, x in enumerate(self.merge_nodes)
+            if x == merge_node
+        ]
+        not_indices = [
+            i
+            for i, x in enumerate(self.merge_nodes)
+            if x != merge_node
+        ]
+        if len(indices) < 2:
+            return set()
+
+        nodes_to_remove = set()
+        for puml_node in [
+            self.puml_nodes[index] for index in indices
+        ]:
+            paths = all_simple_paths(
+                puml_graph,
+                self.start_node,
+                puml_node,
+            )
+            for path in paths:
+                for path_node in path[1:]:
+                    nodes_to_remove.add(path_node)
+
+        new_node = Node(
+            operator=self.logic_node.operator,
+            outgoing_logic=self.logic_node.get_outgoing_logic_by_indices(
+                indices
+            ),
+            outgoing=self.logic_node.get_outgoing_logic_by_indices(
+                indices
+            ),
+            incoming_logic=[self.logic_node],
+        )
+
+        self.merge_nodes = [
+            self.merge_nodes[index] for index in not_indices
+        ] + [None]
+        self.puml_nodes = [
+            self.puml_nodes[index] for index in not_indices
+        ] + [self.start_node]
+        self.paths = [
+            self.paths[index] for index in not_indices
+        ] + [new_node]
+        self.logic_node.set_outgoing_logic(
+            self.logic_node.get_outgoing_logic_by_indices(
+                not_indices
+            ) + [new_node]
+        )
+        return nodes_to_remove
 
 
 def create_puml_graph_from_node_class_graph(
@@ -697,9 +792,8 @@ def handle_logic_node_cases(
         logic_node.get_operator_type()
     )
     # create and add the logic block holder to the logic list
-    logic_list.append(
-        LogicBlockHolder(start_operator, end_operator, logic_node)
-    )
+    new_block = LogicBlockHolder(start_operator, end_operator, logic_node)
+    logic_list.append(new_block)
     # add the edge between the previous PUMLNode and the start node
     # of the PUMLOperatorNode pair
     puml_graph.add_edge(previous_puml_node, start_operator)
@@ -733,7 +827,8 @@ def handle_reach_potential_merge_point(
     node.
     :rtype: `tuple`[:class:`PUMLOperatorNode`, :class:`Node`]
     """
-    if logic_list[-1].handle_path_merge(next_node_class):
+    logic_block = logic_list[-1]
+    if logic_block.handle_path_merge(next_node_class):
         previous_puml_node, previous_node_class = (
             handle_reach_logic_merge_point(
                 puml_graph, logic_list, previous_puml_node, previous_node_class
@@ -742,10 +837,31 @@ def handle_reach_potential_merge_point(
     else:
         # check if we are caught in an infinite loop when there are multiple
         # merge nodes
-        if logic_list[-1].merge_counter > len(logic_list[-1].merge_nodes):
-            return update_puml_graph_with_event_node(
-                puml_graph, next_node_class, previous_puml_node
+        if logic_block.merge_counter > len(logic_block.merge_nodes):
+            logic_block.merge_counter = 0
+
+            nodes_to_remove = set()
+            counter = Counter(logic_block.merge_nodes)
+            for (merge_node, count) in counter.most_common():
+                if count < 2:
+                    break
+
+                nodes_to_remove.update(
+                    logic_block.create_logic_merge(
+                        puml_graph, merge_node
+                    )
+                )
+
+            puml_graph.remove_nodes_from(
+                nodes_to_remove
             )
+
+            return handle_logic_list_next_path(
+                puml_graph=puml_graph,
+                logic_list=logic_list,
+                previous_node_class=logic_block.logic_node,
+            )
+
         previous_puml_node, previous_node_class = handle_rotate_path(
             puml_graph, logic_list, previous_puml_node, previous_node_class
         )

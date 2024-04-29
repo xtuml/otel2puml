@@ -1,16 +1,11 @@
 """End to end tests for bunched constraint cases."""
 
-import pytest
-
 from tel2puml.utils_test import end_to_end_test
 
 
 class TestConstraintBunchedAND:
     """End to end tests for bunched AND constraint cases."""
     @staticmethod
-    @pytest.mark.xfail(
-        reason="Bunched logic of same type currently unsupported", strict=True
-    )
     def test_bunched_AND_AND() -> None:
         """Test bunched AND with AND."""
         end_to_end_test(
@@ -71,9 +66,6 @@ class TestConstraintBunchedOR:
         )
 
     @staticmethod
-    @pytest.mark.xfail(
-        reason="Bunched logic of same type currently unsupported", strict=True
-    )
     def test_bunched_OR_OR() -> None:
         """Test bunched OR with OR."""
         end_to_end_test(
@@ -134,9 +126,6 @@ class TestConstraintBunchedXOR:
         )
 
     @staticmethod
-    @pytest.mark.xfail(
-        reason="Bunched logic of same type currently unsupported", strict=True
-    )
     def test_bunched_XOR_XOR() -> None:
         """Test bunched XOR with XOR."""
         end_to_end_test(
@@ -173,9 +162,6 @@ class TestConstraintBunchedXOR:
 class TestBunchedHard:
     """End to end tests for difficult bunched constraint cases."""
     @staticmethod
-    @pytest.mark.xfail(
-        reason="Bunched logic of same type currently unsupported", strict=True
-    )
     def test_bunched_three_levels_AND() -> None:
         """Test bunched three levels of AND."""
         end_to_end_test(
@@ -184,9 +170,6 @@ class TestBunchedHard:
         )
 
     @staticmethod
-    @pytest.mark.xfail(
-        reason="Bunched logic of same type currently unsupported", strict=True
-    )
     def test_bunched_three_levels_XOR() -> None:
         """Test bunched three levels of XOR."""
         end_to_end_test(

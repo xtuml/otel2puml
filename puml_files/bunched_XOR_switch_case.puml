@@ -6,25 +6,25 @@ partition "bunched_XOR_switch" {
             case ("1")
             if (XOR) then (true)
                 if (XOR) then (true)
-                    :H;
+                    :B;
                 else (false)
-                    :I;
+                    :C;
                 endif
-            else
                 :D;
-                :M;
+            else
+                :E;
             endif
-            :K;
+            :F;
             case ("2")
             fork
-                :E;
+                :G;
             fork again
-                :J;
+                :H;
             end fork
             case ("3")
-            :G;
+            :I;
         endswitch
-        :F;
+        #red:J;
     end group
 }
 @enduml
