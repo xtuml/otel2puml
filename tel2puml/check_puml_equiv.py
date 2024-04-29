@@ -1,6 +1,6 @@
 """Module with methods used to check the equivalency of two puml strings"""
 
-from typing import Any, Generator, Literal, Hashable
+from typing import Any, Generator, Literal, Hashable, Iterable
 
 from networkx import (
     DiGraph,
@@ -15,6 +15,7 @@ from test_event_generator.io.parse_puml import (
 )
 
 from tel2puml.tel2puml_types import NXNodeAttributes, NXEdgeAttributes
+from tel2puml.utils import gen_strings_from_files
 
 
 class NXNode:
@@ -301,3 +302,78 @@ def check_puml_equivalence(
     graph_1 = next(get_network_x_graph_from_puml_string(puml_string_1))
     graph_2 = next(get_network_x_graph_from_puml_string(puml_string_2))
     return check_networkx_graph_equivalence(graph_1, graph_2)
+
+
+def check_puml_graph_equivalence_to_expected_graphs(
+    puml_graph: DiGraph,
+    expected_puml_graphs: Iterable[DiGraph]
+) -> bool:
+    """Method to check if a puml graph is equivalent to any of the expected
+    puml graphs
+
+    :param puml_graph: the puml graph to check
+    :type puml_graph: :class:`DiGraph`
+    :param expected_puml_graphs: the expected puml graphs
+    :type expected_puml_graphs: `Iterable`[:class:`DiGraph`]
+    :return: whether the puml graph is equivalent to any of the expected puml
+    graphs
+    :rtype: `bool`
+    """
+    return any(
+        check_networkx_graph_equivalence(puml_graph, expected_puml_graph)
+        for expected_puml_graph in expected_puml_graphs
+    )
+
+
+def gen_puml_graphs_from_files(
+    file_names: Iterable[str]
+) -> Generator[DiGraph, Any, None]:
+    """Method to generate networkx graphs from a list of puml files
+
+    :param file_names: list of puml file names
+    :type file_names: `Iterable`[`str`]
+    :return: generator of networkx graphs
+    :rtype: `Generator`[:class:`DiGraph`, `Any`, `None`]
+    """
+    for puml_string in gen_strings_from_files(file_names):
+        yield from get_network_x_graph_from_puml_string(puml_string)
+
+
+def check_puml_string_equivalence_to_puml_strings(
+    puml_string: str,
+    expected_puml_strings: Iterable[str]
+) -> bool:
+    """Method to check if a puml string is equivalent to any of the expected
+    puml strings
+
+    :param puml_string: the puml string to check
+    :type puml_string: `str`
+    :param expected_puml_strings: the expected puml strings
+    :type expected_puml_strings: `Iterable`[`str`]
+    :return: whether the puml string is equivalent to any of the expected puml
+    strings
+    :rtype: `bool`"""
+    return any(
+        check_puml_equivalence(puml_string, expected_puml_string)
+        for expected_puml_string in expected_puml_strings
+    )
+
+
+def check_puml_string_equivalence_to_puml_files(
+    puml_string: str,
+    expected_puml_files: Iterable[str]
+) -> bool:
+    """Method to check if a puml string is equivalent to any of the expected
+    puml files
+
+    :param puml_string: the puml string to check
+    :type puml_string: `str`
+    :param expected_puml_files: the expected puml file paths
+    :type expected_puml_files: `Iterable`[`str`]
+    :return: whether the puml string is equivalent to any of the expected puml
+    files
+    :rtype: `bool`
+    """
+    return check_puml_string_equivalence_to_puml_strings(
+        puml_string, gen_strings_from_files(expected_puml_files)
+    )
