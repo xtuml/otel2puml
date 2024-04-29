@@ -25,7 +25,7 @@ from tel2puml.tel2puml_types import DUMMY_START_EVENT
 class TestOperator:
     """Tests for the Operator class."""
 
-    def test_values(self):
+    def test_values(self) -> None:
         """Tests for the values of the Operator class."""
         assert Operator.SEQUENCE.value == "->"
         assert Operator.PARALLEL.value == "+"

@@ -13,7 +13,7 @@ class TestRunJAlergia(unittest.TestCase):
     Test class for the `run_jAlergia` module.
     """
 
-    def teardown(self):
+    def teardown(self) -> None:
         """
         Clean up the test environment.
         """
@@ -21,7 +21,7 @@ class TestRunJAlergia(unittest.TestCase):
         if os.path.exists("model.dot"):
             os.remove("model.dot")
 
-    def test_run_with_data(self):
+    def test_run_with_data(self) -> None:
         """
         Test the `run` function with data input.
         """
@@ -54,7 +54,7 @@ class TestRunJAlergia(unittest.TestCase):
 
         self.teardown()
 
-    def test_run_with_empty_data_and_file(self):
+    def test_run_with_empty_data_and_file(self) -> None:
         """
         Test the `run` function with empty data and file inputs.
         """

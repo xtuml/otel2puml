@@ -39,7 +39,7 @@ class TestNode:
     """Tests for the node class."""
 
     @staticmethod
-    def test_event_node_map_incoming():
+    def test_event_node_map_incoming() -> None:
         """Test the event_node_map property for incoming nodes."""
         node = Node(data="test_data", event_type="test_event_type")
         assert len(node.event_node_map_incoming) == 0
@@ -385,7 +385,7 @@ class TestNode:
         )
 
     @staticmethod
-    def test_traverse_logic():
+    def test_traverse_logic() -> None:
         """Test the traverse_logic method."""
         # setup
         node = Node(uid="test_event", event_type="test_event")
@@ -419,7 +419,7 @@ class TestNode:
         assert len(expected_leaf_nodes) == 0
 
     @staticmethod
-    def test_get_operator_type():
+    def test_get_operator_type() -> None:
         """Test the get_operator_type method."""
         for operator in PUMLOperator:
             node = Node(uid="test_operator", operator=operator.name)
