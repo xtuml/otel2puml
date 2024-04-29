@@ -73,14 +73,10 @@ class TestConstraintXOR:
         )
 
     @staticmethod
-    @pytest.mark.xfail(
-        reason="No need for XOR to merge further down so this will fail but "
-        "the PUML's are equivalent",
-        strict=True
-    )
     def test_merge_at_correct_event_XOR() -> None:
         """Test merge at correct event XOR."""
         end_to_end_test(
             "end-to-end-pumls/constraints/simple/XOR/"
             "merge_at_correct_event_XOR.puml",
+            should_pass=False
         )

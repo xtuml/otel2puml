@@ -35,12 +35,12 @@ class TestConstraintBunchedAND:
         )
 
     @staticmethod
-    @pytest.mark.xfail(reason="Indistinguishable from simple AND", strict=True)
     def test_bunched_merge_AND_AND() -> None:
         """Test bunched merge AND with AND."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/AND/"
             "bunched_merge_ANDFork_ANDFork.puml",
+            should_pass=False
         )
 
     @staticmethod
@@ -98,12 +98,12 @@ class TestConstraintBunchedOR:
         )
 
     @staticmethod
-    @pytest.mark.xfail(reason="Indistinguishable from simple OR", strict=True)
     def test_bunched_merge_OR_OR() -> None:
         """Test bunched merge OR with OR."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/OR/"
             "bunched_merge_ORFork_ORFork.puml",
+            should_pass=False
         )
 
     @staticmethod
@@ -161,12 +161,12 @@ class TestConstraintBunchedXOR:
         )
 
     @staticmethod
-    @pytest.mark.xfail(reason="Indistinguishable from simple XOR", strict=True)
     def test_bunched_merge_XOR_XOR() -> None:
         """Test bunched merge XOR with XOR."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/XOR/"
             "bunched_merge_XORFork_XORFork.puml",
+            should_pass=False
         )
 
 
