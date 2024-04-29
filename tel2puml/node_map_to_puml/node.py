@@ -341,6 +341,34 @@ class Node:
                 return operator
         return None
 
+    def rotate_path(self) -> None:
+        """Rotates the path."""
+        self.outgoing_logic = (
+            [self.outgoing_logic[-1]] + self.outgoing_logic[:-1]
+        )
+        self.outgoing = [self.outgoing[-1]] + self.outgoing[:-1]
+
+    def get_outgoing_logic_by_indices(
+            self,
+            indices: list[int]
+    ) -> list["Node"]:
+        """Gets the outgoing logic by indices.
+
+        :param indices: The indices to get the outgoing logic by.
+        :type indices: `list`[`int`]
+        :return: The outgoing logic by indices.
+        :rtype: `list`[:class:`Node`]
+        """
+        return [self.outgoing_logic[index] for index in indices]
+
+    def set_outgoing_logic(self, outgoing_logic: list["Node"]) -> None:
+        """Sets the outgoing logic.
+
+        :param outgoing_logic: The outgoing logic to set.
+        :type outgoing_logic: `list`[:class:`Node`]
+        """
+        self.outgoing_logic = outgoing_logic
+
 
 def load_all_logic_trees_into_nodes(
     events: dict[str, Event],
@@ -551,10 +579,7 @@ class LogicBlockHolder:
         self.paths = [current_node_in_path] + self.paths[:-1]
         self.merge_nodes = [self.merge_nodes[-1]] + self.merge_nodes[:-1]
         self.puml_nodes = [current_puml_node_in_path] + self.puml_nodes[:-1]
-        self.logic_node.outgoing_logic = (
-            [self.logic_node.outgoing_logic[-1]]
-            + self.logic_node.outgoing_logic[:-1]
-        )
+        self.logic_node.rotate_path()
 
         return self.current_path_puml_node, self.current_path,
 
@@ -628,14 +653,12 @@ class LogicBlockHolder:
 
         new_node = Node(
             operator=self.logic_node.operator,
-            outgoing_logic=[
-                self.logic_node.outgoing_logic[index]
-                for index in indices
-            ],
-            outgoing=[
-                self.logic_node.outgoing_logic[index]
-                for index in indices
-            ],
+            outgoing_logic=self.logic_node.get_outgoing_logic_by_indices(
+                indices
+            ),
+            outgoing=self.logic_node.get_outgoing_logic_by_indices(
+                indices
+            ),
             incoming_logic=[self.logic_node],
         )
 
@@ -648,11 +671,11 @@ class LogicBlockHolder:
         self.paths = [
             self.paths[index] for index in not_indices
         ] + [new_node]
-        self.logic_node.outgoing_logic = [
-            self.logic_node.outgoing_logic[index]
-            for index in not_indices
-        ] + [new_node]
-
+        self.logic_node.set_outgoing_logic(
+            self.logic_node.get_outgoing_logic_by_indices(
+                not_indices
+            ) + [new_node]
+        )
         return nodes_to_remove
 
 
