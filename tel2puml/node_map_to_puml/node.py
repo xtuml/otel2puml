@@ -7,7 +7,7 @@ from uuid import uuid4
 import logging
 from itertools import chain
 
-from networkx import DiGraph, topological_sort, has_path
+from networkx import DiGraph, topological_sort, has_path, all_simple_paths
 from pm4py import ProcessTree
 from pm4py.objects.process_tree.obj import Operator
 
@@ -775,6 +775,7 @@ def handle_reach_potential_merge_point(
         if logic_block.merge_counter > len(logic_block.merge_nodes):
             logic_block.merge_counter = 0
 
+            nodes_to_remove = set()
             counter = Counter(logic_block.merge_nodes)
             for (most_common, count) in counter.most_common():
                 if count < 2:
@@ -799,6 +800,18 @@ def handle_reach_potential_merge_point(
                     incoming_logic=[logic_block.logic_node],
                 )
 
+                for puml_node in [
+                    logic_block.puml_nodes[index] for index in indices
+                ]:
+                    paths = all_simple_paths(
+                        puml_graph,
+                        logic_block.start_node,
+                        puml_node,
+                    )
+                    for path in paths:
+                        for path_node in path[1:]:
+                            nodes_to_remove.add(path_node)
+
                 not_indices = [
                     i
                     for i, x in enumerate(logic_block.merge_nodes)
@@ -808,8 +821,8 @@ def handle_reach_potential_merge_point(
                     logic_block.merge_nodes[index] for index in not_indices
                 ]
                 logic_block.puml_nodes = [
-                    logic_block.start_node
-                ] * len(not_indices)
+                    logic_block.puml_nodes[index] for index in not_indices
+                ]
                 logic_block.paths = [
                     logic_block.paths[index] for index in not_indices
                 ]
@@ -818,53 +831,13 @@ def handle_reach_potential_merge_point(
                     for index in not_indices
                 ]
 
-                logic_block.paths = [new_node] + logic_block.paths
-                logic_block.puml_nodes = (
-                    [logic_block.start_node] + logic_block.puml_nodes
-                )
-                logic_block.merge_nodes = [None] + logic_block.merge_nodes
-                logic_block.logic_node.outgoing_logic = (
-                    [new_node] + logic_block.logic_node.outgoing_logic
-                )
-
-            def _collect_nodes_to_remove(block: LogicBlockHolder):
-                nodes = set()
-                for sub_block in block.sub_blocks:
-                    if (
-                            block.logic_node.operator
-                            == sub_block.logic_node.operator
-                    ):
-                        nodes.add(sub_block.start_node)
-                        nodes.add(sub_block.end_node)
-                    nodes.update(_collect_nodes_to_remove(sub_block))
-
-                while len(block.processed_nodes) > 0:
-                    node = block.processed_nodes.pop()
-                    if (
-                            "END" not in node.node_type
-                            and "START" not in node.node_type
-                    ):
-                        nodes.add(node)
-
-                return nodes
-
-            def _collect_fresh_blocks(block: LogicBlockHolder):
-                blocks = []
-                for sub_block_copy in block.sub_blocks_copy:
-                    if (
-                            block.logic_node.operator
-                            != sub_block_copy.logic_node.operator
-                    ):
-                        blocks.append(sub_block_copy)
-                    blocks.extend(_collect_fresh_blocks(sub_block_copy))
-
-                return blocks
+                logic_block.paths.append(new_node)
+                logic_block.puml_nodes.append(logic_block.start_node)
+                logic_block.merge_nodes.append(None)
+                logic_block.logic_node.outgoing_logic.append(new_node)
 
             puml_graph.remove_nodes_from(
-                _collect_nodes_to_remove(logic_block)
-            )
-            logic_list.extend(
-                _collect_fresh_blocks(logic_block)
+                nodes_to_remove
             )
 
             return handle_logic_list_next_path(
