@@ -23,7 +23,7 @@ TEMPLATE = dedent(
         * [One level](#one-level)
         * [Nested](#nested)
         * [Bunched](#bunched)
-        * [Kill/Detach](#kill-detach)
+        * [Kill Detach](#kill-detach)
 
     {full}
 
@@ -48,7 +48,7 @@ TEMPLATE = dedent(
 
     {bunched}
 
-    ### Kill/Detach
+    ### Kill Detach
 
     {kill}
 
@@ -185,7 +185,7 @@ def update_status() -> str:
         nested=results["nested"],
         bunched=results["bunched"],
         kill=results["kill"],
-    ).replace("\\\\_", "\\_")  # noqa: W605
+    )
 
 
 if __name__ == "__main__":
