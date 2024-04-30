@@ -1,6 +1,6 @@
 #!/bin/bash
 
-mypy --strict --explicit-package-bases --namespace-packages . > mypy_errors.txt
+mypy --config-file .mypy.test.ini --strict --explicit-package-bases --namespace-packages . > mypy_errors.txt
 
 # run checks immediately after updating mypy file
 flake8 .
