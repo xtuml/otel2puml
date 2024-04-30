@@ -185,7 +185,7 @@ def update_status() -> str:
         nested=results["nested"],
         bunched=results["bunched"],
         kill=results["kill"],
-    ).replace("\\\\_", "\\text{\\_}")  # noqa: W605
+    ).replace("\\\\_", "\\_")  # noqa: W605
 
 
 if __name__ == "__main__":
