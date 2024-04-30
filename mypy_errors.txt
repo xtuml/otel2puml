@@ -5,11 +5,6 @@ tel2puml/pipelines/data_creation.py:107: error: Missing type parameters for gene
 tel2puml/pipelines/data_creation.py:119: error: Missing type parameters for generic type "dict"  [type-arg]
 tel2puml/pipelines/data_creation.py:148: error: Missing type parameters for generic type "dict"  [type-arg]
 tel2puml/pipelines/data_creation.py:161: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]
-tel2puml/utils.py:13: error: Missing type parameters for generic type "set"  [type-arg]
-tel2puml/utils.py:13: error: Missing type parameters for generic type "frozenset"  [type-arg]
-tel2puml/utils.py:14: error: Missing type parameters for generic type "set"  [type-arg]
-tel2puml/utils.py:15: error: Missing type parameters for generic type "set"  [type-arg]
-tel2puml/utils.py:47: error: Incompatible types in assignment (expression has type "set[Any] | frozenset[Any]", variable has type "set[set[Any] | frozenset[Any]]")  [assignment]
 tel2puml/utils.py:77: error: Missing type parameters for generic type "DiGraph"  [type-arg]
 tel2puml/utils.py:77: error: Missing type parameters for generic type "tuple"  [type-arg]
 tel2puml/utils.py:78: error: Name "plt.Figure" is not defined  [name-defined]
@@ -538,4 +533,4 @@ tests/test_node_map_to_puml.py:2839: error: Argument 2 to "process_puml_into_gra
 tests/test_node_map_to_puml.py:2903: error: Argument 2 to "process_puml_into_graphs" has incompatible type "bool"; expected "str"  [arg-type]
 tests/test_node_map_to_puml.py:2913: error: Need type annotation for "logic_table" (hint: "logic_table: Dict[<type>, <type>] = ...")  [var-annotated]
 tel2puml/utils_test.py:33: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
-Found 509 errors in 30 files (checked 43 source files)
+Found 504 errors in 30 files (checked 43 source files)

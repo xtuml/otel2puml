@@ -10,9 +10,9 @@ T = TypeVar("T")
 
 
 def get_weighted_cover(
-        event_set: set[set | frozenset],
-        universe: set
-) -> Optional[set]:
+        event_sets: set[set[Any] | frozenset[Any]],
+        universe: set[Any]
+) -> Optional[set[Any]]:
     """
     Get the weighted cover of the event set with respect to the universe, if it
     exists. The weighted cover is a set of elements from the event set that
@@ -25,15 +25,15 @@ def get_weighted_cover(
     :return: The weighted cover of the event set with respect to the universe.
     :rtype: `set` or `None`
     """
-    if universe in event_set:
-        event_set.remove(universe)
+    if universe in event_sets:
+        event_sets.remove(universe)
     # if the event set is empty, return None otherwise there is a zero division
-    if not event_set:
+    if not event_sets:
         return None
-    weighted_cover = set()
+    weighted_cover: set[Any] = set()
     while universe:
         subset = max(
-            event_set,
+            event_sets,
             key=lambda s: len(s & universe) / len(s)**2
         )
 
@@ -44,7 +44,7 @@ def get_weighted_cover(
         if pre_size == len(universe):
             return None
 
-    for event_set in event_set:
+    for event_set in event_sets:
         for cover_set in weighted_cover:
             if event_set & cover_set == cover_set:
                 event_set -= cover_set
