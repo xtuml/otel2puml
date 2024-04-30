@@ -17,7 +17,6 @@ TEMPLATE = dedent(
     # Current Status
     Below we present the current status of the end-to-end tests.
     The tests are divided into the following categories:
-    * [Full](#full)
     * [Branch counts](#branch-counts)
     * [Loops](#loops)
     * [Constraints](#constraints)
@@ -25,8 +24,6 @@ TEMPLATE = dedent(
         * [Nested](#nested)
         * [Bunched](#bunched)
         * [Kill/Detach](#kill-detach)
-
-    ## Full
 
     {full}
 
@@ -77,9 +74,9 @@ def update_status() -> str:
     pytest_output = ["xfailed", "xpassed", "failed", "error", "skipped"]
 
     top_level = subprocess.run(
-            "git rev-parse --show-toplevel".split(),
-            capture_output=True
-        ).stdout.decode().strip()
+        "git rev-parse --show-toplevel".split(),
+        capture_output=True
+    ).stdout.decode().strip()
 
     results = {}
     full_test_count = 0
