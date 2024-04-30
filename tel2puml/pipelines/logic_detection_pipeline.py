@@ -11,15 +11,19 @@ from enum import Enum
 from numpy import ndarray
 import numpy as np
 import pandas as pd
-from pm4py import (
+from pm4py import (  # type: ignore[import-untyped]
     discover_process_tree_inductive,
     ProcessTree,
     format_dataframe,
 )
 import networkx as nx
 
-from test_event_generator.solutions.graph_solution import GraphSolution
-from test_event_generator.solutions.event_solution import EventSolution
+from test_event_generator.solutions.graph_solution import (  # type: ignore[import-untyped] # noqa: E501
+    GraphSolution
+)
+from test_event_generator.solutions.event_solution import (  # type: ignore[import-untyped] # noqa: E501
+    EventSolution
+)
 
 from tel2puml.utils import get_weighted_cover
 from tel2puml.tel2puml_types import PVEvent, DUMMY_START_EVENT
@@ -47,7 +51,7 @@ class Operator(Enum):
     # branch operator
     BRANCH = "BR"
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Provides a string representation of the current operator
 
@@ -56,7 +60,7 @@ class Operator(Enum):
         """
         return self.value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Provides a string representation of the current operator
 
@@ -97,13 +101,15 @@ class EventSet(dict[str, int]):
         for event in events:
             self[event] = self.get(event, 0) + 1
 
-    def __key(self):
+    def __key(self) -> tuple[tuple[str, int], ...]:
         return tuple((k, self[k]) for k in sorted(self))
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.__key())
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, EventSet):
+            return NotImplemented
         return self.__key() == other.__key()
 
     def to_frozenset(self) -> frozenset[str]:
