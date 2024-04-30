@@ -157,3 +157,20 @@ def check_has_path_between_all_nodes(
             if not nx.has_path(graph, source_node, target_node):
                 return False
     return True
+
+
+def gen_strings_from_files(
+    file_names: Iterable[str]
+) -> Generator[str, Any, None]:
+    """Generates strings from utf-8 files.
+
+    :param file_names: The names of the files to read.
+    :type file_names: `Iterable`[`str`]
+    :return: A generator of strings.
+    :rtype: `Generator`[`str`, Any, None]
+    """
+    for file_name in file_names:
+        with open(
+            file_name, "r", encoding="utf-8"
+        ) as file:
+            yield file.read()
