@@ -698,6 +698,18 @@ class LogicBlockHolder:
         )
         return nodes_to_remove
 
+    def is_on_lonely_merge_path(self) -> bool:
+        """Checks if the current path is on the lonely merge path.
+
+        :return: Whether the current path is on the lonely merge path.
+        :rtype: `bool`
+        """
+        if self.lonely_merge_index is not None:
+            return self.lonely_merge_index == len(
+                self.paths
+            ) - 1
+        return False
+
 
 def create_puml_graph_from_node_class_graph(
     node_class_graph: DiGraph,
@@ -780,6 +792,18 @@ def create_puml_graph_from_node_class_graph(
                 )
             )
         else:
+            if logic_list:
+                if logic_list[-1].is_on_lonely_merge_path():
+                    previous_puml_node, previous_node_class = (
+                        handle_reach_potential_merge_point(
+                            puml_graph,
+                            logic_list,
+                            previous_puml_node,
+                            previous_node_class,
+                            previous_node_class.outgoing_logic[0],
+                        )
+                    )
+                    continue
             # handle the case where there is an immediately following logic
             # node or a logic node as the previous node class
             previous_puml_node, previous_node_class = handle_logic_node_cases(
