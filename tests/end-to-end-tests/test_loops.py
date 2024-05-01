@@ -101,10 +101,6 @@ class TestBreakPoints:
 class TestEdgeCases:
     """End to end tests for edge cases of loops."""
     @staticmethod
-    @pytest.mark.xfail(
-        reason="Break points not connected in full solution currently",
-        strict=True
-    )
     def test_loop_break_split_exit() -> None:
         """Test loop with break, split and exit."""
         end_to_end_test(
