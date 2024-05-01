@@ -77,6 +77,10 @@ class TestBreakPoints:
         """Test loop with break point."""
         end_to_end_test(
             "end-to-end-pumls/loops/break_points/loop_break_point.puml",
+            equivalent_pumls=[
+                "end-to-end-pumls/loops/break_points/"
+                "loop_break_point_equiv.puml",
+            ],
         )
 
     @staticmethod
@@ -84,6 +88,10 @@ class TestBreakPoints:
         """Test loop with 2 break points."""
         end_to_end_test(
             "end-to-end-pumls/loops/break_points/loop_with_2_breaks.puml",
+            equivalent_pumls=[
+                "end-to-end-pumls/loops/break_points/"
+                "loop_with_2_breaks_equiv.puml",
+            ]
         )
 
     @staticmethod
