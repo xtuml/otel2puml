@@ -212,8 +212,8 @@ def filter_end_nodes_with_successors(
     found_end_nodes: set[PUMLEventNode], puml_graph: PUMLGraph
 ) -> set[PUMLEventNode]:
     """Filters the given end nodes to only include nodes that have a successor
-    node. This is done to ensure that the end nodes are not the last nodes in
-    the graph and that the loop is not the last nodes in the graph.
+    node. This is done to ensure that the end nodes of the loop are not break
+    nodes have merged further up the loop graph.
 
     :param found_end_nodes: The end nodes to filter.
     :type found_end_nodes: `set[:class:`PUMLEventNode`]`

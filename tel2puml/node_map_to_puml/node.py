@@ -792,6 +792,10 @@ def create_puml_graph_from_node_class_graph(
                 )
             )
         else:
+            # handle the case where we have an operator node coming from an
+            # event node that is part of a logic block where all other paths
+            # do not join back up with the rest of the graph (i.e. a lonely
+            # merge path that can be merged at any desired point)
             if logic_list:
                 if logic_list[-1].is_on_lonely_merge_path():
                     previous_puml_node, previous_node_class = (
