@@ -16,7 +16,7 @@ partition "loop nested break point" {
             repeat while
             :G;
         repeat while
-        #red:E; 
+        #red:H; 
     end group
 }
 @enduml
