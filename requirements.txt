@@ -5,3 +5,5 @@ pytest-md-report~=0.5.1
 pm4py==2.7.9.4
 aalpy==1.4.0
 networkx==3.2.1
+types-networkx==3.2.1.20240425
+pandas-stubs==2.2.1.240316

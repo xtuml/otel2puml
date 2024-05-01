@@ -6,7 +6,7 @@ from tel2puml.pipelines.data_creation import (
 from tel2puml.check_puml_equiv import check_puml_equivalence
 
 
-def test_pv_to_puml_string():
+def test_pv_to_puml_string() -> None:
     """Test the `pv_to_puml_string` function returns a puml string of the
     expected length and structure
     """

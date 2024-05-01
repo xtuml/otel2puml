@@ -1,13 +1,13 @@
 """Module to generate test data from a puml file."""
 
-from typing import Generator, Any
+from typing import Generator, Any, Optional
 import random
 
-from test_harness.protocol_verifier.simulator_data import (
+from test_harness.protocol_verifier.simulator_data import (  # type: ignore[import-untyped]  # noqa: E501
     Job,
     generate_single_events,
 )
-from test_event_generator.io.run import puml_file_to_test_events
+from test_event_generator.io.run import puml_file_to_test_events  # type: ignore[import-untyped]  # noqa: E501
 from tel2puml.tel2puml_types import DUMMY_START_EVENT
 
 
@@ -114,7 +114,7 @@ def remove_dummy_start_event_from_event_sequence(
     start event.
     :rtype: `Generator[dict, Any, None]`
     """
-    dummy_start_event_id = None
+    dummy_start_event_id: Optional[str] = None
     prev_event_id_map: dict[str, list[str]] = {}
     events: dict[str, dict] = {}
     for event in event_sequence:

@@ -19,7 +19,7 @@ class TestNode(unittest.TestCase):
     Unit tests for the Node class.
     """
 
-    def setUp(self):
+    def setUp(self) -> None:
         """
         Set up the test case by creating a directed graph and adding edges.
         """
@@ -29,7 +29,7 @@ class TestNode(unittest.TestCase):
         self.graph.add_edge("B", "D")
         self.graph.add_edge("C", "D")
 
-    def test_populate_incoming(self):
+    def test_populate_incoming(self) -> None:
         """
         Test case to verify the behavior of the populate_incoming method.
 
@@ -52,7 +52,7 @@ class TestNode(unittest.TestCase):
         self.assertIn(lookup_table["B"], node.incoming)
         self.assertIn(lookup_table["C"], node.incoming)
 
-    def test_populate_outgoing(self):
+    def test_populate_outgoing(self) -> None:
         """
         Test case to verify the functionality of the populate_outgoing method
             in the Node class.
@@ -69,7 +69,7 @@ class TestNode(unittest.TestCase):
         self.assertIn(lookup_table["B"], node.outgoing)
         self.assertIn(lookup_table["C"], node.outgoing)
 
-    def test_print_outgoing(self):
+    def test_print_outgoing(self) -> None:
         """
         Test case for the print_outgoing method of the Node class.
         """
@@ -98,7 +98,7 @@ class TestNode(unittest.TestCase):
                 )
 
 
-def test_create_event_node_ref():
+def test_create_event_node_ref() -> None:
     """Test case for the `create_event_node_ref` function.
     """
     lookup_table = {

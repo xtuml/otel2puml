@@ -17,11 +17,16 @@ Example usage:
     model = run(data="1,2,3,4,5", path_to_output="model.dot")
     model = run(path_to_file="data.txt", path_to_output="model.dot")
 """
+from typing import Any
 
-from aalpy.learning_algs import run_Alergia
+from aalpy.learning_algs import run_Alergia  # type: ignore[import-untyped]
 
 
-def run(data: str = "", path_to_file: str = "", path_to_output: str = ""):
+def run(
+        data: str = "",
+        path_to_file: str = "",
+        path_to_output: str = ""
+) -> Any:
     """
     Run the jAlergia algorithm to learn a probabilistic automaton from data or
         a file.

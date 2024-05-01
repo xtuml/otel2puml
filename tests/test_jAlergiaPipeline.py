@@ -26,7 +26,7 @@ class TestJAlergiaPipeline(unittest.TestCase):
     Unit tests for the JAlergiaPipeline class.
     """
 
-    def test_process_puml_into_graphs_with_default_files(self):
+    def test_process_puml_into_graphs_with_default_files(self) -> None:
         """
         Test the `process_puml_into_graphs` function with default files.
         """
@@ -36,7 +36,7 @@ class TestJAlergiaPipeline(unittest.TestCase):
 
         self.assertEqual(len(graphs[0]), expected_graph_count)
 
-    def test_process_puml_into_graphs_with_custom_file(self):
+    def test_process_puml_into_graphs_with_custom_file(self) -> None:
         """
         Test the `process_puml_into_graphs` function with a custom file.
         """

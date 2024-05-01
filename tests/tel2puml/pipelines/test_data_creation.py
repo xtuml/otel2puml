@@ -44,7 +44,7 @@ def test_generate_event_jsons() -> None:
     )
 
 
-def test_generate_test_data_default_args():
+def test_generate_test_data_default_args() -> None:
     """tests for function generate_test_data"""
     input_puml_file = "puml_files/ANDFork_ANDFork_a.puml"
     result = list(generate_test_data(input_puml_file))
@@ -62,7 +62,7 @@ def test_generate_test_data_default_args():
     )
 
 
-def test_generate_test_data_num_paths_to_template():
+def test_generate_test_data_num_paths_to_template() -> None:
     """tests for function generate_test_data"""
     input_puml_file = "puml_files/ANDFork_ANDFork_a.puml"
     result = list(
@@ -82,7 +82,7 @@ def test_generate_test_data_num_paths_to_template():
     )
 
 
-def test_generate_test_data_template_all_paths_true_num_paths_zero():
+def test_generate_test_data_template_all_paths_true_num_paths_zero() -> None:
     """tests for function generate_test_data"""
     input_puml_file = "puml_files/ANDFork_ANDFork_a.puml"
     result = list(generate_test_data(input_puml_file, num_paths_to_template=0))
@@ -100,7 +100,7 @@ def test_generate_test_data_template_all_paths_true_num_paths_zero():
     )
 
 
-def test_generate_test_data_template_all_paths_false_large_num_paths():
+def test_generate_test_data_template_all_paths_false_large_num_paths() -> None:
     """tests for function generate_test_data"""
     input_puml_file = "puml_files/sequence_xor_fork.puml"
     num_templates = 100000
@@ -132,7 +132,7 @@ def test_generate_test_data_template_all_paths_false_large_num_paths():
         assert 0.32 <= prob < 0.3466
 
 
-def test_generate_test_data_event_sequences_from_puml_branch_counts():
+def test_generate_test_data_event_sequences_from_puml_branch_counts() -> None:
     """tests for function generate_test_data_event_sequences_from_puml with
     branch counts"""
     input_puml_file = "puml_files/simple_branch_count.puml"
@@ -155,7 +155,7 @@ def test_generate_test_data_event_sequences_from_puml_branch_counts():
     assert len(expected_numbers_of_event_c) == 0
 
 
-def test_puml_conversion_to_markov_chain():
+def test_puml_conversion_to_markov_chain() -> None:
     """
     Test the conversion of a PlantUML file to a Markov chain representation.
 

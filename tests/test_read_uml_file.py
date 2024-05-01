@@ -26,7 +26,7 @@ class Testread_uml_file(unittest.TestCase):
         and getting event lists from a PlantUML file.
     """
 
-    def test_format_events_list_as_nested_json(self):
+    def test_format_events_list_as_nested_json(self) -> None:
         """
         Test case for the format_events_list_as_nested_json function.
         """
@@ -61,7 +61,7 @@ class Testread_uml_file(unittest.TestCase):
             expected_output,
         )
 
-    def test_recursive_get_type(self):
+    def test_recursive_get_type(self) -> None:
         """
         Test case for the recursive_get_type function.
 
@@ -99,7 +99,7 @@ class Testread_uml_file(unittest.TestCase):
             expected_output,
         )
 
-    def test_get_event_list_from_puml(self):
+    def test_get_event_list_from_puml(self) -> None:
         """
         Test case for the get_event_list_from_puml function.
 

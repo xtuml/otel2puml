@@ -506,7 +506,7 @@ class TestPUMLGraph:
         )
 
     @staticmethod
-    def test_write_puml_string():
+    def test_write_puml_string() -> None:
         """Tests the write_uml_string method."""
         graph = PUMLGraph()
         event_node_1 = graph.create_event_node("event")

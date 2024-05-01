@@ -18,7 +18,7 @@ class TestJAlergia2NetworkX(unittest.TestCase):
     Test class for jAlergia2NetworkX module.
     """
 
-    def setUp(self):
+    def setUp(self) -> None:
         """
         Set up test data.
         """
@@ -30,7 +30,7 @@ class TestJAlergia2NetworkX(unittest.TestCase):
             q2 -> q3 [label="2"]
         """
 
-    def test_get_nodes(self):
+    def test_get_nodes(self) -> None:
         """
         Test get_nodes function.
         """
@@ -41,7 +41,7 @@ class TestJAlergia2NetworkX(unittest.TestCase):
         self.assertEqual(events_reference, {"q1": "A", "q2": "B", "q3": "C"})
         self.assertEqual(node_list, ["A", "B", "C"])
 
-    def test_get_edges(self):
+    def test_get_edges(self) -> None:
         """
         Test get_edges function.
         """
@@ -51,7 +51,7 @@ class TestJAlergia2NetworkX(unittest.TestCase):
             {("q1", "q2"): {"weight": "1"}, ("q2", "q3"): {"weight": "2"}},
         )
 
-    def test_convert_to_networkx(self):
+    def test_convert_to_networkx(self) -> None:
         """
         Test convert_to_networkx function.
         """
