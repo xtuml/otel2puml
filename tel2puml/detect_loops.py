@@ -15,6 +15,7 @@ class Loop:
         self.break_points: set[str] = set()
         self.exit_points: set[str] = set()
         self.merge_processed = False
+        self.break_point_edges_to_remove: set[tuple[str, str]] = set()
 
     def __len__(self) -> int:
         """Return the length of the loop.
@@ -64,6 +65,19 @@ class Loop:
         if self.merge_processed:
             raise RuntimeError("Method not available after merge")
         self.edges_to_remove.add(edge)
+
+    def add_break_point_edges_to_remove(
+        self,
+        graph: DiGraph,
+    ) -> None:
+        """Add the break point edges to remove from the loop.
+
+        :param graph: The graph to get the break point edges from.
+        :type graph: `DiGraph`
+        """
+        break_edges = get_break_edges_to_remove_from_loop(graph, self)
+        for break_edge in break_edges:
+            self.break_point_edges_to_remove.add(break_edge)
 
     def add_break_edge(self, break_edge: tuple[str, str]) -> None:
         """Add a break edge to the loop.
@@ -127,6 +141,35 @@ class Loop:
         """
         self.exit_points = exit_points
 
+    @property
+    def all_edges_to_remove(self) -> set[tuple[str, str]]:
+        """Return all the edges to remove from the loop and subloops.
+
+        :return: The edges to remove.
+        :rtype: `set`[`tuple`[`str`, `str`]]
+        """
+        return self.edges_to_remove.union(self.break_point_edges_to_remove)
+
+    @property
+    def start_points(self) -> set[str]:
+        """Return the start points of the loop.
+
+        :return: The start points of the loop.
+        :rtype: `set`[`str`]
+        """
+        return {edge[1] for edge in self.edges_to_remove}
+
+    @property
+    def end_points(self) -> set[str]:
+        """Return the end points of the loop.
+
+        :return: The end points of the loop.
+        :rtype: `set`[`str`]
+        """
+        return {edge[0] for edge in self.edges_to_remove}.union(
+            self.break_points
+        )
+
 
 def detect_loops(graph: DiGraph) -> list[Loop]:
     """Detect all loops in a graph.
@@ -145,7 +188,9 @@ def detect_loops(graph: DiGraph) -> list[Loop]:
     loops = update_subloops(loops)
     loops = merge_loops(loops)
     loops = update_break_points(graph, loops)
-    return merge_break_points(loops)
+    loops = merge_break_points(loops)
+    update_break_point_edges_to_remove(graph, loops)
+    return loops
 
 
 def add_loop_edges_to_remove_and_breaks(
@@ -293,9 +338,9 @@ def merge_loops(loops: list[Loop]) -> list[Loop]:
 
 
 def update_break_points(
-        graph: DiGraph,
-        loops: list[Loop],
-        sub_loop: bool = False,
+    graph: DiGraph,
+    loops: list[Loop],
+    sub_loop: bool = False,
 ) -> Union[list[Loop], list[str]]:
     """Update the break points of the loops. Add any break points from subloops
     by recursively calling this function.
@@ -376,3 +421,38 @@ def merge_break_points(loops: list[Loop]) -> list[Loop]:
             merged_loops.append(loop)
 
     return merged_loops
+
+
+def get_break_edges_to_remove_from_loop(
+    graph: DiGraph,
+    loop: Loop,
+) -> list[str]:
+    break_edges = []
+    for break_point in loop.break_points:
+        break_edges.extend(graph.out_edges(break_point))
+    return break_edges
+
+
+def update_break_point_edges_to_remove(
+    graph: DiGraph,
+    loops: list[Loop],
+) -> None:
+    for loop in loops:
+        loop.add_break_point_edges_to_remove(graph)
+        update_break_point_edges_to_remove(graph, loop.sub_loops)
+
+
+def get_all_break_points_from_loops(loops: list[Loop]) -> set[str]:
+    break_points = set()
+    for loop in loops:
+        break_points.update(loop.break_points)
+        break_points.update(get_all_break_points_from_loops(loop.sub_loops))
+    return break_points
+
+
+def get_all_break_edges_from_loops(loops: list[Loop]) -> set[tuple[str, str]]:
+    break_edges = set()
+    for loop in loops:
+        break_edges.update(loop.break_edges)
+        break_edges.update(get_all_break_edges_from_loops(loop.sub_loops))
+    return break_edges
