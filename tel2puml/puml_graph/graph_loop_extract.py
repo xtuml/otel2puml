@@ -1,7 +1,7 @@
 """This module contains the LoopExtraction class."""
 from typing import TypedDict
 
-from networkx import dfs_predecessors
+from networkx import dfs_predecessors, has_path
 
 from tel2puml.utils import (
     check_has_path_not_through_nodes, check_has_path_between_all_nodes
@@ -199,11 +199,38 @@ def walk_until_minimal_nodes_found(
         ):
             return LoopNodes(
                 start_loop_nodes=found_start_nodes,
-                end_loop_nodes=found_end_nodes
+                end_loop_nodes=filter_end_nodes_with_successors(
+                    found_end_nodes, puml_graph
+                )
             )
         if node not in predecessors:
             raise RuntimeError("No possible loop start node found")
         node = predecessors[node]
+
+
+def filter_end_nodes_with_successors(
+    found_end_nodes: set[PUMLEventNode], puml_graph: PUMLGraph
+) -> set[PUMLEventNode]:
+    """Filters the given end nodes to only include nodes that have a successor
+    node. This is done to ensure that the end nodes are not the last nodes in
+    the graph and that the loop is not the last nodes in the graph.
+
+    :param found_end_nodes: The end nodes to filter.
+    :type found_end_nodes: `set[:class:`PUMLEventNode`]`
+    :param puml_graph: The PlantUML graph to get the nodes from.
+    :type puml_graph: :class:`PUMLGraph`
+    :return: The filtered end nodes.
+    :rtype: `set[:class:`PUMLEventNode`]`
+    """
+    filtered_end_nodes = set()
+    for potential_end_node in found_end_nodes:
+        if all(
+            not has_path(puml_graph, potential_end_node, potential_successor)
+            for potential_successor in found_end_nodes
+            if potential_successor != potential_end_node
+        ):
+            filtered_end_nodes.add(potential_end_node)
+    return filtered_end_nodes
 
 
 def get_loop_start_and_end(
