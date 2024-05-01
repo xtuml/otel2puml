@@ -55,12 +55,13 @@ def get_event_nodes_from_loop(
     """
     start_loop_nodes = set()
     end_loop_nodes = set()
-    for edge_to_remove in loop.edges_to_remove:
+    for start_point in loop.start_points:
         puml_graph.add_graph_node_to_set_from_reference(
-            end_loop_nodes, edge_to_remove[0]
+            start_loop_nodes, start_point
         )
+    for end_point in loop.end_points:
         puml_graph.add_graph_node_to_set_from_reference(
-            start_loop_nodes, edge_to_remove[1]
+            end_loop_nodes, end_point
         )
     return LoopNodes(
         start_loop_nodes=start_loop_nodes,
@@ -165,12 +166,8 @@ def walk_until_minimal_nodes_found(
     :rtype: :class:`LoopNodes`
     """
     predecessors = dfs_predecessors(puml_graph)
-    minimal_start_nodes_required = set(
-        edge_to_remove[1] for edge_to_remove in loop.edges_to_remove
-    )
-    minimal_end_nodes_required = set(
-        edge_to_remove[0] for edge_to_remove in loop.edges_to_remove
-    )
+    minimal_start_nodes_required = loop.start_points
+    minimal_end_nodes_required = loop.end_points
     while True:
         found_start_nodes = set(
             start_node
