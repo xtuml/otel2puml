@@ -166,7 +166,7 @@ def remove_loop_edges_from_graph(
     :param loop: The loop containing the edges to remove
     :type loop: :class:`Loop`
     """
-    for edge in loop.edges_to_remove:
+    for edge in loop.all_edges_to_remove:
         graph.remove_edge(*edge)
 
 
