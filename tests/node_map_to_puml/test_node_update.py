@@ -17,6 +17,7 @@ class TestUpdateNodesWithBreakPoints:
     """Tests for the `update_nodes_with_break_points` function."""
     @staticmethod
     def loops_event_node_reference() -> tuple[Loop, dict[str, list[Node]]]:
+        """Helper function to create loops and event node reference."""
         loop = Loop(["A"])
         sub_loop = Loop(["E"])
         sub_loop.add_break_point("E")
@@ -37,7 +38,7 @@ class TestUpdateNodesWithBreakPoints:
             for node in event_node_reference[x]
         )
 
-    def test_update_nodes_with_break_points_from_loops(self):
+    def test_update_nodes_with_break_points_from_loops(self) -> None:
         """Test updating nodes with break points from loops."""
         loop, event_node_reference = self.loops_event_node_reference()
         update_nodes_with_break_points_from_loops([loop], event_node_reference)
@@ -49,8 +50,10 @@ class TestUpdateNodesWithBreakPoints:
 
 
 class TestUpdateLonelyMerges:
+    """Tests for updating logic nodes with lonely merges."""
     @staticmethod
-    def node_with_lonely_merges() -> tuple[Node, Node, Node]:
+    def node_with_lonely_merges() -> Node:
+        """Helper function to create a node with lonely merges."""
         A = Node(uid="A", event_type="A")
         logic_node_1 = Node(operator="XOR")
         A.outgoing_logic = [logic_node_1]
@@ -63,6 +66,7 @@ class TestUpdateLonelyMerges:
         return A
 
     def _check_lonely_merges(self, node: Node) -> None:
+        """Helper function to check the lonely merges."""
         assert node.outgoing_logic[0].lonely_merge == (
             node.outgoing_logic[0].outgoing_logic[0]
         )
@@ -71,11 +75,13 @@ class TestUpdateLonelyMerges:
         )
 
     def test_update_logic_node_with_lonely_merge(self) -> None:
+        """Test update_logic_node_with_lonely_merge. """
         A = self.node_with_lonely_merges()
         update_logic_node_with_lonely_merge(A.outgoing_logic[0], "BD")
         self._check_lonely_merges(A)
 
     def test_update_event_nodes_logic_nodes_with_lonely_merges(self) -> None:
+        """Test update_event_nodes_logic_nodes_with_lonly_merges."""
         A = self.node_with_lonely_merges()
         update_event_nodes_logic_nodes_with_lonely_merges(A, "BD")
         self._check_lonely_merges(A)
@@ -83,11 +89,14 @@ class TestUpdateLonelyMerges:
     def test_update_logic_nodes_with_lonely_merges_from_node_to_node_kill_map(
         self
     ) -> None:
+        """Test
+        update_logic_nodes_with_lonely_merges_from_node_to_node_kill_map.
+        """
         A = self.node_with_lonely_merges()
         A_copy = deepcopy(A)
         node_to_node_kill_map = {
-            "A": "BD",
-            "A_copy": "BD",
+            "A": ["B", "D"],
+            "A_copy": ["B", "D"],
         }
         event_node_reference = {
             "A": [A],

@@ -85,7 +85,7 @@ class Node:
 
         self.branch_enum = ["AND", "OR", "XOR", "LOOP", "BRANCH"]
 
-        self.lonely_merge = False
+        self.lonely_merge: "Node" | None = None
 
     def __repr__(self) -> str:
         return self.uid + ":" + (self.event_type or self.operator or "None")

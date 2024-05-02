@@ -427,6 +427,13 @@ def get_break_point_edges_to_remove_from_loop(
     graph: DiGraph,
     loop: Loop,
 ) -> list[str]:
+    """Get the break point edges to remove from the loop.
+
+    :param graph: The graph to get the break point out edges from.
+    :type graph: `DiGraph`
+    :param loop: The loop to get the break point edges to remove.
+    :type loop: `Loop`
+    """
     break_edges = []
     for break_point in loop.break_points:
         break_edges.extend(graph.out_edges(break_point))
@@ -437,12 +444,25 @@ def update_break_point_edges_to_remove(
     graph: DiGraph,
     loops: list[Loop],
 ) -> None:
+    """Update the break point edges to remove from the loops.
+
+    :param graph: The graph to get the break point edges from.
+    :type graph: `DiGraph`
+    :param loops: The loops to update the break point edges to remove.
+    :type loops: `list`[`Loop`]
+    """
     for loop in loops:
         loop.add_break_point_edges_to_remove(graph)
         update_break_point_edges_to_remove(graph, loop.sub_loops)
 
 
 def get_all_break_points_from_loops(loops: list[Loop]) -> set[str]:
+    """Get all break points from the loops and subloops recursively
+
+    :param loops: The loops to get the break points from.
+    :type loops: `list`[`Loop`]
+    :return: The break points.
+    :rtype: `set`[`str`]"""
     break_points = set()
     for loop in loops:
         break_points.update(loop.break_points)
@@ -451,6 +471,13 @@ def get_all_break_points_from_loops(loops: list[Loop]) -> set[str]:
 
 
 def get_all_break_edges_from_loops(loops: list[Loop]) -> set[tuple[str, str]]:
+    """Get all break edges from the loops and subloops recursively
+
+    :param loops: The loops to get the break edges from.
+    :type loops: `list`[`Loop`]
+    :return: The break edges.
+    :rtype: `set`[`tuple`[`str`, `str`]]
+    """
     break_edges = set()
     for loop in loops:
         break_edges.update(loop.break_edges)

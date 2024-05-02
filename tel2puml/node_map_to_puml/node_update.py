@@ -110,6 +110,13 @@ def update_logic_node_with_lonely_merge(
 def get_node_to_node_map_from_edges(
     edges: Iterable[tuple[str, str]],
 ) -> dict[str, set[str]]:
+    """Gets the node to node map from the given edges.
+
+    :param edges: The edges to get the node to node map from
+    :type edges: `Iterable`[`tuple`[`str`, `str`]]
+    :return: The node to node map
+    :rtype: `dict`[`str`, `set`[`str`]]
+    """
     node_to_node_map: dict[str, set[str]] = {}
     for start_event, end_event in edges:
         if start_event not in node_to_node_map:
