@@ -245,6 +245,9 @@ class Event:
         :return: The logic gate tree.
         :rtype: :class:`pm4py.objects.process_tree.obj.ProcessTree`
         """
+        # check if we have no event sets then return None
+        if len(self.event_sets) == 0:
+            return None
         process_tree = self.calculate_process_tree_from_event_sets()
         logic_gate_tree = self.reduce_process_tree_to_preferred_logic_gates(
             process_tree
@@ -1034,7 +1037,7 @@ def get_loop_events_to_remove_mapping(
     """
     mapping: dict[str, list[str]] = {}
     for loop in loops:
-        for node_from, node_to in loop.edges_to_remove:
+        for node_from, node_to in loop.all_edges_to_remove:
             event_from = node_event_name_reference[node_from]
             event_to = node_event_name_reference[node_to]
             if event_from not in mapping:

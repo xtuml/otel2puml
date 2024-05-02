@@ -326,7 +326,7 @@ class PUMLGraph(DiGraph):
         :return: The event node.
         :rtype: :class:`PUMLEventNode`
         """
-        if event_types is None:
+        if not event_types:
             event_types = (PUMLEvent.NORMAL,)
         if isinstance(event_types, PUMLEvent):
             event_types = (event_types,)

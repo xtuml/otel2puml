@@ -10,17 +10,17 @@ The tests are divided into the following categories:
     * [Bunched](#bunched)
     * [Kill Detach](#kill-detach)
 
-Currently the number of end-to-end tests stands at 60, with 51 passing and 9 failing (85.00% coverage).
+Currently the number of end-to-end tests stands at 60, with 54 passing and 6 failing (90.00% coverage).
 
 |                            filepath                            | $$\textcolor{#23d18b}{\tt{passed}}$$ | $$\textcolor{#f5f543}{\tt{xfailed}}$$ | SUBTOTAL |
 | -------------------------------------------------------------- | --------------------------------: | --------------------------------: | -------: |
 | $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/test\\_branch\\_counts.py}}$$ |   $$\textcolor{#23d18b}{\tt{2}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{2}}$$ |
-| $$\textcolor{#f5f543}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/test\\_loops.py}}$$ |   $$\textcolor{#23d18b}{\tt{8}}$$ |   $$\textcolor{#f5f543}{\tt{4}}$$ | $$\textcolor{#f5f543}{\tt{12}}$$ |
+| $$\textcolor{#f5f543}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/test\\_loops.py}}$$ |  $$\textcolor{#23d18b}{\tt{11}}$$ |   $$\textcolor{#f5f543}{\tt{1}}$$ | $$\textcolor{#f5f543}{\tt{12}}$$ |
 | $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_bunched.py}}$$ |  $$\textcolor{#23d18b}{\tt{20}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{20}}$$ |
 | $$\textcolor{#f5f543}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_kill.py}}$$ |   $$\textcolor{#23d18b}{\tt{2}}$$ |   $$\textcolor{#f5f543}{\tt{2}}$$ | $$\textcolor{#f5f543}{\tt{4}}$$ |
 | $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_nested.py}}$$ |  $$\textcolor{#23d18b}{\tt{15}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{15}}$$ |
 | $$\textcolor{#f5f543}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_simple.py}}$$ |   $$\textcolor{#23d18b}{\tt{4}}$$ |   $$\textcolor{#f5f543}{\tt{3}}$$ | $$\textcolor{#f5f543}{\tt{7}}$$ |
-| $$\textcolor{#f5f543}{\tt{TOTAL}}$$                            |  $$\textcolor{#23d18b}{\tt{51}}$$ |   $$\textcolor{#f5f543}{\tt{9}}$$ | $$\textcolor{#f5f543}{\tt{60}}$$ |
+| $$\textcolor{#f5f543}{\tt{TOTAL}}$$                            |  $$\textcolor{#23d18b}{\tt{54}}$$ |   $$\textcolor{#f5f543}{\tt{6}}$$ | $$\textcolor{#f5f543}{\tt{60}}$$ |
 
 
 ## Branch counts
@@ -36,13 +36,10 @@ Currently the number of branch tests stands at 2, with 2 passing and 0 failing (
 
 ## Loops
 
-Currently the number of loops tests stands at 12, with 8 passing and 4 failing (66.67% coverage).
+Currently the number of loops tests stands at 12, with 11 passing and 1 failing (91.67% coverage).
 
 xfailed:
-* `tests/end-to-end-tests/test_loops.py::TestBreakPoints.test_loop_break_point`
-* `tests/end-to-end-tests/test_loops.py::TestBreakPoints.test_loop_two_break_points`
 * `tests/end-to-end-tests/test_loops.py::TestBreakPoints.test_loop_nested_break_point`
-* `tests/end-to-end-tests/test_loops.py::TestEdgeCases.test_loop_break_split_exit`
 
 |               filepath               |                   function                   | $$\textcolor{#23d18b}{\tt{passed}}$$ | $$\textcolor{#f5f543}{\tt{xfailed}}$$ | SUBTOTAL |
 | ------------------------------------ | -------------------------------------------- | --------------------------------: | --------------------------------: | -------: |
@@ -54,11 +51,11 @@ xfailed:
 | $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/test\\_loops.py}}$$ | $$\textcolor{#23d18b}{\tt{TestNestedLogicBlocks.test\\_nested\\_xor}}$$ |   $$\textcolor{#23d18b}{\tt{1}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{1}}$$ |
 | $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/test\\_loops.py}}$$ | $$\textcolor{#23d18b}{\tt{TestNestedLogicBlocks.test\\_logic\\_bunched}}$$ |   $$\textcolor{#23d18b}{\tt{1}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{1}}$$ |
 | $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/test\\_loops.py}}$$ | $$\textcolor{#23d18b}{\tt{test\\_nested\\_branch\\_counts}}$$ |   $$\textcolor{#23d18b}{\tt{1}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{1}}$$ |
-| $$\textcolor{#f5f543}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/test\\_loops.py}}$$ | $$\textcolor{#f5f543}{\tt{TestBreakPoints.test\\_loop\\_break\\_point}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ |   $$\textcolor{#f5f543}{\tt{1}}$$ | $$\textcolor{#f5f543}{\tt{1}}$$ |
-| $$\textcolor{#f5f543}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/test\\_loops.py}}$$ | $$\textcolor{#f5f543}{\tt{TestBreakPoints.test\\_loop\\_two\\_break\\_points}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ |   $$\textcolor{#f5f543}{\tt{1}}$$ | $$\textcolor{#f5f543}{\tt{1}}$$ |
+| $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/test\\_loops.py}}$$ | $$\textcolor{#23d18b}{\tt{TestBreakPoints.test\\_loop\\_break\\_point}}$$ |   $$\textcolor{#23d18b}{\tt{1}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{1}}$$ |
+| $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/test\\_loops.py}}$$ | $$\textcolor{#23d18b}{\tt{TestBreakPoints.test\\_loop\\_two\\_break\\_points}}$$ |   $$\textcolor{#23d18b}{\tt{1}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{1}}$$ |
+| $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/test\\_loops.py}}$$ | $$\textcolor{#23d18b}{\tt{TestEdgeCases.test\\_loop\\_break\\_split\\_exit}}$$ |   $$\textcolor{#23d18b}{\tt{1}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{1}}$$ |
 | $$\textcolor{#f5f543}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/test\\_loops.py}}$$ | $$\textcolor{#f5f543}{\tt{TestBreakPoints.test\\_loop\\_nested\\_break\\_point}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ |   $$\textcolor{#f5f543}{\tt{1}}$$ | $$\textcolor{#f5f543}{\tt{1}}$$ |
-| $$\textcolor{#f5f543}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/test\\_loops.py}}$$ | $$\textcolor{#f5f543}{\tt{TestEdgeCases.test\\_loop\\_break\\_split\\_exit}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ |   $$\textcolor{#f5f543}{\tt{1}}$$ | $$\textcolor{#f5f543}{\tt{1}}$$ |
-| $$\textcolor{#f5f543}{\tt{TOTAL}}$$  |                                              |   $$\textcolor{#23d18b}{\tt{8}}$$ |   $$\textcolor{#f5f543}{\tt{4}}$$ | $$\textcolor{#f5f543}{\tt{12}}$$ |
+| $$\textcolor{#f5f543}{\tt{TOTAL}}$$  |                                              |  $$\textcolor{#23d18b}{\tt{11}}$$ |   $$\textcolor{#f5f543}{\tt{1}}$$ | $$\textcolor{#f5f543}{\tt{12}}$$ |
 
 
 ## Constraints

@@ -552,10 +552,12 @@ def test_merge_markov_without_loops_and_logic_detection_analysis() -> None:
         test_data_logic
     )
     # function call
-    node_class_graph = merge_markov_without_loops_and_logic_detection_analysis(
-        (markov_graph, node_event_reference["event_reference"]),
-        backward,
-        forward,
+    node_class_graph, _ = (
+        merge_markov_without_loops_and_logic_detection_analysis(
+            (markov_graph, node_event_reference["event_reference"]),
+            backward,
+            forward,
+        )
     )
     # test
     expected_outgoing_event_type_logic = {
@@ -661,7 +663,7 @@ class TestCreatePumlGraphFromNodeClassGraph:
             test_data_logic,
             add_dummy_start=add_dummy_start
         )
-        node_class_graph = (
+        node_class_graph, _ = (
             merge_markov_without_loops_and_logic_detection_analysis(
                 (markov_graph, node_event_reference["event_reference"]),
                 backward,
@@ -803,7 +805,7 @@ def test_check_is_merge_node_for_logic_block() -> None:
     forward, backward = update_all_connections_from_clustered_events(
         test_data_logic
     )
-    node_class_graph = (
+    node_class_graph, _ = (
         merge_markov_without_loops_and_logic_detection_analysis(
             (markov_graph, node_event_reference["event_reference"]),
             backward,

@@ -73,30 +73,30 @@ def test_nested_branch_counts() -> None:
 class TestBreakPoints:
     """End to end tests for break points in loops."""
     @staticmethod
-    @pytest.mark.xfail(
-        reason="Break points not connected in full solution currently",
-        strict=True
-    )
     def test_loop_break_point() -> None:
         """Test loop with break point."""
         end_to_end_test(
             "end-to-end-pumls/loops/break_points/loop_break_point.puml",
+            equivalent_pumls=[
+                "end-to-end-pumls/loops/break_points/"
+                "loop_break_point_equiv.puml",
+            ],
         )
 
     @staticmethod
-    @pytest.mark.xfail(
-        reason="Break points not connected in full solution currently",
-        strict=True
-    )
     def test_loop_two_break_points() -> None:
         """Test loop with 2 break points."""
         end_to_end_test(
             "end-to-end-pumls/loops/break_points/loop_with_2_breaks.puml",
+            equivalent_pumls=[
+                "end-to-end-pumls/loops/break_points/"
+                "loop_with_2_breaks_equiv.puml",
+            ]
         )
 
     @staticmethod
     @pytest.mark.xfail(
-        reason="Break points not connected in full solution currently",
+        reason="Break Points within nested are currently not supported",
         strict=True
     )
     def test_loop_nested_break_point() -> None:
@@ -109,10 +109,6 @@ class TestBreakPoints:
 class TestEdgeCases:
     """End to end tests for edge cases of loops."""
     @staticmethod
-    @pytest.mark.xfail(
-        reason="Break points not connected in full solution currently",
-        strict=True
-    )
     def test_loop_break_split_exit() -> None:
         """Test loop with break, split and exit."""
         end_to_end_test(

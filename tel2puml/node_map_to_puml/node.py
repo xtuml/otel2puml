@@ -85,6 +85,8 @@ class Node:
 
         self.branch_enum = ["AND", "OR", "XOR", "LOOP", "BRANCH"]
 
+        self.lonely_merge: "Node" | None = None
+
     def __repr__(self) -> str:
         return self.uid + ":" + (self.event_type or self.operator or "None")
 
@@ -198,7 +200,7 @@ class Node:
             and logic_tree.operator == Logic_operator.BRANCH
         ):
             if direction == "outgoing":
-                root_node.event_types.add(PUMLEvent.BRANCH)
+                root_node.update_event_types(PUMLEvent.BRANCH)
                 for child in logic_tree.children:
                     self._load_logic_into_logic_list(
                         child, event_node_map, direction, root_node
@@ -318,7 +320,15 @@ class Node:
                 nodes.extend(node.traverse_logic(direction))
         return nodes
 
-    def get_puml_event_types(self) -> tuple[PUMLEvent] | None:
+    def update_event_types(self, event_type: PUMLEvent) -> None:
+        """Updates the event types.
+
+        :param event_type: The event type to update.
+        :type event_type: :class:`PUMLEvent`
+        """
+        self.event_types.add(event_type)
+
+    def get_puml_event_types(self) -> tuple[PUMLEvent]:
         """Gets the PUML event types for the node if it is an event node or
         `None` otherwise.
 
@@ -327,7 +337,7 @@ class Node:
         """
         if self.event_types:
             return tuple(self.event_types)
-        return None
+        return tuple()
 
     def get_operator_type(self) -> PUMLOperator | None:
         """Gets the PUML operator type for the node if it is a logic node or
@@ -476,7 +486,7 @@ def merge_markov_without_loops_and_logic_detection_analysis(
     markov_graph_ref_pair: tuple[DiGraph, dict[str, str]],
     incoming_logic_events: dict[str, Event],
     outgoing_logic_events: dict[str, Event],
-) -> DiGraph:
+) -> tuple[DiGraph, dict[str, list[Node]]]:
     """Merges a Markov graph without loops and logic detection analysis.
 
     :param markov_graph_ref_pair: The Markov graph reference pair.
@@ -486,8 +496,9 @@ def merge_markov_without_loops_and_logic_detection_analysis(
     :type incoming_logic_events: `dict`[`str`, :class:`Event`]
     :param outgoing_logic_events: The outgoing logic events.
     :type outgoing_logic_events: `dict`[`str`, :class:`Event`]
-    :return: The NetworkX graph of :class:`Node`'s.
-    :rtype: :class:`DiGraph`
+    :return: A tuple containing the NetworkX graph and the event node
+    reference.
+    :rtype: `tuple`[:class:`DiGraph`, `dict`[`str`, `list`[:class:`Node`]]]
     """
     markov_graph, node_event_references = markov_graph_ref_pair
     node_class_graph, event_node_map = (
@@ -498,7 +509,7 @@ def merge_markov_without_loops_and_logic_detection_analysis(
     load_all_logic_trees_into_nodes(
         outgoing_logic_events, event_node_map, "outgoing"
     )
-    return node_class_graph
+    return node_class_graph, event_node_map
 
 
 class LogicBlockHolder:
@@ -527,6 +538,10 @@ class LogicBlockHolder:
         self.puml_nodes = [start_node] * len(self.paths)
         self.will_merge = False
         self.merge_counter = 0
+        if logic_node.lonely_merge:
+            self.lonely_merge_index = self.paths.index(logic_node.lonely_merge)
+        else:
+            self.lonely_merge_index = None
 
     @property
     def current_path(self) -> Node | None:
@@ -579,6 +594,11 @@ class LogicBlockHolder:
         self.paths = [current_node_in_path] + self.paths[:-1]
         self.merge_nodes = [self.merge_nodes[-1]] + self.merge_nodes[:-1]
         self.puml_nodes = [current_puml_node_in_path] + self.puml_nodes[:-1]
+        if self.lonely_merge_index is not None:
+            self.lonely_merge_index = (
+                (self.lonely_merge_index + 1) % len(self.paths)
+            )
+
         self.logic_node.rotate_path()
 
         return self.current_path_puml_node, self.current_path,
@@ -612,9 +632,9 @@ class LogicBlockHolder:
         return False
 
     def create_logic_merge(
-            self,
-            puml_graph: PUMLGraph,
-            merge_node: Node
+        self,
+        puml_graph: PUMLGraph,
+        merge_node: Node
     ) -> set[PUMLNode]:
         """Creates a logic merge for a given merge node.
 
@@ -678,6 +698,18 @@ class LogicBlockHolder:
         )
         return nodes_to_remove
 
+    def is_on_lonely_merge_path(self) -> bool:
+        """Checks if the current path is on the lonely merge path.
+
+        :return: Whether the current path is on the lonely merge path.
+        :rtype: `bool`
+        """
+        if self.lonely_merge_index is not None:
+            return self.lonely_merge_index == len(
+                self.paths
+            ) - 1
+        return False
+
 
 def create_puml_graph_from_node_class_graph(
     node_class_graph: DiGraph,
@@ -716,8 +748,16 @@ def create_puml_graph_from_node_class_graph(
                 # within a logic block and then handle the merge point and
                 # continue
                 if next_node_class is None:
-                    kill_node = puml_graph.create_kill_node()
-                    puml_graph.add_edge(previous_puml_node, kill_node)
+                    # handle the case where the previous node was a break
+                    # point node
+                    if (
+                        PUMLEvent.BREAK
+                        in previous_node_class.get_puml_event_types()
+                    ):
+                        kill_node = previous_puml_node
+                    else:
+                        kill_node = puml_graph.create_kill_node()
+                        puml_graph.add_edge(previous_puml_node, kill_node)
                     previous_puml_node, previous_node_class = (
                         handle_reach_logic_merge_point(
                             puml_graph,
@@ -752,6 +792,22 @@ def create_puml_graph_from_node_class_graph(
                 )
             )
         else:
+            # handle the case where we have an operator node coming from an
+            # event node that is part of a logic block where all other paths
+            # do not join back up with the rest of the graph (i.e. a lonely
+            # merge path that can be merged at any desired point)
+            if logic_list:
+                if logic_list[-1].is_on_lonely_merge_path():
+                    previous_puml_node, previous_node_class = (
+                        handle_reach_potential_merge_point(
+                            puml_graph,
+                            logic_list,
+                            previous_puml_node,
+                            previous_node_class,
+                            previous_node_class.outgoing_logic[0],
+                        )
+                    )
+                    continue
             # handle the case where there is an immediately following logic
             # node or a logic node as the previous node class
             previous_puml_node, previous_node_class = handle_logic_node_cases(
@@ -1076,6 +1132,13 @@ def check_is_merge_node_for_logic_block(
     than the current path of the logic block, `False` otherwise.
     :rtype: `bool`
     """
+    if logic_block_holder.lonely_merge_index is not None:
+        if logic_block_holder.lonely_merge_index == len(
+            logic_block_holder.paths
+        ) - 1:
+            if node != logic_block_holder.logic_node.lonely_merge:
+                return True
+        return False
     if logic_block_holder.will_merge:
         return True
     # get all leaf nodes of the node classes of all the paths of the logic

@@ -1026,6 +1026,9 @@ class TestEvent:
             assert child.label in labels
             labels.remove(child.label)
         assert len(labels) == 0
+        # test when there are no event sets
+        event.event_sets = set()
+        assert event.calculate_logic_gates() is None
 
 
 def test_update_all_connections_from_data() -> None:
@@ -1421,7 +1424,9 @@ class TestLoopEdgeRemoval:
 
     def test_get_loop_events_to_remove_mapping(self) -> None:
         """Test for method get_loop_events_to_remove_mapping"""
-        loops, node_event_name_reference, _ = self.get_loop_ref_and_events()
+        loops, node_event_name_reference, events = (
+            self.get_loop_ref_and_events()
+        )
         loop_events_to_remove = get_loop_events_to_remove_mapping(
             loops, node_event_name_reference
         )
@@ -1429,6 +1434,18 @@ class TestLoopEdgeRemoval:
         assert "C" in loop_events_to_remove and "E" in loop_events_to_remove
         assert loop_events_to_remove["C"] == ["A"]
         assert loop_events_to_remove["E"] == ["E"]
+        # test for loop with break edges to remove
+        loops[0].break_point_edges_to_remove.add(("q6", "q4"))
+        node_event_name_reference["q6"] = "F"
+        F = Event("F")
+        F.update_event_sets(["D"])
+        events["A"].update_event_sets(["F"])
+        loop_events_to_remove = get_loop_events_to_remove_mapping(
+            loops, node_event_name_reference
+        )
+        assert len(loop_events_to_remove) == 3
+        assert set(loop_events_to_remove.keys()) == {"C", "E", "F"}
+        assert loop_events_to_remove["F"] == ["D"]
 
     def test_remove_detected_loop_data_from_events(self) -> None:
         """Test for method remove_detected_loop_data_from_events"""
