@@ -12,6 +12,10 @@ from tel2puml.detect_loops import (
     merge_loops,
     update_break_points,
     merge_break_points,
+    get_break_point_edges_to_remove_from_loop,
+    update_break_point_edges_to_remove,
+    get_all_break_points_from_loops,
+    get_all_break_edges_from_loops
 )
 from tel2puml.jAlergiaPipeline import audit_event_sequences_to_network_x
 from tel2puml.pipelines.data_creation import (
@@ -168,10 +172,43 @@ class TestLoop():
         loop.set_exit_points({"A"})
         assert loop.exit_points == {"A"}
 
+    @staticmethod
+    def test_all_edges_to_remove() -> None:
+        """Test the `all_edges_to_remove` property of the Loop class."""
+        loop = Loop(["A", "B", "C", "D"])
+        loop.add_edge_to_remove(("C", "A"))
+        loop.break_point_edges_to_remove.add(("D", "E"))
+        assert loop.all_edges_to_remove == {("C", "A"), ("D", "E")}
+
+    @staticmethod
+    def test_start_points() -> None:
+        """Test the `start_points` property of the Loop class."""
+        loop = Loop(["A", "B", "C", "D"])
+        loop.add_edge_to_remove(("C", "A"))
+        assert loop.start_points == {"A"}
+
+    @staticmethod
+    def test_end_points() -> None:
+        """Test the `end_points` property of the Loop class."""
+        loop = Loop(["A", "B", "C", "D"])
+        loop.add_edge_to_remove(("C", "A"))
+        loop.add_break_point("D")
+        assert loop.end_points == {"D", "C"}
+
+    @staticmethod
+    def test_add_break_point_edges_to_remove() -> None:
+        """Test the `add_break_point_edges_to_remove` method of the Loop class.
+        """
+        loop, graph = TestBreakPointFunctions.break_point_loop_and_graph()
+        loop.add_break_point_edges_to_remove(graph)
+        assert loop.break_point_edges_to_remove == {
+            ("A", x) for x in "BCD"
+        }
+
 
 def _get_referenced_iterable(
-        iterable: Iterable[Any],
-        references: dict[str, dict[str, str]]
+    iterable: Iterable[Any],
+    references: dict[str, dict[str, str]]
 ) -> Iterable[Any]:
     """Return referenced iterator.
 
@@ -661,3 +698,52 @@ def test_detect_loops_from_loop_break_split_exit_puml() -> None:
     )
 
     assert len(loop.sub_loops) == 0
+
+
+class TestBreakPointFunctions:
+    """Tests for the break point functions."""
+    @staticmethod
+    def break_point_loop_and_graph() -> tuple[Loop, DiGraph]:
+        """Return a loop and graph with break points."""
+        graph = DiGraph()
+        graph.add_edge("A", "B")
+        graph.add_edge("A", "C")
+        graph.add_edge("A", "D")
+        loop = Loop(["A"])
+        loop.add_break_edge(("X", "A"))
+        sub_loop = Loop(["E"])
+        sub_loop.add_break_edge(("Y", "E"))
+        graph.add_edge("E", "F")
+        sub_loop.add_break_point("E")
+        loop.add_subloop(sub_loop)
+        loop.add_break_point("A")
+        return loop, graph
+
+    def test_get_break_point_edges_to_remove_from_loop(self) -> None:
+        """Test the `get_break_point_edges_to_remove_from_loop` function."""
+        loop, graph = self.break_point_loop_and_graph()
+        break_edges = get_break_point_edges_to_remove_from_loop(
+            graph, loop
+        )
+        assert break_edges == [("A", "B"), ("A", "C"), ("A", "D")]
+
+    def test_update_break_point_edges_to_remove(self) -> None:
+        """Test the `update_break_point_edges_to_remove` function."""
+        loop, graph = self.break_point_loop_and_graph()
+        update_break_point_edges_to_remove(graph, [loop])
+        assert loop.break_point_edges_to_remove == {
+            ("A", "B"), ("A", "C"), ("A", "D")
+        }
+        assert loop.sub_loops[0].break_point_edges_to_remove == {("E", "F")}
+
+    def test_get_all_break_points_from_loops(self) -> None:
+        """Test the `get_all_break_points_from_loops` function."""
+        loop, _ = self.break_point_loop_and_graph()
+        break_points = get_all_break_points_from_loops([loop])
+        assert break_points == {"A", "E"}
+
+    def test_get_all_break_edges_from_loops(self) -> None:
+        """Test the `get_all_break_edges_from_loops` function."""
+        loop, _ = self.break_point_loop_and_graph()
+        break_edges = get_all_break_edges_from_loops([loop])
+        assert break_edges == {("X", "A"), ("Y", "E")}

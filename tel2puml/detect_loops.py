@@ -75,7 +75,7 @@ class Loop:
         :param graph: The graph to get the break point edges from.
         :type graph: `DiGraph`
         """
-        break_edges = get_break_edges_to_remove_from_loop(graph, self)
+        break_edges = get_break_point_edges_to_remove_from_loop(graph, self)
         for break_edge in break_edges:
             self.break_point_edges_to_remove.add(break_edge)
 
@@ -423,7 +423,7 @@ def merge_break_points(loops: list[Loop]) -> list[Loop]:
     return merged_loops
 
 
-def get_break_edges_to_remove_from_loop(
+def get_break_point_edges_to_remove_from_loop(
     graph: DiGraph,
     loop: Loop,
 ) -> list[str]:
