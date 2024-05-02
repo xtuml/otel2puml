@@ -12,7 +12,8 @@ from tel2puml.puml_graph.graph_loop_extract import (
     get_loop_start_and_end,
     calc_loop_start_node,
     calc_loop_end_node,
-    LoopNodes
+    LoopNodes,
+    filter_end_nodes_with_successors
 )
 from tel2puml.detect_loops import Loop
 
@@ -333,3 +334,15 @@ class TestGetLoopStartAndEnd:
             graph, loop_1
         )
         self.check_correct_start_and_end_nodes(unique_loops)
+
+    @staticmethod
+    def test_filter_end_nodes_with_successors() -> None:
+        """Tests the filter_end_nodes_with_successors method."""
+        puml_graph = PUMLGraph()
+        A = puml_graph.create_event_node("A")
+        B = puml_graph.create_event_node("B")
+        puml_graph.add_edge(A, B)
+        filtered_end_nodes = filter_end_nodes_with_successors(
+            {A, B}, puml_graph
+        )
+        assert filtered_end_nodes == {B}
