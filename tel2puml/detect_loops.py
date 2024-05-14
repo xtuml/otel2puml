@@ -1,5 +1,5 @@
 """A module to detect all loops in a graph."""
-from typing import Self, Optional, Union, Hashable, Iterable, Generator
+from typing import Self, Optional, Union, Iterable, Generator
 
 from networkx import (
     DiGraph, simple_cycles, all_simple_paths, weakly_connected_components,
@@ -534,7 +534,7 @@ def get_all_break_edges_from_loops(loops: list[Loop]) -> set[tuple[str, str]]:
 def get_all_lonely_merge_killed_edges_from_loops(
     graph: DiGraph,
     loops: list[Loop],
-) -> set[tuple[Hashable, Hashable]]:
+) -> set[tuple[str, str]]:
     """Get all lonely merge killed edges from the loops.
 
     :param graph: The graph to get the lonely merge killed edges from.
@@ -542,9 +542,9 @@ def get_all_lonely_merge_killed_edges_from_loops(
     :param loops: The loops to get the lonely merge killed edges from.
     :type loops: `list`[`Loop`]
     :return: The lonely merge killed edges.
-    :rtype: `set`[`tuple`[`Hashable`, `Hashable`]]
+    :rtype: `set`[`tuple`[`str`, `str`]]
     """
-    lonely_merge_kill_edges: set[tuple[Hashable, Hashable]] = set()
+    lonely_merge_kill_edges: set[tuple[str, str]] = set()
     for loop in loops:
         for edge in get_all_lonely_merge_killed_edges_from_loop(
             graph, loop
@@ -556,7 +556,7 @@ def get_all_lonely_merge_killed_edges_from_loops(
 def get_all_lonely_merge_killed_edges_from_loop(
     graph: DiGraph,
     loop: Loop
-) -> Generator[tuple[Hashable, Hashable], None, None]:
+) -> Generator[tuple[str, str], None, None]:
     """Get all lonely merge killed edges from the loop.
 
     :param graph: The graph to get the lonely merge killed edges from.
@@ -564,7 +564,7 @@ def get_all_lonely_merge_killed_edges_from_loop(
     :param loop: The loop to get the lonely merge killed edges from.
     :type loop: `Loop`
     :return: The lonely merge killed edges.
-    :rtype: `Generator`[`tuple`[`Hashable`, `Hashable`], `None`, `None`]
+    :rtype: `Generator`[`tuple`[`str`, `str`], `None`, `None`]
     """
     loop_nodes = extract_loop_nodes_from_graph(graph, loop)
     yield from (
@@ -579,7 +579,7 @@ def get_all_lonely_merge_killed_edges_from_loop(
 def extract_loop_nodes_from_graph(
     graph: DiGraph,
     loop: Loop,
-) -> list[Hashable]:
+) -> list[str]:
     """Extract the nodes from the graph that are in the loop.
 
     :param graph: The graph to extract the nodes from.
@@ -605,9 +605,9 @@ def extract_loop_nodes_from_graph(
 
 def get_all_lonely_merge_killed_edges_from_loop_nodes_and_end_points(
     graph: DiGraph,
-    loop_nodes: Iterable[Hashable],
-    end_points: set[Hashable],
-) -> Generator[tuple[Hashable, Hashable], None, None]:
+    loop_nodes: Iterable[str],
+    end_points: set[str],
+) -> Generator[tuple[str, str], None, None]:
     """Get all lonely merge killed edges from the loop nodes and end points.
 
     :param graph: The graph to get the lonely merge killed edges from.

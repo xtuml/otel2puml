@@ -785,6 +785,7 @@ class TestLoopLonelyMerges:
         return loop
 
     def lonely_merge_negative_test_graph(self) -> DiGraph:
+        """Return a graph with no lonely merges."""
         graph = DiGraph()
         graph.add_edge("A", "B")
         graph.add_edge("B", "C")
@@ -799,7 +800,7 @@ class TestLoopLonelyMerges:
         graph: DiGraph,
         loop_nodes: set[str],
         end_points: set[str],
-        expected_lonely_merge_killed_edges: dict[str, list[str]]
+        expected_lonely_merge_killed_edges: set[tuple[str, str]]
     ) -> None:
         """Get and check lonely merge killed edges."""
         lonely_merge_killed_edges = {
