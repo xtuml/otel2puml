@@ -8,7 +8,7 @@ cd /tmp/
 git clone git@github.com:SmartDCSITlimited/test-event-generator.git
 cd test-event-generator
 git fetch --all --tags
-git checkout tags/v1.0.0 -b latest 
+git checkout tags/v1.0.1 -b latest 
 pip install -r requirements.txt
 pip install .
 cd ..
@@ -19,7 +19,7 @@ cd /tmp/
 git clone git@github.com:SmartDCSITlimited/test-harness.git
 cd test-harness
 git fetch --all --tags
-git checkout tags/v1.0.0 -b latest 
+git checkout tags/v1.1.3 -b latest 
 pip install -r requirements.txt
 pip install .
 cd ..
