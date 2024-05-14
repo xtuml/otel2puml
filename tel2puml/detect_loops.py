@@ -1,7 +1,10 @@
 """A module to detect all loops in a graph."""
-from typing import Self, Optional, Union
+from typing import Self, Optional, Union, Iterable, Generator
 
-from networkx import DiGraph, simple_cycles, all_simple_paths
+from networkx import (
+    DiGraph, simple_cycles, all_simple_paths, weakly_connected_components,
+    has_path
+)
 
 
 class Loop:
@@ -194,8 +197,8 @@ def detect_loops(graph: DiGraph) -> list[Loop]:
 
 
 def add_loop_edges_to_remove_and_breaks(
-        loops: list[Loop],
-        edges: list[tuple[str, str]]
+    loops: list[Loop],
+    edges: list[tuple[str, str]]
 ) -> list[Loop]:
     """Add the edges to remove from the loops to the edge_to_remove property of
     the Loop, along with the break points and associated exit point.
@@ -207,6 +210,7 @@ def add_loop_edges_to_remove_and_breaks(
     :return: The updated loops.
     :rtype: `list`[`Loop`]
     """
+    graph = DiGraph(edges)
     loop_edges = {
         edge
         for loop in loops
@@ -228,7 +232,10 @@ def add_loop_edges_to_remove_and_breaks(
                 if v in entries
                 and u in {w for w, _ in exits}
             }
-
+            # filter exits for kill points
+            exits = filter_exits_for_kill_exits(
+                exits, edges_to_remove, graph
+            )
             breaks = {
                 (u, v)
                 for u, v in exits.difference(loop_edges)
@@ -255,6 +262,45 @@ def add_loop_edges_to_remove_and_breaks(
             raise ValueError("No entries or no exits")
 
     return loops
+
+
+def filter_exits_for_kill_exits(
+    exits: set[tuple[str, str]],
+    edges_to_remove: set[tuple[str, str]],
+    graph: DiGraph,
+) -> set[tuple[str, str]]:
+    """Filter the exits for kill exits.
+
+    :param exits: The exits to filter.
+    :type exits: `set`[`tuple`[`str`, `str`]]
+    :param edges_to_remove: The edges to remove.
+    :type edges_to_remove: `set`[`tuple`[`str`, `str`]]
+    :param graph: The graph to check the paths.
+    :type graph: `DiGraph`
+    :return: The filtered exits.
+    :rtype: `set`[`tuple`[`str`, `str`]]
+    """
+    # get the end nodes in the loop from the loop edges to remove
+    loop_ends = {edge[0] for edge in edges_to_remove}
+    # find the normal exits that are those exits that aren't break exits or
+    # kill exits and then get a set of nodes that would succeed the loop
+    normal_exits = {
+        exit_point
+        for exit_point in exits
+        if exit_point[0] in loop_ends
+    }
+    normal_exit_nodes = {exit_point[1] for exit_point in normal_exits}
+    # break exits found by checking if there is a path from the exit point to
+    # any node that would succeed the loop
+    break_exits = {
+        exit_point
+        for exit_point in exits.difference(normal_exits)
+        if any(
+            has_path(graph, exit_point[1], node)
+            for node in normal_exit_nodes
+        )
+    }
+    return normal_exits.union(break_exits)
 
 
 def update_subloops(loops: list[Loop]) -> list[Loop]:
@@ -483,3 +529,110 @@ def get_all_break_edges_from_loops(loops: list[Loop]) -> set[tuple[str, str]]:
         break_edges.update(loop.break_edges)
         break_edges.update(get_all_break_edges_from_loops(loop.sub_loops))
     return break_edges
+
+
+def get_all_lonely_merge_killed_edges_from_loops(
+    graph: DiGraph,
+    loops: list[Loop],
+) -> set[tuple[str, str]]:
+    """Get all lonely merge killed edges from the loops.
+
+    :param graph: The graph to get the lonely merge killed edges from.
+    :type graph: `DiGraph`
+    :param loops: The loops to get the lonely merge killed edges from.
+    :type loops: `list`[`Loop`]
+    :return: The lonely merge killed edges.
+    :rtype: `set`[`tuple`[`str`, `str`]]
+    """
+    lonely_merge_kill_edges: set[tuple[str, str]] = set()
+    for loop in loops:
+        for edge in get_all_lonely_merge_killed_edges_from_loop(
+            graph, loop
+        ):
+            lonely_merge_kill_edges.add(edge)
+    return lonely_merge_kill_edges
+
+
+def get_all_lonely_merge_killed_edges_from_loop(
+    graph: DiGraph,
+    loop: Loop
+) -> Generator[tuple[str, str], None, None]:
+    """Get all lonely merge killed edges from the loop.
+
+    :param graph: The graph to get the lonely merge killed edges from.
+    :type graph: `DiGraph`
+    :param loop: The loop to get the lonely merge killed edges from.
+    :type loop: `Loop`
+    :return: The lonely merge killed edges.
+    :rtype: `Generator`[`tuple`[`str`, `str`], `None`, `None`]
+    """
+    loop_nodes = extract_loop_nodes_from_graph(graph, loop)
+    yield from (
+        get_all_lonely_merge_killed_edges_from_loop_nodes_and_end_points(
+            graph, loop_nodes, loop.end_points
+        )
+    )
+    for sub_loop in loop.sub_loops:
+        yield from get_all_lonely_merge_killed_edges_from_loop(graph, sub_loop)
+
+
+def extract_loop_nodes_from_graph(
+    graph: DiGraph,
+    loop: Loop,
+) -> list[str]:
+    """Extract the nodes from the graph that are in the loop.
+
+    :param graph: The graph to extract the nodes from.
+    :type graph: `DiGraph`
+    :param loop: The loop to extract the nodes from.
+    :type loop: `Loop`
+    """
+    graph_copy: DiGraph = graph.copy()
+    for node in loop.start_points:
+        graph_copy.remove_edges_from(graph.in_edges(node))
+    for node in loop.end_points:
+        graph_copy.remove_edges_from(graph.out_edges(node))
+    for connected_nodes_generator in weakly_connected_components(
+        graph_copy
+    ):
+        connected_nodes = list(connected_nodes_generator)
+        if loop.start_points.issubset(connected_nodes):
+            break
+    else:
+        raise RuntimeError("Loop not found in any connected graphs")
+    return connected_nodes
+
+
+def get_all_lonely_merge_killed_edges_from_loop_nodes_and_end_points(
+    graph: DiGraph,
+    loop_nodes: Iterable[str],
+    end_points: set[str],
+) -> Generator[tuple[str, str], None, None]:
+    """Get all lonely merge killed edges from the loop nodes and end points.
+
+    :param graph: The graph to get the lonely merge killed edges from.
+    :type graph: `DiGraph`
+    :param loop_nodes: The nodes from the loop.
+    :type loop_nodes: `Iterable`[`Hashable`]
+    :param end_points: The end points of the loop.
+    :type end_points: `set`[`Hashable`]
+    :return: The lonely merge killed edges.
+    :rtype: `Generator`[`tuple`[`Hashable`, `Hashable`], `None`, `None`]
+    """
+    for node in loop_nodes:
+        if node in end_points:
+            continue
+        out_edges = graph.out_edges(node)
+        if len(out_edges) <= 1:
+            continue
+        killed_nodes = [
+            edge[1]
+            for edge in out_edges
+            if all(
+                not has_path(graph, edge[1], end_point)
+                for end_point in end_points
+            )
+        ]
+        if len(out_edges) - len(killed_nodes) == 1:
+            for killed_node in killed_nodes:
+                yield node, killed_node

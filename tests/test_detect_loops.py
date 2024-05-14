@@ -15,7 +15,10 @@ from tel2puml.detect_loops import (
     get_break_point_edges_to_remove_from_loop,
     update_break_point_edges_to_remove,
     get_all_break_points_from_loops,
-    get_all_break_edges_from_loops
+    get_all_break_edges_from_loops,
+    get_all_lonely_merge_killed_edges_from_loop_nodes_and_end_points,
+    get_all_lonely_merge_killed_edges_from_loop,
+    get_all_lonely_merge_killed_edges_from_loops
 )
 from tel2puml.jAlergiaPipeline import audit_event_sequences_to_network_x
 from tel2puml.pipelines.data_creation import (
@@ -747,3 +750,126 @@ class TestBreakPointFunctions:
         loop, _ = self.break_point_loop_and_graph()
         break_edges = get_all_break_edges_from_loops([loop])
         assert break_edges == {("X", "A"), ("Y", "E")}
+
+
+class TestLoopLonelyMerges:
+    """Tests for the lonely merge detection functions."""
+    def lonely_merge_graph(self) -> DiGraph:
+        """Return a graph with lonely merges."""
+        graph = DiGraph()
+        graph.add_edge("A", "B")
+        graph.add_edge("B", "C")
+        graph.add_edge("B", "D")
+        graph.add_edge("B", "E")
+        graph.add_edge("C", "F")
+        graph.add_edge("F", "G")
+        graph.add_edge("D", "H")
+        graph.add_edge("D", "I")
+        graph.add_edge("H", "J")
+        graph.add_edge("H", "K")
+        graph.add_edge("J", "L")
+        graph.add_edge("K", "L")
+        graph.add_edge("L", "M")
+        return graph
+
+    def lonely_merge_loop(self) -> Loop:
+        """Return a loop with lonely merges."""
+        loop = Loop(
+            ["B", "C", "D", "E", "F", "H", "I", "J", "K", "L", "M"]
+        )
+        loop.add_edge_to_remove(("F", "B"))
+        sub_loop = Loop(["D", "H", "I", "J", "K"])
+        sub_loop.add_edge_to_remove(("K", "D"))
+        sub_loop.add_edge_to_remove(("J", "D"))
+        loop.add_subloop(sub_loop)
+        return loop
+
+    def lonely_merge_negative_test_graph(self) -> DiGraph:
+        """Return a graph with no lonely merges."""
+        graph = DiGraph()
+        graph.add_edge("A", "B")
+        graph.add_edge("B", "C")
+        graph.add_edge("C", "D")
+        graph.add_edge("C", "E")
+        graph.add_edge("B", "F")
+        graph.add_edge("F", "G")
+        return graph
+
+    @staticmethod
+    def get_and_check_lonely_merge_killed_edges(
+        graph: DiGraph,
+        loop_nodes: set[str],
+        end_points: set[str],
+        expected_lonely_merge_killed_edges: set[tuple[str, str]]
+    ) -> None:
+        """Get and check lonely merge killed edges."""
+        lonely_merge_killed_edges = {
+            edge
+            for edge in
+            get_all_lonely_merge_killed_edges_from_loop_nodes_and_end_points(
+                graph, loop_nodes, end_points
+            )
+        }
+        assert lonely_merge_killed_edges == expected_lonely_merge_killed_edges
+
+    def test_get_all_lonely_merge_killed_edges_from_loop_nodes_and_end_points(
+        self
+    ) -> None:
+        """Test the
+        `get_all_lonely_merge_killed_edges_from_loop_nodes_and_end_points`
+        function.
+        """
+        graph = self.lonely_merge_graph()
+        # test parent loop containing sub loop that occurs on a kill path
+        # for correct detection of lonely merge
+        loop_nodes = {"B", "C", "D", "E", "F", "H", "I", "J", "K"}
+        end_points = {"G"}
+        self.get_and_check_lonely_merge_killed_edges(
+            graph, loop_nodes, end_points,
+            {("B", "D"), ("B", "E")}
+        )
+        # test sub loop with multiple loop end points
+        loop_nodes = {"D", "H", "I", "J", "K", "L"}
+        end_points = {"K", "L"}
+        self.get_and_check_lonely_merge_killed_edges(
+            graph, loop_nodes, end_points, {("D", "I")}
+        )
+        # negative tests
+        graph = self.lonely_merge_negative_test_graph()
+        # test all nodes killed on node
+        loop_nodes = {"C"}
+        end_points = {"F"}
+        self.get_and_check_lonely_merge_killed_edges(
+            graph, loop_nodes, end_points, set()
+        )
+        # test single out edge
+        loop_nodes = {"F"}
+        end_points = {"G"}
+        self.get_and_check_lonely_merge_killed_edges(
+            graph, loop_nodes, end_points, set()
+        )
+        # test node is end point node
+        loop_nodes = {"C"}
+        end_points = {"C"}
+        self.get_and_check_lonely_merge_killed_edges(
+            graph, loop_nodes, end_points, set()
+        )
+
+    def test_get_all_lonely_merge_killed_edges_from_loop(self) -> None:
+        """Test the `get_all_lonely_merge_killed_edges_from_loop` function."""
+        killed_edges = {
+            edge
+            for edge in
+            get_all_lonely_merge_killed_edges_from_loop(
+                self.lonely_merge_graph(), self.lonely_merge_loop()
+            )
+        }
+        assert killed_edges == {("B", "D"), ("B", "E"), ("D", "I")}
+
+    def test_get_all_lonely_merge_killed_edges_from_loops(self) -> None:
+        """Test the `get_all_lonely_merge_killed_edges_from_loops` function."""
+        loop = self.lonely_merge_loop()
+        killed_edges = get_all_lonely_merge_killed_edges_from_loops(
+            self.lonely_merge_graph(), [loop]
+        )
+        assert killed_edges == {("B", "D"), ("B", "E"), ("D", "I")}
