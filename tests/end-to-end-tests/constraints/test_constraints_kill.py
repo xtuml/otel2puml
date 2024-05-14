@@ -31,12 +31,6 @@ def test_kill_with_merge_on_parent() -> None:
     )
 
 
-@pytest.mark.xfail(
-    reason="A kill XOR that has only a single branch that continues will not "
-    "work correctly as the logic block will continue beyond the end of the "
-    "loop",
-    strict=True
-)
 def test_kill_in_loop() -> None:
     """Test kill in loop."""
     end_to_end_test(
