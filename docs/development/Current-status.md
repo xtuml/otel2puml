@@ -10,17 +10,17 @@ The tests are divided into the following categories:
     * [Bunched](#bunched)
     * [Kill Detach](#kill-detach)
 
-Currently the number of end-to-end tests stands at 60, with 54 passing and 6 failing (90.00% coverage).
+Currently the number of end-to-end tests stands at 60, with 55 passing and 5 failing (91.67% coverage).
 
 |                            filepath                            | $$\textcolor{#23d18b}{\tt{passed}}$$ | $$\textcolor{#f5f543}{\tt{xfailed}}$$ | SUBTOTAL |
 | -------------------------------------------------------------- | --------------------------------: | --------------------------------: | -------: |
 | $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/test\\_branch\\_counts.py}}$$ |   $$\textcolor{#23d18b}{\tt{2}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{2}}$$ |
 | $$\textcolor{#f5f543}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/test\\_loops.py}}$$ |  $$\textcolor{#23d18b}{\tt{11}}$$ |   $$\textcolor{#f5f543}{\tt{1}}$$ | $$\textcolor{#f5f543}{\tt{12}}$$ |
 | $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_bunched.py}}$$ |  $$\textcolor{#23d18b}{\tt{20}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{20}}$$ |
-| $$\textcolor{#f5f543}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_kill.py}}$$ |   $$\textcolor{#23d18b}{\tt{2}}$$ |   $$\textcolor{#f5f543}{\tt{2}}$$ | $$\textcolor{#f5f543}{\tt{4}}$$ |
+| $$\textcolor{#f5f543}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_kill.py}}$$ |   $$\textcolor{#23d18b}{\tt{3}}$$ |   $$\textcolor{#f5f543}{\tt{1}}$$ | $$\textcolor{#f5f543}{\tt{4}}$$ |
 | $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_nested.py}}$$ |  $$\textcolor{#23d18b}{\tt{15}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{15}}$$ |
 | $$\textcolor{#f5f543}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_simple.py}}$$ |   $$\textcolor{#23d18b}{\tt{4}}$$ |   $$\textcolor{#f5f543}{\tt{3}}$$ | $$\textcolor{#f5f543}{\tt{7}}$$ |
-| $$\textcolor{#f5f543}{\tt{TOTAL}}$$                            |  $$\textcolor{#23d18b}{\tt{54}}$$ |   $$\textcolor{#f5f543}{\tt{6}}$$ | $$\textcolor{#f5f543}{\tt{60}}$$ |
+| $$\textcolor{#f5f543}{\tt{TOTAL}}$$                            |  $$\textcolor{#23d18b}{\tt{55}}$$ |   $$\textcolor{#f5f543}{\tt{5}}$$ | $$\textcolor{#f5f543}{\tt{60}}$$ |
 
 
 ## Branch counts
@@ -135,19 +135,18 @@ Currently the number of bunched tests stands at 20, with 20 passing and 0 failin
 
 ### Kill Detach
 
-Currently the number of kill tests stands at 4, with 2 passing and 2 failing (50.00% coverage).
+Currently the number of kill tests stands at 4, with 3 passing and 1 failing (75.00% coverage).
 
 xfailed:
 * `tests/end-to-end-tests/constraints/test_constraints_kill.py::test_kill_with_merge_on_parent`
-* `tests/end-to-end-tests/constraints/test_constraints_kill.py::test_kill_in_loop`
 
 |                          filepath                           |            function            | $$\textcolor{#23d18b}{\tt{passed}}$$ | $$\textcolor{#f5f543}{\tt{xfailed}}$$ | SUBTOTAL |
 | ----------------------------------------------------------- | ------------------------------ | --------------------------------: | --------------------------------: | -------: |
 | $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_kill.py}}$$ | $$\textcolor{#23d18b}{\tt{test\\_kill\\_with\\_no\\_merge}}$$ |   $$\textcolor{#23d18b}{\tt{1}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{1}}$$ |
 | $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_kill.py}}$$ | $$\textcolor{#23d18b}{\tt{test\\_kill\\_with\\_merge}}$$ |   $$\textcolor{#23d18b}{\tt{1}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{1}}$$ |
+| $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_kill.py}}$$ | $$\textcolor{#23d18b}{\tt{test\\_kill\\_in\\_loop}}$$ |   $$\textcolor{#23d18b}{\tt{1}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{1}}$$ |
 | $$\textcolor{#f5f543}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_kill.py}}$$ | $$\textcolor{#f5f543}{\tt{test\\_kill\\_with\\_merge\\_on\\_parent}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ |   $$\textcolor{#f5f543}{\tt{1}}$$ | $$\textcolor{#f5f543}{\tt{1}}$$ |
-| $$\textcolor{#f5f543}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_kill.py}}$$ | $$\textcolor{#f5f543}{\tt{test\\_kill\\_in\\_loop}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ |   $$\textcolor{#f5f543}{\tt{1}}$$ | $$\textcolor{#f5f543}{\tt{1}}$$ |
-| $$\textcolor{#f5f543}{\tt{TOTAL}}$$                         |                                |   $$\textcolor{#23d18b}{\tt{2}}$$ |   $$\textcolor{#f5f543}{\tt{2}}$$ | $$\textcolor{#f5f543}{\tt{4}}$$ |
+| $$\textcolor{#f5f543}{\tt{TOTAL}}$$                         |                                |   $$\textcolor{#23d18b}{\tt{3}}$$ |   $$\textcolor{#f5f543}{\tt{1}}$$ | $$\textcolor{#f5f543}{\tt{4}}$$ |
 
 
 
