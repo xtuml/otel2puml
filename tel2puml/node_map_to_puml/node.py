@@ -630,7 +630,7 @@ class LogicBlockHolder:
 
     def rotate_path(
         self, current_node_in_path: Node, current_puml_node_in_path: PUMLNode
-    ) -> tuple[PUMLOperatorNode | PUMLNode, Node]:
+    ) -> tuple[PUMLNode, Node]:
         """Rotates the path by moving the current path to the end of the paths
         list.
 
@@ -956,7 +956,7 @@ def handle_reach_potential_merge_point(
     previous_puml_node: PUMLNode,
     previous_node_class: Node,
     next_node_class: Node,
-) -> tuple[PUMLOperatorNode, Node]:
+) -> tuple[PUMLNode, Node]:
     """Handles reaching a potential merge point in the logic block.
 
     :param puml_graph: The PlantUML graph to update.
