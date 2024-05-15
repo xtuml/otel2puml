@@ -1124,12 +1124,12 @@ def events_to_markov_graph(
 
 def get_event_reference_from_events(
     events: Iterable[Event],
-) -> dict[str, Event]:
+) -> dict[str, str]:
     """This function gets an event reference from a sequence of events.
 
     :param events: A sequence of events.
     :type events: `Iterable`[:class:`Event`]
     :return: The event reference.
-    :rtype: `dict`[`str`, :class:`Event`]
+    :rtype: `dict`[`str`, `str`]
     """
     return {event.event_type: event.event_type for event in events}
