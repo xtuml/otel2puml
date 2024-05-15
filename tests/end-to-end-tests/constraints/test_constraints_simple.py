@@ -1,5 +1,7 @@
 """End to end tests for simple single level constraint cases.
 """
+import pytest
+
 from tel2puml.utils_test import end_to_end_test
 
 
@@ -21,11 +23,31 @@ class TestConstraintAND:
         )
 
     @staticmethod
+    @pytest.mark.xfail(
+        reason="This is a known issue. The test should fail.",
+        strict=True
+    )
+    def test_multiple_same_event_AND_with_extra_branch() -> None:
+        """Test multiple same event AND with extra branch"""
+        end_to_end_test(
+            "end-to-end-pumls/constraints/simple/AND/"
+            "multiple_same_event_AND_with_extra_branch.puml",
+        )
+
+    @staticmethod
     def test_merge_at_correct_event_AND() -> None:
         """Test merge at correct event AND."""
         end_to_end_test(
             "end-to-end-pumls/constraints/simple/AND/"
             "merge_at_correct_event_AND.puml",
+        )
+
+    @staticmethod
+    def test_merge_at_correct_event_AND_with_kill() -> None:
+        """Test merge at correct event AND with kill"""
+        end_to_end_test(
+            "end-to-end-pumls/constraints/simple/AND/"
+            "merge_at_correct_event_AND_with_kill.puml",
         )
 
 
