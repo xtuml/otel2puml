@@ -128,6 +128,19 @@ class EventSet(dict[str, int]):
         """
         return {event: count for event, count in self.items() if count > 1}
 
+    def is_subset(self, other: "EventSet") -> bool:
+        """Method to check if the event set is a subset of another event set.
+
+        :param other: The other event set.
+        :type other: :class:`EventSet`
+        :return: Whether the event set is a subset.
+        :rtype: `bool`
+        """
+        return all(
+            count == other.get(event, -1)
+            for event, count in self.items()
+        )
+
 
 class Event:
     """Class to detect the logic in a sequence of PV events.
@@ -274,6 +287,21 @@ class Event:
         self.event_sets.add(EventSet(events))
 
         self._update_since_logic_gate_tree = True
+
+    def has_event_set_as_subset(self, events: list[str]) -> bool:
+        """Method to check if the event set exists as a subset of any of the
+        eventsets.
+
+        :param events: The events.
+        :type events: `list`[`str`]
+        :return: Whether the event set exists.
+        :rtype: `bool`
+        """
+        event_set_to_check = EventSet(events)
+        return any(
+            event_set_to_check.is_subset(event_set)
+            for event_set in self.event_sets
+        )
 
     def get_reduced_event_set(self) -> set[frozenset[str]]:
         """This method reduces the event set to a list of unique events.

@@ -1,0 +1,21 @@
+@startuml
+partition "merge at correct event AND with kill" {
+    group "merge at correct event AND with kill"
+        #green:A;
+        fork
+            :B;
+            :C;
+        fork again
+            :D;
+            :C;
+        fork again
+            :E;
+            :C;
+        fork again
+            :G;
+            kill
+        end fork
+        #red:F;
+    end group
+}
+@enduml

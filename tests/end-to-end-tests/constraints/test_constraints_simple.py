@@ -15,10 +15,6 @@ class TestConstraintAND:
         )
 
     @staticmethod
-    @pytest.mark.xfail(
-        reason="Multiple AND events does not merge correctly",
-        strict=True
-    )
     def test_multiple_same_event_AND() -> None:
         """Test multiple same event AND."""
         end_to_end_test(
@@ -28,15 +24,30 @@ class TestConstraintAND:
 
     @staticmethod
     @pytest.mark.xfail(
-        reason="AND does not merge at the correct event and will merge too "
-        "early",
+        reason="This is a known issue. The test should fail.",
         strict=True
     )
+    def test_multiple_same_event_AND_with_extra_branch() -> None:
+        """Test multiple same event AND with extra branch"""
+        end_to_end_test(
+            "end-to-end-pumls/constraints/simple/AND/"
+            "multiple_same_event_AND_with_extra_branch.puml",
+        )
+
+    @staticmethod
     def test_merge_at_correct_event_AND() -> None:
         """Test merge at correct event AND."""
         end_to_end_test(
             "end-to-end-pumls/constraints/simple/AND/"
             "merge_at_correct_event_AND.puml",
+        )
+
+    @staticmethod
+    def test_merge_at_correct_event_AND_with_kill() -> None:
+        """Test merge at correct event AND with kill"""
+        end_to_end_test(
+            "end-to-end-pumls/constraints/simple/AND/"
+            "merge_at_correct_event_AND_with_kill.puml",
         )
 
 
@@ -50,11 +61,6 @@ class TestConstraintOR:
         )
 
     @staticmethod
-    @pytest.mark.xfail(
-        reason="Currently OR will not merge at the correct event. Likely not "
-        "possible to implement",
-        strict=True
-    )
     def test_merge_at_correct_event_OR() -> None:
         """Test merge at correct event OR."""
         end_to_end_test(

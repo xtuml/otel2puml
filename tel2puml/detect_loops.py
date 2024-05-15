@@ -10,7 +10,7 @@ from networkx import (
 class Loop:
     """A class to represent a loop in a graph."""
 
-    def __init__(self, nodes: list[str]):
+    def __init__(self, nodes: list[str]) -> None:
         self.nodes = nodes
         self.sub_loops: list[Loop] = []
         self.edges_to_remove: set[tuple[str, str]] = set()

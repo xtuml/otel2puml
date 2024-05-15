@@ -9,12 +9,20 @@ Tests a basic AND constraint
 ### Multiple same events
 Tests multiple of the same event coming from the same source
 
+#### Simple
 ![](/end-to-end-pumls/constraints/simple/AND/multiple_same_event_AND.svg)
+
+#### Extra branch merging in
+![](/end-to-end-pumls/constraints/simple/AND/multiple_same_event_AND_with_extra_branch.svg)
 
 ### Merge at correct event
 Tests that the merge event is the correct event
 
+#### Simple
 ![](/end-to-end-pumls/constraints/simple/AND/merge_at_correct_event_AND.svg)
+
+#### Kill branch included
+![](/end-to-end-pumls/constraints/simple/AND/merge_at_correct_event_AND_with_kill.svg)
 
 ## XOR
 Tests for single XOR constraint cases
