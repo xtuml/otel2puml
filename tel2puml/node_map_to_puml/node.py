@@ -86,12 +86,35 @@ class Node:
         self.branch_enum = ["AND", "OR", "XOR", "LOOP", "BRANCH"]
 
         self.lonely_merge: "Node" | None = None
+        self._event_incoming: Event | None = None
 
     def __repr__(self) -> str:
         return self.uid + ":" + (self.event_type or self.operator or "None")
 
     def __hash__(self) -> int:
         return hash(self.uid)
+
+    @property
+    def event_incoming(self) -> Event:
+        """Gets the event incoming.
+
+        :return: The event incoming.
+        :rtype: :class:`Event`
+        """
+        if self._event_incoming is None:
+            raise ValueError("Event incoming is not set")
+        return self._event_incoming
+
+    @event_incoming.setter
+    def event_incoming(self, value: Event) -> None:
+        """Sets the event incoming.
+
+        :param value: The value to set.
+        :type value: :class:`Event`
+        """
+        if self.event_type is None:
+            raise ValueError("Event type is not set")
+        self._event_incoming = value
 
     def update_node_list_with_nodes(
         self, nodes: list["Node"], direction: Literal["incoming", "outgoing"]
@@ -482,6 +505,25 @@ def create_event_node_ref(
     return event_node_ref
 
 
+def load_all_incoming_events_into_nodes(
+    events: dict[str, Event],
+    nodes: dict[str, list[Node]],
+) -> None:
+    """Loads all incoming events into nodes.
+
+    :param events: The events to load.
+    :type events: `dict`[`str`, :class:`Event`]
+    :param nodes: The nodes to load the events into.
+    :type nodes: `dict`[`str`, `list`[:class:`Node`]]
+    """
+    for event_type, event in events.items():
+        for node in nodes[event_type]:
+            node.event_incoming = event
+            if event.logic_gate_tree is not None:
+                if event.logic_gate_tree.operator == Logic_operator.BRANCH:
+                    node.update_event_types(PUMLEvent.MERGE)
+
+
 def merge_markov_without_loops_and_logic_detection_analysis(
     markov_graph_ref_pair: tuple[DiGraph, dict[str, str]],
     incoming_logic_events: dict[str, Event],
@@ -509,6 +551,9 @@ def merge_markov_without_loops_and_logic_detection_analysis(
     load_all_logic_trees_into_nodes(
         outgoing_logic_events, event_node_map, "outgoing"
     )
+    load_all_incoming_events_into_nodes(
+        incoming_logic_events, event_node_map
+    )
     return node_class_graph, event_node_map
 
 
@@ -534,7 +579,7 @@ class LogicBlockHolder:
         self.end_node = end_node
         self.logic_node = logic_node
         self.paths = logic_node.outgoing_logic.copy()
-        self.merge_nodes = [None] * len(self.paths)
+        self.merge_nodes: list[None | Node] = [None] * len(self.paths)
         self.puml_nodes = [start_node] * len(self.paths)
         self.will_merge = False
         self.merge_counter = 0
@@ -542,6 +587,7 @@ class LogicBlockHolder:
             self.lonely_merge_index = self.paths.index(logic_node.lonely_merge)
         else:
             self.lonely_merge_index = None
+        self.impossible_and_or_merge = False
 
     @property
     def current_path(self) -> Node | None:
@@ -627,9 +673,53 @@ class LogicBlockHolder:
         self.merge_nodes[-1] = potential_merge_node
         # set previous merge nodes to the current merge nodes
         if len(set(self.merge_nodes)) == 1:
-            self.will_merge = True
-            return True
+            # check if for AND or OR logic merges that the merge node is
+            # correct to merge on
+            self.will_merge = self._check_merge_is_correct()
+            return self.will_merge
         return False
+
+    def _check_merge_is_correct(self) -> bool:
+        """Checks if the merge is correct for AND or OR logic nodes. This is
+        performed by checking that if the logic block is an AND/OR block that
+        the merge node contains the event set of all the evnet types of the
+        nodes in the logic block paths at their current state
+        Automatically ok for XOR
+
+        :return: Whether the merge is correct.
+        :rtype: `bool`
+        """
+        potential_merge_node = self.merge_nodes[0]
+        if potential_merge_node is None:
+            raise ValueError(
+                "Potential merge node is None. Function is being used outside "
+                "of its intended purpose."
+            )
+        if self.logic_node.operator not in ["AND", "OR"]:
+            return True
+
+        # check first that the merge node contains the event set of all the
+        # event types of the nodes in the logic block paths (
+        # potential AND merges of same event type)
+        paths_event_types = [node.event_type for node in self.paths]
+        contains_event_set = (
+            potential_merge_node.event_incoming.has_event_set_as_subset(
+                paths_event_types
+            )
+        )
+        if not contains_event_set:
+            # check whether the merge node is a merge count and if so check if
+            # at least the frozen event sets are the same
+            if PUMLEvent.MERGE in potential_merge_node.get_puml_event_types():
+                if (
+                    frozenset(paths_event_types)
+                    in
+                    potential_merge_node.event_incoming.get_reduced_event_set()
+                ):
+                    return True
+            self.impossible_and_or_merge = True
+            return False
+        return True
 
     def create_logic_merge(
         self,
@@ -895,6 +985,20 @@ def handle_reach_potential_merge_point(
         # merge nodes
         if logic_block.merge_counter > len(logic_block.merge_nodes):
             logic_block.merge_counter = 0
+            # handle case of impossible and/or merge
+            if logic_block.impossible_and_or_merge:
+                logic_block.impossible_and_or_merge = False
+                # loop over all paths in the logic block and advance the path
+                for _ in range(len(logic_block.paths)):
+                    new_puml_node, _ = update_puml_graph_with_event_node(
+                        puml_graph, next_node_class, previous_puml_node
+                    )
+                    previous_puml_node, previous_node_class = (
+                        logic_block.rotate_path(
+                            next_node_class, new_puml_node
+                        )
+                    )
+                return previous_puml_node, previous_node_class
 
             nodes_to_remove = set()
             counter = Counter(logic_block.merge_nodes)
