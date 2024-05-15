@@ -75,25 +75,25 @@ tel2puml/pipelines/logic_detection_pipeline.py:107: note:      Superclass:
 tel2puml/pipelines/logic_detection_pipeline.py:107: note:          None
 tel2puml/pipelines/logic_detection_pipeline.py:107: note:      Subclass:
 tel2puml/pipelines/logic_detection_pipeline.py:107: note:          def __hash__(self) -> int
-tel2puml/pipelines/logic_detection_pipeline.py:150: error: Missing type parameters for generic type "ndarray"  [type-arg]
-tel2puml/pipelines/logic_detection_pipeline.py:151: error: Missing type parameters for generic type "ndarray"  [type-arg]
-tel2puml/pipelines/logic_detection_pipeline.py:592: error: Argument 1 to "remove" of "set" has incompatible type "set[Any]"; expected "frozenset[str]"  [arg-type]
-tel2puml/pipelines/logic_detection_pipeline.py:595: error: Argument 1 to "get_weighted_cover" has incompatible type "set[frozenset[str]]"; expected "set[set[Any] | frozenset[Any]]"  [arg-type]
-tel2puml/pipelines/logic_detection_pipeline.py:652: error: Function is missing a return type annotation  [no-untyped-def]
-tel2puml/pipelines/logic_detection_pipeline.py:673: error: Function is missing a return type annotation  [no-untyped-def]
-tel2puml/pipelines/logic_detection_pipeline.py:702: error: Need type annotation for "data_point_edges" (hint: "data_point_edges: Set[<type>] = ...")  [var-annotated]
-tel2puml/pipelines/logic_detection_pipeline.py:795: error: Value of type "ndarray[Any, Any] | None" is not indexable  [index]
-tel2puml/pipelines/logic_detection_pipeline.py:795: error: Unsupported target for indexed assignment ("ndarray[Any, Any] | None")  [index]
-tel2puml/pipelines/logic_detection_pipeline.py:800: error: Missing type parameters for generic type "ndarray"  [type-arg]
-tel2puml/pipelines/logic_detection_pipeline.py:815: error: Missing type parameters for generic type "ndarray"  [type-arg]
-tel2puml/pipelines/logic_detection_pipeline.py:821: error: Returning Any from function declared to return "ndarray[Any, Any]"  [no-any-return]
-tel2puml/pipelines/logic_detection_pipeline.py:822: error: Argument 1 to "diag" has incompatible type "ndarray[Any, Any] | None"; expected "_SupportsArray[dtype[Any]] | _NestedSequence[_SupportsArray[dtype[Any]]]"  [arg-type]
-tel2puml/pipelines/logic_detection_pipeline.py:829: error: Missing type parameters for generic type "dict"  [type-arg]
-tel2puml/pipelines/logic_detection_pipeline.py:841: error: Argument 1 to "update_all_connections_from_clustered_events" has incompatible type "dict_values[str, list[dict[Any, Any]]]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
-tel2puml/pipelines/logic_detection_pipeline.py:936: error: Missing type parameters for generic type "dict"  [type-arg]
-tel2puml/pipelines/logic_detection_pipeline.py:950: error: Missing type parameters for generic type "dict"  [type-arg]
-tel2puml/pipelines/logic_detection_pipeline.py:956: error: Missing type parameters for generic type "dict"  [type-arg]
-tel2puml/pipelines/logic_detection_pipeline.py:1107: error: Value expression in dictionary comprehension has incompatible type "str"; expected type "Event"  [misc]
+tel2puml/pipelines/logic_detection_pipeline.py:163: error: Missing type parameters for generic type "ndarray"  [type-arg]
+tel2puml/pipelines/logic_detection_pipeline.py:164: error: Missing type parameters for generic type "ndarray"  [type-arg]
+tel2puml/pipelines/logic_detection_pipeline.py:620: error: Argument 1 to "remove" of "set" has incompatible type "set[Any]"; expected "frozenset[str]"  [arg-type]
+tel2puml/pipelines/logic_detection_pipeline.py:623: error: Argument 1 to "get_weighted_cover" has incompatible type "set[frozenset[str]]"; expected "set[set[Any] | frozenset[Any]]"  [arg-type]
+tel2puml/pipelines/logic_detection_pipeline.py:680: error: Function is missing a return type annotation  [no-untyped-def]
+tel2puml/pipelines/logic_detection_pipeline.py:701: error: Function is missing a return type annotation  [no-untyped-def]
+tel2puml/pipelines/logic_detection_pipeline.py:730: error: Need type annotation for "data_point_edges" (hint: "data_point_edges: Set[<type>] = ...")  [var-annotated]
+tel2puml/pipelines/logic_detection_pipeline.py:823: error: Value of type "ndarray[Any, Any] | None" is not indexable  [index]
+tel2puml/pipelines/logic_detection_pipeline.py:823: error: Unsupported target for indexed assignment ("ndarray[Any, Any] | None")  [index]
+tel2puml/pipelines/logic_detection_pipeline.py:828: error: Missing type parameters for generic type "ndarray"  [type-arg]
+tel2puml/pipelines/logic_detection_pipeline.py:843: error: Missing type parameters for generic type "ndarray"  [type-arg]
+tel2puml/pipelines/logic_detection_pipeline.py:849: error: Returning Any from function declared to return "ndarray[Any, Any]"  [no-any-return]
+tel2puml/pipelines/logic_detection_pipeline.py:850: error: Argument 1 to "diag" has incompatible type "ndarray[Any, Any] | None"; expected "_SupportsArray[dtype[Any]] | _NestedSequence[_SupportsArray[dtype[Any]]]"  [arg-type]
+tel2puml/pipelines/logic_detection_pipeline.py:857: error: Missing type parameters for generic type "dict"  [type-arg]
+tel2puml/pipelines/logic_detection_pipeline.py:869: error: Argument 1 to "update_all_connections_from_clustered_events" has incompatible type "dict_values[str, list[dict[Any, Any]]]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
+tel2puml/pipelines/logic_detection_pipeline.py:964: error: Missing type parameters for generic type "dict"  [type-arg]
+tel2puml/pipelines/logic_detection_pipeline.py:978: error: Missing type parameters for generic type "dict"  [type-arg]
+tel2puml/pipelines/logic_detection_pipeline.py:984: error: Missing type parameters for generic type "dict"  [type-arg]
+tel2puml/pipelines/logic_detection_pipeline.py:1135: error: Value expression in dictionary comprehension has incompatible type "str"; expected type "Event"  [misc]
 tests/test_check_puml_equiv.py:4: error: Skipping analyzing "networkx": module is installed, but missing library stubs or py.typed marker  [import-untyped]
 tests/test_check_puml_equiv.py:5: error: Skipping analyzing "test_event_generator.io.parse_puml": module is installed, but missing library stubs or py.typed marker  [import-untyped]
 tests/test_check_puml_equiv.py:33: error: Need type annotation for "collected_attributes" (hint: "collected_attributes: Dict[<type>, <type>] = ...")  [var-annotated]
@@ -186,59 +186,54 @@ tel2puml/node_map_to_puml/node.py:9: error: Skipping analyzing "networkx": modul
 tel2puml/node_map_to_puml/node.py:10: error: Skipping analyzing "pm4py": module is installed, but missing library stubs or py.typed marker  [import-untyped]
 tel2puml/node_map_to_puml/node.py:11: error: Skipping analyzing "pm4py.objects.process_tree.obj": module is installed, but missing library stubs or py.typed marker  [import-untyped]
 tel2puml/node_map_to_puml/node.py:11: note: See https://mypy.readthedocs.io/en/stable/running_mypy.html#missing-imports
-tel2puml/node_map_to_puml/node.py:91: error: Unsupported left operand type for + ("None")  [operator]
-tel2puml/node_map_to_puml/node.py:91: note: Left operand is of type "str | None"
-tel2puml/node_map_to_puml/node.py:261: error: Function is missing a return type annotation  [no-untyped-def]
-tel2puml/node_map_to_puml/node.py:263: error: Incompatible default for argument "uid" (default has type "None", argument has type "str")  [assignment]
-tel2puml/node_map_to_puml/node.py:263: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
-tel2puml/node_map_to_puml/node.py:263: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
-tel2puml/node_map_to_puml/node.py:264: error: Missing type parameters for generic type "list"  [type-arg]
-tel2puml/node_map_to_puml/node.py:264: error: Incompatible default for argument "incoming" (default has type "None", argument has type "list[Any]")  [assignment]
-tel2puml/node_map_to_puml/node.py:264: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
-tel2puml/node_map_to_puml/node.py:264: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
-tel2puml/node_map_to_puml/node.py:265: error: Missing type parameters for generic type "list"  [type-arg]
-tel2puml/node_map_to_puml/node.py:265: error: Incompatible default for argument "outgoing" (default has type "None", argument has type "list[Any]")  [assignment]
-tel2puml/node_map_to_puml/node.py:265: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
-tel2puml/node_map_to_puml/node.py:265: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
-tel2puml/node_map_to_puml/node.py:266: error: Missing type parameters for generic type "list"  [type-arg]
-tel2puml/node_map_to_puml/node.py:266: error: Incompatible default for argument "incoming_logic" (default has type "None", argument has type "list[Any]")  [assignment]
-tel2puml/node_map_to_puml/node.py:266: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
-tel2puml/node_map_to_puml/node.py:266: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
-tel2puml/node_map_to_puml/node.py:267: error: Missing type parameters for generic type "list"  [type-arg]
-tel2puml/node_map_to_puml/node.py:267: error: Incompatible default for argument "outgoing_logic" (default has type "None", argument has type "list[Any]")  [assignment]
-tel2puml/node_map_to_puml/node.py:267: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
-tel2puml/node_map_to_puml/node.py:267: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
-tel2puml/node_map_to_puml/node.py:339: error: Incompatible return value type (got "tuple[PUMLEvent, ...]", expected "tuple[PUMLEvent]")  [return-value]
-tel2puml/node_map_to_puml/node.py:340: error: Incompatible return value type (got "tuple[Never, ...]", expected "tuple[PUMLEvent]")  [return-value]
-tel2puml/node_map_to_puml/node.py:473: error: Need type annotation for "event_node_ref" (hint: "event_node_ref: Dict[<type>, <type>] = ...")  [var-annotated]
-tel2puml/node_map_to_puml/node.py:544: error: Incompatible types in assignment (expression has type "None", variable has type "int")  [assignment]
-tel2puml/node_map_to_puml/node.py:569: error: No overload variant of "__setitem__" of "list" matches argument types "int", "PUMLNode"  [call-overload]
-tel2puml/node_map_to_puml/node.py:569: note: Possible overload variants:
-tel2puml/node_map_to_puml/node.py:569: note:     def __setitem__(self, SupportsIndex, PUMLOperatorNode, /) -> None
-tel2puml/node_map_to_puml/node.py:569: note:     def __setitem__(self, slice, Iterable[PUMLOperatorNode], /) -> None
-tel2puml/node_map_to_puml/node.py:596: error: Incompatible types in assignment (expression has type "list[PUMLOperatorNode | PUMLNode]", variable has type "list[PUMLOperatorNode]")  [assignment]
-tel2puml/node_map_to_puml/node.py:604: error: Incompatible return value type (got "tuple[PUMLNode, Node | None]", expected "tuple[PUMLOperatorNode | PUMLNode, Node]")  [return-value]
-tel2puml/node_map_to_puml/node.py:627: error: No overload variant of "__setitem__" of "list" matches argument types "int", "Node"  [call-overload]
-tel2puml/node_map_to_puml/node.py:627: note: Possible overload variants:
-tel2puml/node_map_to_puml/node.py:627: note:     def __setitem__(self, SupportsIndex, None, /) -> None
-tel2puml/node_map_to_puml/node.py:627: note:     def __setitem__(self, slice, Iterable[None], /) -> None
-tel2puml/node_map_to_puml/node.py:727: error: Argument 1 to "create_event_node" of "PUMLGraph" has incompatible type "str | None"; expected "str"  [arg-type]
-tel2puml/node_map_to_puml/node.py:759: error: Incompatible types in assignment (expression has type "PUMLKillNode", variable has type "PUMLEventNode")  [assignment]
-tel2puml/node_map_to_puml/node.py:762: error: Incompatible types in assignment (expression has type "PUMLOperatorNode | PUMLEventNode", variable has type "PUMLEventNode")  [assignment]
-tel2puml/node_map_to_puml/node.py:777: error: Incompatible types in assignment (expression has type "PUMLOperatorNode", variable has type "PUMLEventNode")  [assignment]
-tel2puml/node_map_to_puml/node.py:791: error: Argument 2 to "update_puml_graph_with_event_node" has incompatible type "Node | None"; expected "Node"  [arg-type]
-tel2puml/node_map_to_puml/node.py:802: error: Incompatible types in assignment (expression has type "PUMLOperatorNode", variable has type "PUMLEventNode")  [assignment]
-tel2puml/node_map_to_puml/node.py:813: error: Incompatible types in assignment (expression has type "PUMLOperatorNode", variable has type "PUMLEventNode")  [assignment]
-tel2puml/node_map_to_puml/node.py:848: error: Argument 1 to "create_operator_node_pair" of "PUMLGraph" has incompatible type "PUMLOperator | None"; expected "PUMLOperator"  [arg-type]
-tel2puml/node_map_to_puml/node.py:858: error: Incompatible return value type (got "tuple[PUMLOperatorNode | PUMLEventNode, Node]", expected "tuple[PUMLOperatorNode, Node]")  [return-value]
-tel2puml/node_map_to_puml/node.py:907: error: Argument 2 to "create_logic_merge" of "LogicBlockHolder" has incompatible type "None"; expected "Node"  [arg-type]
-tel2puml/node_map_to_puml/node.py:915: error: Incompatible return value type (got "tuple[PUMLOperatorNode | PUMLEventNode, Node]", expected "tuple[PUMLOperatorNode, Node]")  [return-value]
-tel2puml/node_map_to_puml/node.py:922: error: Argument 3 to "handle_rotate_path" has incompatible type "PUMLNode"; expected "PUMLOperatorNode"  [arg-type]
-tel2puml/node_map_to_puml/node.py:924: error: Incompatible return value type (got "tuple[PUMLOperatorNode | PUMLEventNode, Node]", expected "tuple[PUMLOperatorNode, Node]")  [return-value]
-tel2puml/node_map_to_puml/node.py:949: error: Incompatible types in assignment (expression has type "PUMLOperatorNode | PUMLNode", variable has type "PUMLOperatorNode")  [assignment]
-tel2puml/node_map_to_puml/node.py:956: error: Incompatible types in assignment (expression has type "PUMLOperatorNode | PUMLEventNode", variable has type "PUMLOperatorNode")  [assignment]
-tel2puml/node_map_to_puml/node.py:1016: error: Incompatible return value type (got "tuple[PUMLNode, Node]", expected "tuple[PUMLOperatorNode | PUMLEventNode, Node]")  [return-value]
-tel2puml/node_map_to_puml/node.py:1056: error: Incompatible types in assignment (expression has type "PUMLEventNode", variable has type "PUMLOperatorNode")  [assignment]
+tel2puml/node_map_to_puml/node.py:92: error: Unsupported left operand type for + ("None")  [operator]
+tel2puml/node_map_to_puml/node.py:92: note: Left operand is of type "str | None"
+tel2puml/node_map_to_puml/node.py:284: error: Function is missing a return type annotation  [no-untyped-def]
+tel2puml/node_map_to_puml/node.py:286: error: Incompatible default for argument "uid" (default has type "None", argument has type "str")  [assignment]
+tel2puml/node_map_to_puml/node.py:286: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+tel2puml/node_map_to_puml/node.py:286: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+tel2puml/node_map_to_puml/node.py:287: error: Missing type parameters for generic type "list"  [type-arg]
+tel2puml/node_map_to_puml/node.py:287: error: Incompatible default for argument "incoming" (default has type "None", argument has type "list[Any]")  [assignment]
+tel2puml/node_map_to_puml/node.py:287: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+tel2puml/node_map_to_puml/node.py:287: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+tel2puml/node_map_to_puml/node.py:288: error: Missing type parameters for generic type "list"  [type-arg]
+tel2puml/node_map_to_puml/node.py:288: error: Incompatible default for argument "outgoing" (default has type "None", argument has type "list[Any]")  [assignment]
+tel2puml/node_map_to_puml/node.py:288: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+tel2puml/node_map_to_puml/node.py:288: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+tel2puml/node_map_to_puml/node.py:289: error: Missing type parameters for generic type "list"  [type-arg]
+tel2puml/node_map_to_puml/node.py:289: error: Incompatible default for argument "incoming_logic" (default has type "None", argument has type "list[Any]")  [assignment]
+tel2puml/node_map_to_puml/node.py:289: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+tel2puml/node_map_to_puml/node.py:289: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+tel2puml/node_map_to_puml/node.py:290: error: Missing type parameters for generic type "list"  [type-arg]
+tel2puml/node_map_to_puml/node.py:290: error: Incompatible default for argument "outgoing_logic" (default has type "None", argument has type "list[Any]")  [assignment]
+tel2puml/node_map_to_puml/node.py:290: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+tel2puml/node_map_to_puml/node.py:290: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+tel2puml/node_map_to_puml/node.py:362: error: Incompatible return value type (got "tuple[PUMLEvent, ...]", expected "tuple[PUMLEvent]")  [return-value]
+tel2puml/node_map_to_puml/node.py:363: error: Incompatible return value type (got "tuple[Never, ...]", expected "tuple[PUMLEvent]")  [return-value]
+tel2puml/node_map_to_puml/node.py:496: error: Need type annotation for "event_node_ref" (hint: "event_node_ref: Dict[<type>, <type>] = ...")  [var-annotated]
+tel2puml/node_map_to_puml/node.py:589: error: Incompatible types in assignment (expression has type "None", variable has type "int")  [assignment]
+tel2puml/node_map_to_puml/node.py:615: error: No overload variant of "__setitem__" of "list" matches argument types "int", "PUMLNode"  [call-overload]
+tel2puml/node_map_to_puml/node.py:615: note: Possible overload variants:
+tel2puml/node_map_to_puml/node.py:615: note:     def __setitem__(self, SupportsIndex, PUMLOperatorNode, /) -> None
+tel2puml/node_map_to_puml/node.py:615: note:     def __setitem__(self, slice, Iterable[PUMLOperatorNode], /) -> None
+tel2puml/node_map_to_puml/node.py:642: error: Incompatible types in assignment (expression has type "list[PUMLOperatorNode | PUMLNode]", variable has type "list[PUMLOperatorNode]")  [assignment]
+tel2puml/node_map_to_puml/node.py:650: error: Incompatible return value type (got "tuple[PUMLNode, Node | None]", expected "tuple[PUMLNode, Node]")  [return-value]
+tel2puml/node_map_to_puml/node.py:707: error: Argument 1 to "has_event_set_as_subset" of "Event" has incompatible type "list[str | None]"; expected "list[str]"  [arg-type]
+tel2puml/node_map_to_puml/node.py:817: error: Argument 1 to "create_event_node" of "PUMLGraph" has incompatible type "str | None"; expected "str"  [arg-type]
+tel2puml/node_map_to_puml/node.py:849: error: Incompatible types in assignment (expression has type "PUMLKillNode", variable has type "PUMLEventNode")  [assignment]
+tel2puml/node_map_to_puml/node.py:852: error: Incompatible types in assignment (expression has type "PUMLOperatorNode | PUMLEventNode", variable has type "PUMLEventNode")  [assignment]
+tel2puml/node_map_to_puml/node.py:867: error: Incompatible types in assignment (expression has type "PUMLNode", variable has type "PUMLEventNode")  [assignment]
+tel2puml/node_map_to_puml/node.py:881: error: Argument 2 to "update_puml_graph_with_event_node" has incompatible type "Node | None"; expected "Node"  [arg-type]
+tel2puml/node_map_to_puml/node.py:892: error: Incompatible types in assignment (expression has type "PUMLNode", variable has type "PUMLEventNode")  [assignment]
+tel2puml/node_map_to_puml/node.py:903: error: Incompatible types in assignment (expression has type "PUMLOperatorNode", variable has type "PUMLEventNode")  [assignment]
+tel2puml/node_map_to_puml/node.py:938: error: Argument 1 to "create_operator_node_pair" of "PUMLGraph" has incompatible type "PUMLOperator | None"; expected "PUMLOperator"  [arg-type]
+tel2puml/node_map_to_puml/node.py:948: error: Incompatible return value type (got "tuple[PUMLOperatorNode | PUMLEventNode, Node]", expected "tuple[PUMLOperatorNode, Node]")  [return-value]
+tel2puml/node_map_to_puml/node.py:1011: error: Argument 2 to "create_logic_merge" of "LogicBlockHolder" has incompatible type "Node | None"; expected "Node"  [arg-type]
+tel2puml/node_map_to_puml/node.py:1026: error: Argument 3 to "handle_rotate_path" has incompatible type "PUMLNode"; expected "PUMLOperatorNode"  [arg-type]
+tel2puml/node_map_to_puml/node.py:1053: error: Incompatible types in assignment (expression has type "PUMLNode", variable has type "PUMLOperatorNode")  [assignment]
+tel2puml/node_map_to_puml/node.py:1060: error: Incompatible types in assignment (expression has type "PUMLOperatorNode | PUMLEventNode", variable has type "PUMLOperatorNode")  [assignment]
+tel2puml/node_map_to_puml/node.py:1120: error: Incompatible return value type (got "tuple[PUMLNode, Node]", expected "tuple[PUMLOperatorNode | PUMLEventNode, Node]")  [return-value]
+tel2puml/node_map_to_puml/node.py:1160: error: Incompatible types in assignment (expression has type "PUMLEventNode", variable has type "PUMLOperatorNode")  [assignment]
 tests/puml_graph/test_graph_loop_extract.py:58: error: Argument 1 to "remove" of "list" has incompatible type "Hashable"; expected "str"  [arg-type]
 tests/puml_graph/test_graph_loop_extract.py:64: error: Argument 1 to "remove" of "list" has incompatible type "Hashable"; expected "str"  [arg-type]
 tests/puml_graph/test_graph_loop_extract.py:75: error: Argument 1 to "remove" of "list" has incompatible type "Hashable"; expected "str"  [arg-type]
@@ -501,4 +496,4 @@ tests/test_pv_to_puml.py:26: error: Argument 1 to "pv_to_puml_string" has incomp
 tests/test_pv_to_puml.py:37: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tests/test_pv_to_puml.py:47: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tel2puml/utils_test.py:39: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
-Found 470 errors in 31 files (checked 46 source files)
+Found 468 errors in 31 files (checked 46 source files)
