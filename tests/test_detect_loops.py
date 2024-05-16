@@ -4,10 +4,11 @@ import pytest
 
 from networkx import DiGraph
 
-from tel2puml.pipelines.logic_detection_pipeline import (
+from tel2puml.pipelines.data_ingestion import (
     update_all_connections_from_clustered_events,
-    events_to_markov_graph,
-    get_event_reference_from_events,
+)
+from tel2puml.events import (
+    events_to_markov_graph, get_event_reference_from_events
 )
 from tel2puml.detect_loops import (
     Loop,
