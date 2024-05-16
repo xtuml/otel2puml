@@ -1,7 +1,7 @@
 """Module to detect the logic in a sequence of PV events.
 """
 
-from itertools import product, permutations
+from itertools import permutations
 from uuid import uuid4
 from datetime import datetime, timedelta
 from typing import Any, Generator, Iterable
@@ -9,7 +9,6 @@ from copy import deepcopy
 from enum import Enum
 
 from numpy import ndarray
-import numpy as np
 import pandas as pd
 from pm4py import (  # type: ignore[import-untyped]
     discover_process_tree_inductive,
@@ -710,147 +709,6 @@ class Event:
             ]
 
         return node
-
-    # -----------------Conditional methods-----------------
-    """
-    NOTE: The following methods are for the conditional probability matrix and
-    are not used currently and may be removed but are kept for now for
-    potential future use.
-    """
-
-    def update_with_data_point(
-        self,
-        edge_tuples: list[tuple[str, str]],
-    ) -> None:
-        """Method to update the event with a data point.
-
-        :param edge_tuples: The edge tuples.
-        :type edge_tuples: `list`[`tuple`[`str`, `str`]]
-        """
-        data_point_edges = set()
-        for edge_tuple in edge_tuples:
-            self.update_with_edge_tuple_and_data_point_edges(
-                edge_tuple, data_point_edges
-            )
-        self.update_conditional_count_matrix(data_point_edges)
-        self._update_since_conditional_probability_matrix = True
-
-    def update_with_edge_tuple_and_data_point_edges(
-        self,
-        edge_tuple: tuple[str, str],
-        data_point_edges: set[tuple[str, str]],
-    ) -> None:
-        """Method to update the event with an edge tuple and data point edges.
-        This method adds a new edge to the edge counts per data point
-        dictionary and a new edge to the conditional count matrix if it does
-        not exist and then updates the edge counts with the edge tuple and
-        data point edges and adds a new edge to the conditional count matrix.
-
-        :param edge_tuple: The edge tuple.
-        :type edge_tuple: `tuple`[`str`, `str`]
-        :param data_point_edges: The data point edges.
-        :type data_point_edges: `set`[`tuple`[`str`, `str`]]
-        """
-        if edge_tuple not in self.edge_counts_per_data_point:
-            self.add_new_edge_to_edge_counts_per_data_point(edge_tuple)
-            self.add_new_edge_to_conditional_count_matrix()
-        self.update_edge_counts_with_edge_tuple(edge_tuple, data_point_edges)
-
-    def add_new_edge_to_edge_counts_per_data_point(
-        self,
-        edge_tuple: tuple[str, str],
-    ) -> None:
-        """Method to add a new edge to the edge counts per data point
-        dictionary.
-
-        :param edge_tuple: The edge tuple.
-        :type edge_tuple: `tuple`[`str`, `str`]
-        """
-        self.edge_counts_per_data_point[edge_tuple] = {
-            "data_count": 0,
-            "total_count": 0,
-            "index": len(self.edge_counts_per_data_point),
-        }
-
-    def add_new_edge_to_conditional_count_matrix(self) -> None:
-        """Method to add a new edge to the conditional count matrix. This
-        method pads the conditional count matrix with a new row and column of
-        zeros. If the conditional count matrix is None, it creates a new
-        conditional count matrix with a single zero.
-        """
-        if self.conditional_count_matrix is None:
-            self.conditional_count_matrix = np.array([[0]])
-            return
-        self.conditional_count_matrix = np.pad(
-            self.conditional_count_matrix,
-            ((0, 1), (0, 1)),
-            mode="constant",
-            constant_values=0,
-        )
-
-    def update_edge_counts_with_edge_tuple(
-        self,
-        edge_tuple: tuple[str, str],
-        data_point_edges: set[tuple[str, str]],
-    ) -> None:
-        """Method to update the edge counts with an edge tuple and data point
-        edges.
-
-        :param edge_tuple: The edge tuple.
-        :type edge_tuple: `tuple`[`str`, `str`]
-        :param data_point_edges: The data point edges.
-        :type data_point_edges: `set`[`tuple`[`str`, `str`]]
-        """
-        if edge_tuple not in data_point_edges:
-            self.edge_counts_per_data_point[edge_tuple]["data_count"] += 1
-            data_point_edges.add(edge_tuple)
-        self.edge_counts_per_data_point[edge_tuple]["total_count"] += 1
-
-    def update_conditional_count_matrix(
-        self,
-        data_point_edges: set[tuple[str, str]],
-    ) -> None:
-        """Method to update the conditional count matrix with a set of data
-        point edges.
-
-        :param data_point_edges: The data point edges.
-        :type data_point_edges: `set`[`tuple`[`str`, `str`]]
-        """
-        indexes = [
-            self.edge_counts_per_data_point[edge_tuple]["index"]
-            for edge_tuple in data_point_edges
-        ]
-        self.conditional_count_matrix[
-            tuple(zip(*product(indexes, repeat=2)))
-        ] += 1
-
-    @property
-    def conditional_probability_matrix(self) -> ndarray | None:
-        """This property gets the conditional probability matrix. If the
-        conditional probability matrix has not been calculated, it calculates
-        it.
-
-        :return: The conditional probability matrix.
-        :rtype: `ndarray` | `None`
-        """
-        if self._update_since_conditional_probability_matrix:
-            self._condtional_probability_matrix = (
-                self._calculate_conditional_probability_matrix()
-            )
-            self._update_since_conditional_probability_matrix = False
-        return self._condtional_probability_matrix
-
-    def _calculate_conditional_probability_matrix(self) -> ndarray:
-        """This method calculates the conditional probability matrix.
-
-        :return: The conditional probability matrix.
-        :rtype: `ndarray`
-        """
-        return self.conditional_count_matrix / np.diag(
-            self.conditional_count_matrix
-        )
-
-    # -----------------End of conditional methods-----------------
 
 
 def update_all_connections_from_data(
