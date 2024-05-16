@@ -4,6 +4,11 @@ import pytest
 
 from networkx import DiGraph
 
+from tel2puml.pipelines.logic_detection_pipeline import (
+    update_all_connections_from_clustered_events,
+    events_to_markov_graph,
+    get_event_reference_from_events,
+)
 from tel2puml.detect_loops import (
     Loop,
     detect_loops,
@@ -20,7 +25,6 @@ from tel2puml.detect_loops import (
     get_all_lonely_merge_killed_edges_from_loop,
     get_all_lonely_merge_killed_edges_from_loops
 )
-from tel2puml.jAlergiaPipeline import audit_event_sequences_to_network_x
 from tel2puml.pipelines.data_creation import (
     generate_test_data_event_sequences_from_puml,
 )
@@ -211,25 +215,25 @@ class TestLoop():
 
 def _get_referenced_iterable(
     iterable: Iterable[Any],
-    references: dict[str, dict[str, str]]
+    references: dict[str, str]
 ) -> Iterable[Any]:
     """Return referenced iterator.
 
     :param iterable: The iterable to get the references for.
     :type iterable: `Iterable`
     :param references: The references to use.
-    :type references: `dict`[`str`, `dict`[`str`, `str`]]
+    :type references: `dict`[`str`, `str`]
     :return: The referenced iterable.
     :rtype: `Iterable`
     """
     if isinstance(iterable, list):
-        return [references["node_reference"][item][0] for item in iterable]
+        return [references[item] for item in iterable]
     elif isinstance(iterable, tuple):
         return tuple(
-            references["node_reference"][item][0] for item in iterable
+            references[item] for item in iterable
             )
     elif isinstance(iterable, set):
-        return {references["node_reference"][item][0] for item in iterable}
+        return {references[item] for item in iterable}
     else:
         raise TypeError("Unsupported type")
 
@@ -483,7 +487,11 @@ def test_detect_loops_from_simple_puml() -> None:
     event_sequences = generate_test_data_event_sequences_from_puml(
         "puml_files/loop_loop_a.puml"
     )
-    graph, references = audit_event_sequences_to_network_x(event_sequences)
+    forward, _ = update_all_connections_from_clustered_events(
+        event_sequences
+    )
+    graph = events_to_markov_graph(forward.values())
+    references = get_event_reference_from_events(forward.values())
     loops = detect_loops(graph)
     loop, = loops
     loop.merge_processed = False
@@ -509,7 +517,11 @@ def test_detect_loops_from_XOR_puml() -> None:
     event_sequences = generate_test_data_event_sequences_from_puml(
         "puml_files/loop_XORFork_a.puml"
     )
-    graph, references = audit_event_sequences_to_network_x(event_sequences)
+    forward, _ = update_all_connections_from_clustered_events(
+        event_sequences
+    )
+    graph = events_to_markov_graph(forward.values())
+    references = get_event_reference_from_events(forward.values())
     loops = detect_loops(graph)
     loop, = loops
     assert set(loop.nodes) == _get_referenced_iterable(
@@ -528,7 +540,11 @@ def test_detect_loops_from_AND_puml() -> None:
     event_sequences = generate_test_data_event_sequences_from_puml(
         "puml_files/loop_ANDFork_a.puml"
     )
-    graph, references = audit_event_sequences_to_network_x(event_sequences)
+    forward, _ = update_all_connections_from_clustered_events(
+        event_sequences
+    )
+    graph = events_to_markov_graph(forward.values())
+    references = get_event_reference_from_events(forward.values())
     loops = detect_loops(graph)
     loop, = loops
     assert set(loop.nodes) == _get_referenced_iterable(
@@ -548,7 +564,11 @@ def test_detect_loops_from_simple_break_puml() -> None:
     event_sequences = generate_test_data_event_sequences_from_puml(
         "puml_files/simple_loop_with_break.puml"
     )
-    graph, references = audit_event_sequences_to_network_x(event_sequences)
+    forward, _ = update_all_connections_from_clustered_events(
+        event_sequences
+    )
+    graph = events_to_markov_graph(forward.values())
+    references = get_event_reference_from_events(forward.values())
     loops = detect_loops(graph)
     loop, = loops
     assert set(loop.nodes) == _get_referenced_iterable(
@@ -571,7 +591,11 @@ def test_detect_loops_from_complex_break_puml() -> None:
     event_sequences = generate_test_data_event_sequences_from_puml(
         "puml_files/complex_loop_with_break.puml"
     )
-    graph, references = audit_event_sequences_to_network_x(event_sequences)
+    forward, _ = update_all_connections_from_clustered_events(
+        event_sequences
+    )
+    graph = events_to_markov_graph(forward.values())
+    references = get_event_reference_from_events(forward.values())
     loops = detect_loops(graph)
     loop, = loops
     assert set(loop.nodes) == _get_referenced_iterable(
@@ -618,7 +642,11 @@ def test_detect_loops_from_2_break_puml() -> None:
     event_sequences = generate_test_data_event_sequences_from_puml(
         "puml_files/loop_with_2_breaks.puml"
     )
-    graph, references = audit_event_sequences_to_network_x(event_sequences)
+    forward, _ = update_all_connections_from_clustered_events(
+        event_sequences
+    )
+    graph = events_to_markov_graph(forward.values())
+    references = get_event_reference_from_events(forward.values())
     loops = detect_loops(graph)
     loop, = loops
     assert set(loop.nodes) == _get_referenced_iterable(
@@ -646,7 +674,14 @@ def test_detect_loops_from_break_loop_in_break_loop_puml() -> None:
     event_sequences = generate_test_data_event_sequences_from_puml(
         "puml_files/break_loop_in_break_loop.puml"
     )
-    graph, references = audit_event_sequences_to_network_x(event_sequences)
+    event_sequences = generate_test_data_event_sequences_from_puml(
+        "puml_files/loop_XORFork_a.puml"
+    )
+    forward, _ = update_all_connections_from_clustered_events(
+        event_sequences
+    )
+    graph = events_to_markov_graph(forward.values())
+    references = get_event_reference_from_events(forward.values())
     loops = detect_loops(graph)
     loop, = loops
     assert set(loop.nodes) == _get_referenced_iterable(
@@ -681,7 +716,11 @@ def test_detect_loops_from_loop_break_split_exit_puml() -> None:
     event_sequences = generate_test_data_event_sequences_from_puml(
         "puml_files/loop_break_split_exit.puml"
     )
-    graph, references = audit_event_sequences_to_network_x(event_sequences)
+    forward, _ = update_all_connections_from_clustered_events(
+        event_sequences
+    )
+    graph = events_to_markov_graph(forward.values())
+    references = get_event_reference_from_events(forward.values())
     loops = detect_loops(graph)
     loop, = loops
     assert set(loop.nodes) == _get_referenced_iterable(

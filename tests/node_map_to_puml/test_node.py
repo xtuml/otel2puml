@@ -19,11 +19,12 @@ from tel2puml.node_map_to_puml.node import (
 from tel2puml.pipelines.logic_detection_pipeline import (
     Event,
     update_all_connections_from_clustered_events,
+    events_to_markov_graph,
+    get_event_reference_from_events
 )
 from tel2puml.pipelines.data_creation import (
     generate_test_data_event_sequences_from_puml,
 )
-from tel2puml.jAlergiaPipeline import audit_event_sequences_to_network_x
 from tel2puml.check_puml_equiv import (
     check_puml_graph_equivalence_to_expected_graphs,
     gen_puml_graphs_from_files
@@ -511,12 +512,14 @@ def test_create_networkx_graph_of_nodes_from_markov_graph() -> None:
     test_data = generate_test_data_event_sequences_from_puml(
         "puml_files/simple_test.puml"
     )
-    markov_graph, event_node_reference = audit_event_sequences_to_network_x(
+    forward, _ = update_all_connections_from_clustered_events(
         test_data
     )
+    markov_graph = events_to_markov_graph(forward.values())
+    event_reference = get_event_reference_from_events(forward.values())
     # function call
     node_class_graph, _ = create_networkx_graph_of_nodes_from_markov_graph(
-        markov_graph, event_node_reference["event_reference"]
+        markov_graph, event_reference
     )
     # test
     # check the graphs are mirrors of one another
@@ -525,7 +528,7 @@ def test_create_networkx_graph_of_nodes_from_markov_graph() -> None:
         assert node.uid in markov_graph.nodes
         assert (
             node.event_type
-            == event_node_reference["event_reference"][node.uid]
+            == event_reference[node.uid]
         )
     for edge in node_class_graph.edges:
         assert (edge[0].uid, edge[1].uid) in markov_graph.edges
@@ -539,22 +542,18 @@ def test_merge_markov_without_loops_and_logic_detection_analysis() -> None:
     analysis and return a graph with the expected connections and logic.
     """
     # setup
-    test_data_markov = generate_test_data_event_sequences_from_puml(
-        "puml_files/simple_test.puml"
-    )
-    markov_graph, node_event_reference = audit_event_sequences_to_network_x(
-        test_data_markov
-    )
     test_data_logic = generate_test_data_event_sequences_from_puml(
         "puml_files/simple_test.puml"
     )
     forward, backward = update_all_connections_from_clustered_events(
         test_data_logic
     )
+    markov_graph = events_to_markov_graph(forward.values())
+    event_reference = get_event_reference_from_events(forward.values())
     # function call
     node_class_graph, _ = (
         merge_markov_without_loops_and_logic_detection_analysis(
-            (markov_graph, node_event_reference["event_reference"]),
+            (markov_graph, event_reference),
             backward,
             forward,
         )
@@ -645,16 +644,6 @@ class TestCreatePumlGraphFromNodeClassGraph:
         :return: The puml graph.
         :rtype: :class:`PUMLGraph`"""
         # setup
-        test_data_markov = generate_test_data_event_sequences_from_puml(
-            puml_file,
-            remove_dummy_start_event=remove_dummy_start_from_test_data
-        )
-        markov_graph, node_event_reference = (
-            audit_event_sequences_to_network_x(
-                test_data_markov,
-                add_dummy_start=add_dummy_start
-            )
-        )
         test_data_logic = generate_test_data_event_sequences_from_puml(
             puml_file,
             remove_dummy_start_event=remove_dummy_start_from_test_data
@@ -663,9 +652,11 @@ class TestCreatePumlGraphFromNodeClassGraph:
             test_data_logic,
             add_dummy_start=add_dummy_start
         )
+        markov_graph = events_to_markov_graph(forward.values())
+        event_reference = get_event_reference_from_events(forward.values())
         node_class_graph, _ = (
             merge_markov_without_loops_and_logic_detection_analysis(
-                (markov_graph, node_event_reference["event_reference"]),
+                (markov_graph, event_reference),
                 backward,
                 forward,
             )
@@ -793,21 +784,17 @@ def test_check_is_merge_node_for_logic_block() -> None:
     """Test the check_is_merge_node_for_current_path function."""
     # setup
     # get the node class graph for the given puml
-    test_data_markov = generate_test_data_event_sequences_from_puml(
-        "puml_files/complicated_merge_with_same_event.puml"
-    )
-    markov_graph, node_event_reference = (
-        audit_event_sequences_to_network_x(test_data_markov)
-    )
     test_data_logic = generate_test_data_event_sequences_from_puml(
         "puml_files/complicated_merge_with_same_event.puml"
     )
     forward, backward = update_all_connections_from_clustered_events(
         test_data_logic
     )
+    markov_graph = events_to_markov_graph(forward.values())
+    event_reference = get_event_reference_from_events(forward.values())
     node_class_graph, _ = (
         merge_markov_without_loops_and_logic_detection_analysis(
-            (markov_graph, node_event_reference["event_reference"]),
+            (markov_graph, event_reference),
             backward,
             forward,
         )
