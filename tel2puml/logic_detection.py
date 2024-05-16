@@ -75,6 +75,8 @@ def get_non_operator_successor_labels(
 def calculate_logic_gates(event: "ev.Event") -> ProcessTree:
     """This method calculates the logic gates from the event sets.
 
+    :param event: The event.
+    :type event: :class:`tel2puml.events.Event`
     :return: The logic gate tree.
     :rtype: :class:`pm4py.objects.process_tree.obj.ProcessTree`
     """
@@ -100,6 +102,8 @@ def create_augmented_data_from_event_sets(
     """Method to create augmented data from the event sets and yields
     the data.
 
+    :param event: The event.
+    :type event: :class:`tel2puml.events.Event`
     :return: The augmented data.
     :rtype: `Generator`[`dict`[`str`, `Any`], `Any`, `None`]"""
     for reduced_event_set in event.get_reduced_event_set():
@@ -116,6 +120,8 @@ def create_augmented_data_from_reduced_event_set(
     """Method to create augmented data from a single event set then
     yielding the augmented data.
 
+    :param event: The event.
+    :type event: :class:`tel2puml.events.Event`
     :param reduced_event_set: The reduced event set.
     :type reduced_event_set: `frozenset`[`str`]
     :return: The augmented data.
@@ -162,6 +168,8 @@ def calculate_process_tree_from_event_sets(
 ) -> ProcessTree:
     """This method calculates the pm4py process tree from the event sets.
 
+    :param event: The event.
+    :type event: :class:`tel2puml.events.Event`
     :return: The process tree.
     :rtype: :class:`pm4py.objects.process_tree.obj.ProcessTree`
     """
@@ -188,6 +196,8 @@ def reduce_process_tree_to_preferred_logic_gates(
     removing the first event and getting the subsequent tree and then
     calculating the OR gates and adding missing AND gates.
 
+    :param event: The event.
+    :type event: :class:`tel2puml.events.Event`
     :param process_tree: The process tree.
     :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
     :return: The logic gate tree.
@@ -208,6 +218,11 @@ def process_or_gates(
 ) -> None:
     """Method to process the OR gates in a process tree by extending
     the OR gates and filtering the defunct OR gates.
+
+    :param event: The event.
+    :type event: :class:`tel2puml.events.Event`
+    :param process_tree: The process tree.
+    :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
     """
     get_extended_or_gates_from_process_tree(event, process_tree)
     filter_defunct_or_gates(process_tree)
@@ -220,6 +235,8 @@ def get_extended_or_gates_from_process_tree(
     """Static method to get the extended OR gates from a process tree by
     inferring the OR gates from a node.
 
+    :param event: The event.
+    :type event: :class:`tel2puml.events.Event`
     :param process_tree: The process tree.
     :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
     """
@@ -236,6 +253,8 @@ def check_is_or_operator(
     """Method to check if the operator is an OR operator from the non-tau
     children and removed tau children.
 
+    :param event: The event.
+    :type event: :class:`tel2puml.events.Event`
     :param non_tau_children: The non-tau children.
     :type non_tau_children:
     `list`[:class:`pm4py.objects.process_tree.obj.ProcessTree`]
@@ -276,8 +295,10 @@ def infer_or_gate_from_node(
     event: "ev.Event",
     node: ProcessTree,
 ) -> None:
-    """Static method to infer the OR gates from a node.
+    """Method to infer the OR gates from a node.
 
+    :param event: The event.
+    :type event: :class:`tel2puml.events.Event`
     :param node: The node.
     :type node: :class:`pm4py.objects.process_tree.obj.ProcessTree`
     """
@@ -336,8 +357,10 @@ def infer_or_gate_from_node(
 def filter_defunct_or_gates(
     process_tree: ProcessTree,
 ) -> None:
-    """Static method to filter the defunct OR gates from a process tree.
+    """Method to filter the defunct OR gates from a process tree.
 
+    :param event: The event.
+    :type event: :class:`tel2puml.events.Event`
     :param process_tree: The process tree.
     :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
     """
@@ -356,6 +379,8 @@ def process_missing_and_gates(
 ) -> None:
     """Method to add missing AND gates to a process tree below OR gates.
 
+    :param event: The event.
+    :type event: :class:`tel2puml.events.Event`
     :param process_tree: The process tree.
     :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
     """
@@ -422,6 +447,8 @@ def calculate_repeats_in_tree(
 ) -> ProcessTree:
     """Method to find the repeats in a process tree.
 
+    :param event: The event.
+    :type event: :class:`tel2puml.events.Event`
     :return: The process tree with repeats.
     :rtype: :class:`pm4py.objects.process_tree.obj.ProcessTree`
     """
@@ -444,6 +471,8 @@ def calculate_repeats_in_tree(
 def update_tree_with_repeat_logic(event: "ev.Event", node: ProcessTree):
     """Method to update a tree with repeat logic.
 
+    :param event: The event.
+    :type event: :class:`tel2puml.events.Event`
     :param node: The node.
     :type node: :class:`pm4py.objects.process_tree.obj.ProcessTree`
     """
@@ -462,8 +491,13 @@ def update_tree_with_repeat_logic(event: "ev.Event", node: ProcessTree):
     return node
 
 
-def remove_defunct_sequence_logic(node: ProcessTree):
-    """Method to remove defunct sequence logic from a tree."""
+def remove_defunct_sequence_logic(node: ProcessTree) -> Any | ProcessTree:
+    """Method to remove defunct sequence logic from a tree.
+
+    :param node: The node.
+    :type node: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+    :return: The node.
+    :rtype: :class:`pm4py.objects.process_tree.obj.ProcessTree`"""
     if node.operator is not None:
         if node.operator == Operator.SEQUENCE:
             return remove_defunct_sequence_logic(node.children[0])
