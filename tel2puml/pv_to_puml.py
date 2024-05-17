@@ -6,8 +6,10 @@ import json
 import os
 
 from tel2puml.tel2puml_types import PVEvent
-from tel2puml.pipelines.logic_detection_pipeline import (
-    update_all_connections_from_clustered_events,
+from tel2puml.pipelines.data_ingestion import (
+    update_all_connections_from_clustered_events
+)
+from tel2puml.events import (
     remove_detected_loop_data_from_events,
     events_to_markov_graph,
     get_event_reference_from_events

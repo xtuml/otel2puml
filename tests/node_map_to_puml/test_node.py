@@ -16,9 +16,11 @@ from tel2puml.node_map_to_puml.node import (
     check_is_merge_node_for_logic_block,
     LogicBlockHolder,
 )
-from tel2puml.pipelines.logic_detection_pipeline import (
+from tel2puml.pipelines.data_ingestion import (
+    update_all_connections_from_clustered_events
+)
+from tel2puml.events import (
     Event,
-    update_all_connections_from_clustered_events,
     events_to_markov_graph,
     get_event_reference_from_events
 )

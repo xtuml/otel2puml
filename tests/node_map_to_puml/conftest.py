@@ -6,10 +6,8 @@ import pytest
 from pm4py import ProcessTree
 from pm4py.objects.process_tree.obj import Operator
 
-from tel2puml.pipelines.logic_detection_pipeline import (
-    Event,
-    Operator as Logic_operator
-)
+from tel2puml.events import Event
+from tel2puml.logic_detection import Operator as Logic_operator
 from tel2puml.node_map_to_puml.node import Node
 
 
