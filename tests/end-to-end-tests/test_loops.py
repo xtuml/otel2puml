@@ -1,7 +1,5 @@
 """End to end tests for loops.
 """
-import pytest
-
 from tel2puml.utils_test import end_to_end_test
 
 
@@ -95,14 +93,14 @@ class TestBreakPoints:
         )
 
     @staticmethod
-    @pytest.mark.xfail(
-        reason="Break Points within nested are currently not supported",
-        strict=True
-    )
     def test_loop_nested_break_point() -> None:
         """Test loop with break point in a nested loop."""
         end_to_end_test(
             "end-to-end-pumls/loops/break_points/loop_nested_break_point.puml",
+            equivalent_pumls=[
+                "end-to-end-pumls/loops/break_points/"
+                "loop_nested_break_point_equiv.puml",
+            ],
         )
 
 
