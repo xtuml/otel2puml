@@ -6,6 +6,8 @@ from networkx import (
     has_path
 )
 
+from tel2puml.utils import circularly_identical
+
 
 class Loop:
     """A class to represent a loop in a graph."""
@@ -55,7 +57,7 @@ class Loop:
         if other.get_edges() == self.get_edges():
             return False
         for sublist in self.get_sublist_of_length(self.nodes, len(other)):
-            if sublist == other.nodes:
+            if circularly_identical(sublist, other.nodes):
                 return True
         return False
 
@@ -88,8 +90,8 @@ class Loop:
         :param break_point: The break edge to add.
         :type break_point: `tuple`[`str`, `str`]
         """
-        if self.merge_processed:
-            raise RuntimeError("Method not available after merge")
+        if not self.merge_processed:
+            raise RuntimeError("Method not available before merge")
         self.break_edges.add(break_edge)
 
     def add_break_point(self, break_point: str) -> None:
@@ -185,24 +187,24 @@ def detect_loops(graph: DiGraph) -> list[Loop]:
     loops_with_ref = [Loop(loop_list) for loop_list in simple_cycles(graph)]
     edges = [(u, v) for u, v in graph.edges()]
 
-    loops: list[Loop] = add_loop_edges_to_remove_and_breaks(
+    loops: list[Loop] = add_loop_edges_to_remove(
         loops_with_ref, edges
     )
     loops = update_subloops(loops)
     loops = merge_loops(loops)
+    loops = update_break_edges_and_exits(loops, edges)
     loops = update_break_points(graph, loops)
     loops = merge_break_points(loops)
     update_break_point_edges_to_remove(graph, loops)
     return loops
 
 
-def add_loop_edges_to_remove_and_breaks(
+def add_loop_edges_to_remove(
     loops: list[Loop],
     edges: list[tuple[str, str]]
 ) -> list[Loop]:
     """Add the edges to remove from the loops to the edge_to_remove property of
-    the Loop, along with the break points and associated exit point.
-
+    the Loop.
     :param loops: The loops to add the edges to remove.
     :type loops: `list`[`Loop`]
     :param edges: The edges from the graph.
@@ -210,7 +212,6 @@ def add_loop_edges_to_remove_and_breaks(
     :return: The updated loops.
     :rtype: `list`[`Loop`]
     """
-    graph = DiGraph(edges)
     loop_edges = {
         edge
         for loop in loops
@@ -224,7 +225,6 @@ def add_loop_edges_to_remove_and_breaks(
                 entries.add(v)
             elif u in loop.nodes and v not in loop.nodes:
                 exits.add((u, v))
-
         if entries and exits:
             edges_to_remove = {
                 (u, v)
@@ -232,14 +232,46 @@ def add_loop_edges_to_remove_and_breaks(
                 if v in entries
                 and u in {w for w, _ in exits}
             }
+            for edge in edges_to_remove:
+                loop.add_edge_to_remove(edge)
+        else:
+            raise ValueError("No entries or no exits")
+
+    return loops
+
+
+def update_break_edges_and_exits(
+    loops: list[Loop],
+    edges: list[tuple[str, str]]
+) -> list[Loop]:
+    """Add the break edges and exits to the loops.
+
+    :param loops: The loops to add the break edges and exits.
+    :type loops: `list`[`Loop`]
+    :param edges: The edges from the graph.
+    :type edges: `list`[`tuple`[`str`, `str`]]
+    :return: The updated loops.
+    :rtype: `list`[`Loop`]
+    """
+    graph = DiGraph(edges)
+    for loop in loops:
+        entries: set[str] = set()
+        exits: set[tuple[str, str]] = set()
+        for u, v in graph.edges:
+            if u not in loop.nodes and v in loop.nodes:
+                entries.add(v)
+            elif u in loop.nodes and v not in loop.nodes:
+                exits.add((u, v))
+
+        if entries and exits:
             # filter exits for kill points
             exits = filter_exits_for_kill_exits(
-                exits, edges_to_remove, graph
+                exits, loop.edges_to_remove, graph
             )
             breaks = {
                 (u, v)
-                for u, v in exits.difference(loop_edges)
-                if u not in {w for w, _ in edges_to_remove}
+                for u, v in exits
+                if u not in {w for w, _ in loop.edges_to_remove}
             }
 
             for break_point in breaks:
@@ -247,20 +279,18 @@ def add_loop_edges_to_remove_and_breaks(
 
             exit_points = set()
             if len(loop) == 1:
-                loop.add_edge_to_remove(edges_to_remove.pop())
                 for _, exit_point in exits:
                     exit_points.add(exit_point)
             else:
-                for u, v in edges_to_remove:
-                    loop.add_edge_to_remove((u, v))
-                    for loop_exit, exit_point in exits.difference(loop_edges):
+                for u, v in loop.edges_to_remove:
+                    for loop_exit, exit_point in exits:
                         if u == loop_exit:
                             exit_points.add(exit_point)
 
             loop.set_exit_points(exit_points)
         else:
             raise ValueError("No entries or no exits")
-
+        loop.sub_loops = update_break_edges_and_exits(loop.sub_loops, edges)
     return loops
 
 
@@ -472,7 +502,7 @@ def merge_break_points(loops: list[Loop]) -> list[Loop]:
 def get_break_point_edges_to_remove_from_loop(
     graph: DiGraph,
     loop: Loop,
-) -> list[str]:
+) -> list[tuple[str, str]]:
     """Get the break point edges to remove from the loop.
 
     :param graph: The graph to get the break point out edges from.

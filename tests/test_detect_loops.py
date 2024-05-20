@@ -13,7 +13,7 @@ from tel2puml.events import (
 from tel2puml.detect_loops import (
     Loop,
     detect_loops,
-    add_loop_edges_to_remove_and_breaks,
+    add_loop_edges_to_remove,
     update_subloops,
     merge_loops,
     update_break_points,
@@ -24,7 +24,8 @@ from tel2puml.detect_loops import (
     get_all_break_edges_from_loops,
     get_all_lonely_merge_killed_edges_from_loop_nodes_and_end_points,
     get_all_lonely_merge_killed_edges_from_loop,
-    get_all_lonely_merge_killed_edges_from_loops
+    get_all_lonely_merge_killed_edges_from_loops,
+    update_break_edges_and_exits
 )
 from tel2puml.pipelines.data_creation import (
     generate_test_data_event_sequences_from_puml,
@@ -108,13 +109,12 @@ class TestLoop():
     def test_add_break_edge() -> None:
         """Test the add_break_edge method of the Loop class."""
         loop = Loop(["A", "B", "C"])
+        with pytest.raises(RuntimeError):
+            loop.add_break_edge(("A", "B"))
+        loop.set_merged()
         assert len(loop.break_edges) == 0
         loop.add_break_edge(("A", "B"))
         assert loop.break_edges == {("A", "B")}
-
-        loop.set_merged()
-        with pytest.raises(RuntimeError):
-            loop.add_break_edge(("A", "B"))
 
     @staticmethod
     def test_add_break_point() -> None:
@@ -239,31 +239,25 @@ def _get_referenced_iterable(
         raise TypeError("Unsupported type")
 
 
-def test_add_loop_edges_to_remove_and_breaks() -> None:
-    """Test the add_loop_edges_to_remove_and_breaks function."""
+def test_add_loop_edges_to_remove() -> None:
+    """Test the add_loop_edges_to_remove function."""
     loops = [Loop(["B"])]
     edges = [("A", "B"), ("B", "C"), ("B", "B")]
-    loops = add_loop_edges_to_remove_and_breaks(loops, edges)
+    loops = add_loop_edges_to_remove(loops, edges)
     loop, = loops
     assert loop.edges_to_remove == {("B", "B")}
-    assert loop.break_edges == set()
-    assert loop.exit_points == {"C"}
 
     loops = [Loop(["B", "C", "D"])]
     edges = [("A", "B"), ("B", "C"), ("C", "D"), ("D", "B"), ("D", "E")]
-    loops = add_loop_edges_to_remove_and_breaks(loops, edges)
+    loops = add_loop_edges_to_remove(loops, edges)
     loop, = loops
     assert loop.edges_to_remove == {("D", "B")}
-    assert loop.break_edges == set()
-    assert loop.exit_points == {"E"}
 
     loops = [Loop(["B", "C", "D"])]
     edges = [("D", "B"), ("D", "E"), ("A", "B"), ("C", "D"), ("B", "C")]
-    loops = add_loop_edges_to_remove_and_breaks(loops, edges)
+    loops = add_loop_edges_to_remove(loops, edges)
     loop, = loops
     assert loop.edges_to_remove == {("D", "B")}
-    assert loop.break_edges == set()
-    assert loop.exit_points == {"E"}
 
     loops = [Loop(["B", "C", "E"]), Loop(["B", "D", "E"])]
     edges = [
@@ -271,19 +265,17 @@ def test_add_loop_edges_to_remove_and_breaks() -> None:
         ("D", "E"), ("B", "D"), ("E", "F"),
         ("E", "B")
     ]
-    loops = add_loop_edges_to_remove_and_breaks(loops, edges)
+    loops = add_loop_edges_to_remove(loops, edges)
     assert len(loops) == 2
     for loop in loops:
         assert loop.edges_to_remove == {("E", "B")}
-        assert loop.break_edges == set()
-        assert loop.exit_points == {"F"}
 
     loops = [Loop(["B", "D"]), Loop(["C", "E"]), Loop(["B", "D", "C", "E"])]
     edges = [
         ("A", "B"), ("A", "C"), ("B", "D"), ("D", "B"), ("C", "E"),
         ("E", "C"), ("D", "C"), ("E", "B"), ("D", "F"), ("E", "F")
     ]
-    loops = add_loop_edges_to_remove_and_breaks(loops, edges)
+    loops = add_loop_edges_to_remove(loops, edges)
     assert len(loops) == 3
     for loop in loops:
         if {("B", "D"), ("D", "B")} == loop.get_edges():
@@ -294,8 +286,6 @@ def test_add_loop_edges_to_remove_and_breaks() -> None:
             assert loop.edges_to_remove == {
                 ("E", "B"), ("D", "C"), ("D", "B"), ("E", "C")
             }
-        assert loop.break_edges == set()
-        assert loop.exit_points == {"F"}
 
     loops = [Loop(["B", "D", "E"])]
     edges = [
@@ -303,11 +293,9 @@ def test_add_loop_edges_to_remove_and_breaks() -> None:
         ('D', 'E'), ('E', 'B'), ('E', 'F')
     ]
 
-    assert add_loop_edges_to_remove_and_breaks(loops, edges) == loops
+    assert add_loop_edges_to_remove(loops, edges) == loops
     loop, = loops
     assert loop.edges_to_remove == {('E', 'B')}
-    assert loop.break_edges == {('B', 'C')}
-    assert loop.exit_points == {"F"}
 
     loops = [Loop(["B", "D", "E"])]
     edges = [
@@ -315,11 +303,85 @@ def test_add_loop_edges_to_remove_and_breaks() -> None:
         ('D', 'E'), ('E', 'B'), ('E', 'F')
     ]
 
-    assert add_loop_edges_to_remove_and_breaks(loops, edges) == loops
+    assert add_loop_edges_to_remove(loops, edges) == loops
     loop, = loops
     assert loop.edges_to_remove == {('E', 'B')}
-    assert loop.break_edges == {('B', 'C')}
-    assert loop.exit_points == {"F"}
+
+
+def test_update_break_edges_and_exits() -> None:
+    """Test the update_break_edges_and_exits function."""
+    def setup_and_check_case(
+        loop: Loop,
+        edges: list[tuple[str, str]],
+        expected_break_edges: set[tuple[str, str]],
+        expected_exit_points: set[str]
+    ) -> None:
+        loop.set_merged()
+        loops = update_break_edges_and_exits([loop], edges)
+        assert loops == [loop]
+        assert loop.break_edges == expected_break_edges
+        assert loop.exit_points == expected_exit_points
+    # self loop
+    loop = Loop(["B"])
+    loop.add_edge_to_remove(("B", "B"))
+    setup_and_check_case(
+        loop, [("A", "B"), ("B", "C"), ("B", "B")], set(), {"C"}
+    )
+    # normal loop
+    loop = Loop(["B", "C", "D"])
+    loop.add_edge_to_remove(("D", "B"))
+    setup_and_check_case(
+        loop, [("A", "B"), ("B", "C"), ("C", "D"), ("D", "B"), ("D", "E")],
+        set(), {"E"}
+    )
+    # dual exit point
+    loop = Loop(["B", "C", "D"])
+    loop.add_edge_to_remove(("D", "B"))
+    setup_and_check_case(
+        loop,
+        [
+            ("A", "B"), ("B", "C"), ("C", "D"), ("D", "B"), ("D", "E"),
+            ("D", "F")
+        ],
+        set(), {"E", "F"}
+    )
+    # break point
+    loop = Loop(["B", "C", "D"])
+    loop.add_edge_to_remove(("D", "B"))
+    setup_and_check_case(
+        loop,
+        [
+            ("A", "B"), ("B", "C"), ("C", "D"), ("D", "B"), ("D", "E"),
+            ("C", "F"), ("F", "E")
+        ],
+        {("C", "F")}, {"E"}
+    )
+    # break point with multiple break edges
+    loop = Loop(["B", "C", "D"])
+    loop.add_edge_to_remove(("D", "B"))
+    setup_and_check_case(
+        loop,
+        [
+            ("A", "B"), ("B", "C"), ("C", "D"), ("D", "B"), ("D", "E"),
+            ("C", "F"), ("F", "E"), ("C", "G"), ("G", "E")
+        ], {("C", "F"), ("C", "G")}, {"E"}
+    )
+    # break point in nested loop
+    loop = Loop(["B", "C", "D", "E", "F"])
+    loop.add_edge_to_remove(("E", "B"))
+    sub_loop = Loop(["C", "D"])
+    sub_loop.add_edge_to_remove(("D", "C"))
+    loop.add_subloop(sub_loop)
+    sub_loop.set_merged()
+    setup_and_check_case(
+        loop,
+        [
+            ("A", "B"), ("B", "C"), ("C", "D"), ("D", "E"), ("E", "B"),
+            ("C", "F"), ("F", "E"), ("D", "C"), ("E", "G")
+        ], set(), {"G"}
+    )
+    assert sub_loop.break_edges == {("C", "F")}
+    assert sub_loop.exit_points == {"E"}
 
 
 def test_update_subloops() -> None:
@@ -421,6 +483,7 @@ def test_update_break_points() -> None:
     )
 
     loop = Loop(["A", "B", "D"])
+    loop.set_merged()
     loop.add_break_edge(("B", "C"))
     loop.exit_points = {"E"}
 
@@ -441,6 +504,7 @@ def test_update_break_points() -> None:
     loop = Loop(["B", "D"])
     sub_loop = Loop(["D"])
     sub_loop.exit_points = {"B"}
+    loop.set_merged()
     loop.add_break_edge(("B", "C"))
     loop.sub_loops = [sub_loop]
     loop.exit_points = {"E"}
@@ -753,8 +817,10 @@ class TestBreakPointFunctions:
         graph.add_edge("A", "C")
         graph.add_edge("A", "D")
         loop = Loop(["A"])
+        loop.set_merged()
         loop.add_break_edge(("X", "A"))
         sub_loop = Loop(["E"])
+        sub_loop.set_merged()
         sub_loop.add_break_edge(("Y", "E"))
         graph.add_edge("E", "F")
         sub_loop.add_break_point("E")

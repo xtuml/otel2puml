@@ -174,3 +174,26 @@ def gen_strings_from_files(
             file_name, "r", encoding="utf-8"
         ) as file:
             yield file.read()
+
+
+def circularly_identical(list1: list[Any], list2: list[Any]) -> bool:
+    """Check if two lists are circularly identical.
+
+    :param list1: The first list to compare.
+    :type list1: `list`
+    :param list2: The second list to compare.
+    :type list2: `list`
+    :return: Whether the lists are circularly identical.
+    :rtype: `bool`
+    """
+    # doubling list
+    compare_list = list1 * 2
+
+    # traversal in twice of list1
+    for i in range(len(compare_list)):
+
+        # check if sliced list1 is equal to list2
+        if list2 == compare_list[i: i + len(list2)]:
+
+            return True
+    return False
