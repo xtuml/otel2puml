@@ -502,7 +502,7 @@ def merge_break_points(loops: list[Loop]) -> list[Loop]:
 def get_break_point_edges_to_remove_from_loop(
     graph: DiGraph,
     loop: Loop,
-) -> list[str]:
+) -> list[tuple[str, str]]:
     """Get the break point edges to remove from the loop.
 
     :param graph: The graph to get the break point out edges from.
