@@ -1,5 +1,5 @@
 """Utils for the tel2puml package."""
-
+from datetime import datetime
 from itertools import permutations
 from typing import Optional, Generator, Any, TypeVar, Iterable, Hashable
 
@@ -197,3 +197,14 @@ def circularly_identical(list1: list[Any], list2: list[Any]) -> bool:
 
             return True
     return False
+
+
+def datetime_to_pv_string(date_time: datetime) -> str:
+    """Convert a datetime object to a pv string.
+
+    :param date_time: The datetime object to convert.
+    :type date_time: `datetime`
+    :return: The pv string.
+    :rtype: `str`
+    """
+    return date_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
