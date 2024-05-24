@@ -36,7 +36,21 @@ def has_time_overlap(time_vec_1: np.ndarray, time_vec_2: np.ndarray) -> bool:
 
 
 class Span:
-    """A span is a single operation in a trace"""
+    """A span is a single operation in a trace
+    :param name: The name of the span
+    :type name: `str`
+    :param start_time: The start time of the span
+    :type start_time: `int`
+    :param end_time: The end time of the span
+    :type end_time: `int`
+    :param parent_id: The parent id of the span, defaults to None
+    :type parent_id: `str`, optional
+    :param app_name: The application name of the span, defaults to
+    "default_app"
+    :type app_name: `str`, optional
+    :param status: The status of the span, defaults to None
+    :type status: `str`, optional
+    """
     def __init__(
         self, span_id: str, name: str | None = None,
         start_time: int | None = None, end_time: int | None = None,
@@ -54,12 +68,20 @@ class Span:
         self.status = status
 
     def __repr__(self) -> str:
+        """Return the string representation of the span
+
+        :return: The string representation of the span
+        :rtype: `str`"""
         return (
             self.name + f"_{self.status}" if self.status is not None
             else self.name
         )
 
     def __hash__(self) -> int:
+        """Return the hash of the span id
+
+        :return: The hash of the span id
+        :rtype: `int`"""
         return hash(self.span_id)
 
     def update_attrs(
@@ -67,7 +89,22 @@ class Span:
         parent_id: str | None = None, app_name: str = "default_app",
         status: str | None = None
     ) -> None:
-        """Update the attributes of the span"""
+        """Update the attributes of the span
+
+        :param name: The name of the span
+        :type name: `str`
+        :param start_time: The start time of the span
+        :type start_time: `int`
+        :param end_time: The end time of the span
+        :type end_time: `int`
+        :param parent_id: The parent id of the span, defaults to None
+        :type parent_id: `str`, optional
+        :param app_name: The application name of the span, defaults to
+        "default_app"
+        :type app_name: `str`, optional
+        :param status: The status of the span, defaults to None
+        :type status: `str`, optional
+        """
         self.name = name
         self._start_time = start_time
         self._end_time = end_time
@@ -78,7 +115,10 @@ class Span:
 
     @property
     def start_time_order(self) -> list["Span"]:
-        """Return the child spans in start time order"""
+        """Return the child spans in start time order
+
+        :return: The child spans in start time order
+        :rtype: `list`[:class:`Span`]"""
         return sorted(
             self.child_spans.values(),
             key=lambda span: span._start_time
@@ -90,15 +130,25 @@ class Span:
         return datetime.fromtimestamp(self._end_time * 1e-9)
 
     def time_array(self) -> np.ndarray:
-        """Return the start and end times as a numpy array"""
+        """Return the start and end times as a numpy array
+
+        :return: The start and end times as a numpy array
+        :rtype: `np.ndarray`"""
         return np.array([self._start_time, self._end_time])
 
     def add_child_span(self, span: "Span") -> None:
-        """Add a child span to the span"""
+        """Add a child span to the span
+
+        :span: The child span to add
+        :type span: :class:`Span`
+        """
         self.child_spans[span.span_id] = span
 
     def child_spans_sequence_order(self) -> list[list["Span"]]:
-        """Return the child spans in sequence order"""
+        """Return the child spans in sequence order
+
+        :return: The child spans in sequence order
+        :rtype: `list`[`list`[:class:`Span`]]"""
         if not self.child_spans:
             return []
         ordered_spans = self.start_time_order
@@ -112,7 +162,13 @@ class Span:
     def update_graph_with_connections(
         self, graph: nx.DiGraph
     ) -> list["Span"]:
-        """Update the graph with connections"""
+        """Update the graph with connections
+
+        :param graph: The graph to update
+        :type graph: :class:`nx.DiGraph`
+        :return: The previous spans
+        :rtype: `list`[:class:`Span`]
+        """
         previous_spans = [self]
         for async_span_group in reversed(self.child_spans_sequence_order()):
             next_previous_spans = []
@@ -131,7 +187,14 @@ class Span:
         job_name: str,
         graph: nx.DiGraph
     ) -> PVEvent:
-        """Return the span as a pv event"""
+        """Return the span as a pv event
+
+        :param job_id: The job id of the pv event
+        :type job_id: `str`
+        :param job_name: The job name of the pv event
+        :type job_name: `str`
+        :param graph: The graph to get the previous event ids from
+        :type graph: :class:`nx.DiGraph"""
         return PVEvent(
             jobId=job_id, eventId=self.span_id,
             timestamp=datetime_to_pv_string(self.end_time),
@@ -143,7 +206,12 @@ class Span:
     def get_previous_event_ids(
         self, graph: nx.DiGraph
     ) -> list[str]:
-        """Return the previous event ids"""
+        """Return the previous event ids
+
+        :param graph: The graph to get the previous event ids from
+        :type graph: :class:`nx.DiGraph
+        :return: The previous event ids
+        :rtype: `list`[`str`]"""
         return [
             node.span_id
             for node in graph.predecessors(self)
@@ -151,7 +219,13 @@ class Span:
 
 
 class Trace:
-    """A trace is a collection of spans"""
+    """A trace is a collection of spans
+
+    :param trace_id: The trace id of the trace
+    :type trace_id: `str`
+    :param job_name: The job name of the trace, defaults to "default_job"
+    :type job_name: `str`, optional
+    """
     def __init__(
         self, trace_id: str | None = None, job_name: str = "default_job"
     ) -> None:
@@ -164,12 +238,19 @@ class Trace:
 
     @property
     def trace_id(self) -> str:
-        """Return the trace id"""
+        """Return the trace id
+
+        :return: The trace id
+        :rtype: `str`"""
         return self._trace_id
 
     @trace_id.setter
     def trace_id(self, trace_id: str) -> None:
-        """Set the trace id"""
+        """Set the trace id
+
+        :param trace_id: The trace id to set
+        :type trace_id: `str`
+        """
         if self._trace_id is not None:
             raise ValueError("Trace id has already been set")
         self._trace_id = trace_id
@@ -180,7 +261,23 @@ class Trace:
         parent_id: str | None = None, app_name: str = "default_app",
         status: str | None = None
     ) -> None:
-        """Add a span to the trace"""
+        """Add a span to the trace
+
+        :param span_id: The span id of the span
+        :type span_id: `str`
+        :param name: The name of the span
+        :type name: `str`
+        :param start_time: The start time of the span
+        :type start_time: `int`
+        :param end_time: The end time of the span
+        :type end_time: `int`
+        :param parent_id: The parent id of the span, defaults to None
+        :type parent_id: `str`, optional
+        :param app_name: The application name of the span, defaults to
+        "default_app"
+        :type app_name: `str`, optional
+        :param status: The status of the span, defaults to None
+        :type status: `str`, optional"""
         if span_id in self.spans:
             span = self.spans[span_id]
             span.update_attrs(
@@ -201,7 +298,10 @@ class Trace:
 
     @property
     def root_span(self) -> Span:
-        """Return the root span of the trace"""
+        """Return the root span of the trace
+
+        :return: The root span of the trace
+        :rtype: :class:`Span`"""
         if self._root_span is None:
             raise ValueError("Root span has not been set")
         return self._root_span
@@ -217,7 +317,11 @@ class Trace:
     #         )
 
     def yield_pv_event_sequence(self) -> Generator[PVEvent, Any, None]:
-        """Return the pv event sequence"""
+        """Return the pv event sequence
+
+        :return: The pv event sequence
+        :rtype: `Generator`[:class:`PVEvent`, `Any`, `None`]
+        """
         graph = self._graph
         # self.check_and_add_no_call_spans()
         self.root_span.update_graph_with_connections(graph)
