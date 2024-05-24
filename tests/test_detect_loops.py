@@ -460,7 +460,7 @@ def test_merge_loops() -> None:
     loop, = loops
     assert set(loop.nodes) == {"B", "C", "D", "E"}
     assert loop.edges_to_remove == {
-        ("D", "B"), ("E", "C"), ("E", "B"), ("D", "C")
+        ("E", "B"), ("D", "C")
     }
 
     assert len(loop.sub_loops) == 2

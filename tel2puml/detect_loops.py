@@ -133,6 +133,7 @@ class Loop:
         :type sub_loop: `Loop`
         """
         self.sub_loops.append(sub_loop)
+        self.edges_to_remove.difference_update(sub_loop.edges_to_remove)
 
     def set_merged(self) -> None:
         """Set the merge_processed property to True."""
