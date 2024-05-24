@@ -1,5 +1,5 @@
 """TypedDicts for tel2puml"""
-from typing import TypedDict, NotRequired
+from typing import TypedDict, NotRequired, Any
 from enum import Enum
 
 
@@ -84,3 +84,17 @@ class PlantUMLEventAttributes(TypedDict):
 
 
 DUMMY_START_EVENT = "|||START|||"
+
+
+class OtelSpan(TypedDict):
+    """TypedDict for OtelSpan"""
+    trace_id: str
+    span_id: str
+    name: str
+    kind: int
+    start_time_unix_nano: int
+    end_time_unix_nano: int
+    attributes: NotRequired[list[dict[str, Any]]]
+    status: dict
+    parent_span_id: NotRequired[str]
+    events: NotRequired[Any]
