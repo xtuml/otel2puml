@@ -380,7 +380,6 @@ def merge_loops(loops: list[Loop]) -> list[Loop]:
     merged_loops: list[Loop] = []
     while len(loops) > 0:
         loop = loops.pop(0)
-        loop.sub_loops = merge_loops(loop.sub_loops)
         merged = False
         for merged_loop in merged_loops:
             # check that there are common nodes between the edges to remove
@@ -409,6 +408,8 @@ def merge_loops(loops: list[Loop]) -> list[Loop]:
         if not merged:
             loop.set_merged()
             merged_loops.append(loop)
+    for merged_loop in merged_loops:
+        merged_loop.sub_loops = merge_loops(merged_loop.sub_loops)
 
     return merged_loops
 
@@ -453,6 +454,8 @@ def update_break_points(
                 tuple(path[:-1])
                 for paths in paths_to_exits
                 for path in paths
+                if not loop.exit_points.intersection(path[:-1])
+                and not loop.start_points.intersection(path[:-1])
             }
             if len(unique_path) == 1:
                 for node in (path := unique_path.pop()):
