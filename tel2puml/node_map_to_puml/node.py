@@ -377,7 +377,8 @@ class Node:
         self.outgoing_logic = (
             [self.outgoing_logic[-1]] + self.outgoing_logic[:-1]
         )
-        self.outgoing = [self.outgoing[-1]] + self.outgoing[:-1]
+        if self.outgoing:
+            self.outgoing = [self.outgoing[-1]] + self.outgoing[:-1]
 
     def get_outgoing_logic_by_indices(
             self,
