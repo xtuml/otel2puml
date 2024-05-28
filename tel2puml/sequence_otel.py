@@ -5,6 +5,7 @@ from datetime import datetime
 import numpy as np
 import numba as nb
 import networkx as nx
+import numpy.typing as npt
 
 from tel2puml.tel2puml_types import PVEvent, OtelSpan
 from tel2puml.utils import datetime_to_pv_string
@@ -12,7 +13,7 @@ from tel2puml.utils import datetime_to_pv_string
 
 @nb.jit(nopython=True)
 def get_slice_indexes(
-    time_array: np.ndarray
+    time_array: npt.NDArray[np.float_]
 ) -> list[int]:
     """Get the indexes of the slices"""
     slice_indexes = [0]
@@ -28,10 +29,12 @@ def get_slice_indexes(
 
 
 @nb.jit(nopython=True)
-def has_time_overlap(time_vec_1: np.ndarray, time_vec_2: np.ndarray) -> bool:
+def has_time_overlap(
+    time_vec_1: npt.NDArray[np.float_], time_vec_2: npt.NDArray[np.float_]
+) -> np.bool_:
     """Calculate the overlap between two time vectors"""
-    start_time = max(time_vec_1[0], time_vec_2[0])
-    end_time = min(time_vec_1[1], time_vec_2[1])
+    start_time: np.float_ = max(time_vec_1[0], time_vec_2[0])
+    end_time: np.float_ = min(time_vec_1[1], time_vec_2[1])
     return start_time < end_time
 
 
@@ -53,7 +56,7 @@ class Span:
     """
     def __init__(
         self, span_id: str, name: str | None = None,
-        start_time: int | None = None, end_time: int | None = None,
+        start_time: float | None = None, end_time: float | None = None,
         parent_id: str | None = None,
         app_name: str = "default_app",
         status: str | None = None,
@@ -72,10 +75,12 @@ class Span:
 
         :return: The string representation of the span
         :rtype: `str`"""
-        return (
-            self.name + f"_{self.status}" if self.status is not None
-            else self.name
-        )
+        repr_str = ""
+        if self.name is not None:
+            repr_str += f"{self.name}"
+        if self.status is not None:
+            repr_str += f"_{self.status}"
+        return repr_str
 
     def __hash__(self) -> int:
         """Return the hash of the span id
@@ -85,7 +90,7 @@ class Span:
         return hash(self.span_id)
 
     def update_attrs(
-        self, name: str, start_time: int, end_time: int,
+        self, name: str, start_time: float, end_time: float,
         parent_id: str | None = None, app_name: str = "default_app",
         status: str | None = None
     ) -> None:
@@ -121,20 +126,42 @@ class Span:
         :rtype: `list`[:class:`Span`]"""
         return sorted(
             self.child_spans.values(),
-            key=lambda span: span._start_time
+            key=lambda span: span.raw_start_time
         )
+
+    @property
+    def raw_start_time(self) -> float:
+        """Return the raw start time
+
+        :return: The raw start time
+        :rtype: `int`"""
+        if self._start_time is None:
+            raise ValueError("Start time has not been set")
+        return self._start_time
+
+    @property
+    def raw_end_time(self) -> float:
+        """Return the raw end time
+
+        :return: The raw end time
+        :rtype: `int`"""
+        if self._end_time is None:
+            raise ValueError("End time has not been set")
+        return self._end_time
 
     @property
     def end_time(self) -> datetime:
         """Return the end time as a datetime"""
-        return datetime.fromtimestamp(self._end_time * 1e-9)
+        return datetime.fromtimestamp(self.raw_end_time * 1e-9)
 
-    def time_array(self) -> np.ndarray:
+    def time_array(self) -> npt.NDArray[np.float_]:
         """Return the start and end times as a numpy array
 
         :return: The start and end times as a numpy array
-        :rtype: `np.ndarray`"""
-        return np.array([self._start_time, self._end_time])
+        :rtype: `np.ndarray`[`int`]"""
+        return np.array(
+            [self.raw_start_time, self.raw_end_time], dtype=np.float_
+        )
 
     def add_child_span(self, span: "Span") -> None:
         """Add a child span to the span
@@ -174,8 +201,12 @@ class Span:
         :return: The previous spans
         :rtype: `list`[:class:`Span`]
         """
+        if self.span_id is None or self.name is None:
+            raise ValueError("Span id or name has not been set")
+        span_id = self.span_id + "_START"
+        name = self.name + "_START"
         start_span = Span(
-            self.span_id + "_START", self.name + "_START",
+            span_id, name,
             self._start_time, self._start_time, app_name=self.app_name,
         )
         if previous_spans:
@@ -192,8 +223,10 @@ class Span:
                 )
             previous_spans = next_previous_spans
         if not self.child_spans:
+            span_id = self.span_id + "_NOCALL"
+            name = self.name + "_NO_CALL"
             no_call_span = Span(
-                self.span_id + "_NOCALL", self.name + "_NO_CALL",
+                span_id, name,
                 self._end_time, self._end_time, self.span_id
             )
             graph.add_edge(start_span, no_call_span)
@@ -201,8 +234,10 @@ class Span:
         for previous_span in previous_spans:
             graph.add_edge(previous_span, self)
         if with_end_span:
+            span_id = self.span_id + "_END"
+            name = self.name + "_END"
             end_span = Span(
-                self.span_id + "_END", self.name + "_END",
+                span_id, name,
                 self._end_time, self._end_time, app_name=self.app_name,
             )
             graph.add_edge(self, end_span)
@@ -287,11 +322,11 @@ class Trace:
         self._graph = nx.DiGraph()
 
     @property
-    def trace_id(self) -> str:
+    def trace_id(self) -> str | None:
         """Return the trace id
 
         :return: The trace id
-        :rtype: `str`"""
+        :rtype: `str` | `None`"""
         return self._trace_id
 
     @trace_id.setter
@@ -307,7 +342,7 @@ class Trace:
 
     def add_span(
         self,
-        span_id: str, name: str, start_time: int, end_time: int,
+        span_id: str, name: str, start_time: float, end_time: float,
         parent_id: str | None = None, app_name: str = "default_app",
         status: str | None = None
     ) -> None:
@@ -411,7 +446,6 @@ def get_attribute_from_list(
 
 def get_name_and_operation(
     span: OtelSpan,
-    attr_string: str = "attributes",
 ) -> tuple[str, str]:
     """Gets the name and operation from the span
 
@@ -420,9 +454,9 @@ def get_name_and_operation(
     :return: Returns the name and operation from the span
     :rtype: `tuple`[`str`, `str`]
     """
-    if attr_string in span:
+    if "attributes" in span:
         services_operation = get_attribute_from_list(
-            span[attr_string],
+            span["attributes"],
             {"coral.operation": "StringValue", "coral.service": "StringValue"},
         )
         if len(services_operation) == 2:
@@ -465,6 +499,13 @@ def get_trace_from_span_dicts(
     spans: Iterable[OtelSpan],
     job_name: str = "default_job"
 ) -> Trace:
+    """Get a trace from a list of spans
+
+    :param spans: The spans to get the trace from
+    :type spans: `Iterable`[:class:`OtelSpan`]
+    :param job_name: The job name of the trace, defaults to "default_job"
+    :type job_name: `str`, optional
+    """
     trace = Trace(job_name=job_name)
     for span in spans:
         if trace.trace_id is None:

@@ -95,6 +95,8 @@ class OtelSpan(TypedDict):
     start_time_unix_nano: int
     end_time_unix_nano: int
     attributes: NotRequired[list[dict[str, Any]]]
-    status: dict
+    status: dict[str, Any]
     parent_span_id: NotRequired[str]
     events: NotRequired[Any]
+    scope: dict[str, Any]
+    operation: str
