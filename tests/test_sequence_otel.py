@@ -122,6 +122,7 @@ class TestSpan:
         }
 
     def test_to_pv_event(self) -> None:
+        """Test the `to_pv_event` method."""
         spans = self.spans_for_test()
         graph = nx.DiGraph()
         spans["span"].update_graph_with_connections(graph)

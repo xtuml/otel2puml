@@ -544,12 +544,12 @@ if __name__ == "__main__":
         json_list = list(trace.yield_pv_event_sequence(True))
         fig = get_graphviz_plot(trace._graph, (30, 30))
         fig.savefig(
-            "outputs/may13-15/ExportHigh_data/linked_spans_"
+            "out_data/linked_spans_"
             f"{i}_pv_event_sequence.png"
         )
         plt.close(fig)
         with open(
-            "outputs/may13-15/ExportHigh_data/linked_spans_"
+            "out_data/linked_spans_"
             f"{i}_pv_event_sequence.json", "w"
         ) as f:
             json.dump(json_list, f, indent=4)
