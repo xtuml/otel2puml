@@ -208,3 +208,21 @@ def datetime_to_pv_string(date_time: datetime) -> str:
     :rtype: `str`
     """
     return date_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+
+def check_is_sub_list(
+    sub_list: list[Any], super_list: list[Any]
+) -> bool:
+    """Check if the first list is a sublist of the second list.
+
+    :param sub_list: The sublist to check.
+    :type sub_list: `list`
+    :param super_list: The superlist to check.
+    :type super_list: `list`
+    :return: Whether the first list is a sublist of the second list.
+    :rtype: `bool`
+    """
+    return any(
+        super_list[idx: idx + len(sub_list)] == sub_list
+        for idx in range(len(super_list) - len(sub_list) + 1)
+    )
