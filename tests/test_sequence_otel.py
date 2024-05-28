@@ -11,6 +11,7 @@ from tel2puml.utils import datetime_to_pv_string
 
 
 def test_has_time_overlap() -> None:
+    """Test the `has_time_overlap` function."""
     assert has_time_overlap([1, 3], [2, 3])
     assert has_time_overlap([1, 3], [1, 2])
     assert not has_time_overlap([1, 2], [2, 3])
@@ -18,6 +19,7 @@ def test_has_time_overlap() -> None:
 
 
 def test_get_slice_indexes() -> None:
+    """Test the `get_slice_indexes` function."""
     time_array = np.array([
         [2, 3], [4, 6], [5, 7], [6, 8]
     ])
@@ -25,13 +27,16 @@ def test_get_slice_indexes() -> None:
 
 
 class TestSpan:
+    """Tests for the `Span` class."""
     @staticmethod
     def test_time_array() -> None:
+        """Test the `time_array` method."""
         span = Span("1", "a_span", 2, 3)
         assert list(span.time_array()) == [2, 3]
 
     @staticmethod
     def test_add_child_span() -> None:
+        """Test the `add_child_span` method."""
         span = Span("1", "a_span", 2, 3)
         child_span = Span("2", "a_child_span", 2, 3)
         span.add_child_span(child_span)
@@ -39,6 +44,7 @@ class TestSpan:
 
     @staticmethod
     def spans_for_test() -> dict[str, Span]:
+        """Return a dictionary of spans for testing."""
         span = Span("1", "a_span", 2, 8)
         child_span_1 = Span("2", "a_child_span_1", 2, 3)
         child_span_2 = Span("3", "a_child_span_2", 4, 6)
@@ -57,6 +63,7 @@ class TestSpan:
         }
 
     def updated_spans_for_test(self) -> dict[str, Span]:
+        """Return a dictionary of spans for testing with updated spans."""
         grand_child_span_1 = Span("6", "a_grand_child_span_1", 2, 3)
         grand_child_span_2 = Span("7", "a_grand_child_span_2", 2, 2.5)
         spans_for_test = self.spans_for_test()
@@ -67,6 +74,7 @@ class TestSpan:
         return spans_for_test
 
     def test_start_time_order(self) -> None:
+        """Test the `start_time_order` method."""
         spans = self.spans_for_test()
         assert spans["span"].start_time_order == [
             spans["child_span_1"], spans["child_span_2"],
@@ -74,6 +82,7 @@ class TestSpan:
         ]
 
     def test_child_spans_sequence_order(self) -> None:
+        """Test the `child_spans_sequence_order` method."""
         spans = self.spans_for_test()
         assert spans["span"].child_spans_sequence_order() == [
             [spans["child_span_1"]],
@@ -84,6 +93,7 @@ class TestSpan:
         ]
 
     def test_update_graph_with_connections(self) -> None:
+        """Test the `update_graph_with_connections` method."""
         # check case where child spans have no children
         spans = self.spans_for_test()
         graph = nx.DiGraph()
@@ -132,8 +142,10 @@ class TestSpan:
 
 
 class TestTrace:
+    """Tests for the `Trace` class."""
     @staticmethod
     def trace_for_test() -> Trace:
+        """Return a trace for testing."""
         trace = Trace("1")
         for span_details in [
             ("1", "a_span", 2, 8),
@@ -146,6 +158,7 @@ class TestTrace:
         return trace
 
     def test_add_span(self) -> None:
+        """Test the `add_span` method."""
         # check for simple case
         trace = Trace("1")
         trace.add_span("1", "a_span", 2, 3)
@@ -168,10 +181,12 @@ class TestTrace:
             assert trace.spans[span_id].child_spans == {}
 
     def test_root_span(self) -> None:
+        """Test the `root_span` property."""
         trace = self.trace_for_test()
         assert trace.root_span == trace.spans["1"]
 
-    def test_yield_pv_event_sequence(self):
+    def test_yield_pv_event_sequence(self) -> None:
+        """Test the `yield_pv_event_sequence` method."""
         trace = self.trace_for_test()
         events = list(trace.yield_pv_event_sequence())
         assert len(events) == 5
