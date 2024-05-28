@@ -159,6 +159,56 @@ class Span:
             for i in range(len(slice_indexes) - 1)
         ]
 
+    def update_graph_with_connections_start_end(
+        self, graph: nx.DiGraph, previous_spans: list["Span"] | None = None,
+        with_end_span: bool = False
+    ) -> list["Span"]:
+        """Update the graph with connections
+
+        :param graph: The graph to update
+        :type graph: :class:`nx.DiGraph
+        :param previous_spans: The previous spans
+        :type previous_spans: `list`[:class:`Span`]
+        :param with_end_span: Whether to add an end span, defaults to `False`
+        :type with_end_span: `bool`, optional
+        :return: The previous spans
+        :rtype: `list`[:class:`Span`]
+        """
+        start_span = Span(
+            self.span_id + "_START", self.name + "_START",
+            self._start_time, self._start_time, app_name=self.app_name,
+        )
+        if previous_spans:
+            for previous_span in previous_spans:
+                graph.add_edge(previous_span, start_span)
+        previous_spans = [start_span]
+        for async_span_group in self.child_spans_sequence_order():
+            next_previous_spans = []
+            for span in async_span_group:
+                next_previous_spans.extend(
+                    span.update_graph_with_connections_start_end(
+                        graph, previous_spans
+                    )
+                )
+            previous_spans = next_previous_spans
+        if not self.child_spans:
+            no_call_span = Span(
+                self.span_id + "_NOCALL", self.name + "_NO_CALL",
+                self._end_time, self._end_time, self.span_id
+            )
+            graph.add_edge(start_span, no_call_span)
+            previous_spans = [no_call_span]
+        for previous_span in previous_spans:
+            graph.add_edge(previous_span, self)
+        if with_end_span:
+            end_span = Span(
+                self.span_id + "_END", self.name + "_END",
+                self._end_time, self._end_time, app_name=self.app_name,
+            )
+            graph.add_edge(self, end_span)
+            return [end_span]
+        return [self]
+
     def update_graph_with_connections(
         self, graph: nx.DiGraph
     ) -> list["Span"]:
@@ -306,26 +356,31 @@ class Trace:
             raise ValueError("Root span has not been set")
         return self._root_span
 
-    # def check_and_add_no_call_spans(self):
-    #     """Check if there is a no call span and add it if there is not"""
-    #     spans = [
-    #           span for span in self.spans.values() if not span.child_spans]
-    #     for span in spans:
-    #         self.add_span(
-    #             span.span_id + "NOCALL", span.name + "_NO_CALL",
-    #             span._end_time, span._end_time, span.span_id
-    #         )
-
-    def yield_pv_event_sequence(self) -> Generator[PVEvent, Any, None]:
+    def yield_pv_event_sequence(
+        self, include_start_end_status: bool = False,
+        with_end_span: bool = False
+    ) -> Generator[PVEvent, Any, None]:
         """Return the pv event sequence
 
+        :param include_start_end_status: Whether to include the start and end
+        status, defaults to `False`
+        :type include_start_end_status: `bool`, optional
+        :param with_end_span: Whether to add an end span, defaults to `False`
+        :type with_end_span: `bool`, optional
         :return: The pv event sequence
         :rtype: `Generator`[:class:`PVEvent`, `Any`, `None`]
         """
         graph = self._graph
-        # self.check_and_add_no_call_spans()
-        self.root_span.update_graph_with_connections(graph)
-        for span in self.spans.values():
+        if include_start_end_status:
+            self.root_span.update_graph_with_connections_start_end(
+                graph, with_end_span=with_end_span
+            )
+        else:
+            self.root_span.update_graph_with_connections(graph)
+        for span in (
+            self.spans.values()
+            if not include_start_end_status else graph.nodes()
+        ):
             yield span.to_pv_event(
                 self.trace_id, self.job_name, graph
             )
@@ -414,7 +469,6 @@ def get_trace_from_span_dicts(
     for span in spans:
         if trace.trace_id is None:
             trace.trace_id = span["trace_id"]
-        # span_name, span_operation = get_name_and_operation(span)
         span_status = get_http_status_code_from_span(span)
         trace.add_span(
             span["span_id"], span["operation"],
@@ -446,15 +500,15 @@ if __name__ == "__main__":
             with open(file, "r") as f:
                 spans.append(json.load(f))
         trace = get_trace_from_span_dicts(spans)
-        json_list = list(trace.yield_pv_event_sequence())
+        json_list = list(trace.yield_pv_event_sequence(True))
         fig = get_graphviz_plot(trace._graph, (30, 30))
         fig.savefig(
-            "outputs/may13-15/ExportHighPV/linked_spans_"
+            "outputs/may13-15/ExportHigh_data/linked_spans_"
             f"{i}_pv_event_sequence.png"
         )
         plt.close(fig)
         with open(
-            "outputs/may13-15/ExportHighPV/linked_spans_"
+            "outputs/may13-15/ExportHigh_data/linked_spans_"
             f"{i}_pv_event_sequence.json", "w"
         ) as f:
             json.dump(json_list, f, indent=4)
