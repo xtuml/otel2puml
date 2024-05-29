@@ -67,26 +67,33 @@ class TestLoop():
     def test_check_subloop() -> None:
         """Test the check_subloop method of the Loop class."""
         loop = Loop(["A", "B", "C", "D"])
+        loop.add_edge_to_remove(("D", "A"))
 
         other = Loop(["A", "B", "C", "D"])
         assert not loop.check_subloop(other)
 
         other = Loop(["B"])
+        other.add_edge_to_remove(("B", "B"))
         assert loop.check_subloop(other)
 
         other = Loop(["A", "B"])
+        other.add_edge_to_remove(("B", "A"))
         assert loop.check_subloop(other)
 
         other = Loop(["C", "D"])
+        other.add_edge_to_remove(("D", "C"))
         assert loop.check_subloop(other)
 
         other = Loop(["D", "A"])
-        assert loop.check_subloop(other)
+        other.add_edge_to_remove(("D", "A"))
+        assert not loop.check_subloop(other)
 
         other = Loop(["B", "D"])
+        other.add_edge_to_remove(("D", "B"))
         assert not loop.check_subloop(other)
 
         other = Loop(["B", "D", "C"])
+        other.add_edge_to_remove(("C", "B"))
         assert not loop.check_subloop(other)
 
         loop.set_merged()
@@ -284,7 +291,7 @@ def test_add_loop_edges_to_remove() -> None:
             assert loop.edges_to_remove == {("E", "C")}
         else:
             assert loop.edges_to_remove == {
-                ("E", "B"), ("D", "C"), ("D", "B"), ("E", "C")
+                ("E", "B"), ("D", "C")
             }
 
     loops = [Loop(["B", "D", "E"])]
@@ -388,6 +395,8 @@ def test_update_subloops() -> None:
     """Test the update_subloops function."""
     loop1 = Loop(["A"])
     loop2 = Loop(["A", "B", "C"])
+    loop1.add_edge_to_remove(("A", "A"))
+    loop2.add_edge_to_remove(("C", "A"))
 
     loops = [loop1, loop2]
     loops = update_subloops(loops)
@@ -398,6 +407,8 @@ def test_update_subloops() -> None:
 
     loop1 = Loop(["A", "B", "C"])
     loop2 = Loop(["A"])
+    loop1.add_edge_to_remove(("A", "A"))
+    loop2.add_edge_to_remove(("C", "A"))
 
     loops = [loop1, loop2]
     loops = update_subloops(loops)
@@ -407,8 +418,11 @@ def test_update_subloops() -> None:
     assert subloop == loop2
 
     loop1 = Loop(["A"])
-    loop2 = Loop(["D", "A"])
+    loop2 = Loop(["A", "B", "C"])
     loop3 = Loop(["A", "B", "C", "D"])
+    loop1.add_edge_to_remove(("A", "A"))
+    loop2.add_edge_to_remove(("C", "A"))
+    loop3.add_edge_to_remove(("D", "A"))
 
     loops = [loop1, loop2, loop3]
     loops = update_subloops(loops)
@@ -421,6 +435,8 @@ def test_update_subloops() -> None:
 
     loop1 = Loop(["A"])
     loop2 = Loop(["B", "C"])
+    loop1.add_edge_to_remove(("A", "A"))
+    loop2.add_edge_to_remove(("C", "B"))
     loops = [loop1, loop2]
     loops = update_subloops(loops)
     assert len(loops) == 2
@@ -460,7 +476,7 @@ def test_merge_loops() -> None:
     loop, = loops
     assert set(loop.nodes) == {"B", "C", "D", "E"}
     assert loop.edges_to_remove == {
-        ("D", "B"), ("E", "C"), ("E", "B"), ("D", "C")
+        ("E", "B"), ("D", "C")
     }
 
     assert len(loop.sub_loops) == 2

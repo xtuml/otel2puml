@@ -1,5 +1,5 @@
 """Utils for the tel2puml package."""
-
+from datetime import datetime
 from itertools import permutations
 from typing import Optional, Generator, Any, TypeVar, Iterable, Hashable
 
@@ -197,3 +197,32 @@ def circularly_identical(list1: list[Any], list2: list[Any]) -> bool:
 
             return True
     return False
+
+
+def datetime_to_pv_string(date_time: datetime) -> str:
+    """Convert a datetime object to a pv string.
+
+    :param date_time: The datetime object to convert.
+    :type date_time: `datetime`
+    :return: The pv string.
+    :rtype: `str`
+    """
+    return date_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+
+def check_is_sub_list(
+    sub_list: list[Any], super_list: list[Any]
+) -> bool:
+    """Check if the first list is a sublist of the second list.
+
+    :param sub_list: The sublist to check.
+    :type sub_list: `list`
+    :param super_list: The superlist to check.
+    :type super_list: `list`
+    :return: Whether the first list is a sublist of the second list.
+    :rtype: `bool`
+    """
+    return any(
+        super_list[idx: idx + len(sub_list)] == sub_list
+        for idx in range(len(super_list) - len(sub_list) + 1)
+    )

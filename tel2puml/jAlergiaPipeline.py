@@ -36,4 +36,5 @@ def remove_loop_edges_from_graph(
     :type loop: :class:`Loop`
     """
     for edge in loop.all_edges_to_remove:
-        graph.remove_edge(*edge)
+        if graph.has_edge(*edge):
+            graph.remove_edge(*edge)

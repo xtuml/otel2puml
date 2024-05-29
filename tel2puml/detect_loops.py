@@ -1,12 +1,13 @@
 """A module to detect all loops in a graph."""
 from typing import Self, Optional, Union, Iterable, Generator
+from logging import getLogger
 
 from networkx import (
     DiGraph, simple_cycles, all_simple_paths, weakly_connected_components,
     has_path
 )
 
-from tel2puml.utils import circularly_identical
+from tel2puml.utils import check_is_sub_list
 
 
 class Loop:
@@ -56,10 +57,19 @@ class Loop:
             raise RuntimeError("Method not available after merge")
         if other.get_edges() == self.get_edges():
             return False
-        for sublist in self.get_sublist_of_length(self.nodes, len(other)):
-            if circularly_identical(sublist, other.nodes):
-                return True
-        return False
+        index_of_start = self.nodes.index([
+            start_point for start_point in self.start_points
+        ][0])
+        ordered_nodes = self.nodes[index_of_start:] + self.nodes[
+            :index_of_start
+        ]
+        other_index = other.nodes.index([
+            start_point for start_point in other.start_points
+        ][0])
+        other_ordered_nodes = other.nodes[other_index:] + other.nodes[
+            :other_index
+        ]
+        return check_is_sub_list(other_ordered_nodes, ordered_nodes)
 
     def add_edge_to_remove(self, edge: tuple[str, str]) -> None:
         """Add an edge to remove from the loop.
@@ -133,6 +143,7 @@ class Loop:
         :type sub_loop: `Loop`
         """
         self.sub_loops.append(sub_loop)
+        self.edges_to_remove.difference_update(sub_loop.edges_to_remove)
 
     def set_merged(self) -> None:
         """Set the merge_processed property to True."""
@@ -212,6 +223,8 @@ def add_loop_edges_to_remove(
     :return: The updated loops.
     :rtype: `list`[`Loop`]
     """
+    graph = DiGraph(edges)
+    root_node = [node for node, degree in graph.in_degree() if degree == 0][0]
     loop_edges = {
         edge
         for loop in loops
@@ -233,7 +246,22 @@ def add_loop_edges_to_remove(
                 and u in {w for w, _ in exits}
             }
             for edge in edges_to_remove:
-                loop.add_edge_to_remove(edge)
+                # make sure the edge loops back
+                if (
+                    loop.nodes.index(edge[0]) + 1
+                ) % len(loop) == loop.nodes.index(edge[1]):
+                    # create a copy of the graph and remove all other nodes
+                    # that could start the loop from the other edges to remove
+                    copy_graph = graph.copy()
+                    for other_edge in edges_to_remove:
+                        if other_edge[1] != edge[1]:
+                            if other_edge[1] in copy_graph.nodes:
+                                copy_graph.remove_node(other_edge[1])
+                    # check that the potential start node can be reached from
+                    # the root node without passing through the other nodes
+                    # that could start the loop
+                    if has_path(copy_graph, root_node, edge[1]):
+                        loop.add_edge_to_remove(edge)
         else:
             raise ValueError("No entries or no exits")
 
@@ -380,7 +408,6 @@ def merge_loops(loops: list[Loop]) -> list[Loop]:
     merged_loops: list[Loop] = []
     while len(loops) > 0:
         loop = loops.pop(0)
-        loop.sub_loops = merge_loops(loop.sub_loops)
         merged = False
         for merged_loop in merged_loops:
             # check that there are common nodes between the edges to remove
@@ -409,6 +436,8 @@ def merge_loops(loops: list[Loop]) -> list[Loop]:
         if not merged:
             loop.set_merged()
             merged_loops.append(loop)
+    for merged_loop in merged_loops:
+        merged_loop.sub_loops = merge_loops(merged_loop.sub_loops)
 
     return merged_loops
 
@@ -441,8 +470,10 @@ def update_break_points(
             if node not in loop.nodes:
                 loop.nodes.append(node)
                 breaks_from_subloops.append(node)
-
-        for _, v in loop.break_edges:
+        # removal of break edges set in case break edges pass through loop end
+        # points
+        break_edges_to_remove: set[tuple[str, str]] = set()
+        for u, v in loop.break_edges:
             if len(loop.exit_points) == 0:
                 raise ValueError("No exit points")
             paths_to_exits = [
@@ -453,6 +484,9 @@ def update_break_points(
                 tuple(path[:-1])
                 for paths in paths_to_exits
                 for path in paths
+                if not loop.exit_points.intersection(path[:-1])
+                and not loop.start_points.intersection(path[:-1])
+                and not loop.end_points.intersection(path[:-1])
             }
             if len(unique_path) == 1:
                 for node in (path := unique_path.pop()):
@@ -463,7 +497,14 @@ def update_break_points(
             elif len(unique_path) > 1:
                 raise ValueError("Multiple paths")
             else:
-                raise ValueError("No paths")
+                # if there are no paths to the exit point then this can't be a
+                # break point
+                getLogger(__name__).info(
+                    "No unique path to exit point"
+                )
+                break_edges_to_remove.add((u, v))
+        # remove break edges that have no paths to exit points
+        loop.break_edges.difference_update(break_edges_to_remove)
 
     if sub_loop:
         return breaks_from_subloops

@@ -566,7 +566,8 @@ class PUMLGraph(DiGraph):
                 "Node not found in parent graph nodes to node ref"
             )
         for graph_node in self.parent_graph_nodes_to_node_ref[node_ref]:
-            node_set.add(graph_node)
+            if graph_node in self.nodes:
+                node_set.add(graph_node)
 
     def replace_subgraph_node_from_start_and_end_nodes(
         self, start_node: PUMLNode, end_node: PUMLNode, node_name: str,
