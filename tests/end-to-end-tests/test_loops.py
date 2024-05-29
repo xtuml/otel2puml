@@ -112,3 +112,10 @@ class TestEdgeCases:
         end_to_end_test(
             "end-to-end-pumls/loops/edge_cases/loop_break_split_exit.puml",
         )
+
+    @staticmethod
+    def test_paths_should_kill_in_loop() -> None:
+        """Test paths that should kill in loop."""
+        end_to_end_test(
+            "end-to-end-pumls/loops/edge_cases/paths_should_kill_in_loop.puml",
+        )
