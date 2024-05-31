@@ -707,3 +707,91 @@ def get_all_lonely_merge_killed_edges_from_loop_nodes_and_end_points(
         if len(out_edges) - len(killed_nodes) == 1:
             for killed_node in killed_nodes:
                 yield node, killed_node
+
+
+def get_all_kill_edges_from_loops(
+    graph: DiGraph,
+    loops: list[Loop],
+) -> set[tuple[str, str]]:
+    """Get all kill edges from the loops.
+
+    :param graph: The graph to get the kill edges from.
+    :type graph: `DiGraph`
+    :param loops: The loops to get the kill edges from.
+    :type loops: `list`[`Loop`]
+    :return: The kill edges.
+    :rtype: `set`[`tuple`[`str`, `str`]]
+    """
+    kill_edges: set[tuple[str, str]] = set()
+    for loop in loops:
+        for edge in get_all_kill_edges_from_loop(graph, loop):
+            kill_edges.add(edge)
+    return kill_edges
+
+
+def get_all_kill_edges_from_loop(
+    graph: DiGraph,
+    loop: Loop,
+) -> Generator[tuple[str, str], None, None]:
+    """Get all kill edges from the loop.
+
+    :param graph: The graph to get the kill edges from.
+    :type graph: `DiGraph`
+    :param loop: The loop to get the kill edges from.
+    :type loop: `Loop`
+    :return: The kill edges.
+    :rtype: `Generator`[`tuple`[`str`, `str`], `None`, `None`]
+    """
+    loop_nodes = extract_loop_nodes_from_graph(graph, loop)
+    yield from (
+        get_all_kill_edges_from_loop_nodes_and_end_points(
+            graph, loop_nodes, loop.end_points,
+            loop.start_points
+        )
+    )
+    for sub_loop in loop.sub_loops:
+        yield from get_all_kill_edges_from_loop(graph, sub_loop)
+
+
+def get_all_kill_edges_from_loop_nodes_and_end_points(
+    graph: DiGraph,
+    loop_nodes: Iterable[str],
+    end_points: set[str],
+    start_points: set[str],
+) -> Generator[tuple[str, str], None, None]:
+    """Get all kill edges from the loop nodes and end points.
+
+    :param graph: The graph to get the kill edges from.
+    :type graph: `DiGraph`
+    :param loop_nodes: The nodes from the loop.
+    :type loop_nodes: `Iterable`[`Hashable`]
+    :param end_points: The end points of the loop.
+    :type end_points: `set`[`Hashable`]
+    :return: The kill edges.
+    :rtype: `Generator`[`tuple`[`Hashable`, `Hashable`], `None`, `None`]
+    """
+    if len(start_points) != 1:
+        for start_point in start_points:
+            if all(
+                not has_path(graph, start_point, end_point)
+                for end_point in end_points
+            ):
+                in_edges = graph.in_edges(start_point)
+                if len(in_edges) != 1:
+                    raise ValueError(
+                        "Multiple in edges to start point in a loop with "
+                        "multiple start points"
+                    )
+                yield in_edges[0]
+    for node in loop_nodes:
+        if node in end_points:
+            continue
+        out_edges = graph.out_edges(node)
+        if len(out_edges) <= 1:
+            continue
+        for edge in out_edges:
+            if all(
+                not has_path(graph, edge[1], end_point)
+                for end_point in end_points
+            ):
+                yield edge
