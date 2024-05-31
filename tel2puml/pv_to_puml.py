@@ -23,13 +23,15 @@ from tel2puml.node_map_to_puml.node import (
 )
 from tel2puml.detect_loops import (
     detect_loops, get_all_break_edges_from_loops,
-    get_all_lonely_merge_killed_edges_from_loops
+    get_all_lonely_merge_killed_edges_from_loops,
+    get_all_kill_edges_from_loops
 )
 from tel2puml.puml_graph.graph_loop_insert import insert_loops
 from tel2puml.node_map_to_puml.node_update import (
     update_nodes_with_break_points_from_loops,
     get_node_to_node_map_from_edges,
-    update_logic_nodes_with_lonely_merges_from_node_to_node_kill_map
+    update_logic_nodes_with_lonely_merges_from_node_to_node_kill_map,
+    add_loop_kill_paths_for_nodes
 )
 
 
@@ -87,6 +89,15 @@ def pv_to_puml_string(
     node_to_node_kill_map = get_node_to_node_map_from_edges(kill_edges)
     update_logic_nodes_with_lonely_merges_from_node_to_node_kill_map(
         node_to_node_kill_map, event_node_reference
+    )
+    # get all kill edges from loops and update the logic nodes with them
+    loop_must_kill_edges = get_all_kill_edges_from_loops(markov_graph, loops)
+    must_kill_node_to_node_map = get_node_to_node_map_from_edges(
+        loop_must_kill_edges
+    )
+    add_loop_kill_paths_for_nodes(
+        must_kill_node_to_node_map,
+        merged_markov_and_logic
     )
     # create the PlantUML graph
     puml_graph = create_puml_graph_from_node_class_graph(
