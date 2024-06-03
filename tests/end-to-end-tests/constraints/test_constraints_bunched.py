@@ -176,3 +176,11 @@ class TestBunchedHard:
             "end-to-end-pumls/constraints/bunched/"
             "bunched_3_levels_same_XOR.puml",
         )
+
+    @staticmethod
+    def test_bunched_XOR_XOR_with_kill() -> None:
+        """Test bunched XOR with XOR with kill."""
+        end_to_end_test(
+            "end-to-end-pumls/constraints/bunched/"
+            "bunched_XORFork_XORFork_with_kill.puml",
+        )

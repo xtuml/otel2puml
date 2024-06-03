@@ -279,49 +279,6 @@ class Node:
                 )
             logic_list.append(logic_operator_node)
 
-    def copy_node(
-        self,
-        uid: str = None,
-        incoming: list = None,
-        outgoing: list = None,
-        incoming_logic: list = None,
-        outgoing_logic: list = None,
-    ):
-        """
-        Creates a copy of this node with optional modifications to its
-            attributes.
-
-        Args:
-            uid (Any, optional): The modified data for the copied node.
-                Defaults to None.
-            incoming (List[Edge], optional): The modified incoming edges for
-                the copied node. Defaults to None.
-            outgoing (List[Edge], optional): The modified outgoing edges for
-                the copied node. Defaults to None.
-            incoming_logic (Any, optional): The modified incoming logic for
-                the copied node. Defaults to None.
-            outgoing_logic (Any, optional): The modified outgoing logic for
-                the copied node. Defaults to None.
-
-        Returns:
-            Node: The copied node with optional modifications.
-        """
-        return Node(
-            uid=self.uid if uid is None else uid,
-            incoming=self.incoming if incoming is None else incoming,
-            outgoing=self.outgoing if outgoing is None else outgoing,
-            incoming_logic=(
-                self.incoming_logic
-                if incoming_logic is None
-                else incoming_logic
-            ),
-            outgoing_logic=(
-                self.outgoing_logic
-                if outgoing_logic is None
-                else outgoing_logic
-            ),
-        )
-
     def traverse_logic(
         self,
         direction: Literal["incoming", "outgoing"],
@@ -372,17 +329,9 @@ class Node:
                 return operator
         return None
 
-    def rotate_path(self) -> None:
-        """Rotates the path."""
-        self.outgoing_logic = (
-            [self.outgoing_logic[-1]] + self.outgoing_logic[:-1]
-        )
-        if self.outgoing:
-            self.outgoing = [self.outgoing[-1]] + self.outgoing[:-1]
-
     def get_outgoing_logic_by_indices(
-            self,
-            indices: list[int]
+        self,
+        indices: list[int]
     ) -> list["Node"]:
         """Gets the outgoing logic by indices.
 
@@ -578,6 +527,8 @@ class LogicBlockHolder:
         self.end_node = end_node
         self.logic_node = logic_node
         self.paths = logic_node.outgoing_logic.copy()
+        self._path_indexes = list(range(len(self.paths)))
+        self._merged_path_indexes: list[int] = []
         self.merge_nodes: list[None | Node] = [None] * len(self.paths)
         self.puml_nodes = [start_node] * len(self.paths)
         self.will_merge = False
@@ -625,6 +576,7 @@ class LogicBlockHolder:
             self.paths.pop()
             self.merge_nodes.pop()
             self.puml_nodes.pop()
+            self._merged_path_indexes.append(self._path_indexes.pop())
         return self.current_path
 
     def rotate_path(
@@ -638,14 +590,12 @@ class LogicBlockHolder:
         """
         self.paths = [current_node_in_path] + self.paths[:-1]
         self.merge_nodes = [self.merge_nodes[-1]] + self.merge_nodes[:-1]
+        self._path_indexes = [self._path_indexes[-1]] + self._path_indexes[:-1]
         self.puml_nodes = [current_puml_node_in_path] + self.puml_nodes[:-1]
         if self.lonely_merge_index is not None:
             self.lonely_merge_index = (
                 (self.lonely_merge_index + 1) % len(self.paths)
             )
-
-        self.logic_node.rotate_path()
-
         return self.current_path_puml_node, self.current_path,
 
     def handle_path_merge(self, potential_merge_node: Node) -> bool:
@@ -763,12 +713,8 @@ class LogicBlockHolder:
         new_node = Node(
             operator=self.logic_node.operator,
             outgoing_logic=self.logic_node.get_outgoing_logic_by_indices(
-                indices
+                [self._path_indexes[index] for index in indices]
             ),
-            outgoing=self.logic_node.get_outgoing_logic_by_indices(
-                indices
-            ),
-            incoming_logic=[self.logic_node],
         )
 
         self.merge_nodes = [
@@ -782,9 +728,19 @@ class LogicBlockHolder:
         ] + [new_node]
         self.logic_node.set_outgoing_logic(
             self.logic_node.get_outgoing_logic_by_indices(
-                not_indices
+                [self._path_indexes[index] for index in not_indices]
+                + self._merged_path_indexes
             ) + [new_node]
         )
+        # make sure all indexes that mirror the logic node indexes are updated
+        # correctly
+        not_indices_len = len(not_indices)
+        merged_paths_indices_len = len(self._merged_path_indexes)
+        self._path_indexes = list(range(not_indices_len))
+        self._merged_path_indexes = list(
+            range(not_indices_len, not_indices_len + merged_paths_indices_len)
+        )
+        self._path_indexes += [not_indices_len + merged_paths_indices_len]
         return nodes_to_remove
 
     def is_on_lonely_merge_path(self) -> bool:

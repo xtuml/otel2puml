@@ -109,3 +109,8 @@ Test for a bunched constraint with three levels of AND constraints
 Test for a bunched constraint with three levels of XOR constraints
 
 ![](/end-to-end-pumls/constraints/bunched/bunched_3_levels_same_XOR.svg)
+
+### Two bunched XOR with a kill
+Test for a bunched constraint with two levels of XOR constraints and a kill on the top level
+
+![](/end-to-end-pumls/constraints/bunched/bunched_XORFork_XORFork_with_kill.svg)
