@@ -131,6 +131,14 @@ def add_loop_kill_paths_for_nodes(
     node_to_node_kill_map: dict[str, set[str]],
     node_class_graph: "DiGraph[Node]"
 ) -> None:
+    """Adds the loop kill paths for the given nodes.
+
+    :param node_to_node_kill_map: The node to node kill map to use to add the
+    loop kill paths
+    :type node_to_node_kill_map: `dict`[`str`, `set`[`str`]]
+    :param node_class_graph: The node class graph to update
+    :type node_class_graph: :class:`DiGraph`[:class:`Node`]
+    """
     for node in node_class_graph.nodes:
         if node.uid in node_to_node_kill_map:
             if len(node.outgoing_logic) != 1:
