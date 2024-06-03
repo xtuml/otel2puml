@@ -1,6 +1,8 @@
 """"""
 from typing import Iterable
 
+from networkx import DiGraph
+
 from tel2puml.detect_loops import Loop, get_all_break_points_from_loops
 from tel2puml.node_map_to_puml.node import Node, get_node_as_list
 from tel2puml.tel2puml_types import PUMLEvent
@@ -123,3 +125,28 @@ def get_node_to_node_map_from_edges(
             node_to_node_map[start_event] = set()
         node_to_node_map[start_event].add(end_event)
     return node_to_node_map
+
+
+def add_loop_kill_paths_for_nodes(
+    node_to_node_kill_map: dict[str, set[str]],
+    node_class_graph: "DiGraph[Node]"
+) -> None:
+    """Adds the loop kill paths for the given nodes.
+
+    :param node_to_node_kill_map: The node to node kill map to use to add the
+    loop kill paths
+    :type node_to_node_kill_map: `dict`[`str`, `set`[`str`]]
+    :param node_class_graph: The node class graph to update
+    :type node_class_graph: :class:`DiGraph`[:class:`Node`]
+    """
+    for node in node_class_graph.nodes:
+        if node.uid in node_to_node_kill_map:
+            if len(node.outgoing_logic) != 1:
+                raise ValueError(
+                    f"Node {node.uid} does not have a single logic node"
+                    "when it should do"
+                )
+            logic_node = node.outgoing_logic[0]
+            logic_node.update_loop_kill_paths_from_given_leaf_nodes(
+                node_to_node_kill_map[node.uid]
+            )

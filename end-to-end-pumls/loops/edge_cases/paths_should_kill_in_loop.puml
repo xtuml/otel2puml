@@ -1,0 +1,30 @@
+@startuml
+partition "paths_should_kill_in_loop" {
+    group "paths_should_kill_in_loop"
+        #green:A;
+        repeat
+            :J;
+            fork
+                :B;
+            fork again
+                :C;
+            fork again
+                :H;
+                :I;
+                :K;
+                kill
+            fork again
+                :I;
+                :K;
+                kill
+            end fork
+            :E;
+            :D;
+        repeat while 
+        :G;
+        :H;
+        :I;
+        :K;
+    end group
+}
+@enduml

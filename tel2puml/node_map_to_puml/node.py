@@ -81,10 +81,9 @@ class Node:
 
         self.event_types = set() if event_types is None else event_types
 
-        self.branch_enum = ["AND", "OR", "XOR", "LOOP", "BRANCH"]
-
         self.lonely_merge: "Node" | None = None
         self._event_incoming: Event | None = None
+        self.is_loop_kill_path: list[bool] = []
 
     def __repr__(self) -> str:
         return self.uid + ":" + (self.event_type or self.operator or "None")
@@ -113,6 +112,24 @@ class Node:
         if self.event_type is None:
             raise ValueError("Event type is not set")
         self._event_incoming = value
+
+    def update_logic_list(
+        self,
+        node: "Node",
+        direction: Literal["incoming", "outgoing"]
+    ) -> None:
+        """Updates the logic list.
+
+        :param direction: The direction to update the logic list.
+        :type direction: `Literal`[`"incoming"`, `"outgoing"`]
+        """
+        if direction not in ["incoming", "outgoing"]:
+            raise ValueError(f"Invalid direction {direction}")
+        if direction == "incoming":
+            self.incoming_logic.append(node)
+        else:
+            self.outgoing_logic.append(node)
+            self.is_loop_kill_path.append(False)
 
     def update_node_list_with_nodes(
         self, nodes: list["Node"], direction: Literal["incoming", "outgoing"]
@@ -228,11 +245,6 @@ class Node:
                     )
                 return
 
-        if direction == "incoming":
-            logic_list = self.incoming_logic
-        else:
-            logic_list = self.outgoing_logic
-
         if logic_tree.label is not None:
             if (
                 logic_tree.label not in event_node_map
@@ -262,7 +274,10 @@ class Node:
                 getattr(self, direction).append(
                     event_node_map[logic_tree.label]
                 )
-                logic_list.append(event_node_map[logic_tree.label])
+                self.update_logic_list(
+                    event_node_map[logic_tree.label],
+                    direction
+                )
 
         elif logic_tree.operator == Operator.SEQUENCE:
             for child in logic_tree.children:
@@ -277,7 +292,7 @@ class Node:
                 logic_operator_node._load_logic_into_logic_list(
                     child, event_node_map, direction, root_node
                 )
-            logic_list.append(logic_operator_node)
+            self.update_logic_list(logic_operator_node, direction)
 
     def traverse_logic(
         self,
@@ -349,6 +364,25 @@ class Node:
         :type outgoing_logic: `list`[:class:`Node`]
         """
         self.outgoing_logic = outgoing_logic
+
+    def update_loop_kill_paths_from_given_leaf_nodes(
+        self, leaf_nodes: set[str],
+    ) -> None:
+        """Updates the loop kill paths from given leaf nodes.
+
+        :param leaf_nodes: The leaf nodes to update the loop kill paths from.
+        :type leaf_nodes: `set`[`str`]
+        """
+        if self.operator is None:
+            return
+        for index, node in enumerate(self.outgoing_logic):
+            if all(
+                leaf_of_logic.uid in leaf_nodes
+                for leaf_of_logic in get_node_as_list(node)
+            ):
+                self.is_loop_kill_path[index] = True
+            else:
+                node.update_loop_kill_paths_from_given_leaf_nodes(leaf_nodes)
 
 
 def load_all_logic_trees_into_nodes(
@@ -537,7 +571,8 @@ class LogicBlockHolder:
             self.lonely_merge_index = self.paths.index(logic_node.lonely_merge)
         else:
             self.lonely_merge_index = None
-        self.impossible_and_or_merge = False
+        self.loop_kill_paths = logic_node.is_loop_kill_path.copy()
+        self.impossible_and_or_merges = [False] * len(self.paths)
 
     @property
     def current_path(self) -> Node | None:
@@ -545,6 +580,14 @@ class LogicBlockHolder:
         if self.paths:
             return self.paths[-1]
         return None
+
+    @current_path.setter
+    def current_path(self, value: Node) -> None:
+        """Sets the current path."""
+        if self.paths:
+            self.paths[-1] = value
+        else:
+            raise ValueError("No paths to set")
 
     @property
     def current_path_puml_node(self) -> PUMLNode:
@@ -570,12 +613,11 @@ class LogicBlockHolder:
         :return: The path node.
         :rtype: :class:`Node` | `None`
         """
-        if self.will_merge:
-            pop = True
         if self.paths and pop:
             self.paths.pop()
             self.merge_nodes.pop()
             self.puml_nodes.pop()
+            self.loop_kill_paths.pop()
             self._merged_path_indexes.append(self._path_indexes.pop())
         return self.current_path
 
@@ -590,6 +632,13 @@ class LogicBlockHolder:
         """
         self.paths = [current_node_in_path] + self.paths[:-1]
         self.merge_nodes = [self.merge_nodes[-1]] + self.merge_nodes[:-1]
+        self.loop_kill_paths = (
+            [self.loop_kill_paths[-1]] + self.loop_kill_paths[:-1]
+        )
+        self.impossible_and_or_merges = (
+            [self.impossible_and_or_merges[-1]]
+            + self.impossible_and_or_merges[:-1]
+        )
         self._path_indexes = [self._path_indexes[-1]] + self._path_indexes[:-1]
         self.puml_nodes = [current_puml_node_in_path] + self.puml_nodes[:-1]
         if self.lonely_merge_index is not None:
@@ -610,7 +659,7 @@ class LogicBlockHolder:
         :return: Whether the merge was successful.
         :rtype: `bool`
         """
-        if self.will_merge:
+        if self.will_merge and not self.loop_kill_paths[-1]:
             return True
         if self.current_path is None:
             raise ValueError("No current path to merge")
@@ -620,15 +669,23 @@ class LogicBlockHolder:
         else:
             self.merge_counter = 0
         self.merge_nodes[-1] = potential_merge_node
-        # set previous merge nodes to the current merge nodes
-        if len(set(self.merge_nodes)) == 1:
-            # check if for AND or OR logic merges that the merge node is
-            # correct to merge on
-            self.will_merge = self._check_merge_is_correct()
-            return self.will_merge
+        if self.loop_kill_paths[-1]:
+            self._check_merge_is_correct(potential_merge_node)
+            return False
+        elif any(self.loop_kill_paths):
+            return False
+        else:
+            # set previous merge nodes to the current merge nodes
+            if len(set(self.merge_nodes)) == 1:
+                # check if for AND or OR logic merges that the merge node is
+                # correct to merge on
+                self.will_merge = self._check_merge_is_correct(
+                    potential_merge_node
+                )
+                return self.will_merge
         return False
 
-    def _check_merge_is_correct(self) -> bool:
+    def _check_merge_is_correct(self, potential_merge_node: Node) -> bool:
         """Checks if the merge is correct for AND or OR logic nodes. This is
         performed by checking that if the logic block is an AND/OR block that
         the merge node contains the event set of all the evnet types of the
@@ -638,19 +695,18 @@ class LogicBlockHolder:
         :return: Whether the merge is correct.
         :rtype: `bool`
         """
-        potential_merge_node = self.merge_nodes[0]
-        if potential_merge_node is None:
-            raise ValueError(
-                "Potential merge node is None. Function is being used outside "
-                "of its intended purpose."
-            )
         if self.logic_node.operator not in ["AND", "OR"]:
             return True
 
         # check first that the merge node contains the event set of all the
         # event types of the nodes in the logic block paths (
         # potential AND merges of same event type)
-        paths_event_types = [node.event_type for node in self.paths]
+        paths_event_types = [
+            node.event_type for node, merge_node in zip(
+                self.paths, self.merge_nodes
+            )
+            if merge_node == potential_merge_node
+        ]
         contains_event_set = (
             potential_merge_node.event_incoming.has_event_set_as_subset(
                 paths_event_types
@@ -666,7 +722,9 @@ class LogicBlockHolder:
                     potential_merge_node.event_incoming.get_reduced_event_set()
                 ):
                     return True
-            self.impossible_and_or_merge = True
+            for index, merge_node in enumerate(self.merge_nodes):
+                if merge_node == potential_merge_node:
+                    self.impossible_and_or_merges[index] = True
             return False
         return True
 
@@ -684,6 +742,15 @@ class LogicBlockHolder:
         :return: The nodes to remove.
         :rtype: `set`[:class:`PUMLNode`]
         """
+        # whilst there are still loop kill paths still check if the merge node
+        # is for all of the non loop kill paths, if so do nothing and return
+        if not self.loop_kill_paths[-1]:
+            if sum(
+                1 for m_node in self.merge_nodes if m_node == merge_node
+            ) == sum(
+                1 for is_kill_path in self.loop_kill_paths if not is_kill_path
+            ):
+                return set()
         indices = [
             i
             for i, x in enumerate(self.merge_nodes)
@@ -716,6 +783,8 @@ class LogicBlockHolder:
                 [self._path_indexes[index] for index in indices]
             ),
         )
+        # make sure the new node created has no kill paths
+        new_node.is_loop_kill_path = [False] * len(indices)
 
         self.merge_nodes = [
             self.merge_nodes[index] for index in not_indices
@@ -726,12 +795,16 @@ class LogicBlockHolder:
         self.paths = [
             self.paths[index] for index in not_indices
         ] + [new_node]
+        self.loop_kill_paths = [
+            self.loop_kill_paths[index] for index in not_indices
+        ] + [all(self.loop_kill_paths[index] for index in indices)]
         self.logic_node.set_outgoing_logic(
             self.logic_node.get_outgoing_logic_by_indices(
                 [self._path_indexes[index] for index in not_indices]
                 + self._merged_path_indexes
             ) + [new_node]
         )
+        self.logic_node.is_loop_kill_path = self.loop_kill_paths.copy()
         # make sure all indexes that mirror the logic node indexes are updated
         # correctly
         not_indices_len = len(not_indices)
@@ -941,26 +1014,35 @@ def handle_reach_potential_merge_point(
         if logic_block.merge_counter > len(logic_block.merge_nodes):
             logic_block.merge_counter = 0
             # handle case of impossible and/or merge
-            if logic_block.impossible_and_or_merge:
-                logic_block.impossible_and_or_merge = False
+            if logic_block.impossible_and_or_merges[-1]:
+                for index, merge_node in enumerate(logic_block.merge_nodes):
+                    if merge_node == next_node_class:
+                        logic_block.impossible_and_or_merges[index] = False
                 # loop over all paths in the logic block and advance the path
-                for _ in range(len(logic_block.paths)):
-                    new_puml_node, _ = update_puml_graph_with_event_node(
-                        puml_graph, next_node_class, previous_puml_node
-                    )
-                    previous_puml_node, previous_node_class = (
-                        logic_block.rotate_path(
-                            next_node_class, new_puml_node
+                for i in range(len(logic_block.paths)):
+                    if logic_block.merge_nodes[i] == next_node_class:
+                        new_puml_node, _ = update_puml_graph_with_event_node(
+                            puml_graph,
+                            next_node_class,
+                            logic_block.puml_nodes[i],
                         )
-                    )
-                return previous_puml_node, previous_node_class
+                        logic_block.puml_nodes[i] = new_puml_node
+                        logic_block.paths[i] = next_node_class
+                return (
+                    logic_block.current_path_puml_node,
+                    logic_block.current_path,
+                )
+            # make sure there are no more impossible merge cases lurking around
+            if any(logic_block.impossible_and_or_merges):
+                return logic_block.rotate_path(
+                    previous_node_class, previous_puml_node
+                )
 
             nodes_to_remove = set()
             counter = Counter(logic_block.merge_nodes)
             for (merge_node, count) in counter.most_common():
                 if count < 2:
                     break
-
                 nodes_to_remove.update(
                     logic_block.create_logic_merge(
                         puml_graph, merge_node
@@ -1198,7 +1280,12 @@ def check_is_merge_node_for_logic_block(
             if node != logic_block_holder.logic_node.lonely_merge:
                 return True
         return False
-    if logic_block_holder.will_merge:
+    # check if the logic block should merge and the current path is not a loop
+    # kill path
+    if (
+        logic_block_holder.will_merge
+        and not logic_block_holder.loop_kill_paths[-1]
+    ):
         return True
     # get all leaf nodes of the node classes of all the paths of the logic
     # block holder apart from the current path. Then check if there is a path
