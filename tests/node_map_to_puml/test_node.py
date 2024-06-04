@@ -527,6 +527,7 @@ def test_create_networkx_graph_of_nodes_from_markov_graph() -> None:
     # check the graphs are mirrors of one another
     assert len(node_class_graph.nodes) == len(markov_graph.nodes)
     for node in node_class_graph.nodes:
+        assert isinstance(node.uid, str)
         assert node.uid in markov_graph.nodes
         assert (
             node.event_type
@@ -582,6 +583,7 @@ def test_merge_markov_without_loops_and_logic_detection_analysis() -> None:
     }
     # test that every node has the expected connections and logic inserted
     for node in node_class_graph.nodes:
+        assert isinstance(node.event_type, str)
         for outgoing_logic_node in node.outgoing_logic:
             assert outgoing_logic_node.operator in (
                 expected_outgoing_event_type_logic[node.event_type]
@@ -597,6 +599,11 @@ def test_merge_markov_without_loops_and_logic_detection_analysis() -> None:
                 ]
             )
         for incoming_logic_node in node.incoming_logic:
+            assert isinstance(incoming_logic_node.operator, str)
+            assert all(
+                isinstance(logic_node.event_type, str)
+                for logic_node in incoming_logic_node.incoming_logic
+            )
             assert incoming_logic_node.operator in (
                 expected_incoming_event_type_logic[node.event_type]
             )

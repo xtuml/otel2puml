@@ -19,7 +19,6 @@ from tel2puml.puml_graph.graph import (
     PUMLNode,
 )
 from tel2puml.tel2puml_types import PUMLEvent, PUMLOperator
-from tel2puml.utils import check_has_path_not_through_nodes
 
 
 operator_name_map = {
@@ -428,18 +427,19 @@ def load_logic_tree_into_nodes(
 
 
 def create_networkx_graph_of_nodes_from_markov_graph(
-    markov_graph: DiGraph,
+    markov_graph: "DiGraph[str]",
     node_event_references: dict[str, str],
-) -> tuple[DiGraph, dict[str, list[Node]]]:
+) -> tuple["DiGraph[Node]", dict[str, list[Node]]]:
     """Creates a NetworkX graph of nodes from a Markov graph.
 
     :param markov_graph: The Markov graph to create the NetworkX graph from.
-    :type markov_graph: :class:`DiGraph`
+    :type markov_graph: :class:`DiGraph`[`str`]
     :param node_event_references: The node event references.
     :type node_event_references: `dict`[`str`, `str`]
     :return: A tuple containing the NetworkX graph and the event node
     reference.
-    :rtype: `tuple`[:class:`DiGraph`, `dict`[`str`, `list`[:class:`Node`]]]
+    :rtype: `tuple`[:class:`DiGraph`[:class:`Node`], `dict`[`str`,
+    `list`[:class:`Node`]]]
     """
     networkx_graph = DiGraph()
     uid_to_node = {}
@@ -466,12 +466,12 @@ def create_networkx_graph_of_nodes_from_markov_graph(
 
 
 def create_event_node_ref(
-    node_class_network_x_graph: DiGraph,
+    node_class_network_x_graph: "DiGraph[Node]",
 ) -> dict[str, list[Node]]:
     """Creates an event node reference.
 
     :param node_class_network_x_graph: The node class NetworkX graph.
-    :type node_class_network_x_graph: :class:`DiGraph`
+    :type node_class_network_x_graph: :class:`DiGraph`[:class:`Node`]
     :return: The event node reference.
     :rtype: `dict`[`str`, `list`[:class:`Node`]]
     """
@@ -507,14 +507,14 @@ def load_all_incoming_events_into_nodes(
 
 
 def merge_markov_without_loops_and_logic_detection_analysis(
-    markov_graph_ref_pair: tuple[DiGraph, dict[str, str]],
+    markov_graph_ref_pair: tuple["DiGraph[str]", dict[str, str]],
     incoming_logic_events: dict[str, Event],
     outgoing_logic_events: dict[str, Event],
-) -> tuple[DiGraph, dict[str, list[Node]]]:
+) -> tuple["DiGraph[Node]", dict[str, list[Node]]]:
     """Merges a Markov graph without loops and logic detection analysis.
 
     :param markov_graph_ref_pair: The Markov graph reference pair.
-    :type markov_graph_ref_pair: `tuple`[:class:`DiGraph`,
+    :type markov_graph_ref_pair: `tuple`[:class:`DiGraph`[`str`],
     `dict`[`str`, `str`]]
     :param incoming_logic_events: The incoming logic events.
     :type incoming_logic_events: `dict`[`str`, :class:`Event`]
@@ -522,7 +522,8 @@ def merge_markov_without_loops_and_logic_detection_analysis(
     :type outgoing_logic_events: `dict`[`str`, :class:`Event`]
     :return: A tuple containing the NetworkX graph and the event node
     reference.
-    :rtype: `tuple`[:class:`DiGraph`, `dict`[`str`, `list`[:class:`Node`]]]
+    :rtype: `tuple`[:class:`DiGraph`[:class:`Node`], `dict`[`str`,
+    `list`[:class:`Node`]]]
     """
     markov_graph, node_event_references = markov_graph_ref_pair
     node_class_graph, event_node_map = (
@@ -573,6 +574,32 @@ class LogicBlockHolder:
             self.lonely_merge_index = None
         self.loop_kill_paths = logic_node.is_loop_kill_path.copy()
         self.impossible_and_or_merges = [False] * len(self.paths)
+
+    @property
+    def paths_non_loop_kill(self) -> list[Node]:
+        """Gets the non loop kill paths.
+
+        :return: The non loop kill paths.
+        :rtype: `list`[`bool`]
+        """
+        return [
+            path for path, is_loop_kill_path in
+            zip(self.paths, self.loop_kill_paths)
+            if not is_loop_kill_path
+        ]
+
+    @property
+    def paths_loop_kill(self) -> list[Node]:
+        """Gets the loop kill paths.
+
+        :return: The loop kill paths.
+        :rtype: `list`[`bool`]
+        """
+        return [
+            path for path, is_loop_kill_path in
+            zip(self.paths, self.loop_kill_paths)
+            if is_loop_kill_path
+        ]
 
     @property
     def current_path(self) -> Node | None:
@@ -830,13 +857,13 @@ class LogicBlockHolder:
 
 
 def create_puml_graph_from_node_class_graph(
-    node_class_graph: DiGraph,
+    node_class_graph: "DiGraph[Node]",
 ) -> PUMLGraph:
     """Creates a PlantUML graph from a node class graph using the logic
     held on each node and the connections between the nodes.
 
     :param node_class_graph: The node class graph.
-    :type node_class_graph: :class:`DiGraph`
+    :type node_class_graph: :class:`DiGraph`[:class:`Node`]
     :return: The PlantUML graph.
     :rtype: :class:`PUMLGraph`
     """
@@ -1255,7 +1282,7 @@ def get_node_as_list(
 def check_is_merge_node_for_logic_block(
     node: Node,
     logic_block_holder: LogicBlockHolder,
-    node_class_graph: DiGraph,
+    node_class_graph: "DiGraph[Node]",
 ) -> bool:
     """Checks if a node has a different path to the logic node other than the
     current path of the logic block. Subsequently checks that
@@ -1268,7 +1295,7 @@ def check_is_merge_node_for_logic_block(
     :param logic_block_holder: The logic block holder.
     :type logic_block_holder: :class:`LogicBlockHolder`
     :param node_class_graph: The node class graph.
-    :type node_class_graph: :class:`DiGraph`
+    :type node_class_graph: :class:`DiGraph`[:class:`Node`]
     :return: `True` if the node has a different path to the logic node other
     than the current path of the logic block, `False` otherwise.
     :rtype: `bool`
@@ -1287,14 +1314,42 @@ def check_is_merge_node_for_logic_block(
         and not logic_block_holder.loop_kill_paths[-1]
     ):
         return True
-    # get all leaf nodes of the node classes of all the paths of the logic
-    # block holder apart from the current path. Then check if there is a path
-    # from the node to the node class that is not through the current path of
-    # the logic block holder and does not have outgoing logic
+    # check if we are mergin kill paths or not and then check the merge node
+    # is correct
+    if logic_block_holder.loop_kill_paths[-1]:
+        return check_has_valid_merge(
+            node, logic_block_holder.paths_loop_kill[:-1], node_class_graph
+        )
+    else:
+        return check_has_valid_merge(
+            node, logic_block_holder.paths_non_loop_kill[:-1], node_class_graph
+        )
+
+
+def check_has_valid_merge(
+    node: Node,
+    paths_to_check: list[Node],
+    node_class_graph: "DiGraph[Node]",
+) -> bool:
+    """Checks if a node has a valid merge point.
+
+    :param node: The node to check.
+    :type node: :class:`Node`
+    :param paths_to_check: The paths to check.
+    :type paths_to_check: `list`[:class:`Node`]
+    :param node_class_graph: The node class graph.
+    :type node_class_graph: :class:`DiGraph`[:class:`Node`]
+    :return: `True` if the node has a valid merge point, `False` otherwise.
+    :rtype: `bool`
+    """
+    # get all leaf nodes of the node classes of all the given paths.
+    # Then check if there is a path
+    # from the node to the node class that is not through and does not have
+    # outgoing logic
     for path_node in chain(
         *[
             get_node_as_list(child)
-            for child in logic_block_holder.paths[:-1]
+            for child in paths_to_check
         ]
     ):
         if path_node == node:
@@ -1303,21 +1358,8 @@ def check_is_merge_node_for_logic_block(
             # check if there is at least one incoming node that has a path to
             # the path_node and not through the current path of the logic block
             # holder and does not have outgoing logic
-            in_nodes_with_path_and_no_logic = []
-            # make sure we handle bunched logic within the current path
-            nodes_to_avoid = get_node_as_list(
-                logic_block_holder.current_path
-            )
             for in_node, _ in node_class_graph.in_edges(node):
-                if check_has_path_not_through_nodes(
-                    node_class_graph,
-                    path_node,
-                    in_node,
-                    nodes_to_avoid,
-                ):
+                if has_path(node_class_graph, path_node, in_node):
                     if not in_node.outgoing_logic:
-                        in_nodes_with_path_and_no_logic.append(in_node)
-            if len(in_nodes_with_path_and_no_logic) == 0:
-                continue
-            return True
+                        return True
     return False

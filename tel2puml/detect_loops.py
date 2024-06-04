@@ -187,11 +187,11 @@ class Loop:
         )
 
 
-def detect_loops(graph: DiGraph) -> list[Loop]:
+def detect_loops(graph: "DiGraph[str]") -> list[Loop]:
     """Detect all loops in a graph.
 
     :param graph: The graph to detect the loops from.
-    :type graph: `DiGraph`
+    :type graph: :class:`DiGraph`[`str`]
     :return: A list of all loops in the graph.
     :rtype: `list`[`Loop`]
     """
@@ -325,7 +325,7 @@ def update_break_edges_and_exits(
 def filter_exits_for_kill_exits(
     exits: set[tuple[str, str]],
     edges_to_remove: set[tuple[str, str]],
-    graph: DiGraph,
+    graph: "DiGraph[str]",
 ) -> set[tuple[str, str]]:
     """Filter the exits for kill exits.
 
@@ -334,7 +334,7 @@ def filter_exits_for_kill_exits(
     :param edges_to_remove: The edges to remove.
     :type edges_to_remove: `set`[`tuple`[`str`, `str`]]
     :param graph: The graph to check the paths.
-    :type graph: `DiGraph`
+    :type graph: :class:`DiGraph`[`str`]
     :return: The filtered exits.
     :rtype: `set`[`tuple`[`str`, `str`]]
     """
@@ -443,7 +443,7 @@ def merge_loops(loops: list[Loop]) -> list[Loop]:
 
 
 def update_break_points(
-    graph: DiGraph,
+    graph: "DiGraph[str]",
     loops: list[Loop],
     sub_loop: bool = False,
 ) -> Union[list[Loop], list[str]]:
@@ -451,7 +451,7 @@ def update_break_points(
     by recursively calling this function.
 
     :param graph: The graph to get the paths from.
-    :type graph: `DiGraph`
+    :type graph: :class:`DiGraph`[`str`]
     :param loops: The loops to update the break points.
     :type loops: `list`[`Loop`]
     :param sub_loop: Whether the loops are subloops or not.
@@ -541,13 +541,13 @@ def merge_break_points(loops: list[Loop]) -> list[Loop]:
 
 
 def get_break_point_edges_to_remove_from_loop(
-    graph: DiGraph,
+    graph: "DiGraph[str]",
     loop: Loop,
 ) -> list[tuple[str, str]]:
     """Get the break point edges to remove from the loop.
 
     :param graph: The graph to get the break point out edges from.
-    :type graph: `DiGraph`
+    :type graph: :class:`DiGraph`[`str`]
     :param loop: The loop to get the break point edges to remove.
     :type loop: `Loop`
     """
@@ -558,13 +558,13 @@ def get_break_point_edges_to_remove_from_loop(
 
 
 def update_break_point_edges_to_remove(
-    graph: DiGraph,
+    graph: "DiGraph[str]",
     loops: list[Loop],
 ) -> None:
     """Update the break point edges to remove from the loops.
 
     :param graph: The graph to get the break point edges from.
-    :type graph: `DiGraph`
+    :type graph: :class:`DiGraph`[`str`]
     :param loops: The loops to update the break point edges to remove.
     :type loops: `list`[`Loop`]
     """
@@ -603,15 +603,15 @@ def get_all_break_edges_from_loops(loops: list[Loop]) -> set[tuple[str, str]]:
 
 
 def get_all_lonely_merge_killed_edges_from_loops(
-    graph: DiGraph,
+    graph: "DiGraph[str]",
     loops: list[Loop],
 ) -> set[tuple[str, str]]:
     """Get all lonely merge killed edges from the loops.
 
     :param graph: The graph to get the lonely merge killed edges from.
-    :type graph: `DiGraph`
+    :type graph: :class:`DiGraph`[`str`]
     :param loops: The loops to get the lonely merge killed edges from.
-    :type loops: `list`[`Loop`]
+    :type loops: `list`[:class:`Loop`]
     :return: The lonely merge killed edges.
     :rtype: `set`[`tuple`[`str`, `str`]]
     """
@@ -625,15 +625,15 @@ def get_all_lonely_merge_killed_edges_from_loops(
 
 
 def get_all_lonely_merge_killed_edges_from_loop(
-    graph: DiGraph,
+    graph: "DiGraph[str]",
     loop: Loop
 ) -> Generator[tuple[str, str], None, None]:
     """Get all lonely merge killed edges from the loop.
 
     :param graph: The graph to get the lonely merge killed edges from.
-    :type graph: `DiGraph`
+    :type graph: :class:`DiGraph`[`str`]
     :param loop: The loop to get the lonely merge killed edges from.
-    :type loop: `Loop`
+    :type loop: :class:`Loop`
     :return: The lonely merge killed edges.
     :rtype: `Generator`[`tuple`[`str`, `str`], `None`, `None`]
     """
@@ -648,7 +648,7 @@ def get_all_lonely_merge_killed_edges_from_loop(
 
 
 def extract_loop_nodes_from_graph(
-    graph: DiGraph,
+    graph: "DiGraph[str]",
     loop: Loop,
 ) -> list[str]:
     """Extract the nodes from the graph that are in the loop.
@@ -658,7 +658,7 @@ def extract_loop_nodes_from_graph(
     :param loop: The loop to extract the nodes from.
     :type loop: `Loop`
     """
-    graph_copy: DiGraph = graph.copy()
+    graph_copy = graph.copy()
     for node in loop.start_points:
         graph_copy.remove_edges_from(graph.in_edges(node))
     for node in loop.end_points:
@@ -675,14 +675,14 @@ def extract_loop_nodes_from_graph(
 
 
 def get_all_lonely_merge_killed_edges_from_loop_nodes_and_end_points(
-    graph: DiGraph,
+    graph: "DiGraph[str]",
     loop_nodes: Iterable[str],
     end_points: set[str],
 ) -> Generator[tuple[str, str], None, None]:
     """Get all lonely merge killed edges from the loop nodes and end points.
 
     :param graph: The graph to get the lonely merge killed edges from.
-    :type graph: `DiGraph`
+    :type graph: :class:`DiGraph`[`str`]
     :param loop_nodes: The nodes from the loop.
     :type loop_nodes: `Iterable`[`Hashable`]
     :param end_points: The end points of the loop.
@@ -710,15 +710,15 @@ def get_all_lonely_merge_killed_edges_from_loop_nodes_and_end_points(
 
 
 def get_all_kill_edges_from_loops(
-    graph: DiGraph,
+    graph: "DiGraph[str]",
     loops: list[Loop],
 ) -> set[tuple[str, str]]:
     """Get all kill edges from the loops.
 
     :param graph: The graph to get the kill edges from.
-    :type graph: `DiGraph`
+    :type graph: :class:`DiGraph`[`str`]
     :param loops: The loops to get the kill edges from.
-    :type loops: `list`[`Loop`]
+    :type loops: `list`[:class:`Loop`]
     :return: The kill edges.
     :rtype: `set`[`tuple`[`str`, `str`]]
     """
@@ -730,15 +730,15 @@ def get_all_kill_edges_from_loops(
 
 
 def get_all_kill_edges_from_loop(
-    graph: DiGraph,
+    graph: "DiGraph[str]",
     loop: Loop,
 ) -> Generator[tuple[str, str], None, None]:
     """Get all kill edges from the loop.
 
     :param graph: The graph to get the kill edges from.
-    :type graph: `DiGraph`
+    :type graph: :class:`DiGraph`[`str`]
     :param loop: The loop to get the kill edges from.
-    :type loop: `Loop`
+    :type loop: :class:`Loop`
     :return: The kill edges.
     :rtype: `Generator`[`tuple`[`str`, `str`], `None`, `None`]
     """
@@ -754,7 +754,7 @@ def get_all_kill_edges_from_loop(
 
 
 def get_all_kill_edges_from_loop_nodes_and_end_points(
-    graph: DiGraph,
+    graph: "DiGraph[str]",
     loop_nodes: Iterable[str],
     end_points: set[str],
     start_points: set[str],
@@ -762,7 +762,7 @@ def get_all_kill_edges_from_loop_nodes_and_end_points(
     """Get all kill edges from the loop nodes and end points.
 
     :param graph: The graph to get the kill edges from.
-    :type graph: `DiGraph`
+    :type graph: :class:`DiGraph`[`str`]
     :param loop_nodes: The nodes from the loop.
     :type loop_nodes: `Iterable`[`Hashable`]
     :param end_points: The end points of the loop.

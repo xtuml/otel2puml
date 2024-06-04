@@ -36,6 +36,11 @@ Tests that the merge event is the correct event
 
 ![](/end-to-end-pumls/constraints/simple/XOR/merge_at_correct_event_XOR.svg)
 
+### Merge from similar paths
+Tests that two paths are able to merge even if they some of the path is shared by the other path
+
+![](/end-to-end-pumls/constraints/simple/XOR/merge_from_similar_paths_XOR.svg)
+
 ## OR
 Tests for single OR constraint cases
 ### Basic

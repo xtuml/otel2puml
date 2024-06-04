@@ -86,3 +86,11 @@ class TestConstraintXOR:
             "merge_at_correct_event_XOR.puml",
             should_pass=False
         )
+
+    @staticmethod
+    def test_merge_from_similar_paths() -> None:
+        """Test merge from similar paths."""
+        end_to_end_test(
+            "end-to-end-pumls/constraints/simple/XOR/"
+            "merge_from_similar_paths.puml",
+        )
