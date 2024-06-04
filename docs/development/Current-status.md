@@ -10,17 +10,17 @@ The tests are divided into the following categories:
     * [Bunched](#bunched)
     * [Kill Detach](#kill-detach)
 
-Currently the number of end-to-end tests stands at 63, with 61 passing and 2 failing (96.83% coverage).
+Currently the number of end-to-end tests stands at 65, with 63 passing and 2 failing (96.92% coverage).
 
 |                            filepath                            | $$\textcolor{#23d18b}{\tt{passed}}$$ | $$\textcolor{#f5f543}{\tt{xfailed}}$$ | SUBTOTAL |
 | -------------------------------------------------------------- | --------------------------------: | --------------------------------: | -------: |
 | $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/test\\_branch\\_counts.py}}$$ |   $$\textcolor{#23d18b}{\tt{2}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{2}}$$ |
-| $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/test\\_loops.py}}$$ |  $$\textcolor{#23d18b}{\tt{12}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{12}}$$ |
+| $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/test\\_loops.py}}$$ |  $$\textcolor{#23d18b}{\tt{13}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{13}}$$ |
 | $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_bunched.py}}$$ |  $$\textcolor{#23d18b}{\tt{21}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{21}}$$ |
 | $$\textcolor{#f5f543}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_kill.py}}$$ |   $$\textcolor{#23d18b}{\tt{3}}$$ |   $$\textcolor{#f5f543}{\tt{1}}$$ | $$\textcolor{#f5f543}{\tt{4}}$$ |
 | $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_nested.py}}$$ |  $$\textcolor{#23d18b}{\tt{15}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{15}}$$ |
-| $$\textcolor{#f5f543}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_simple.py}}$$ |   $$\textcolor{#23d18b}{\tt{8}}$$ |   $$\textcolor{#f5f543}{\tt{1}}$$ | $$\textcolor{#f5f543}{\tt{9}}$$ |
-| $$\textcolor{#f5f543}{\tt{TOTAL}}$$                            |  $$\textcolor{#23d18b}{\tt{61}}$$ |   $$\textcolor{#f5f543}{\tt{2}}$$ | $$\textcolor{#f5f543}{\tt{63}}$$ |
+| $$\textcolor{#f5f543}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_simple.py}}$$ |   $$\textcolor{#23d18b}{\tt{9}}$$ |   $$\textcolor{#f5f543}{\tt{1}}$$ | $$\textcolor{#f5f543}{\tt{10}}$$ |
+| $$\textcolor{#f5f543}{\tt{TOTAL}}$$                            |  $$\textcolor{#23d18b}{\tt{63}}$$ |   $$\textcolor{#f5f543}{\tt{2}}$$ | $$\textcolor{#f5f543}{\tt{65}}$$ |
 
 
 ## Branch counts
@@ -36,7 +36,7 @@ Currently the number of branch tests stands at 2, with 2 passing and 0 failing (
 
 ## Loops
 
-Currently the number of loops tests stands at 12, with 12 passing and 0 failing (100.00% coverage).
+Currently the number of loops tests stands at 13, with 13 passing and 0 failing (100.00% coverage).
 
 |               filepath               |                   function                   | $$\textcolor{#23d18b}{\tt{passed}}$$ | SUBTOTAL |
 | ------------------------------------ | -------------------------------------------- | --------------------------------: | -------: |
@@ -52,13 +52,14 @@ Currently the number of loops tests stands at 12, with 12 passing and 0 failing 
 | $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/test\\_loops.py}}$$ | $$\textcolor{#23d18b}{\tt{TestBreakPoints.test\\_loop\\_two\\_break\\_points}}$$ |   $$\textcolor{#23d18b}{\tt{1}}$$ | $$\textcolor{#23d18b}{\tt{1}}$$ |
 | $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/test\\_loops.py}}$$ | $$\textcolor{#23d18b}{\tt{TestBreakPoints.test\\_loop\\_nested\\_break\\_point}}$$ |   $$\textcolor{#23d18b}{\tt{1}}$$ | $$\textcolor{#23d18b}{\tt{1}}$$ |
 | $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/test\\_loops.py}}$$ | $$\textcolor{#23d18b}{\tt{TestEdgeCases.test\\_loop\\_break\\_split\\_exit}}$$ |   $$\textcolor{#23d18b}{\tt{1}}$$ | $$\textcolor{#23d18b}{\tt{1}}$$ |
-| $$\textcolor{#23d18b}{\tt{TOTAL}}$$  |                                              |  $$\textcolor{#23d18b}{\tt{12}}$$ | $$\textcolor{#23d18b}{\tt{12}}$$ |
+| $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/test\\_loops.py}}$$ | $$\textcolor{#23d18b}{\tt{TestEdgeCases.test\\_paths\\_should\\_kill\\_in\\_loop}}$$ |   $$\textcolor{#23d18b}{\tt{1}}$$ | $$\textcolor{#23d18b}{\tt{1}}$$ |
+| $$\textcolor{#23d18b}{\tt{TOTAL}}$$  |                                              |  $$\textcolor{#23d18b}{\tt{13}}$$ | $$\textcolor{#23d18b}{\tt{13}}$$ |
 
 
 ## Constraints
 ### One level
 
-Currently the number of simple tests stands at 9, with 8 passing and 1 failing (88.89% coverage).
+Currently the number of simple tests stands at 10, with 9 passing and 1 failing (90.00% coverage).
 
 xfailed:
 * `tests/end-to-end-tests/constraints/test_constraints_simple.py::TestConstraintAND.test_multiple_same_event_AND_with_extra_branch`
@@ -73,8 +74,9 @@ xfailed:
 | $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_simple.py}}$$ | $$\textcolor{#23d18b}{\tt{TestConstraintOR.test\\_merge\\_at\\_correct\\_event\\_OR}}$$ |   $$\textcolor{#23d18b}{\tt{1}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{1}}$$ |
 | $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_simple.py}}$$ | $$\textcolor{#23d18b}{\tt{TestConstraintXOR.test\\_simple\\_XOR}}$$ |   $$\textcolor{#23d18b}{\tt{1}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{1}}$$ |
 | $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_simple.py}}$$ | $$\textcolor{#23d18b}{\tt{TestConstraintXOR.test\\_merge\\_at\\_correct\\_event\\_XOR}}$$ |   $$\textcolor{#23d18b}{\tt{1}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{1}}$$ |
+| $$\textcolor{#23d18b}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_simple.py}}$$ | $$\textcolor{#23d18b}{\tt{TestConstraintXOR.test\\_merge\\_from\\_similar\\_paths}}$$ |   $$\textcolor{#23d18b}{\tt{1}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ | $$\textcolor{#23d18b}{\tt{1}}$$ |
 | $$\textcolor{#f5f543}{\tt{tests/end\text{-}to\text{-}end\text{-}tests/constraints/test\\_constraints\\_simple.py}}$$ | $$\textcolor{#f5f543}{\tt{TestConstraintAND.test\\_multiple\\_same\\_event\\_AND\\_with\\_extra\\_branch}}$$ |   $$\textcolor{#666666}{\tt{0}}$$ |   $$\textcolor{#f5f543}{\tt{1}}$$ | $$\textcolor{#f5f543}{\tt{1}}$$ |
-| $$\textcolor{#f5f543}{\tt{TOTAL}}$$                           |                                                                  |   $$\textcolor{#23d18b}{\tt{8}}$$ |   $$\textcolor{#f5f543}{\tt{1}}$$ | $$\textcolor{#f5f543}{\tt{9}}$$ |
+| $$\textcolor{#f5f543}{\tt{TOTAL}}$$                           |                                                                  |   $$\textcolor{#23d18b}{\tt{9}}$$ |   $$\textcolor{#f5f543}{\tt{1}}$$ | $$\textcolor{#f5f543}{\tt{10}}$$ |
 
 
 ### Nested
