@@ -12,6 +12,7 @@ End to end test cases for cases involving constraints.
     * [OR](./Constraints/Simple.md#or)
         * Basic
         * Merge at correct event
+        * Merge from similar paths
 * [Nested](./Constraints/Nested.md)
     * [AND](./Constraints/Nested.md#and)
         * AND

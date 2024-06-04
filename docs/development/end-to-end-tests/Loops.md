@@ -17,6 +17,7 @@ End to end test cases for cases involving loops.
 * [Nested Branch Counts](/docs/development/end-to-end-tests/Loops.md#nested-branch-counts)
 * [Edge Cases](/docs/development/end-to-end-tests/Loops.md#edge-cases)
   * Loop with break with logic directly after loop
+  * Paths should kill in loop
 
 ## Cases
 ### Self Loops
@@ -75,3 +76,8 @@ Tests any further edge cases that are considered to be less common
 Tests a case in which there is a loop with a break in it with the start of a logic block directly after the end of the loop so that the loop exits to more than one event.
 
 ![](/end-to-end-pumls/loops/edge_cases/loop_break_split_exit.svg)
+
+#### Paths should kill in loop
+Tests a case where paths in a logic block should be kill paths in a loop due to starting after the loop ends.
+
+![](/end-to-end-pumls/loops/edge_cases/paths_should_kill_in_loop.svg)
