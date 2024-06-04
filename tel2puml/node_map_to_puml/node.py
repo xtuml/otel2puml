@@ -427,18 +427,19 @@ def load_logic_tree_into_nodes(
 
 
 def create_networkx_graph_of_nodes_from_markov_graph(
-    markov_graph: DiGraph,
+    markov_graph: "DiGraph[str]",
     node_event_references: dict[str, str],
-) -> tuple[DiGraph, dict[str, list[Node]]]:
+) -> tuple["DiGraph[Node]", dict[str, list[Node]]]:
     """Creates a NetworkX graph of nodes from a Markov graph.
 
     :param markov_graph: The Markov graph to create the NetworkX graph from.
-    :type markov_graph: :class:`DiGraph`
+    :type markov_graph: :class:`DiGraph`[`str`]
     :param node_event_references: The node event references.
     :type node_event_references: `dict`[`str`, `str`]
     :return: A tuple containing the NetworkX graph and the event node
     reference.
-    :rtype: `tuple`[:class:`DiGraph`, `dict`[`str`, `list`[:class:`Node`]]]
+    :rtype: `tuple`[:class:`DiGraph`[:class:`Node`], `dict`[`str`,
+    `list`[:class:`Node`]]]
     """
     networkx_graph = DiGraph()
     uid_to_node = {}
@@ -465,12 +466,12 @@ def create_networkx_graph_of_nodes_from_markov_graph(
 
 
 def create_event_node_ref(
-    node_class_network_x_graph: DiGraph,
+    node_class_network_x_graph: "DiGraph[Node]",
 ) -> dict[str, list[Node]]:
     """Creates an event node reference.
 
     :param node_class_network_x_graph: The node class NetworkX graph.
-    :type node_class_network_x_graph: :class:`DiGraph`
+    :type node_class_network_x_graph: :class:`DiGraph`[:class:`Node`]
     :return: The event node reference.
     :rtype: `dict`[`str`, `list`[:class:`Node`]]
     """
@@ -506,14 +507,14 @@ def load_all_incoming_events_into_nodes(
 
 
 def merge_markov_without_loops_and_logic_detection_analysis(
-    markov_graph_ref_pair: tuple[DiGraph, dict[str, str]],
+    markov_graph_ref_pair: tuple["DiGraph[str]", dict[str, str]],
     incoming_logic_events: dict[str, Event],
     outgoing_logic_events: dict[str, Event],
-) -> tuple[DiGraph, dict[str, list[Node]]]:
+) -> tuple["DiGraph[Node]", dict[str, list[Node]]]:
     """Merges a Markov graph without loops and logic detection analysis.
 
     :param markov_graph_ref_pair: The Markov graph reference pair.
-    :type markov_graph_ref_pair: `tuple`[:class:`DiGraph`,
+    :type markov_graph_ref_pair: `tuple`[:class:`DiGraph`[`str`],
     `dict`[`str`, `str`]]
     :param incoming_logic_events: The incoming logic events.
     :type incoming_logic_events: `dict`[`str`, :class:`Event`]
@@ -521,7 +522,8 @@ def merge_markov_without_loops_and_logic_detection_analysis(
     :type outgoing_logic_events: `dict`[`str`, :class:`Event`]
     :return: A tuple containing the NetworkX graph and the event node
     reference.
-    :rtype: `tuple`[:class:`DiGraph`, `dict`[`str`, `list`[:class:`Node`]]]
+    :rtype: `tuple`[:class:`DiGraph`[:class:`Node`], `dict`[`str`,
+    `list`[:class:`Node`]]]
     """
     markov_graph, node_event_references = markov_graph_ref_pair
     node_class_graph, event_node_map = (
@@ -855,13 +857,13 @@ class LogicBlockHolder:
 
 
 def create_puml_graph_from_node_class_graph(
-    node_class_graph: DiGraph,
+    node_class_graph: "DiGraph[Node]",
 ) -> PUMLGraph:
     """Creates a PlantUML graph from a node class graph using the logic
     held on each node and the connections between the nodes.
 
     :param node_class_graph: The node class graph.
-    :type node_class_graph: :class:`DiGraph`
+    :type node_class_graph: :class:`DiGraph`[:class:`Node`]
     :return: The PlantUML graph.
     :rtype: :class:`PUMLGraph`
     """
