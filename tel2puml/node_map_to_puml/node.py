@@ -771,7 +771,10 @@ class LogicBlockHolder:
         """
         # whilst there are still loop kill paths still check if the merge node
         # is for all of the non loop kill paths, if so do nothing and return
-        if not self.loop_kill_paths[self.merge_nodes.index(merge_node)] and any(self.loop_kill_paths):
+        if (
+            not self.loop_kill_paths[self.merge_nodes.index(merge_node)]
+            and any(self.loop_kill_paths)
+        ):
             return set()
         indices = [
             i
