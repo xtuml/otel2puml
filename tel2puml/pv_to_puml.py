@@ -5,6 +5,8 @@ from typing import Generator, Iterable, Any
 import json
 import os
 
+import networkx as nx
+
 from tel2puml.tel2puml_types import PVEvent
 from tel2puml.pipelines.data_ingestion import (
     update_all_connections_from_clustered_events
@@ -66,6 +68,11 @@ def pv_to_puml_string(
     remove_detected_loop_data_from_events(
         loops, forward_logic, event_reference
     )
+    try:
+        nx.find_cycle(markov_graph)
+        raise RuntimeError("Markov graph has a cycle after lop removals")
+    except nx.NetworkXNoCycle:
+        pass
     # merge the Markov graph and the logic trees
     merged_markov_and_logic, event_node_reference = (
         merge_markov_without_loops_and_logic_detection_analysis(
