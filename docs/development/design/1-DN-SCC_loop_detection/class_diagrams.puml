@@ -1,0 +1,44 @@
+@startuml
+class Event {
+    #event_type : str
+    +event_sets : set<EventSet>
+    +in_event_sets : set<EventSet>
+    +logic_gate_tree: ProcessTree
+    +__hash__() : int
+    +update_event_sets([]str): void
+    +update_in_event_sets([]str): void
+}
+
+class EventTuple {
+    #out_event : Event
+    #in_event : Event
+    +__hash__() : int
+    +__eq__(EventTuple): bool
+}
+
+
+class EventSet {
+    #self : dict<str, int>
+    +__hash__() : int
+    +__eq__(EventSet): bool
+}
+
+class EventGraph {
+    nodes: set<Event>
+    edges: set<EventTuple>
+}
+
+struct GraphLoopTuple {
+    +graph: EventGraph
+    +loops: dict<Event, *GraphLoopTuple>
+}
+
+Event ..> EventSet
+EventGraph ..> Event
+GraphLoopTuple ..> EventGraph
+GraphLoopTuple ..> Event
+GraphLoopTuple ..> EventTuple
+GraphLoopTuple ..> GraphLoopTuple
+EventTuple ..> Event
+
+@enduml
