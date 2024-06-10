@@ -1,4 +1,5 @@
 @startuml
+
 class Event {
     #event_type : str
     +event_sets : set<EventSet>
@@ -9,6 +10,13 @@ class Event {
     +update_in_event_sets([]str): void
 }
 
+class LoopEvent {
+    start_nodes: set<Event>
+    end_nodes: set<Event>
+    break_edges: set<EventTuple>
+    sub_graph: EventGraph
+}
+
 class EventTuple {
     #out_event : Event
     #in_event : Event
@@ -17,7 +25,7 @@ class EventTuple {
 }
 
 
-class EventSet {
+class EventSet <inherits from dict> {
     #self : dict<str, int>
     +__hash__() : int
     +__eq__(EventSet): bool
@@ -28,17 +36,13 @@ class EventGraph {
     edges: set<EventTuple>
 }
 
-struct GraphLoopTuple {
-    +graph: EventGraph
-    +loops: dict<Event, *GraphLoopTuple>
-}
 
 Event ..> EventSet
 EventGraph ..> Event
-GraphLoopTuple ..> EventGraph
-GraphLoopTuple ..> Event
-GraphLoopTuple ..> EventTuple
-GraphLoopTuple ..> GraphLoopTuple
+EventGraph ..> EventTuple
 EventTuple ..> Event
+LoopEvent --> Event
+LoopEvent --> EventTuple
+LoopEvent --> EventGraph
 
 @enduml
