@@ -1,0 +1,24 @@
+@startuml
+digraph G {
+  rankdir=LR;
+  node [style=rounded];
+  detect_loops [label="detect_loops()"];
+  calc_components_of_loop [label="calc_components_of_loop()"];
+  calc_loop_end_break_and_loop_edges [label="calc_loop_end_break_and_loop_edges()"];
+    detect_loops -> calc_components_of_loop;
+    calc_components_of_loop -> calc_loop_end_break_and_loop_edges;
+  create_sub_graph_of_loop [label="create_sub_graph_of_loop()"];
+  remove_loop_edges [label="remove_loop_edges()"];
+  get_disconnected_loop_sub_graph [label="get_disconnected_loop_sub_graph()"];
+  add_start_and_end_events_to_sub_graph [label="add_start_and_end_events_to_sub_graph()"];
+    detect_loops -> create_sub_graph_of_loop;
+    create_sub_graph_of_loop -> remove_loop_edges;
+    create_sub_graph_of_loop -> get_disconnected_loop_sub_graph;
+    create_sub_graph_of_loop -> add_start_and_end_events_to_sub_graph;
+  create_loop_event [label="create_loop_event()"];
+  calculate_updated_graph_with_loop_event [label="calculate_updated_graph_with_loop_event()"];
+    detect_loops -> create_loop_event;
+    detect_loops -> calculate_updated_graph_with_loop_event;
+    detect_loops -> detect_loops;
+}
+@enduml

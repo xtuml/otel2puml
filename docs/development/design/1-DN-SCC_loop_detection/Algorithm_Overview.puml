@@ -12,14 +12,14 @@
                 :Calculate out edges of SCC component;
                 :Input start points and out edges of loop;
                 partition "Break and end point calculation" {
+                    :Calculate edges that create loop;
                     :Calculate "end points" and "break points" of loop;
-                    :Output end and break points of loop;
+                    :Output end and break points of loop and\nedges that create loop;
                 }
-                :Output start, end and break points of loop;
+                :Output start, end and break points of loop\nand edges that create loop;
             }
             partition "Create sub graph of Loop" {
                 partition "Remove edges describing loop" {
-                    :Calculate edges that create loop;
                     :Copy graph and remove in + out edges of start and end points;
                     :Remove edges that create loop from copied graph;
                     :Remove EventSets that mirror removed edges;

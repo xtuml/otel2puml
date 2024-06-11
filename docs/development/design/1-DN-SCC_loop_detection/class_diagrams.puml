@@ -10,10 +10,15 @@ class Event {
     +update_in_event_sets([]str): void
 }
 
+struct Loop {
+    nodes: set<Event>
+    start_events: set<Event>
+    end_events: set<Event>
+    break_events: set<Event>
+    edges_to_remove: set<EventTuple>
+}
+
 class LoopEvent {
-    start_nodes: set<Event>
-    end_nodes: set<Event>
-    break_edges: set<EventTuple>
     sub_graph: EventGraph
 }
 
@@ -42,7 +47,8 @@ EventGraph ..> Event
 EventGraph ..> EventTuple
 EventTuple ..> Event
 LoopEvent --> Event
-LoopEvent --> EventTuple
-LoopEvent --> EventGraph
+Loop ..> EventTuple
+Loop ..> Event
+LoopEvent ..> EventGraph
 
 @enduml
