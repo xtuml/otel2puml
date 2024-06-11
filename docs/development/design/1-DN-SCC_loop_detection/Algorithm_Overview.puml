@@ -1,0 +1,56 @@
+@startuml
+    start
+    label loop_detection_algorithm
+    :Input directed graph;
+    partition "Loop detection algorithm" {
+        :Get SCC components of graph;
+        repeat
+            :Input SCC component and graph;
+            partition "Calculate components of Loop" {
+                :Calculate in edges of SCC component;
+                :Calculate "start points" of loop;
+                :Calculate out edges of SCC component;
+                :Input start points and out edges of loop;
+                partition "Break and end point calculation" {
+                    :Calculate edges that create loop;
+                    :Calculate "end points" and "break points" of loop;
+                    :Output end and break points of loop and\nedges that create loop;
+                }
+                :Output start, end and break points of loop\nand edges that create loop;
+            }
+            partition "Create sub graph of Loop" {
+                partition "Remove edges describing loop" {
+                    :Copy graph and remove in + out edges of start and end points;
+                    :Remove edges that create loop from copied graph;
+                    :Remove EventSets that mirror removed edges;
+                    :Remove out edges of break points and EventSets;
+                    :Output copied and modified graph;
+                }
+                partition "Get disconnected sub graph" {
+                    :Get disconnected sub graph by finding disconnected components containing loop nodes;
+                    :Output disconnected sub graph;
+                }
+                partition "Add start and end Event vertices" {
+                    :Add start Event vertex to sub graph;
+                    :Create out EventSets of start Event\nvertex using out EventSets of incoming Events;
+                    :Add end Event vertex to sub graph;
+                    :Create in EventSets of end Event\nvertex using in EventSets of outgoing Events;
+                }
+                :Output final subgraph of Loop;
+            }
+            partition "Create Loop Event" {
+                :Create LoopEvent with subgraph added;
+                :Update in + out EventSets of LoopEvent;
+                :Output LoopEvent;
+            }
+            partition "Calculate Updated Graph with LoopEvent" {
+                :Update in + out EventSets connected to LoopEvent;
+                :Remove loop Event's from graph;
+                :Recalculate graph from updated EventSets of Events;
+                :Output updated graph;
+            }
+            :Run "Loop detection algorithm" on sub graph of LoopEvent|
+        repeat while (SCC components are not empty)
+        :Output Graph updated with LoopEvent's;
+    }
+@enduml
