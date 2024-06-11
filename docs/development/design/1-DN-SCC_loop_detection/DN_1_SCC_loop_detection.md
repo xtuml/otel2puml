@@ -20,7 +20,7 @@ The following functions required using the activity diagram and class diagram ar
 
 ```python
 
-def create_graph_from_events(events: List[Event]) -> EventGraph:
+def create_graph_from_events(events: Iterable[Event]) -> EventGraph:
     """Create a graph from the events using the information in the `event_sets` attribute for links
 
     :param events: The events to create the graph from

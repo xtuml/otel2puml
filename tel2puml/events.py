@@ -348,3 +348,28 @@ def get_event_reference_from_events(
     :rtype: `dict`[`str`, `str`]
     """
     return {event.event_type: event.event_type for event in events}
+
+
+def create_graph_from_events(
+    events: Iterable[Event],
+) -> "DiGraph[Event]":
+    """This function gets a graph of events by creating a reference dictionary
+    locally and then creating a graph from the `events_sets` of the events as
+    directed edges.
+
+    :param events: A sequence of events.
+    :type events: `Iterable`[:class:`Event`]
+    :return: The graph of events.
+    :rtype: :class:`nx.DiGraph`[:class:`Event`]
+    """
+    graph: "DiGraph[Event]" = DiGraph()
+    event_ref = {event.event_type: event for event in events}
+    for event in events:
+        out_events = set(
+            event_ref[event_type]
+            for event_set in event.event_sets
+            for event_type in event_set.to_frozenset()
+        )
+        for out_event in out_events:
+            graph.add_edge(event, out_event)
+    return graph
