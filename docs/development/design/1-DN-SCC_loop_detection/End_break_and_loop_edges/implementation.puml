@@ -1,0 +1,26 @@
+@startuml
+    start
+    :input start events, SCC loop events and graph;
+    partition "calc_loop_end_break_and_loop_edges" {
+        :find all out edges of SCC events\nthat point to events not in the SCC events;
+        if (check if there are edges) then (no edges exist)
+            :get events furthest away from start\nevents in SCC events that connect to start events;
+            :set as end events;
+            :no break edges; 
+        else (edges exist)
+            :get set of Events that are the first entries in out edges EventTuple;
+            :find subset of those events that have edge to start events;
+            if (check size of subset) then (subset empty)
+                :get events furthest away from start\nevents in SCC events that connect to start events;
+                :set as end events;
+                :break events are then the second entries in out edges EventTuple;
+            else (subset not empty)
+                :set end events as subset;
+                :break events are calculated as events at the end of the paths\nbetween those events not in the\nsubset and between the exits points from end events (if they exist);
+            endif
+        endif
+        :set loop edges as all edges between\nend events and start events;
+        :output end events, break events and loop edges;
+    }
+    end
+@enduml
