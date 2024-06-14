@@ -90,8 +90,17 @@ class Event:
         """Constructor method."""
         self.event_type = event_type
         self.event_sets: set[EventSet] = set()
+        self.in_event_sets: set[EventSet] = set()
         self._logic_gate_tree: ProcessTree | None = None
         self._update_since_logic_gate_tree = False
+
+    def __hash__(self) -> int:
+        """Method to hash the event type.
+
+        :return: The hash of the event type.
+        :rtype: `int`
+        """
+        return hash(self.event_type)
 
     def save_vis_logic_gate_tree(
         self,
@@ -195,6 +204,21 @@ class Event:
         self.event_sets.add(EventSet(events))
 
         self._update_since_logic_gate_tree = True
+
+    def update_in_event_sets(
+        self,
+        events: list[str],
+    ) -> None:
+        """This method updates the event sets for a given list of events as
+        strings.
+
+        :param events: A list of events as strings.
+        :type events: `list`[`str`]
+        """
+        if len(events) == 0:
+            return
+
+        self.in_event_sets.add(EventSet(events))
 
     def has_event_set_as_subset(self, events: list[str]) -> bool:
         """Method to check if the event set exists as a subset of any of the

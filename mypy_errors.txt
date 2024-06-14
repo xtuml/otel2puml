@@ -127,8 +127,8 @@ tel2puml/events.py:41: note:      Superclass:
 tel2puml/events.py:41: note:          None
 tel2puml/events.py:41: note:      Subclass:
 tel2puml/events.py:41: note:          def __hash__(self) -> int
-tel2puml/events.py:319: error: Missing type parameters for generic type "DiGraph"  [type-arg]
-tel2puml/events.py:328: error: Need type annotation for "graph"  [var-annotated]
+tel2puml/events.py:343: error: Missing type parameters for generic type "DiGraph"  [type-arg]
+tel2puml/events.py:352: error: Need type annotation for "graph"  [var-annotated]
 tel2puml/pipelines/data_ingestion.py:13: error: Missing type parameters for generic type "dict"  [type-arg]
 tel2puml/pipelines/data_ingestion.py:25: error: Argument 1 to "update_all_connections_from_clustered_events" has incompatible type "dict_values[str, list[dict[Any, Any]]]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tel2puml/pipelines/data_ingestion.py:120: error: Missing type parameters for generic type "dict"  [type-arg]
@@ -148,26 +148,26 @@ tel2puml/node_map_to_puml/node.py:635: note:     def __setitem__(self, slice, It
 tel2puml/node_map_to_puml/node.py:670: error: Incompatible types in assignment (expression has type "list[PUMLOperatorNode | PUMLNode]", variable has type "list[PUMLOperatorNode]")  [assignment]
 tel2puml/node_map_to_puml/node.py:675: error: Incompatible return value type (got "tuple[PUMLNode, Node | None]", expected "tuple[PUMLNode, Node]")  [return-value]
 tel2puml/node_map_to_puml/node.py:739: error: Argument 1 to "has_event_set_as_subset" of "Event" has incompatible type "list[str | None]"; expected "list[str]"  [arg-type]
-tel2puml/node_map_to_puml/node.py:872: error: Argument 1 to "create_event_node" of "PUMLGraph" has incompatible type "str | None"; expected "str"  [arg-type]
-tel2puml/node_map_to_puml/node.py:904: error: Incompatible types in assignment (expression has type "PUMLKillNode", variable has type "PUMLEventNode")  [assignment]
-tel2puml/node_map_to_puml/node.py:907: error: Incompatible types in assignment (expression has type "PUMLOperatorNode | PUMLEventNode", variable has type "PUMLEventNode")  [assignment]
-tel2puml/node_map_to_puml/node.py:922: error: Incompatible types in assignment (expression has type "PUMLNode", variable has type "PUMLEventNode")  [assignment]
-tel2puml/node_map_to_puml/node.py:936: error: Argument 2 to "update_puml_graph_with_event_node" has incompatible type "Node | None"; expected "Node"  [arg-type]
-tel2puml/node_map_to_puml/node.py:947: error: Incompatible types in assignment (expression has type "PUMLNode", variable has type "PUMLEventNode")  [assignment]
-tel2puml/node_map_to_puml/node.py:958: error: Incompatible types in assignment (expression has type "PUMLOperatorNode", variable has type "PUMLEventNode")  [assignment]
-tel2puml/node_map_to_puml/node.py:993: error: Argument 1 to "create_operator_node_pair" of "PUMLGraph" has incompatible type "PUMLOperator | None"; expected "PUMLOperator"  [arg-type]
-tel2puml/node_map_to_puml/node.py:1003: error: Incompatible return value type (got "tuple[PUMLOperatorNode | PUMLEventNode, Node]", expected "tuple[PUMLOperatorNode, Node]")  [return-value]
-tel2puml/node_map_to_puml/node.py:1056: error: No overload variant of "__setitem__" of "list" matches argument types "int", "PUMLEventNode"  [call-overload]
-tel2puml/node_map_to_puml/node.py:1056: note: Possible overload variants:
-tel2puml/node_map_to_puml/node.py:1056: note:     def __setitem__(self, SupportsIndex, PUMLOperatorNode, /) -> None
-tel2puml/node_map_to_puml/node.py:1056: note:     def __setitem__(self, slice, Iterable[PUMLOperatorNode], /) -> None
-tel2puml/node_map_to_puml/node.py:1058: error: Incompatible return value type (got "tuple[PUMLNode, Node | None]", expected "tuple[PUMLNode, Node]")  [return-value]
-tel2puml/node_map_to_puml/node.py:1075: error: Argument 2 to "create_logic_merge" of "LogicBlockHolder" has incompatible type "Node | None"; expected "Node"  [arg-type]
-tel2puml/node_map_to_puml/node.py:1090: error: Argument 3 to "handle_rotate_path" has incompatible type "PUMLNode"; expected "PUMLOperatorNode"  [arg-type]
-tel2puml/node_map_to_puml/node.py:1117: error: Incompatible types in assignment (expression has type "PUMLNode", variable has type "PUMLOperatorNode")  [assignment]
-tel2puml/node_map_to_puml/node.py:1124: error: Incompatible types in assignment (expression has type "PUMLOperatorNode | PUMLEventNode", variable has type "PUMLOperatorNode")  [assignment]
-tel2puml/node_map_to_puml/node.py:1184: error: Incompatible return value type (got "tuple[PUMLNode, Node]", expected "tuple[PUMLOperatorNode | PUMLEventNode, Node]")  [return-value]
-tel2puml/node_map_to_puml/node.py:1224: error: Incompatible types in assignment (expression has type "PUMLEventNode", variable has type "PUMLOperatorNode")  [assignment]
+tel2puml/node_map_to_puml/node.py:870: error: Argument 1 to "create_event_node" of "PUMLGraph" has incompatible type "str | None"; expected "str"  [arg-type]
+tel2puml/node_map_to_puml/node.py:902: error: Incompatible types in assignment (expression has type "PUMLKillNode", variable has type "PUMLEventNode")  [assignment]
+tel2puml/node_map_to_puml/node.py:905: error: Incompatible types in assignment (expression has type "PUMLOperatorNode | PUMLEventNode", variable has type "PUMLEventNode")  [assignment]
+tel2puml/node_map_to_puml/node.py:920: error: Incompatible types in assignment (expression has type "PUMLNode", variable has type "PUMLEventNode")  [assignment]
+tel2puml/node_map_to_puml/node.py:934: error: Argument 2 to "update_puml_graph_with_event_node" has incompatible type "Node | None"; expected "Node"  [arg-type]
+tel2puml/node_map_to_puml/node.py:945: error: Incompatible types in assignment (expression has type "PUMLNode", variable has type "PUMLEventNode")  [assignment]
+tel2puml/node_map_to_puml/node.py:956: error: Incompatible types in assignment (expression has type "PUMLOperatorNode", variable has type "PUMLEventNode")  [assignment]
+tel2puml/node_map_to_puml/node.py:991: error: Argument 1 to "create_operator_node_pair" of "PUMLGraph" has incompatible type "PUMLOperator | None"; expected "PUMLOperator"  [arg-type]
+tel2puml/node_map_to_puml/node.py:1001: error: Incompatible return value type (got "tuple[PUMLOperatorNode | PUMLEventNode, Node]", expected "tuple[PUMLOperatorNode, Node]")  [return-value]
+tel2puml/node_map_to_puml/node.py:1054: error: No overload variant of "__setitem__" of "list" matches argument types "int", "PUMLEventNode"  [call-overload]
+tel2puml/node_map_to_puml/node.py:1054: note: Possible overload variants:
+tel2puml/node_map_to_puml/node.py:1054: note:     def __setitem__(self, SupportsIndex, PUMLOperatorNode, /) -> None
+tel2puml/node_map_to_puml/node.py:1054: note:     def __setitem__(self, slice, Iterable[PUMLOperatorNode], /) -> None
+tel2puml/node_map_to_puml/node.py:1056: error: Incompatible return value type (got "tuple[PUMLNode, Node | None]", expected "tuple[PUMLNode, Node]")  [return-value]
+tel2puml/node_map_to_puml/node.py:1073: error: Argument 2 to "create_logic_merge" of "LogicBlockHolder" has incompatible type "Node | None"; expected "Node"  [arg-type]
+tel2puml/node_map_to_puml/node.py:1088: error: Argument 3 to "handle_rotate_path" has incompatible type "PUMLNode"; expected "PUMLOperatorNode"  [arg-type]
+tel2puml/node_map_to_puml/node.py:1115: error: Incompatible types in assignment (expression has type "PUMLNode", variable has type "PUMLOperatorNode")  [assignment]
+tel2puml/node_map_to_puml/node.py:1122: error: Incompatible types in assignment (expression has type "PUMLOperatorNode | PUMLEventNode", variable has type "PUMLOperatorNode")  [assignment]
+tel2puml/node_map_to_puml/node.py:1182: error: Incompatible return value type (got "tuple[PUMLNode, Node]", expected "tuple[PUMLOperatorNode | PUMLEventNode, Node]")  [return-value]
+tel2puml/node_map_to_puml/node.py:1222: error: Incompatible types in assignment (expression has type "PUMLEventNode", variable has type "PUMLOperatorNode")  [assignment]
 tests/test_detect_loops.py:507: error: Incompatible types in assignment (expression has type "list[Loop] | list[str]", variable has type "list[Loop]")  [assignment]
 tests/test_detect_loops.py:529: error: Incompatible types in assignment (expression has type "list[Loop] | list[str]", variable has type "list[Loop]")  [assignment]
 tests/test_detect_loops.py:572: error: Argument 1 to "update_all_connections_from_clustered_events" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
@@ -229,13 +229,13 @@ tests/node_map_to_puml/test_node.py:823: error: Argument 1 to "rotate_path" of "
 tests/node_map_to_puml/test_node_update.py:106: error: Argument 1 to "update_logic_nodes_with_lonely_merges_from_node_to_node_kill_map" has incompatible type "dict[str, list[str]]"; expected "dict[str, Iterable[str]]"  [arg-type]
 tests/node_map_to_puml/test_node_update.py:106: note: "Dict" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
 tests/node_map_to_puml/test_node_update.py:106: note: Consider using "Mapping" instead, which is covariant in the value type
-tel2puml/pv_to_puml.py:91: error: Argument 1 to "update_logic_nodes_with_lonely_merges_from_node_to_node_kill_map" has incompatible type "dict[str, set[str]]"; expected "dict[str, Iterable[str]]"  [arg-type]
-tel2puml/pv_to_puml.py:91: note: "Dict" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
-tel2puml/pv_to_puml.py:91: note: Consider using "Mapping" instead, which is covariant in the value type
-tel2puml/pv_to_puml.py:147: error: Returning Any from function declared to return "list[PVEvent]"  [no-any-return]
+tel2puml/pv_to_puml.py:98: error: Argument 1 to "update_logic_nodes_with_lonely_merges_from_node_to_node_kill_map" has incompatible type "dict[str, set[str]]"; expected "dict[str, Iterable[str]]"  [arg-type]
+tel2puml/pv_to_puml.py:98: note: "Dict" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+tel2puml/pv_to_puml.py:98: note: Consider using "Mapping" instead, which is covariant in the value type
+tel2puml/pv_to_puml.py:154: error: Returning Any from function declared to return "list[PVEvent]"  [no-any-return]
 tests/test_pv_to_puml.py:16: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tests/test_pv_to_puml.py:26: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tests/test_pv_to_puml.py:37: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tests/test_pv_to_puml.py:47: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tel2puml/utils_test.py:39: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
-Found 215 errors in 28 files (checked 42 source files)
+Found 215 errors in 28 files (checked 43 source files)
