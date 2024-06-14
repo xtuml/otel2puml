@@ -10,7 +10,6 @@ tel2puml/utils.py:77: error: Missing type parameters for generic type "tuple"  [
 tel2puml/utils.py:78: error: Name "plt.Figure" is not defined  [name-defined]
 tel2puml/utils.py:108: error: Missing type parameters for generic type "DiGraph"  [type-arg]
 tel2puml/utils.py:142: error: Missing type parameters for generic type "DiGraph"  [type-arg]
-tests/test_utils.py:9: error: Need type annotation for "graph"  [var-annotated]
 tel2puml/sequence_otel.py:14: error: Untyped decorator makes function "get_slice_indexes" untyped  [misc]
 tel2puml/sequence_otel.py:31: error: Untyped decorator makes function "has_time_overlap" untyped  [misc]
 tel2puml/sequence_otel.py:190: error: Missing type parameters for generic type "DiGraph"  [type-arg]
@@ -36,6 +35,7 @@ tel2puml/check_puml_equiv.py:281: error: Returning Any from function declared to
 tel2puml/check_puml_equiv.py:308: error: Missing type parameters for generic type "DiGraph"  [type-arg]
 tel2puml/check_puml_equiv.py:309: error: Missing type parameters for generic type "DiGraph"  [type-arg]
 tel2puml/check_puml_equiv.py:330: error: Missing type parameters for generic type "DiGraph"  [type-arg]
+tel2puml/loop_detection/calculate_loop_components.py:134: error: Incompatible types in assignment (expression has type "Graph[Any]", variable has type "DiGraph[Any]")  [assignment]
 tests/test_sequence_otel.py:99: error: Need type annotation for "graph"  [var-annotated]
 tests/test_sequence_otel.py:101: error: Non-overlapping equality check (left operand type: "OutEdgeView[Any]", right operand type: "set[tuple[Span, Span]]")  [comparison-overlap]
 tests/test_sequence_otel.py:113: error: Non-overlapping equality check (left operand type: "OutEdgeView[Any]", right operand type: "set[tuple[Span, Span]]")  [comparison-overlap]
@@ -238,4 +238,4 @@ tests/test_pv_to_puml.py:26: error: Argument 1 to "pv_to_puml_string" has incomp
 tests/test_pv_to_puml.py:37: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tests/test_pv_to_puml.py:47: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tel2puml/utils_test.py:39: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
-Found 215 errors in 28 files (checked 43 source files)
+Found 215 errors in 28 files (checked 46 source files)

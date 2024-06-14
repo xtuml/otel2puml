@@ -1,12 +1,16 @@
 """Tests for the tel2puml.utils module."""
 from networkx import DiGraph
 
-from tel2puml.utils import check_has_path_not_through_nodes
+from tel2puml.utils import (
+    check_has_path_not_through_nodes,
+    get_innodes_not_in_set, get_outnodes_not_in_set,
+    get_nodes_with_outedges_not_in_set, get_nodes_with_outedges_in_set,
+)
 
 
 def test_check_has_path_not_through_nodes() -> None:
     """Tests the check_has_path_not_through_nodes method."""
-    graph = DiGraph()
+    graph: "DiGraph[str]" = DiGraph()
     graph.add_node("A")
     graph.add_node("B")
     graph.add_node("C")
@@ -51,3 +55,79 @@ def test_check_has_path_not_through_nodes() -> None:
     assert check_has_path_not_through_nodes(
         graph, "A", "A", ["A"]
     )
+
+
+def test_get_innodes_not_in_set() -> None:
+    """Tests the get_innodes_not_in_set method."""
+    graph: "DiGraph[str]" = DiGraph()
+    graph.add_node("A")
+    graph.add_node("B")
+    graph.add_node("C")
+    graph.add_node("D")
+    graph.add_edge("A", "B")
+    graph.add_edge("A", "C")
+    graph.add_edge("D", "C")
+    graph.add_edge("D", "B")
+    assert get_innodes_not_in_set(
+        {"B", "C"}, {"B", "C"}, graph
+    ) == {"A", "D"}
+    assert get_innodes_not_in_set(
+        {"B", "C"}, {"A", "D"}, graph
+    ) == set()
+
+
+def test_get_outnodes_not_in_set() -> None:
+    """Tests the get_outnodes_not_in_set method."""
+    graph: "DiGraph[str]" = DiGraph()
+    graph.add_node("A")
+    graph.add_node("B")
+    graph.add_node("C")
+    graph.add_node("D")
+    graph.add_edge("A", "B")
+    graph.add_edge("A", "C")
+    graph.add_edge("D", "C")
+    graph.add_edge("D", "B")
+    assert get_outnodes_not_in_set(
+        {"A", "D"}, {"A", "D"}, graph
+    ) == {"B", "C"}
+    assert get_outnodes_not_in_set(
+        {"A", "D"}, {"B", "C"}, graph
+    ) == set()
+
+
+def test_get_nodes_with_outedges_not_in_set() -> None:
+    """Tests the get_nodes_with_outedges_not_in_set method."""
+    graph: "DiGraph[str]" = DiGraph()
+    graph.add_node("A")
+    graph.add_node("B")
+    graph.add_node("C")
+    graph.add_node("D")
+    graph.add_edge("A", "B")
+    graph.add_edge("A", "C")
+    graph.add_edge("D", "C")
+    graph.add_edge("D", "B")
+    assert get_nodes_with_outedges_not_in_set(
+        {"A", "D"}, {"A", "D"}, graph
+    ) == {"A", "D"}
+    assert get_nodes_with_outedges_not_in_set(
+        {"A", "D"}, {"B", "C"}, graph
+    ) == set()
+
+
+def test_get_nodes_with_outedges_in_set() -> None:
+    """Tests the get_nodes_with_outedges_in_set method."""
+    graph: "DiGraph[str]" = DiGraph()
+    graph.add_node("A")
+    graph.add_node("B")
+    graph.add_node("C")
+    graph.add_node("D")
+    graph.add_edge("A", "B")
+    graph.add_edge("A", "C")
+    graph.add_edge("D", "C")
+    graph.add_edge("D", "B")
+    assert get_nodes_with_outedges_in_set(
+        {"A", "D"}, {"A", "D"}, graph
+    ) == set()
+    assert get_nodes_with_outedges_in_set(
+        {"A", "D"}, {"B", "C"}, graph
+    ) == {"A", "D"}

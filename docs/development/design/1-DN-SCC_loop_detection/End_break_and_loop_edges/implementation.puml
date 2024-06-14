@@ -1,26 +1,47 @@
 @startuml
-    start
-    :input start events, SCC loop events and graph;
     partition "calc_loop_end_break_and_loop_edges" {
-        :find all out edges of SCC events\nthat point to events not in the SCC events;
-        if (check if there are edges) then (no edges exist)
-            :get events furthest away from start\nevents in SCC events that connect to start events;
-            :set as end events;
+        start
+        :input start events, SCC loop events and graph;
+        group "main algorithm"
+        :input start events, SCC loop events and graph;
+        :find all nodes that have an edge not pointing back into scc;
+        :find all loop end nodes using "loop end node algorithm";
+        if (check if edges exiting loop exist) then (no edges exist)
             :no break edges; 
         else (edges exist)
-            :get set of Events that are the first entries in out edges EventTuple;
-            :find subset of those events that have edge to start events;
+            :get set of end nodes that intersect with nodes that exit loop;
             if (check size of subset) then (subset empty)
-                :get events furthest away from start\nevents in SCC events that connect to start events;
-                :set as end events;
-                :break events are then the second entries in out edges EventTuple;
+                :break nodes are the nodes that exit the loop;
             else (subset not empty)
-                :set end events as subset;
-                :break events are calculated as events at the end of the paths\nbetween those events not in the\nsubset and between the exits points from end events (if they exist);
+                :break nodes are calculated as nodes at the end of the paths\nbetween those nodes not in the\nsubset and between the exits points from end nodes;
             endif
         endif
         :set loop edges as all edges between\nend events and start events;
         :output end events, break events and loop edges;
+        end group
+        end
+        partition "sub algorithms" {
+            start 
+            :input start nodes, scc nodes and graph;
+            group "loop end node algorithm"
+            :find the nodes with edges to start nodes as potential end nodes;
+            :copy graph and remove edges to start nodes;
+            repeat
+                :set node as potential end node;
+                repeat
+                    :set as other potential end node;
+                    :check if other potential end node\nhas path to potential end node but not vice versa;
+                    if () then (true)
+                        :potential end node is not a loop end node and remove from set;
+                        break
+                    else (false)
+                        :continue;
+                    endif
+                repeat while (for each potential end node)
+            repeat while (for each potential end node)
+            :output end nodes that were not removed from set;
+            end group
+            end
+        }
     }
-    end
 @enduml
