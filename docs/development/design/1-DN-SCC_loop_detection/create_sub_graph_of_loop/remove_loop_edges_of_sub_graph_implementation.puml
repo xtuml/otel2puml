@@ -1,0 +1,31 @@
+@startuml
+    partition "remove_loop_edges" {
+        start
+        :input "Loop" type and graph;
+        group "main algorithm"
+            :copy graph ready for modification;
+            :remove edges that create loop;
+            :remove the EventSets from event_sets that mirror the removed edges;
+            :get in edges to start points;
+            :get out edges from end points and break points;
+            :remove in edges to start points;
+            :remove EventSets that mirror the removed edges from start points;
+            :remove out edges from end points and break points;
+            :remove EventSets that mirror the removed edges from end and break points;
+            :output copied graph;
+        end group
+        end
+        partition "sub algorithms" {
+            start
+            :input removed edges;
+            group "remove EventSets mirroring removed edges"
+                repeat
+                    :remove EventSets containing the end Event of the\nedge from the event_sets attribute of the start Event of the edge;
+                    :remove EventSets containing the start Event of the\nedge from the in_event_sets of the end Event of the edge;
+                repeat while (for each removed edge)
+                :output "EventSets" without mirroring removed edges;
+            end group
+            end
+        }
+    }
+@enduml
