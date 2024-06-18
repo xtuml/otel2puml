@@ -35,7 +35,6 @@ tel2puml/check_puml_equiv.py:281: error: Returning Any from function declared to
 tel2puml/check_puml_equiv.py:308: error: Missing type parameters for generic type "DiGraph"  [type-arg]
 tel2puml/check_puml_equiv.py:309: error: Missing type parameters for generic type "DiGraph"  [type-arg]
 tel2puml/check_puml_equiv.py:330: error: Missing type parameters for generic type "DiGraph"  [type-arg]
-tel2puml/loop_detection/calculate_loop_components.py:134: error: Incompatible types in assignment (expression has type "Graph[Any]", variable has type "DiGraph[Any]")  [assignment]
 tests/test_sequence_otel.py:99: error: Need type annotation for "graph"  [var-annotated]
 tests/test_sequence_otel.py:101: error: Non-overlapping equality check (left operand type: "OutEdgeView[Any]", right operand type: "set[tuple[Span, Span]]")  [comparison-overlap]
 tests/test_sequence_otel.py:113: error: Non-overlapping equality check (left operand type: "OutEdgeView[Any]", right operand type: "set[tuple[Span, Span]]")  [comparison-overlap]
@@ -224,6 +223,7 @@ tests/node_map_to_puml/test_node.py:629: error: Value of type variable "Supports
 tests/node_map_to_puml/test_node.py:663: error: Argument 1 to "update_all_connections_from_clustered_events" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tests/node_map_to_puml/test_node.py:802: error: Argument 1 to "update_all_connections_from_clustered_events" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tests/node_map_to_puml/test_node.py:825: error: Argument 1 to "rotate_path" of "LogicBlockHolder" has incompatible type "Node | None"; expected "Node"  [arg-type]
+tel2puml/loop_detection/calculate_loop_components.py:184: error: Incompatible types in assignment (expression has type "Graph[T]", variable has type "DiGraph[T]")  [assignment]
 tests/node_map_to_puml/test_node_update.py:106: error: Argument 1 to "update_logic_nodes_with_lonely_merges_from_node_to_node_kill_map" has incompatible type "dict[str, list[str]]"; expected "dict[str, Iterable[str]]"  [arg-type]
 tests/node_map_to_puml/test_node_update.py:106: note: "Dict" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
 tests/node_map_to_puml/test_node_update.py:106: note: Consider using "Mapping" instead, which is covariant in the value type

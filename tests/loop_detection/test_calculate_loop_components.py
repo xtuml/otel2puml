@@ -1,6 +1,8 @@
 """Tests for the calculate_loop_components module."""
 from networkx import DiGraph
 
+from tel2puml.events import Event
+from tel2puml.loop_detection.loop_types import Loop, EventEdge
 from tel2puml.loop_detection.calculate_loop_components import (
     get_break_nodes_from_potential_break_outnodes,
     get_break_nodes_if_end_to_start_exists,
@@ -8,7 +10,9 @@ from tel2puml.loop_detection.calculate_loop_components import (
     get_end_nodes_from_potential_end_nodes,
     get_end_nodes_using_start_nodes,
     get_loop_edges,
-    calc_loop_end_break_and_loop_edges
+    calc_loop_end_break_and_loop_edges,
+    calc_components_of_loop_generic,
+    calc_components_of_loop
 )
 
 
@@ -166,5 +170,51 @@ class TestCalculateLoopComponents:
             {"K", "H"},
             {
                 ("E", "A"),
+            }
+        )
+
+    def test_calc_components_of_loop_generic(self) -> None:
+        """Tests the calc_components_of_loop_generic method."""
+        # happy path with exits from the loop
+        graph = self.create_graph_happy_path_with_loops()
+        graph.add_edge("X", "A")
+        assert calc_components_of_loop_generic(
+            {"A", "B", "C", "D", "E"},
+            graph
+        ) == (
+            {"A"},
+            {"E"},
+            {"H", "K"},
+            {
+                ("E", "A"),
+            }
+        )
+
+    def test_calc_components_of_loop(self) -> None:
+        """Tests the calc_components_of_loop method."""
+        graph: "DiGraph[Event]" = DiGraph()
+        events = {
+            event: Event(event)
+            for event in ["A", "B", "C", "D", "E", "F"]
+        }
+        graph.add_edge(events["F"], events["A"])
+        graph.add_edge(events["A"], events["B"])
+        graph.add_edge(events["B"], events["C"])
+        graph.add_edge(events["B"], events["D"])
+        graph.add_edge(events["C"], events["E"])
+        graph.add_edge(events["D"], events["E"])
+        graph.add_edge(events["C"], events["A"])
+
+        loop = calc_components_of_loop(
+            {events["A"], events["B"], events["C"]},
+            graph
+        )
+        assert loop == Loop(
+            {events["A"], events["B"], events["C"]},
+            {events["A"]},
+            {events["C"]},
+            {events["D"]},
+            {
+                EventEdge(events["C"], events["A"]),
             }
         )

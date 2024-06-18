@@ -10,7 +10,7 @@
                 :Calculate in edges of SCC component;
                 :Calculate "start points" of loop;
                 :Calculate out edges of SCC component;
-                :Input start points and out edges of loop;
+                :Input start points, SCC components and graph;
                 partition "Break and end point calculation" {
                     :Calculate edges that create loop;
                     :Calculate "end points" and "break points" of loop;

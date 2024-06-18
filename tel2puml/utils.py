@@ -229,9 +229,9 @@ def check_is_sub_list(
 
 
 def get_nodes_with_outedges_not_in_set(
-    nodes: set[Any], nodes_to_check: set[Any],
-    graph: "nx.DiGraph[Any]"
-) -> set[Any]:
+    nodes: set[T], nodes_to_check: set[T],
+    graph: "nx.DiGraph[T]"
+) -> set[T]:
     """Get the subset of nodes that have out edges that do not lead to nodes
     in the given set of nodes.
 
@@ -253,9 +253,9 @@ def get_nodes_with_outedges_not_in_set(
 
 
 def get_nodes_with_outedges_in_set(
-    nodes: set[Any], nodes_to_check: set[Any],
-    graph: "nx.DiGraph[Any]"
-) -> set[Any]:
+    nodes: set[T], nodes_to_check: set[T],
+    graph: "nx.DiGraph[T]"
+) -> set[T]:
     """Get the subset of nodes that have out edges that lead to nodes in the
     given set of nodes.
 
@@ -277,9 +277,9 @@ def get_nodes_with_outedges_in_set(
 
 
 def get_outnodes_not_in_set(
-    nodes: set[Any], nodes_to_check: set[Any],
-    graph: "nx.DiGraph[Any]"
-) -> set[Any]:
+    nodes: set[T], nodes_to_check: set[T],
+    graph: "nx.DiGraph[T]"
+) -> set[T]:
     """Get the subset of nodes that have out edges that do not lead to nodes
     in the given set of nodes.
 
@@ -301,9 +301,9 @@ def get_outnodes_not_in_set(
 
 
 def get_innodes_not_in_set(
-    nodes: set[Any], nodes_to_check: set[Any],
-    graph: "nx.DiGraph[Any]"
-) -> set[Any]:
+    nodes: set[T], nodes_to_check: set[T],
+    graph: "nx.DiGraph[T]"
+) -> set[T]:
     """Get a set of nodes that are the start node of a directed edge from
     the input set of nodes that do not come from the set of nodes to check.
 
@@ -320,6 +320,30 @@ def get_innodes_not_in_set(
     """
     return set(
         edge[0]
+        for edge in graph.in_edges(nodes)
+        if edge[0] not in nodes_to_check
+    )
+
+
+def get_nodes_with_inedge_not_in_set(
+    nodes: set[T], nodes_to_check: set[T],
+    graph: "nx.DiGraph[T]"
+) -> set[T]:
+    """Get the subset of nodes that have in edges that do not come from nodes
+    in the given set of nodes.
+
+    :param nodes: The set of nodes to get the in edges from
+    :type nodes: `set`[:class:`Any`]
+    :param nodes_to_check: The set of nodes to check if the in edges come from
+    :type nodes_to_check: `set`[:class:`Any`]
+    :param graph: The graph to find the in edges from
+    :type graph: :class:`DiGraph`[:class:`Any`]
+    :return: The in edges of the nodes that do not come from nodes in the
+    given set of nodes
+    :rtype: `set`[:class:`Any`]
+    """
+    return set(
+        edge[1]
         for edge in graph.in_edges(nodes)
         if edge[0] not in nodes_to_check
     )

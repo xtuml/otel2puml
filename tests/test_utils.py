@@ -5,6 +5,7 @@ from tel2puml.utils import (
     check_has_path_not_through_nodes,
     get_innodes_not_in_set, get_outnodes_not_in_set,
     get_nodes_with_outedges_not_in_set, get_nodes_with_outedges_in_set,
+    get_nodes_with_inedge_not_in_set
 )
 
 
@@ -131,3 +132,27 @@ def test_get_nodes_with_outedges_in_set() -> None:
     assert get_nodes_with_outedges_in_set(
         {"A", "D"}, {"B", "C"}, graph
     ) == {"A", "D"}
+
+
+def test_get_nodes_with_inedge_not_in_set() -> None:
+    """Tests the get_nodes_with_inedge_not_in_set method."""
+    graph: "DiGraph[str]" = DiGraph()
+    graph.add_edge("A", "B")
+    graph.add_edge("A", "C")
+    graph.add_edge("C", "D")
+    graph.add_edge("B", "E")
+    graph.add_edge("D", "A")
+    graph.add_edge("E", "A")
+    graph.add_edge("F", "A")
+    graph.add_edge("G", "B")
+    graph.add_edge("H", "G")
+    nodes = {"A", "B", "C", "D", "E"}
+    assert get_nodes_with_inedge_not_in_set(
+        nodes, nodes, graph
+    ) == {"A", "B"}
+    assert get_nodes_with_inedge_not_in_set(
+        {"G"}, nodes, graph
+    ) == {"G"}
+    assert get_nodes_with_inedge_not_in_set(
+        {"C", "D", "E"}, nodes, graph
+    ) == set()
