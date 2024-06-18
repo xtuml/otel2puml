@@ -127,8 +127,6 @@ tel2puml/events.py:41: note:      Superclass:
 tel2puml/events.py:41: note:          None
 tel2puml/events.py:41: note:      Subclass:
 tel2puml/events.py:41: note:          def __hash__(self) -> int
-tel2puml/events.py:343: error: Missing type parameters for generic type "DiGraph"  [type-arg]
-tel2puml/events.py:352: error: Need type annotation for "graph"  [var-annotated]
 tel2puml/pipelines/data_ingestion.py:13: error: Missing type parameters for generic type "dict"  [type-arg]
 tel2puml/pipelines/data_ingestion.py:25: error: Argument 1 to "update_all_connections_from_clustered_events" has incompatible type "dict_values[str, list[dict[Any, Any]]]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tel2puml/pipelines/data_ingestion.py:120: error: Missing type parameters for generic type "dict"  [type-arg]
@@ -215,17 +213,17 @@ tests/node_map_to_puml/test_node.py:447: error: Argument 3 to "load_logic_tree_i
 tests/node_map_to_puml/test_node.py:475: error: Argument 3 to "load_all_logic_trees_into_nodes" has incompatible type "str"; expected "Literal['incoming', 'outgoing']"  [arg-type]
 tests/node_map_to_puml/test_node.py:492: error: Need type annotation for "graph"  [var-annotated]
 tests/node_map_to_puml/test_node.py:518: error: Argument 1 to "update_all_connections_from_clustered_events" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
-tests/node_map_to_puml/test_node.py:552: error: Argument 1 to "update_all_connections_from_clustered_events" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
-tests/node_map_to_puml/test_node.py:571: error: Need type annotation for "expected_incoming_event_type_logic"  [var-annotated]
-tests/node_map_to_puml/test_node.py:588: error: Unsupported right operand type for in ("object")  [operator]
-tests/node_map_to_puml/test_node.py:591: error: Value of type variable "SupportsRichComparisonT" of "sorted" cannot be "str | None"  [type-var]
-tests/node_map_to_puml/test_node.py:597: error: Value of type "object" is not indexable  [index]
-tests/node_map_to_puml/test_node.py:610: error: Value of type variable "SupportsRichComparisonT" of "sorted" cannot be "str | None"  [type-var]
-tests/node_map_to_puml/test_node.py:621: error: Value of type variable "SupportsRichComparisonT" of "sorted" cannot be "str | None"  [type-var]
-tests/node_map_to_puml/test_node.py:627: error: Value of type variable "SupportsRichComparisonT" of "sorted" cannot be "str | None"  [type-var]
-tests/node_map_to_puml/test_node.py:661: error: Argument 1 to "update_all_connections_from_clustered_events" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
-tests/node_map_to_puml/test_node.py:800: error: Argument 1 to "update_all_connections_from_clustered_events" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
-tests/node_map_to_puml/test_node.py:823: error: Argument 1 to "rotate_path" of "LogicBlockHolder" has incompatible type "Node | None"; expected "Node"  [arg-type]
+tests/node_map_to_puml/test_node.py:554: error: Argument 1 to "update_all_connections_from_clustered_events" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
+tests/node_map_to_puml/test_node.py:573: error: Need type annotation for "expected_incoming_event_type_logic"  [var-annotated]
+tests/node_map_to_puml/test_node.py:590: error: Unsupported right operand type for in ("object")  [operator]
+tests/node_map_to_puml/test_node.py:593: error: Value of type variable "SupportsRichComparisonT" of "sorted" cannot be "str | None"  [type-var]
+tests/node_map_to_puml/test_node.py:599: error: Value of type "object" is not indexable  [index]
+tests/node_map_to_puml/test_node.py:612: error: Value of type variable "SupportsRichComparisonT" of "sorted" cannot be "str | None"  [type-var]
+tests/node_map_to_puml/test_node.py:623: error: Value of type variable "SupportsRichComparisonT" of "sorted" cannot be "str | None"  [type-var]
+tests/node_map_to_puml/test_node.py:629: error: Value of type variable "SupportsRichComparisonT" of "sorted" cannot be "str | None"  [type-var]
+tests/node_map_to_puml/test_node.py:663: error: Argument 1 to "update_all_connections_from_clustered_events" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
+tests/node_map_to_puml/test_node.py:802: error: Argument 1 to "update_all_connections_from_clustered_events" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
+tests/node_map_to_puml/test_node.py:825: error: Argument 1 to "rotate_path" of "LogicBlockHolder" has incompatible type "Node | None"; expected "Node"  [arg-type]
 tests/node_map_to_puml/test_node_update.py:106: error: Argument 1 to "update_logic_nodes_with_lonely_merges_from_node_to_node_kill_map" has incompatible type "dict[str, list[str]]"; expected "dict[str, Iterable[str]]"  [arg-type]
 tests/node_map_to_puml/test_node_update.py:106: note: "Dict" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
 tests/node_map_to_puml/test_node_update.py:106: note: Consider using "Mapping" instead, which is covariant in the value type
@@ -238,4 +236,4 @@ tests/test_pv_to_puml.py:26: error: Argument 1 to "pv_to_puml_string" has incomp
 tests/test_pv_to_puml.py:37: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tests/test_pv_to_puml.py:47: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tel2puml/utils_test.py:39: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
-Found 215 errors in 28 files (checked 46 source files)
+Found 213 errors in 28 files (checked 48 source files)

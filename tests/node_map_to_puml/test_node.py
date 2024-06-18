@@ -534,6 +534,8 @@ def test_create_networkx_graph_of_nodes_from_markov_graph() -> None:
             == event_reference[node.uid]
         )
     for edge in node_class_graph.edges:
+        assert isinstance(edge[0].uid, str)
+        assert isinstance(edge[1].uid, str)
         assert (edge[0].uid, edge[1].uid) in markov_graph.edges
 
 

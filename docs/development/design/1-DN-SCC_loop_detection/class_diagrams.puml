@@ -11,7 +11,7 @@ class Event {
 }
 
 struct Loop {
-    nodes: set<Event>
+    loop_events: set<Event>
     start_events: set<Event>
     end_events: set<Event>
     break_events: set<Event>

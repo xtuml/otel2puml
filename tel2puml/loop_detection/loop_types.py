@@ -38,16 +38,18 @@ class EventEdge(NamedTuple):
 class Loop(NamedTuple):
     """Named tuple for loop detection.
 
-    :param start_event: The start event of the loop.
-    :type start_event: `Event`
-    :param end_event: The end event of the loop.
-    :type end_event: `Event`
-    :param break_event: The break event of the loop.
-    :type break_event: `Event`
+    :param loop_events: The loop events.
+    :type loop_events: `set`[:class:`Event`]
+    :param start_events: The start events.
+    :type start_events: `set`[:class:`Event`]
+    :param end_events: The end events.
+    :type end_events: `set`[:class:`Event`]
+    :param break_events: The break events.
+    :type break_events: `set`[:class:`Event`]
     :param edges_to_remove: The edges to remove.
     :type edges_to_remove: `set`[:class:`EventEdge`]
     """
-
+    loop_events: set[Event]
     start_events: set[Event]
     end_events: set[Event]
     break_events: set[Event]

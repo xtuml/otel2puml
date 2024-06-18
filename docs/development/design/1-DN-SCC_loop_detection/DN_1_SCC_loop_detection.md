@@ -72,12 +72,11 @@ def create_sub_graph_of_loop(loop: Loop, graph: EventGraph) -> EventGraph:
     """
     pass
 
-def remove_loop_edges(loop: Loop, graph: EventGraph) -> EventGraph:
-    """Remove the edges of the loop from the graph
+def remove_loop_edges(loop: Loop, graph: EventGraph) -> None:
+    """Remove the edges of the loop from the graph and return a deep copied graph with loop edges removed and the loop components
 
     :param loop: The components of the loop to remove the edges from
     :param graph: The graph to remove the edges from
-    :return: The graph copied with the loop edges removed
     """
     pass
 

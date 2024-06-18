@@ -19,22 +19,23 @@
                 :Output start, end and break points of loop\nand edges that create loop;
             }
             partition "Create sub graph of Loop" {
-                partition "Remove edges describing loop" {
-                    :Copy graph and remove in + out edges of start and end points;
-                    :Remove edges that create loop from copied graph;
-                    :Remove EventSets that mirror removed edges;
-                    :Remove out edges of break points and EventSets;
-                    :Output copied and modified graph;
-                }
-                partition "Get disconnected sub graph" {
-                    :Get disconnected sub graph by finding disconnected components containing loop nodes;
-                    :Output disconnected sub graph;
-                }
+                :Copy graph and loop components;
                 partition "Add start and end Event vertices" {
                     :Add start Event vertex to sub graph;
                     :Create out EventSets of start Event\nvertex using out EventSets of incoming Events;
                     :Add end Event vertex to sub graph;
                     :Create in EventSets of end Event\nvertex using in EventSets of outgoing Events;
+                }
+                partition "Remove edges describing loop" {
+                    :Remove in + out edges of start and end points;
+                    :Remove edges that create loop from graph;
+                    :Remove EventSets that mirror removed edges;
+                    :Remove out edges of break points and EventSets; 
+                }
+                :Remove nodes that have no path back to loop;
+                partition "Get disconnected sub graph" {
+                    :Get disconnected sub graph by finding disconnected components containing loop nodes;
+                    :Output disconnected sub graph;
                 }
                 :Output final subgraph of Loop;
             }

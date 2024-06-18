@@ -3,7 +3,6 @@
         start
         :input "Loop" type and graph;
         group "main algorithm"
-            :copy graph ready for modification;
             :remove edges that create loop;
             :remove the EventSets from event_sets that mirror the removed edges;
             :get in edges to start points;
@@ -12,7 +11,6 @@
             :remove EventSets that mirror the removed edges from start points;
             :remove out edges from end points and break points;
             :remove EventSets that mirror the removed edges from end and break points;
-            :output copied graph;
         end group
         end
         partition "sub algorithms" {

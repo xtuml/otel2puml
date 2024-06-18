@@ -272,6 +272,18 @@ class Event:
 
         self._update_since_logic_gate_tree = True
 
+    def remove_event_type_from_in_event_sets(self, event_type: str) -> None:
+        """Method to remove an event type from the in event sets.
+
+        :param event_type: The event type.
+        :type event_type: `str`
+        """
+        self.in_event_sets = {
+            event_set
+            for event_set in self.in_event_sets
+            if event_type not in event_set
+        }
+
 
 def remove_detected_loop_events(
     mapping: dict[str, list[str]],
@@ -340,7 +352,7 @@ def remove_detected_loop_data_from_events(
 
 def events_to_markov_graph(
     events: Iterable[Event],
-) -> DiGraph:
+) -> "DiGraph[str]":
     """This function converts a sequence of events to a minimal Markov chain
     or what could be termed as a directly follows graph.
 
@@ -349,7 +361,7 @@ def events_to_markov_graph(
     :return: The Markov graph.
     :rtype: :class:`nx.DiGraph`
     """
-    graph = DiGraph()
+    graph: "DiGraph[str]" = DiGraph()
     for event in events:
         out_events = set(
             event_type
