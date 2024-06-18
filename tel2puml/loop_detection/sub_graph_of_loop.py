@@ -1,11 +1,13 @@
 """Module for creating sub graph of loop"""
 
-from typing import Iterable
+from typing import Iterable, TypeVar
 
-from networkx import DiGraph
+from networkx import DiGraph, weakly_connected_components
 
 from tel2puml.events import Event
 from tel2puml.loop_detection.loop_types import Loop, EventEdge
+
+T = TypeVar("T")
 
 
 def remove_loop_edges(
@@ -65,3 +67,26 @@ def remove_event_edges_and_event_sets(
     """
     graph.remove_edges_from(event_edges)
     remove_event_sets_mirroring_removed_edges(event_edges)
+
+
+def get_disconnected_loop_sub_graph(
+    scc_nodes: set[T],
+    graph: "DiGraph[T]",
+) -> "DiGraph[T]":
+    """Get the sub graph of the loop that is disconnected from the rest of the
+    graph, given the nodes in the strong connected components. The graph needs
+    to have had all connections to the nodes outside the loop removed
+    previously.
+
+    :param scc_nodes: The nodes in the SCC
+    :type scc_nodes: `set`[:class:`T`]
+    :param graph: The graph to get the sub graph from
+    :type graph: :class:`DiGraph`[:class:`T`]
+    :return: The sub graph of the loop
+    :rtype: :class:`DiGraph`[:class:`T`]
+    """
+    for wcc_nodes in weakly_connected_components(graph):
+        if scc_nodes.issubset(wcc_nodes):
+            graph.remove_nodes_from(set(graph.nodes).difference(wcc_nodes))
+            return graph
+    raise ValueError("The SCC nodes are not a subgraph of the graph")

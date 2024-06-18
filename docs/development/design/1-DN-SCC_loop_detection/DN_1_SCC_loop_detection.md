@@ -80,7 +80,7 @@ def remove_loop_edges(loop: Loop, graph: EventGraph) -> None:
     """
     pass
 
-def get_disconnected_loop_sub_graph(loop: Loop, graph: EventGraph) -> EventGraph:
+def get_disconnected_loop_sub_graph(scc_nodes: set[T], graph: DiGraph[T]) -> DiGraph[T]:
     """Get the disconnected subgraph of the loop from the graph
 
     :param loop: The components of the loop to get the disconnected subgraph from

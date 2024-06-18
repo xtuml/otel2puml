@@ -1,12 +1,15 @@
 """Tests for the sub_graph_of_loop module"""
 from networkx import DiGraph
 
+import pytest
+
 from tel2puml.events import Event, EventSet
 from tel2puml.loop_detection.loop_types import Loop, EventEdge
 from tel2puml.loop_detection.sub_graph_of_loop import (
     remove_event_sets_mirroring_removed_edges,
     remove_event_edges_and_event_sets,
-    remove_loop_edges
+    remove_loop_edges,
+    get_disconnected_loop_sub_graph
 )
 
 
@@ -134,3 +137,30 @@ class TestsRemoveEdgesAndEventSets:
         assert EventEdge(events["G"], events["E"]) not in graph.edges()
         assert EventEdge(events["D"], events["E"]) not in graph.edges()
         assert EventEdge(X, events["A"]) not in graph.edges()
+
+    @staticmethod
+    def disconnected_graph() -> "DiGraph[str]":
+        """Create a graph with diconnected components."""
+        graph: "DiGraph[str]" = DiGraph()
+        graph.add_edge("A", "B")
+        graph.add_edge("B", "C")
+        graph.add_edge("X", "Y")
+        graph.add_edge("B", "E")
+        graph.add_edge("A", "G")
+        graph.add_edge("G", "H")
+        graph.add_edge("D", "F")
+        return graph
+
+    def test_get_disconnected_loop_sub_graph(self) -> None:
+        """Test the creation of a sub graph from a loop."""
+        # check normal case
+        graph = self.disconnected_graph()
+        graph = get_disconnected_loop_sub_graph({"A", "B", "C"}, graph)
+        assert set(graph.nodes) == {"A", "B", "C", "E", "G", "H"}
+        assert set(graph.edges) == {
+            ("A", "B"), ("B", "C"), ("B", "E"), ("G", "H"), ("A", "G")
+        }
+        # check case where input scc_nodes is not a subset of the graph
+        graph = self.disconnected_graph()
+        with pytest.raises(ValueError):
+            get_disconnected_loop_sub_graph({"M", "N"}, graph)
