@@ -1,0 +1,26 @@
+@startuml
+    partition "add_start_and_end_events_to_sub_graph" {
+        start
+        :input "Loop" type and graph;
+        group "main algorithm"
+            :Create dummy start event and dummy end event;
+            :Get in edges to loop start events that are not in the loop events;
+            :Collect all the out EventSets from the events into the start events;
+            :Add those EventSets to the dummy start event out event set;
+            repeat
+                :Get out edges from end events that are not in the loop events;
+                if (do edges exist) then (yes)
+                    :Collect all the in EventSets from the Events out from the end events;
+                    :Add those EventSets to the dummy end event in event set;
+                else (no)
+                    :Add a single EventSet that is the end event to the in\nevent set of the dummy end event;
+                endif
+            repeat while (for each end event)
+            :Add edges from dummy start event to loop start events;
+            :Add an inevent set of the the dummy start event to the start events;
+            :Add edges from loop end events to dummy end event;
+            :Add an outevent set of the dummy end event to the end events;
+        end group
+        end
+    }
+@enduml
