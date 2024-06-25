@@ -75,6 +75,18 @@ class EventSet(dict[str, int]):
             for event, count in self.items()
         )
 
+    def to_list(self) -> list[str]:
+        """Method to get the events as a list.
+
+        :return: The events as a list.
+        :rtype: `list`[`str`]
+        """
+        return list(
+            event
+            for event, count in self.items()
+            for _ in range(count)
+        )
+
 
 class Event:
     """Class to detect the logic in a sequence of PV events.

@@ -6,6 +6,8 @@ from networkx import DiGraph, weakly_connected_components
 
 from tel2puml.events import Event
 from tel2puml.loop_detection.loop_types import Loop, EventEdge
+from tel2puml.tel2puml_types import DUMMY_START_EVENT, DUMMY_END_EVENT
+from tel2puml.utils import get_innodes_not_in_set, get_outnodes_not_in_set
 
 T = TypeVar("T")
 
@@ -90,3 +92,82 @@ def get_disconnected_loop_sub_graph(
             graph.remove_nodes_from(set(graph.nodes).difference(wcc_nodes))
             return graph
     raise ValueError("The SCC nodes are not a subgraph of the graph")
+
+
+def add_start_and_end_events_to_sub_graph(
+    loop: Loop,
+    graph: "DiGraph[Event]",
+) -> None:
+    """Add the start and end events of the loop to the sub graph.
+
+    :param loop: The loop to get the start and end events from.
+    :type loop: :class:`Loop`
+    :param graph: The graph to add the start and end events to.
+    :type graph: :class:`DiGraph`[:class:`Event`]
+    """
+    # create dummy start and end events
+    start_event = create_start_event(loop, graph)
+    end_event = create_end_event(loop, graph)
+    # add edges from start event to loop start events
+    for loop_start_event in loop.start_events:
+        graph.add_edge(start_event, loop_start_event)
+    # add edges from loop end events to end event
+    for loop_end_event in loop.end_events:
+        graph.add_edge(loop_end_event, end_event)
+
+
+def create_start_event(
+    loop: Loop,
+    graph: "DiGraph[Event]",
+) -> Event:
+    """Create the start event of the loop.
+
+    :param loop: The loop to create the start event for.
+    :type loop: :class:`Loop`
+    :param graph: The graph to create the start event from.
+    :type graph: :class:`DiGraph`[:class:`Event`]
+    :return: The start event of the loop.
+    :rtype: :class:`Event`
+    """
+    start_event = Event(DUMMY_START_EVENT)
+    in_nodes = get_innodes_not_in_set(
+        loop.start_events, loop.loop_events, graph
+    )
+    # update start events out event sets
+    for in_node in in_nodes:
+        for event_set in in_node.event_sets:
+            start_event.update_event_sets(event_set.to_list())
+    return start_event
+
+
+def create_end_event(
+    loop: Loop,
+    graph: "DiGraph[Event]",
+) -> Event:
+    """Create the end event of the loop.
+
+    :param loop: The loop to create the end event for.
+    :type loop: :class:`Loop`
+    :param graph: The graph to create the end event from.
+    :type graph: :class:`DiGraph`[:class:`Event`]
+    :return: The end event of the loop.
+    :rtype: :class:`Event`
+    """
+    end_event = Event(DUMMY_END_EVENT)
+    loop_event_types = {event.event_type for event in loop.loop_events}
+    for end_event_node in loop.end_events:
+        exit_event_nodes = get_outnodes_not_in_set(
+            {end_event_node}, loop.loop_events, graph
+        )
+        # check if there are any exit event nodes
+        if exit_event_nodes:
+            # update end events in event sets to mirror exit event nodes
+            for out_node in exit_event_nodes:
+                for event_set in out_node.in_event_sets:
+                    if event_set.to_frozenset().issubset(loop_event_types):
+                        end_event.update_in_event_sets(event_set.to_list())
+        else:
+            # if no exit event nodes update end events in event sets to
+            # to be a single occurence of the end event
+            end_event.update_in_event_sets([end_event_node.event_type])
+    return end_event

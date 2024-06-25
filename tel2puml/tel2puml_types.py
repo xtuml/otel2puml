@@ -85,6 +85,8 @@ class PlantUMLEventAttributes(TypedDict):
 
 DUMMY_START_EVENT = "|||START|||"
 
+DUMMY_END_EVENT = "|||END|||"
+
 
 class OtelSpan(TypedDict):
     """TypedDict for OtelSpan"""
