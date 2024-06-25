@@ -106,6 +106,9 @@ class Event:
         self._logic_gate_tree: ProcessTree | None = None
         self._update_since_logic_gate_tree = False
 
+    def __repr__(self) -> str:
+        return self.event_type
+
     def __hash__(self) -> int:
         """Method to hash the event type.
 
@@ -254,6 +257,14 @@ class Event:
         :rtype: `list`[`str`]
         """
         return {event_set.to_frozenset() for event_set in self.event_sets}
+
+    def get_reduced_in_event_set(self) -> set[frozenset[str]]:
+        """This method reduces the event set to a list of unique events.
+
+        :return: The reduced event set.
+        :rtype: `list`[`str`]
+        """
+        return {event_set.to_frozenset() for event_set in self.in_event_sets}
 
     def get_event_set_counts(self) -> dict[str, set[int]]:
         """Method to get the event set counts.

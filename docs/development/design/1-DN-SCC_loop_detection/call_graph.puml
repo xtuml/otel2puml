@@ -10,14 +10,13 @@ digraph G {
   create_sub_graph_of_loop [label="create_sub_graph_of_loop()"];
 
   add_start_and_end_events_to_sub_graph [label="add_start_and_end_events_to_sub_graph()"];
-  get_disconnected_loop_sub_graph [label="get_disconnected_loop_sub_graph()"];
   remove_loop_edges [label="remove_loop_edges()"];
+  remove_nodes_without_path_back_to_loop [label="remove_nodes_without_path_back_to_loop()"];
   create_graph_from_events [label="create_graph_from_events()"];
     detect_loops -> create_sub_graph_of_loop;
     create_sub_graph_of_loop -> add_start_and_end_events_to_sub_graph;
-    create_sub_graph_of_loop -> get_disconnected_loop_sub_graph;
     create_sub_graph_of_loop -> remove_loop_edges;
-    create_sub_graph_of_loop -> create_graph_from_events
+    create_sub_graph_of_loop -> remove_nodes_without_path_back_to_loop;
   create_loop_event [label="create_loop_event()"];
   calculate_updated_graph_with_loop_event [label="calculate_updated_graph_with_loop_event()"];
     detect_loops -> create_loop_event;

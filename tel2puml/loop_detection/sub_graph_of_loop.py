@@ -1,5 +1,5 @@
 """Module for creating sub graph of loop"""
-
+from copy import deepcopy
 from typing import Iterable, TypeVar
 
 from networkx import DiGraph, weakly_connected_components
@@ -7,7 +7,10 @@ from networkx import DiGraph, weakly_connected_components
 from tel2puml.events import Event
 from tel2puml.loop_detection.loop_types import Loop, EventEdge
 from tel2puml.tel2puml_types import DUMMY_START_EVENT, DUMMY_END_EVENT
-from tel2puml.utils import get_innodes_not_in_set, get_outnodes_not_in_set
+from tel2puml.utils import (
+    get_innodes_not_in_set, get_outnodes_not_in_set,
+    remove_nodes_without_path_back_to_loop
+)
 
 T = TypeVar("T")
 
@@ -32,6 +35,7 @@ def remove_loop_edges(
     remove_event_edges_and_event_sets(start_points_in_edges, graph)
     end_points_out_edges = set(
         EventEdge(*edge) for edge in graph.out_edges(loop.end_events)
+        if edge[1] not in loop.loop_events
     )
     remove_event_edges_and_event_sets(end_points_out_edges, graph)
     break_points_out_edges = set(
@@ -108,12 +112,54 @@ def add_start_and_end_events_to_sub_graph(
     # create dummy start and end events
     start_event = create_start_event(loop, graph)
     end_event = create_end_event(loop, graph)
-    # add edges from start event to loop start events
+    add_start_event_to_graph(start_event, loop, graph)
+    add_end_event_to_graph(end_event, loop, graph)
+    loop.loop_events.add(start_event)
+    loop.loop_events.add(end_event)
+
+
+def add_start_event_to_graph(
+    start_event: Event,
+    loop: Loop,
+    graph: "DiGraph[Event]",
+) -> None:
+    """Add the edges from the start event to the loop start events.
+
+    :param start_event: The start event to add the edges from.
+    :type start_event: :class:`Event`
+    :param loop: The loop to get the start events from.
+    :type loop: :class:`Loop`
+    :param graph: The graph to add the edges to.
+    :type graph: :class:`DiGraph`[:class:`Event`]
+    """
+    for node in graph.nodes:
+        if node.event_type == DUMMY_START_EVENT:
+            raise ValueError("A start event already exists in the graph")
     for loop_start_event in loop.start_events:
         graph.add_edge(start_event, loop_start_event)
-    # add edges from loop end events to end event
+        loop_start_event.update_in_event_sets([DUMMY_START_EVENT])
+
+
+def add_end_event_to_graph(
+    end_event: Event,
+    loop: Loop,
+    graph: "DiGraph[Event]",
+) -> None:
+    """Add the edges from the loop end events to the end event.
+
+    :param end_event: The end event to add the edges to.
+    :type end_event: :class:`Event`
+    :param loop: The loop to get the end events from.
+    :type loop: :class:`Loop`
+    :param graph: The graph to add the edges to.
+    :type graph: :class:`DiGraph`[:class:`Event`]
+    """
+    for node in graph.nodes:
+        if node.event_type == DUMMY_END_EVENT:
+            raise ValueError("An end event already exists in the graph")
     for loop_end_event in loop.end_events:
         graph.add_edge(loop_end_event, end_event)
+        loop_end_event.update_event_sets([DUMMY_END_EVENT])
 
 
 def create_start_event(
@@ -171,3 +217,28 @@ def create_end_event(
             # to be a single occurence of the end event
             end_event.update_in_event_sets([end_event_node.event_type])
     return end_event
+
+
+def create_sub_graph_of_loop(
+    loop: Loop,
+    graph: "DiGraph[Event]",
+) -> "DiGraph[Event]":
+    """Create a sub graph of the loop.
+
+    :param loop: The loop to create the sub graph from.
+    :type loop: :class:`Loop`
+    :param graph: The graph to create the sub graph from.
+    :type graph: :class:`DiGraph`[:class:`Event`]
+    :return: The sub graph of the loop.
+    :rtype: :class:`DiGraph`[:class:`Event`]
+    """
+    sub_loop, sub_graph = deepcopy((loop, graph))
+    # add start and end events to subgraph
+    add_start_and_end_events_to_sub_graph(sub_loop, sub_graph)
+    # remove loop edges from sub graph
+    remove_loop_edges(sub_loop, sub_graph)
+    # remove nodes from the graph without a path back to the loop events
+    remove_nodes_without_path_back_to_loop(
+        set(sub_graph.nodes), sub_loop.loop_events, sub_graph
+    )
+    return sub_graph

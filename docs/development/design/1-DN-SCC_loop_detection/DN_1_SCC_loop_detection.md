@@ -98,6 +98,22 @@ def add_start_and_end_events_to_sub_graph(loop: Loop, sub_graph: EventGraph) -> 
     """
     pass
 
+def remove_nodes_without_path_back_to_loop(
+    nodes: set[T],
+    loop_nodes: set[T],
+    graph: "nx.DiGraph[T]",
+) -> None:
+    """Remove nodes that do not have a path back to the loop nodes.
+
+    :param nodes: The set of nodes to remove.
+    :type nodes: `set`[:class:`T`]
+    :param loop_nodes: The set of loop nodes.
+    :type loop_nodes: `set`[:class:`T`]
+    :param graph: The graph to remove the nodes from.
+    :type graph: :class:`DiGraph`[:class:`T`]
+    """
+    pass
+
 def create_loop_event(loop: Loop, sub_graph: EventGraph, graph: EventGraph) -> LoopEvent:
     """Create a LoopEvent from the loop components and the subgraph
 

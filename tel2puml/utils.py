@@ -347,3 +347,73 @@ def get_nodes_with_inedge_not_in_set(
         for edge in graph.in_edges(nodes)
         if edge[0] not in nodes_to_check
     )
+
+
+def has_path_back_to_chosen_nodes(
+    node: T,
+    nodes_to_find_path_from: set[T],
+    graph: "nx.DiGraph[T]",
+) -> bool:
+    """Check if there is a path back to the chosen nodes.
+
+    :param node: The node to check if there is a path back to the chosen nodes.
+    :type node: :class:`T`
+    :param nodes_to_find_path_from: The nodes to find a path from.
+    :type nodes_to_find_path_from: `set`[:class:`T`]
+    :param graph: The graph to find the path from.
+    :type graph: :class:`DiGraph`[:class:`T`]
+    :return: If there is a path back to the chosen nodes.
+    :rtype: `bool`
+    """
+    for node_to_find_path_from in nodes_to_find_path_from:
+        if nx.has_path(graph, node_to_find_path_from, node):
+            return True
+    return False
+
+
+def identify_nodes_without_path_back_to_chosen_nodes(
+    nodes: set[T],
+    nodes_to_find_path_from: set[T],
+    graph: "nx.DiGraph[T]",
+) -> Generator[T, Any, None]:
+    """Identify nodes that do not have a path back to the chosen nodes.
+
+    :param nodes: The set of nodes to identify.
+    :type nodes: `set`[:class:`T`]
+    :param nodes_to_find_path_from: The set of nodes to find a path from.
+    :type nodes_to_find_path_from: `set`[:class:`T`]
+    :param graph: The graph to find the path from.
+    :type graph: :class:`DiGraph`[:class:`T`]
+    :return: A generator of nodes that do not have a path back to the chosen
+    nodes.
+    :rtype: `Generator`[:class:`T`, Any, None]
+    """
+    for node in nodes:
+        if not has_path_back_to_chosen_nodes(
+            node, nodes_to_find_path_from, graph
+        ):
+            yield node
+
+
+def remove_nodes_without_path_back_to_loop(
+    nodes: set[T],
+    loop_nodes: set[T],
+    graph: "nx.DiGraph[T]",
+) -> None:
+    """Remove nodes that do not have a path back to the loop nodes.
+
+    :param nodes: The set of nodes to remove.
+    :type nodes: `set`[:class:`T`]
+    :param loop_nodes: The set of loop nodes.
+    :type loop_nodes: `set`[:class:`T`]
+    :param graph: The graph to remove the nodes from.
+    :type graph: :class:`DiGraph`[:class:`T`]
+    """
+    nodes_without_path_back_to_loop_nodes = set(
+        identify_nodes_without_path_back_to_chosen_nodes(
+            set(nodes), loop_nodes, graph
+        )
+    )
+    for node in nodes_without_path_back_to_loop_nodes:
+        if node in graph.nodes:
+            graph.remove_node(node)
