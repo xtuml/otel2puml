@@ -54,3 +54,6 @@ class Loop(NamedTuple):
     end_events: set[Event]
     break_events: set[Event]
     edges_to_remove: set[EventEdge]
+
+
+LOOP_EVENT_TYPE = "LOOP"
