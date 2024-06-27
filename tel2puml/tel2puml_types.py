@@ -8,7 +8,7 @@ class PVEvent(TypedDict):
     jobId: str
     eventId: str
     timestamp: str
-    previousEventIds: NotRequired[list[str]]
+    previousEventIds: NotRequired[list[str] | str]
     applicationName: str
     jobName: str
     eventType: str

@@ -2,7 +2,6 @@
 
 import os
 import json
-from typing import Generator, Any
 from datetime import datetime, timezone
 
 from tel2puml.tel2puml_types import PVEvent, OtelSpan
@@ -40,23 +39,22 @@ def pv_event_to_otel(event: PVEvent) -> OtelSpan:
     return: A singular otel event
     rtype: :class:`OtelSpan`
     """
-    return OtelSpan(
-        name=event.get("applicationName", ""),
-        span_id=event.get("eventId", ""),
-        parent_span_id=event.get("previousEventIds", None),
-        trace_id=event.get("jobId", ""),
+    span = OtelSpan(
+        name=event["applicationName"],
+        span_id=event["eventId"],
+        trace_id=event["jobId"],
         start_time_unix_nano=convert_timestamp_to_unix_nano(
-            event.get("timestamp", 0)
+            event["timestamp"]
         ),
         end_time_unix_nano=convert_timestamp_to_unix_nano(
-            event.get("timestamp", 0)
+            event["timestamp"]
         ),
         attributes=(
             [
                 {
                     "key": "coral.operation",
                     "value": {
-                        "Value": {"StringValue": event.get("eventType", "")}
+                        "Value": {"StringValue": event["eventType"]}
                     },
                 }
             ]
@@ -64,6 +62,12 @@ def pv_event_to_otel(event: PVEvent) -> OtelSpan:
             else []
         ),
     )
+    if "previousEventIds" in event:
+        if isinstance(event["previousEventIds"], list):
+            span["parent_span_id"] = event["previousEventIds"][0]
+        else:
+            span["parent_span_id"] = event["previousEventIds"]
+    return span
 
 
 def puml_to_otel_file(
@@ -87,7 +91,7 @@ def puml_to_otel_file(
     :param file_name_prefix: Filename prefix
     :type file_name_prefix: str
     """
-    pv_events_generators: Generator[Generator[dict, Any, None], Any, None] = (
+    pv_events_generators = (
         generate_test_data_event_sequences_from_puml(
             input_puml_file=puml_file_path
         )

@@ -1,5 +1,5 @@
 """Test cases for pv_to_tel module"""
-
+from typing import Any, Generator
 import os
 import json
 import pytest
@@ -15,13 +15,13 @@ from tel2puml.pv_to_tel import (
 
 def test_pv_event_to_otel(
     sample_pv_events: list[PVEvent], expected_otel_span_events: list[OtelSpan]
-):
+) -> None:
     """Test pv_event_to_otel"""
     for index, pv_event in enumerate(sample_pv_events):
         assert pv_event_to_otel(pv_event) == expected_otel_span_events[index]
 
 
-def test_convert_timestamp_to_unix_nano():
+def test_convert_timestamp_to_unix_nano() -> None:
     """Test convert_timestamp_to_unix_nano"""
     iso_timestamp: str = "2024-01-01T00:00:00Z"
     expected_unix_nano: int = int(
@@ -33,11 +33,13 @@ def test_convert_timestamp_to_unix_nano():
 def test_puml_to_otel_file(
     monkeypatch: pytest.MonkeyPatch,
     sample_pv_events: list[PVEvent],
-    expected_otel_json_output_sample_test_1: dict[OtelSpan],
-):
+    expected_otel_json_output_sample_test_1: dict[str, list[dict[str, Any]]],
+) -> None:
     """Test puml_to_otel_file"""
 
-    def mock_generate_test_data_event_sequences_from_puml(input_puml_file):
+    def mock_generate_test_data_event_sequences_from_puml(
+        input_puml_file: str
+    ) -> Generator[list[PVEvent], Any, None]:
         """Mock generate_test_data_event_sequences_from_puml"""
         yield [sample_pv_events[0]]
 

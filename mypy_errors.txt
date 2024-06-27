@@ -5,6 +5,7 @@ tel2puml/pipelines/data_creation.py:107: error: Missing type parameters for gene
 tel2puml/pipelines/data_creation.py:119: error: Missing type parameters for generic type "dict"  [type-arg]
 tel2puml/pipelines/data_creation.py:148: error: Missing type parameters for generic type "dict"  [type-arg]
 tel2puml/pipelines/data_creation.py:161: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]
+tel2puml/pv_to_tel.py:105: error: Argument 1 to "pv_event_to_otel" has incompatible type "dict[Any, Any]"; expected "PVEvent"  [arg-type]
 tel2puml/utils.py:77: error: Missing type parameters for generic type "DiGraph"  [type-arg]
 tel2puml/utils.py:77: error: Missing type parameters for generic type "tuple"  [type-arg]
 tel2puml/utils.py:78: error: Name "plt.Figure" is not defined  [name-defined]
@@ -236,4 +237,4 @@ tests/test_pv_to_puml.py:26: error: Argument 1 to "pv_to_puml_string" has incomp
 tests/test_pv_to_puml.py:37: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tests/test_pv_to_puml.py:47: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tel2puml/utils_test.py:39: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
-Found 213 errors in 28 files (checked 50 source files)
+Found 214 errors in 29 files (checked 53 source files)
