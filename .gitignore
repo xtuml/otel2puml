@@ -168,3 +168,5 @@ data/
 
 # vscode
 .vscode
+
+/tel2puml/OtelSpan_output

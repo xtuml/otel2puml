@@ -3,15 +3,13 @@
 {
 	"name": "Test Harness",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/anaconda:3",
-
+	"image": "mcr.microsoft.com/devcontainers/anaconda:0.204.15-3",
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
 		"ghcr.io/rocker-org/devcontainer-features/apt-packages:1": {
 			"packages": "default-jre"
 		}
 	},
-
 	"customizations": {
 		"vscode": {
 			"settings": {
@@ -20,7 +18,7 @@
 					"--line-length",
 					"79"
 				],
-				"[python]":{
+				"[python]": {
 					"editor.rulers": [
 						{
 							"column": 79
@@ -37,22 +35,17 @@
 			]
 		}
 	},
-
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
-
 	// Use 'postCreateCommand' to run commands after the container is created.
 	"postCreateCommand": {
-        "1": "conda install -y python=3.11 && conda install -y -c conda-forge cvxopt && conda install -y -c conda-forge pygraphviz && pip3 install --user -r requirements.txt && bash scripts/install_repositories.sh",
-        "2": "echo 'export PYTHONPATH=/workspaces/test-harness:$PYTHONPATH' >> ~/.bashrc"
-    },
-
-    // Add repo to safe directories
-    "postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
-	
-    // Configure tool-specific properties.
+		"1": "conda install -y python=3.11.8 && conda install -y -c conda-forge cvxopt && conda install -y -c conda-forge pygraphviz && pip3 install --user -r requirements.txt && bash scripts/install_repositories.sh",
+		"2": "echo 'export PYTHONPATH=/workspaces/test-harness:$PYTHONPATH' >> ~/.bashrc"
+	},
+	// Add repo to safe directories
+	"postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
+	// Configure tool-specific properties.
 	// "customizations": {},
-
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
 	"mounts": [

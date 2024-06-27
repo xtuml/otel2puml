@@ -90,15 +90,16 @@ DUMMY_END_EVENT = "|||END|||"
 
 class OtelSpan(TypedDict):
     """TypedDict for OtelSpan"""
-    trace_id: str
-    span_id: str
     name: str
-    kind: int
+    span_id: str
+    parent_span_id: NotRequired[str]
+    trace_id: str
     start_time_unix_nano: int
     end_time_unix_nano: int
     attributes: NotRequired[list[dict[str, Any]]]
-    status: dict[str, Any]
-    parent_span_id: NotRequired[str]
+    scope: NotRequired[dict[str, Any]]
+    resource: NotRequired[list[dict[str, Any]]]
     events: NotRequired[Any]
-    scope: dict[str, Any]
-    operation: str
+    operation: NotRequired[str]
+    status: NotRequired[dict[str, Any]]
+    kind: NotRequired[int]
