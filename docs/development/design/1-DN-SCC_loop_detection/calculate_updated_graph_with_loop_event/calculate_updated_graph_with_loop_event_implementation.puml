@@ -1,0 +1,32 @@
+@startuml
+    partition "calculate_updated_graph_with_loop_event" {
+        start
+        :input "Loop" paired with parent graph and LoopEvent;
+        group "main algorithm"
+            :get events connected to start events outside of the loop;
+            :replace out eventsets containing the start events event types with the loop event type;
+            :add edges from those events to the loop event;
+            :get events connected to end events outside of the loop;
+            :replace in eventsets containing the end events event types with the loop event type;
+            :add edges from the loop event to those events;
+            :remove all edges to/from loop events and remove any eventsets from events that reference a loop event;
+            :get all break events;
+            repeat
+                :get all direct successor events from the break event;
+                :check if break event has a path back to the start node of parent graph;
+                if (break event has path) then (true) 
+                    :get all direct successor events from the loop event;
+                    :add loop event type ineventset to each successor event;
+                else (false)
+                    :remove all edges from the break event to the successor events;
+                    :replace all in eventsets of the successor events that reference the break event with the loop event;
+                endif
+                :add edges from loop event to the successor events;
+            repeat while (for each break event)
+            :remove all nodes without path back to start event of parent graph;
+            :output updated graph;
+        end group
+        end
+    }
+
+@enduml
