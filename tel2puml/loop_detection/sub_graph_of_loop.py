@@ -9,7 +9,7 @@ from tel2puml.loop_detection.loop_types import Loop, EventEdge
 from tel2puml.tel2puml_types import DUMMY_START_EVENT, DUMMY_END_EVENT
 from tel2puml.utils import (
     get_innodes_not_in_set, get_outnodes_not_in_set,
-    remove_nodes_without_path_back_to_loop
+    identify_nodes_without_path_back_to_chosen_nodes
 )
 
 T = TypeVar("T")
@@ -118,6 +118,29 @@ def add_start_and_end_events_to_sub_graph(
     loop.loop_events.add(end_event)
 
 
+def add_start_and_end_events_to_graph(
+    loop: Loop,
+    graph: "DiGraph[Event]",
+    start_event: Event,
+    end_event: Event,
+) -> None:
+    """Add the start and end events to the graph.
+
+    :param loop: The loop to get the start and end events from.
+    :type loop: :class:`Loop`
+    :param graph: The graph to add the start and end events to.
+    :type graph: :class:`DiGraph`[:class:`Event`]
+    :param start_event: The start event to add to the graph.
+    :type start_event: :class:`Event`
+    :param end_event: The end event to add to the graph.
+    :type end_event: :class:`Event`
+    """
+    add_start_event_to_graph(start_event, loop, graph)
+    add_end_event_to_graph(end_event, loop, graph)
+    loop.loop_events.add(start_event)
+    loop.loop_events.add(end_event)
+
+
 def add_start_event_to_graph(
     start_event: Event,
     loop: Loop,
@@ -132,9 +155,6 @@ def add_start_event_to_graph(
     :param graph: The graph to add the edges to.
     :type graph: :class:`DiGraph`[:class:`Event`]
     """
-    for node in graph.nodes:
-        if node.event_type == DUMMY_START_EVENT:
-            raise ValueError("A start event already exists in the graph")
     for loop_start_event in loop.start_events:
         graph.add_edge(start_event, loop_start_event)
         loop_start_event.update_in_event_sets([DUMMY_START_EVENT])
@@ -154,9 +174,6 @@ def add_end_event_to_graph(
     :param graph: The graph to add the edges to.
     :type graph: :class:`DiGraph`[:class:`Event`]
     """
-    for node in graph.nodes:
-        if node.event_type == DUMMY_END_EVENT:
-            raise ValueError("An end event already exists in the graph")
     for loop_end_event in loop.end_events:
         graph.add_edge(loop_end_event, end_event)
         loop_end_event.update_event_sets([DUMMY_END_EVENT])
@@ -179,10 +196,12 @@ def create_start_event(
     in_nodes = get_innodes_not_in_set(
         loop.start_events, loop.loop_events, graph
     )
+    start_event_types = {event.event_type for event in loop.start_events}
     # update start events out event sets
     for in_node in in_nodes:
         for event_set in in_node.event_sets:
-            start_event.update_event_sets(event_set.to_list())
+            if event_set.to_frozenset().issubset(start_event_types):
+                start_event.update_event_sets(event_set.to_list())
     return start_event
 
 
@@ -219,6 +238,24 @@ def create_end_event(
     return end_event
 
 
+def create_start_and_end_events(
+    loop: Loop,
+    graph: "DiGraph[Event]",
+) -> tuple[Event, Event]:
+    """Create the start and end events of the loop.
+
+    :param loop: The loop to create the start and end events for.
+    :type loop: :class:`Loop`
+    :param graph: The graph to create the start and end events from.
+    :type graph: :class:`DiGraph`[:class:`Event`]
+    :return: The start and end events of the loop.
+    :rtype: tuple[:class:`Event`, :class:`Event`]
+    """
+    start_event = create_start_event(loop, graph)
+    end_event = create_end_event(loop, graph)
+    return start_event, end_event
+
+
 def create_sub_graph_of_loop(
     loop: Loop,
     graph: "DiGraph[Event]",
@@ -234,11 +271,26 @@ def create_sub_graph_of_loop(
     """
     sub_loop, sub_graph = deepcopy((loop, graph))
     # add start and end events to subgraph
-    add_start_and_end_events_to_sub_graph(sub_loop, sub_graph)
+    start_event, end_event = create_start_and_end_events(sub_loop, sub_graph)
     # remove loop edges from sub graph
     remove_loop_edges(sub_loop, sub_graph)
+    # get nodes without path back to loop nodes and then remove event sets
+    # that mirror the out edges to remove any in event sets associated with
+    # them
+    nodes_without_path_back = set(
+        identify_nodes_without_path_back_to_chosen_nodes(
+            set(sub_graph.nodes), sub_loop.loop_events, sub_graph
+        )
+    )
+    remove_event_sets_mirroring_removed_edges(
+        set(
+            EventEdge(*edge)
+            for edge in sub_graph.out_edges(nodes_without_path_back)
+        )
+    )
     # remove nodes from the graph without a path back to the loop events
-    remove_nodes_without_path_back_to_loop(
-        set(sub_graph.nodes), sub_loop.loop_events, sub_graph
+    sub_graph.remove_nodes_from(nodes_without_path_back)
+    add_start_and_end_events_to_graph(
+        sub_loop, sub_graph, start_event, end_event
     )
     return sub_graph

@@ -141,4 +141,4 @@ class TestCreateLoopEvent:
         loop_event = create_loop_event(loop, graph, graph)
         assert loop_event.in_event_sets == {EventSet(["A"])}
         assert loop_event.event_sets == {EventSet(["E"])}
-        assert loop_event.event_type == f"{LOOP_EVENT_TYPE}_1"
+        assert loop_event.event_type == LOOP_EVENT_TYPE

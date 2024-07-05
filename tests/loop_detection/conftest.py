@@ -9,7 +9,13 @@ from tel2puml.loop_detection.loop_types import Loop, EventEdge
 
 @pytest.fixture
 def graph() -> "DiGraph[Event]":
-    """Returns a graph with Events."""
+    """Returns a graph with Events.
+
+    The graph is as shown in the diagram at the following link:
+
+    `tests/loop_detection/loop_test_graph.svg`
+
+    """
     graph: "DiGraph[Event]" = DiGraph()
     start_event = Event(DUMMY_START_EVENT)
     A = Event("A")
@@ -41,6 +47,7 @@ def graph() -> "DiGraph[Event]":
     graph.add_edge(F, G)
     graph.add_edge(G, H)
     graph.add_edge(G, I_)
+    graph.add_edge(G, M)
     graph.add_edge(H, J)
     graph.add_edge(H, K)
     graph.add_edge(I_, L)

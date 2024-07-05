@@ -122,11 +122,11 @@ tests/puml_graph/test_graph_loop_insert.py:100: error: Argument 1 to "check_netw
 tel2puml/logic_detection.py:407: error: Argument 1 to "remove" of "set" has incompatible type "set[Any]"; expected "frozenset[str]"  [arg-type]
 tel2puml/logic_detection.py:410: error: Argument 1 to "get_weighted_cover" has incompatible type "set[frozenset[str]]"; expected "set[set[Any] | frozenset[Any]]"  [arg-type]
 tel2puml/logic_detection.py:471: error: Function is missing a return type annotation  [no-untyped-def]
-tel2puml/events.py:41: error: Signature of "__hash__" incompatible with supertype "dict"  [override]
-tel2puml/events.py:41: note:      Superclass:
-tel2puml/events.py:41: note:          None
-tel2puml/events.py:41: note:      Subclass:
-tel2puml/events.py:41: note:          def __hash__(self) -> int
+tel2puml/events.py:42: error: Signature of "__hash__" incompatible with supertype "dict"  [override]
+tel2puml/events.py:42: note:      Superclass:
+tel2puml/events.py:42: note:          None
+tel2puml/events.py:42: note:      Subclass:
+tel2puml/events.py:42: note:          def __hash__(self) -> int
 tel2puml/pipelines/data_ingestion.py:13: error: Missing type parameters for generic type "dict"  [type-arg]
 tel2puml/pipelines/data_ingestion.py:25: error: Argument 1 to "update_all_connections_from_clustered_events" has incompatible type "dict_values[str, list[dict[Any, Any]]]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tel2puml/pipelines/data_ingestion.py:120: error: Missing type parameters for generic type "dict"  [type-arg]
@@ -224,7 +224,7 @@ tests/node_map_to_puml/test_node.py:629: error: Value of type variable "Supports
 tests/node_map_to_puml/test_node.py:663: error: Argument 1 to "update_all_connections_from_clustered_events" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tests/node_map_to_puml/test_node.py:802: error: Argument 1 to "update_all_connections_from_clustered_events" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tests/node_map_to_puml/test_node.py:825: error: Argument 1 to "rotate_path" of "LogicBlockHolder" has incompatible type "Node | None"; expected "Node"  [arg-type]
-tel2puml/loop_detection/calculate_loop_components.py:184: error: Incompatible types in assignment (expression has type "Graph[T]", variable has type "DiGraph[T]")  [assignment]
+tel2puml/loop_detection/calculate_loop_components.py:185: error: Incompatible types in assignment (expression has type "Graph[T]", variable has type "DiGraph[T]")  [assignment]
 tests/node_map_to_puml/test_node_update.py:106: error: Argument 1 to "update_logic_nodes_with_lonely_merges_from_node_to_node_kill_map" has incompatible type "dict[str, list[str]]"; expected "dict[str, Iterable[str]]"  [arg-type]
 tests/node_map_to_puml/test_node_update.py:106: note: "Dict" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
 tests/node_map_to_puml/test_node_update.py:106: note: Consider using "Mapping" instead, which is covariant in the value type
@@ -237,4 +237,4 @@ tests/test_pv_to_puml.py:26: error: Argument 1 to "pv_to_puml_string" has incomp
 tests/test_pv_to_puml.py:37: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tests/test_pv_to_puml.py:47: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tel2puml/utils_test.py:39: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
-Found 214 errors in 29 files (checked 56 source files)
+Found 214 errors in 29 files (checked 58 source files)

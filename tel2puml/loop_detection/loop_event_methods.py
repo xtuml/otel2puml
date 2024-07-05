@@ -21,8 +21,7 @@ def create_loop_event(
     :return: The loop event
     :rtype: :class:`LoopEvent`
     """
-    loop_event_type = get_new_loop_event_type_from_graph(graph)
-    loop_event = LoopEvent(loop_event_type, sub_graph)
+    loop_event = LoopEvent(LOOP_EVENT_TYPE, sub_graph)
     loop_event_types = {event.event_type for event in loop.loop_events}
     update_loop_event_in_event_sets(
         loop.start_events, loop_event, loop_event_types

@@ -3,6 +3,7 @@ events. It also contains functions to convert these classes to a Markov graph.
 """
 from typing import Iterable
 from copy import deepcopy
+from uuid import uuid4
 
 from pm4py import (  # type: ignore[import-untyped]
     ProcessTree,
@@ -98,13 +99,36 @@ class Event:
     def __init__(
         self,
         event_type: str,
+        uid: str | None = None,
     ) -> None:
         """Constructor method."""
         self.event_type = event_type
         self.event_sets: set[EventSet] = set()
         self.in_event_sets: set[EventSet] = set()
+        self._set_uid(uid)
         self._logic_gate_tree: ProcessTree | None = None
         self._update_since_logic_gate_tree = False
+
+    @property
+    def uid(self) -> str:
+        """This property gets the unique identifier for the event.
+
+        :return: The unique identifier.
+        :rtype: `str`
+        """
+        if self._uid is None:
+            raise ValueError("The event does not have a unique identifier.")
+        return self._uid
+
+    def _set_uid(self, uid: str | None) -> None:
+        """This method sets the unique identifier for the event.
+
+        :param uid: The unique identifier.
+        :type uid: `str`
+        """
+        if uid is None:
+            uid = str(uuid4())
+        self._uid = uid
 
     def __repr__(self) -> str:
         return self.event_type
@@ -115,7 +139,7 @@ class Event:
         :return: The hash of the event type.
         :rtype: `int`
         """
-        return hash(self.event_type)
+        return hash(self.uid)
 
     def save_vis_logic_gate_tree(
         self,

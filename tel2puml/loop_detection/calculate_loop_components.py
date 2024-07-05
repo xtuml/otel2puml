@@ -127,6 +127,7 @@ def get_break_nodes_if_end_to_start_exists(
     :rtype: set`[:class:`T`]
     """
     exit_points = get_outnodes_not_in_set(end_nodes, start_nodes, graph)
+    exit_points.difference_update(end_nodes)
     break_nodes = get_break_nodes_from_potential_break_outnodes(
         nodes_without_edge_to_start_nodes, exit_points, end_nodes, graph
     )
