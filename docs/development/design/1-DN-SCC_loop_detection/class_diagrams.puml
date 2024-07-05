@@ -2,6 +2,7 @@
 
 class Event {
     #event_type : str
+    #uid: str
     +event_sets : set<EventSet>
     +in_event_sets : set<EventSet>
     +logic_gate_tree: ProcessTree
