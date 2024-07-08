@@ -20,8 +20,10 @@ from tel2puml.jAlergiaPipeline import (
     remove_loop_data_from_graph
 )
 from tel2puml.node_map_to_puml.node import (
-    merge_markov_without_loops_and_logic_detection_analysis,
-    create_puml_graph_from_node_class_graph,
+    merge_markov_without_loops_and_logic_detection_analysis
+)
+from tel2puml.node_map_to_puml.walk_puml_logic_graph import (
+    create_puml_graph_from_node_class_graph
 )
 from tel2puml.detect_loops import (
     detect_loops, get_all_break_edges_from_loops,
