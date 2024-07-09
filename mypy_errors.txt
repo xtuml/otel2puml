@@ -237,4 +237,4 @@ tests/test_pv_to_puml.py:26: error: Argument 1 to "pv_to_puml_string" has incomp
 tests/test_pv_to_puml.py:37: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tests/test_pv_to_puml.py:47: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tel2puml/utils_test.py:39: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
-Found 214 errors in 31 files (checked 60 source files)
+Found 214 errors in 31 files (checked 62 source files)

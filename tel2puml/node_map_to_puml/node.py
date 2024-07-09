@@ -412,14 +412,14 @@ class SubGraphNode(Node):
 class NodeTuple(NamedTuple):
     """Named tuple for node graph edge.
 
-    :param in_node: Start node for the edge
-    :type in_node: `Node`
-    :param out_node: End node for the edge
+    :param out_node: Start node for the edge
     :type out_node: `Node`
+    :param in_node: End node for the edge
+    :type in_node: `Node`
     """
 
-    in_node: Node
     out_node: Node
+    in_node: Node
 
 
 def load_all_logic_trees_into_nodes(
