@@ -2,7 +2,9 @@
 
 from networkx import DiGraph
 
-from tel2puml.node_map_to_puml.node import NodeTuple, Node
+from tel2puml.node_map_to_puml.node import NodeTuple, Node, SubGraphNode
+from tel2puml.events import Event
+from tel2puml.loop_detection.loop_types import LoopEvent
 
 
 def update_graph_with_node_tuple(
@@ -23,3 +25,18 @@ def update_graph_with_node_tuple(
     in_node.update_node_list_with_node(out_node, "incoming")
 
     return node_graph
+
+
+def create_node_from_event(event: Event | LoopEvent) -> Node | SubGraphNode:
+    """Create a node from an event
+
+    :param event: The event to create the node from
+    :type: :class: `Event` | `LoopEvent`
+    :return: The node created from the event
+    :rtype: :class: `Node` | `SubGraphNode`
+    """
+    # Check for LoopEvent first as it inherits from Event
+    if isinstance(event, LoopEvent):
+        return SubGraphNode(uid=event.uid, event_type=event.event_type)
+    else:
+        return Node(event_type=event.event_type, uid=event.uid)

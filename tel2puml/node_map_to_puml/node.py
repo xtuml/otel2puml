@@ -380,10 +380,15 @@ class SubGraphNode(Node):
 
     :param _sub_graph: The subgraph
     :type: :class: `DiGraph`
+    :param uid: The unique identifier of the sub graph node, defaults to `None`
+    :type uid: `str` | `None`, optional
+    :param event_type: The event type of the sub graph node, defaults to `None`
+    :type event_type: `str` | `None`, optional
     """
 
-    def __init__(self) -> None:
+    def __init__(self, uid: str, event_type: str) -> None:
         """Constructor method"""
+        super().__init__(uid=uid, event_type=event_type)
         self._sub_graph: "DiGraph[Node]" | None = None
 
     @property

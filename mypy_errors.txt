@@ -136,8 +136,8 @@ tel2puml/node_map_to_puml/node.py:82: error: Unsupported left operand type for +
 tel2puml/node_map_to_puml/node.py:82: note: Left operand is of type "str | None"
 tel2puml/node_map_to_puml/node.py:322: error: Incompatible return value type (got "tuple[PUMLEvent, ...]", expected "tuple[PUMLEvent]")  [return-value]
 tel2puml/node_map_to_puml/node.py:323: error: Incompatible return value type (got "tuple[Never, ...]", expected "tuple[PUMLEvent]")  [return-value]
-tel2puml/node_map_to_puml/node.py:482: error: Need type annotation for "networkx_graph"  [var-annotated]
-tel2puml/node_map_to_puml/node.py:516: error: Need type annotation for "event_node_ref" (hint: "event_node_ref: Dict[<type>, <type>] = ...")  [var-annotated]
+tel2puml/node_map_to_puml/node.py:487: error: Need type annotation for "networkx_graph"  [var-annotated]
+tel2puml/node_map_to_puml/node.py:521: error: Need type annotation for "event_node_ref" (hint: "event_node_ref: Dict[<type>, <type>] = ...")  [var-annotated]
 tests/test_detect_loops.py:507: error: Incompatible types in assignment (expression has type "list[Loop] | list[str]", variable has type "list[Loop]")  [assignment]
 tests/test_detect_loops.py:529: error: Incompatible types in assignment (expression has type "list[Loop] | list[str]", variable has type "list[Loop]")  [assignment]
 tests/test_detect_loops.py:572: error: Argument 1 to "update_all_connections_from_clustered_events" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
