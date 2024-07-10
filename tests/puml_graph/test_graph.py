@@ -729,3 +729,33 @@ class TestPUMLGraph:
         assert (dummy_start, A) not in graph.edges
         assert (dummy_start, B) not in graph.edges
         assert dummy_start not in graph.nodes
+
+    @staticmethod
+    def test_add_sub_graph_to_puml_nodes_with_ref() -> None:
+        """Tests the add_sub_graph_to_puml_nodes_with_ref method."""
+        # setup
+        graph = PUMLGraph()
+        A1 = graph.create_event_node("A1", parent_graph_node="A")
+        A2 = graph.create_event_node("A2", parent_graph_node="A")
+        B = graph.create_event_node("B", parent_graph_node="B")
+        # test addition of subgraph to single node
+        sub_graph_b = PUMLGraph()
+        graph.add_sub_graph_to_puml_nodes_with_ref(
+            sub_graph=sub_graph_b, ref="B"
+        )
+        assert B.sub_graph == sub_graph_b
+        assert A1.sub_graph is None
+        assert A2.sub_graph is None
+        # test addition of subgraph to multiple nodes
+        sub_graph_a = PUMLGraph()
+        graph.add_sub_graph_to_puml_nodes_with_ref(
+            sub_graph=sub_graph_a, ref="A"
+        )
+        assert A1.sub_graph == sub_graph_a
+        assert A2.sub_graph == sub_graph_a
+        assert B.sub_graph == sub_graph_b
+        # test raises error when node_ref not in graph
+        with pytest.raises(KeyError):
+            graph.add_sub_graph_to_puml_nodes_with_ref(
+                sub_graph=sub_graph_a, ref="C"
+            )

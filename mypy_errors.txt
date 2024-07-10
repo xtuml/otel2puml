@@ -62,27 +62,27 @@ tel2puml/jAlergiaPipeline.py:28: error: Missing type parameters for generic type
 tel2puml/puml_graph/graph.py:55: error: "type[PUMLOperatorNodes]" has no attribute "PATH_LOOP"  [attr-defined]
 tel2puml/puml_graph/graph.py:78: error: Argument "extra_info" to "__init__" of "NXNode" has incompatible type "dict[str, bool] | None"; expected "dict[str, str] | None"  [arg-type]
 tel2puml/puml_graph/graph.py:296: error: Missing type parameters for generic type "DiGraph"  [type-arg]
-tel2puml/puml_graph/graph.py:390: error: Incompatible return value type (got "tuple[PUMLOperatorNode, ...]", expected "tuple[PUMLOperatorNode, PUMLOperatorNode]")  [return-value]
-tel2puml/puml_graph/graph.py:438: error: Signature of "add_node" incompatible with supertype "Graph"  [override]
-tel2puml/puml_graph/graph.py:438: note:      Superclass:
-tel2puml/puml_graph/graph.py:438: note:          def add_node(self, node_for_adding: Any, **attr: Any) -> None
-tel2puml/puml_graph/graph.py:438: note:      Subclass:
-tel2puml/puml_graph/graph.py:438: note:          def add_node(self, node: PUMLNode) -> None
-tel2puml/puml_graph/graph.py:449: error: Signature of "add_edge" incompatible with supertype "Graph"  [override]
-tel2puml/puml_graph/graph.py:449: note:      Superclass:
-tel2puml/puml_graph/graph.py:449: note:          def add_edge(self, u_of_edge: Any, v_of_edge: Any, **attr: Any) -> None
-tel2puml/puml_graph/graph.py:449: note:      Subclass:
-tel2puml/puml_graph/graph.py:449: note:          def add_edge(self, start_node: PUMLNode, end_node: PUMLNode) -> None
-tel2puml/puml_graph/graph.py:458: error: Incompatible types (expression has type "dict[str, Any]", TypedDict item "start_node_attr" has type "NXNodeAttributes")  [typeddict-item]
-tel2puml/puml_graph/graph.py:459: error: Incompatible types (expression has type "dict[str, Any]", TypedDict item "end_node_attr" has type "NXNodeAttributes")  [typeddict-item]
-tel2puml/puml_graph/graph.py:533: error: Invalid index type "PUMLNode" for "dict[PUMLEventNode | PUMLOperatorNode, list[PUMLEventNode | PUMLOperatorNode]]"; expected type "PUMLEventNode | PUMLOperatorNode"  [index]
-tel2puml/puml_graph/graph.py:539: error: Call to untyped function (unknown) in typed context  [no-untyped-call]
-tel2puml/puml_graph/graph.py:551: error: Incompatible return value type (got "list[PUMLNode]", expected "list[PUMLEventNode | PUMLOperatorNode]")  [return-value]
-tel2puml/puml_graph/graph.py:643: error: "DiGraph[Any]" has no attribute "node_counts"  [attr-defined]
-tel2puml/puml_graph/graph.py:644: error: "DiGraph[Any]" has no attribute "branch_counts"  [attr-defined]
-tel2puml/puml_graph/graph.py:645: error: "DiGraph[Any]" has no attribute "kill_counts"  [attr-defined]
-tel2puml/puml_graph/graph.py:646: error: "DiGraph[Any]" has no attribute "parent_graph_nodes_to_node_ref"  [attr-defined]
-tel2puml/puml_graph/graph.py:649: error: Incompatible return value type (got "DiGraph[Any]", expected "PUMLGraph")  [return-value]
+tel2puml/puml_graph/graph.py:392: error: Incompatible return value type (got "tuple[PUMLOperatorNode, ...]", expected "tuple[PUMLOperatorNode, PUMLOperatorNode]")  [return-value]
+tel2puml/puml_graph/graph.py:440: error: Signature of "add_node" incompatible with supertype "Graph"  [override]
+tel2puml/puml_graph/graph.py:440: note:      Superclass:
+tel2puml/puml_graph/graph.py:440: note:          def add_node(self, node_for_adding: Any, **attr: Any) -> None
+tel2puml/puml_graph/graph.py:440: note:      Subclass:
+tel2puml/puml_graph/graph.py:440: note:          def add_node(self, node: PUMLNode) -> None
+tel2puml/puml_graph/graph.py:451: error: Signature of "add_edge" incompatible with supertype "Graph"  [override]
+tel2puml/puml_graph/graph.py:451: note:      Superclass:
+tel2puml/puml_graph/graph.py:451: note:          def add_edge(self, u_of_edge: Any, v_of_edge: Any, **attr: Any) -> None
+tel2puml/puml_graph/graph.py:451: note:      Subclass:
+tel2puml/puml_graph/graph.py:451: note:          def add_edge(self, start_node: PUMLNode, end_node: PUMLNode) -> None
+tel2puml/puml_graph/graph.py:460: error: Incompatible types (expression has type "dict[str, Any]", TypedDict item "start_node_attr" has type "NXNodeAttributes")  [typeddict-item]
+tel2puml/puml_graph/graph.py:461: error: Incompatible types (expression has type "dict[str, Any]", TypedDict item "end_node_attr" has type "NXNodeAttributes")  [typeddict-item]
+tel2puml/puml_graph/graph.py:535: error: Invalid index type "PUMLNode" for "dict[PUMLEventNode | PUMLOperatorNode, list[PUMLEventNode | PUMLOperatorNode]]"; expected type "PUMLEventNode | PUMLOperatorNode"  [index]
+tel2puml/puml_graph/graph.py:541: error: Call to untyped function (unknown) in typed context  [no-untyped-call]
+tel2puml/puml_graph/graph.py:553: error: Incompatible return value type (got "list[PUMLNode]", expected "list[PUMLEventNode | PUMLOperatorNode]")  [return-value]
+tel2puml/puml_graph/graph.py:645: error: "DiGraph[Any]" has no attribute "node_counts"  [attr-defined]
+tel2puml/puml_graph/graph.py:646: error: "DiGraph[Any]" has no attribute "branch_counts"  [attr-defined]
+tel2puml/puml_graph/graph.py:647: error: "DiGraph[Any]" has no attribute "kill_counts"  [attr-defined]
+tel2puml/puml_graph/graph.py:648: error: "DiGraph[Any]" has no attribute "parent_graph_nodes_to_node_ref"  [attr-defined]
+tel2puml/puml_graph/graph.py:651: error: Incompatible return value type (got "DiGraph[Any]", expected "PUMLGraph")  [return-value]
 tests/test_jAlergiaPipeline.py:17: error: Missing type parameters for generic type "DiGraph"  [type-arg]
 tests/test_jAlergiaPipeline.py:24: error: Need type annotation for "graph"  [var-annotated]
 tests/test_jAlergiaPipeline.py:63: error: Need type annotation for "graph"  [var-annotated]
@@ -112,6 +112,13 @@ tests/puml_graph/test_graph_loop_extract.py:81: error: Argument 1 to "remove" of
 tests/puml_graph/test_graph_loop_extract.py:303: error: Argument 1 to "remove" of "list" has incompatible type "tuple[Hashable, Hashable]"; expected "tuple[tuple[str, str, int], tuple[str, str, int]]"  [arg-type]
 tests/puml_graph/test_graph_loop_extract.py:321: error: Argument 1 to "check_correct_start_and_end_nodes" of "TestGetLoopStartAndEnd" has incompatible type "list[tuple[PUMLNode, PUMLNode]]"; expected "list[tuple[PUMLEventNode, PUMLEventNode]]"  [arg-type]
 tests/puml_graph/test_graph_loop_extract.py:336: error: Argument 1 to "check_correct_start_and_end_nodes" of "TestGetLoopStartAndEnd" has incompatible type "list[tuple[PUMLNode, PUMLNode]]"; expected "list[tuple[PUMLEventNode, PUMLEventNode]]"  [arg-type]
+tel2puml/puml_graph/graph_loop_insert.py:42: error: Argument 1 to "insert_loops" has incompatible type "PUMLGraph | None"; expected "PUMLGraph"  [arg-type]
+tests/puml_graph/test_graph_loop_insert.py:47: error: Item "None" of "PUMLGraph | None" has no attribute "nodes"  [union-attr]
+tests/puml_graph/test_graph_loop_insert.py:57: error: Item "None" of "PUMLGraph | None" has no attribute "nodes"  [union-attr]
+tests/puml_graph/test_graph_loop_insert.py:73: error: Item "None" of "PUMLGraph | None" has no attribute "nodes"  [union-attr]
+tests/puml_graph/test_graph_loop_insert.py:79: error: Item "None" of "PUMLGraph | None" has no attribute "subgraph_nodes"  [union-attr]
+tests/puml_graph/test_graph_loop_insert.py:95: error: Argument 1 to "check_networkx_graph_equivalence" has incompatible type "PUMLGraph | None"; expected "DiGraph[Any]"  [arg-type]
+tests/puml_graph/test_graph_loop_insert.py:100: error: Argument 1 to "check_networkx_graph_equivalence" has incompatible type "PUMLGraph | None"; expected "DiGraph[Any]"  [arg-type]
 tel2puml/logic_detection.py:407: error: Argument 1 to "remove" of "set" has incompatible type "set[Any]"; expected "frozenset[str]"  [arg-type]
 tel2puml/logic_detection.py:410: error: Argument 1 to "get_weighted_cover" has incompatible type "set[frozenset[str]]"; expected "set[set[Any] | frozenset[Any]]"  [arg-type]
 tel2puml/logic_detection.py:471: error: Function is missing a return type annotation  [no-untyped-def]
@@ -120,13 +127,6 @@ tel2puml/events.py:42: note:      Superclass:
 tel2puml/events.py:42: note:          None
 tel2puml/events.py:42: note:      Subclass:
 tel2puml/events.py:42: note:          def __hash__(self) -> int
-tel2puml/puml_graph/graph_loop_insert.py:42: error: Argument 1 to "insert_loops" has incompatible type "PUMLGraph | None"; expected "PUMLGraph"  [arg-type]
-tests/puml_graph/test_graph_loop_insert.py:47: error: Item "None" of "PUMLGraph | None" has no attribute "nodes"  [union-attr]
-tests/puml_graph/test_graph_loop_insert.py:57: error: Item "None" of "PUMLGraph | None" has no attribute "nodes"  [union-attr]
-tests/puml_graph/test_graph_loop_insert.py:73: error: Item "None" of "PUMLGraph | None" has no attribute "nodes"  [union-attr]
-tests/puml_graph/test_graph_loop_insert.py:79: error: Item "None" of "PUMLGraph | None" has no attribute "subgraph_nodes"  [union-attr]
-tests/puml_graph/test_graph_loop_insert.py:95: error: Argument 1 to "check_networkx_graph_equivalence" has incompatible type "PUMLGraph | None"; expected "DiGraph[Any]"  [arg-type]
-tests/puml_graph/test_graph_loop_insert.py:100: error: Argument 1 to "check_networkx_graph_equivalence" has incompatible type "PUMLGraph | None"; expected "DiGraph[Any]"  [arg-type]
 tel2puml/pipelines/data_ingestion.py:13: error: Missing type parameters for generic type "dict"  [type-arg]
 tel2puml/pipelines/data_ingestion.py:25: error: Argument 1 to "update_all_connections_from_clustered_events" has incompatible type "dict_values[str, list[dict[Any, Any]]]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tel2puml/pipelines/data_ingestion.py:120: error: Missing type parameters for generic type "dict"  [type-arg]

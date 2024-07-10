@@ -323,6 +323,8 @@ class PUMLGraph(DiGraph):
         `tuple[:class:`PUMLEvent`, `...`]`
         :param sub_graph: The sub graph of the event node, defaults to `None`.
         :type sub_graph: :class:`PUMLGraph`, optional
+        :param parent_graph_node: The parent graph node, defaults to `None`.
+        :type parent_graph_node: `Hashable`, optional
         :return: The event node.
         :rtype: :class:`PUMLEventNode`
         """
@@ -662,3 +664,20 @@ class PUMLGraph(DiGraph):
         ]
         for node in nodes_to_remove:
             self.remove_node(node)
+
+    def add_sub_graph_to_puml_nodes_with_ref(
+        self, sub_graph: "PUMLGraph", ref: Hashable
+    ) -> None:
+        """Adds a subgraph to the PlantUML nodes with a parent reference.
+
+        :param sub_graph: The subgraph to add.
+        :type sub_graph: :class:`PUMLGraph`
+        :param ref: The parent reference.
+        :type ref: `Hashable`
+        """
+        if ref not in self.parent_graph_nodes_to_node_ref:
+            raise KeyError(
+                "Node not found in parent graph nodes to node ref"
+            )
+        for puml_event_node in self.parent_graph_nodes_to_node_ref[ref]:
+            puml_event_node.sub_graph = sub_graph

@@ -66,12 +66,12 @@ def walk_nested_graph(node_graph: NodeGraph) -> PUMLGraph:
     """
     pass
 
-def add_sub_graph_to_puml_node(sub_graph_node: SubGraphNode, puml_sub_graph: PUMLGraph, puml_parent_graph: PUMLGraph) -> None:
-    """Add the sub graph to the PUML node
+def add_sub_graph_to_puml_node(puml_parent_graph: PUMLGraph, puml_sub_graph: PUMLGraph, ref: Hashable) -> None:
+    """Add the sub graph to the PUML nodes of the parent graph
 
-    :param sub_graph_node: The sub graph node to add
-    :param puml_sub_graph: The PUML sub graph to add the sub graph node to
-    :param puml_parent_graph: The PUML parent graph to add the sub graph node to
+    :param puml_parent_graph: The PUML parent graph that contains the nodes
+    :param puml_sub_graph: The PUML sub graph to add
+    :param ref: The reference used to find the PUMLNodes in the PUMLGraph
     """
     pass
 
