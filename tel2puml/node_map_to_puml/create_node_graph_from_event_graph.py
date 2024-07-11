@@ -27,6 +27,15 @@ def update_graph_with_node_tuple(
     return node_graph
 
 
+def update_outgoing_logic_nodes(event: Event, node: Node) -> None:
+    """Update the outgoing logic nodes
+
+    :param event: The event to update the outgoing logic nodes
+    :param node: The node to update the outgoing logic nodes
+    """
+    node.load_logic_into_list(event.logic_gate_tree, "outgoing")
+
+
 def create_node_from_event(event: Event | LoopEvent) -> Node | SubGraphNode:
     """Create a node from an event
 

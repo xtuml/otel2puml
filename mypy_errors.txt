@@ -112,13 +112,6 @@ tests/puml_graph/test_graph_loop_extract.py:81: error: Argument 1 to "remove" of
 tests/puml_graph/test_graph_loop_extract.py:303: error: Argument 1 to "remove" of "list" has incompatible type "tuple[Hashable, Hashable]"; expected "tuple[tuple[str, str, int], tuple[str, str, int]]"  [arg-type]
 tests/puml_graph/test_graph_loop_extract.py:321: error: Argument 1 to "check_correct_start_and_end_nodes" of "TestGetLoopStartAndEnd" has incompatible type "list[tuple[PUMLNode, PUMLNode]]"; expected "list[tuple[PUMLEventNode, PUMLEventNode]]"  [arg-type]
 tests/puml_graph/test_graph_loop_extract.py:336: error: Argument 1 to "check_correct_start_and_end_nodes" of "TestGetLoopStartAndEnd" has incompatible type "list[tuple[PUMLNode, PUMLNode]]"; expected "list[tuple[PUMLEventNode, PUMLEventNode]]"  [arg-type]
-tel2puml/puml_graph/graph_loop_insert.py:42: error: Argument 1 to "insert_loops" has incompatible type "PUMLGraph | None"; expected "PUMLGraph"  [arg-type]
-tests/puml_graph/test_graph_loop_insert.py:47: error: Item "None" of "PUMLGraph | None" has no attribute "nodes"  [union-attr]
-tests/puml_graph/test_graph_loop_insert.py:57: error: Item "None" of "PUMLGraph | None" has no attribute "nodes"  [union-attr]
-tests/puml_graph/test_graph_loop_insert.py:73: error: Item "None" of "PUMLGraph | None" has no attribute "nodes"  [union-attr]
-tests/puml_graph/test_graph_loop_insert.py:79: error: Item "None" of "PUMLGraph | None" has no attribute "subgraph_nodes"  [union-attr]
-tests/puml_graph/test_graph_loop_insert.py:95: error: Argument 1 to "check_networkx_graph_equivalence" has incompatible type "PUMLGraph | None"; expected "DiGraph[Any]"  [arg-type]
-tests/puml_graph/test_graph_loop_insert.py:100: error: Argument 1 to "check_networkx_graph_equivalence" has incompatible type "PUMLGraph | None"; expected "DiGraph[Any]"  [arg-type]
 tel2puml/logic_detection.py:407: error: Argument 1 to "remove" of "set" has incompatible type "set[Any]"; expected "frozenset[str]"  [arg-type]
 tel2puml/logic_detection.py:410: error: Argument 1 to "get_weighted_cover" has incompatible type "set[frozenset[str]]"; expected "set[set[Any] | frozenset[Any]]"  [arg-type]
 tel2puml/logic_detection.py:471: error: Function is missing a return type annotation  [no-untyped-def]
@@ -127,6 +120,13 @@ tel2puml/events.py:42: note:      Superclass:
 tel2puml/events.py:42: note:          None
 tel2puml/events.py:42: note:      Subclass:
 tel2puml/events.py:42: note:          def __hash__(self) -> int
+tel2puml/puml_graph/graph_loop_insert.py:42: error: Argument 1 to "insert_loops" has incompatible type "PUMLGraph | None"; expected "PUMLGraph"  [arg-type]
+tests/puml_graph/test_graph_loop_insert.py:47: error: Item "None" of "PUMLGraph | None" has no attribute "nodes"  [union-attr]
+tests/puml_graph/test_graph_loop_insert.py:57: error: Item "None" of "PUMLGraph | None" has no attribute "nodes"  [union-attr]
+tests/puml_graph/test_graph_loop_insert.py:73: error: Item "None" of "PUMLGraph | None" has no attribute "nodes"  [union-attr]
+tests/puml_graph/test_graph_loop_insert.py:79: error: Item "None" of "PUMLGraph | None" has no attribute "subgraph_nodes"  [union-attr]
+tests/puml_graph/test_graph_loop_insert.py:95: error: Argument 1 to "check_networkx_graph_equivalence" has incompatible type "PUMLGraph | None"; expected "DiGraph[Any]"  [arg-type]
+tests/puml_graph/test_graph_loop_insert.py:100: error: Argument 1 to "check_networkx_graph_equivalence" has incompatible type "PUMLGraph | None"; expected "DiGraph[Any]"  [arg-type]
 tel2puml/pipelines/data_ingestion.py:13: error: Missing type parameters for generic type "dict"  [type-arg]
 tel2puml/pipelines/data_ingestion.py:25: error: Argument 1 to "update_all_connections_from_clustered_events" has incompatible type "dict_values[str, list[dict[Any, Any]]]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tel2puml/pipelines/data_ingestion.py:120: error: Missing type parameters for generic type "dict"  [type-arg]

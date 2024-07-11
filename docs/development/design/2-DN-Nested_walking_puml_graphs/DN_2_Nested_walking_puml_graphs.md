@@ -50,11 +50,11 @@ def update_graph_with_node_tuple(node_edge: NodeTuple, node_graph: NodeGraph) ->
     """
     pass
 
-def update_incoming_and_outgoing_logic_nodes(event: Event, node: Node) -> None:
-    """Update the incoming and outgoing logic nodes
+def update_outgoing_logic_nodes(event: Event, node: Node) -> None:
+    """Update the outgoing logic nodes
 
-    :param event: The event to update the incoming and outgoing logic nodes
-    :param node: The node to update the incoming and outgoing logic nodes
+    :param event: The event to update the outgoing logic nodes
+    :param node: The node to update the outgoing logic nodes
     """
     pass
 

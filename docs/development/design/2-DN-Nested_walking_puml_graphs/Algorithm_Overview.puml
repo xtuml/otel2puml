@@ -25,8 +25,8 @@
             }
         repeat while (for each edge in graph)
         repeat
-            partition "update_incoming_and_outgoing_logic_nodes" {
-                :update incoming and outgoing logic Nodes of each Node;
+            partition "update_outgoing_logic_nodes" {
+                :update outgoing logic Nodes of each Node;
             }
         repeat while (for each entry in dictionary)
         repeat
