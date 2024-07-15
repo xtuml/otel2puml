@@ -11,7 +11,7 @@ from tel2puml.puml_graph.graph import (
     PUMLOperatorNode,
     PUMLNode,
 )
-from tel2puml.node_map_to_puml.node import Node, get_node_as_list
+from tel2puml.node_map_to_puml.node import Node, get_node_as_list, SubGraphNode
 from tel2puml.tel2puml_types import PUMLEvent
 
 
@@ -805,3 +805,33 @@ def check_has_valid_merge(
                     if not in_node.outgoing_logic:
                         return True
     return False
+
+
+def walk_nested_graph(
+    node_class_graph: "DiGraph[Node]",
+) -> PUMLGraph:
+    """Walks a nested graph and creates a PlantUML graph from it.
+
+    :param node_class_graph: The node class graph.
+    :type node_class_graph: :class:`DiGraph`[:class:`Node`]
+    :return: The PlantUML graph.
+    :rtype: :class:`PUMLGraph`
+    """
+    sub_graph_node_puml_graphs: list[tuple[SubGraphNode, PUMLGraph]] = []
+    sub_graph_nodes = [
+        node for node in node_class_graph.nodes if isinstance(
+            node, SubGraphNode
+        )
+    ]
+    for sub_graph_node in sub_graph_nodes:
+        sub_graph_node_puml_graphs.append(
+            (sub_graph_node, walk_nested_graph(
+                sub_graph_node.sub_graph
+            ))
+        )
+    puml_graph = create_puml_graph_from_node_class_graph(node_class_graph)
+    for sub_graph_node, sub_graph_puml_graph in sub_graph_node_puml_graphs:
+        puml_graph.add_sub_graph_to_puml_nodes_with_ref(
+            sub_graph_puml_graph, sub_graph_node.uid
+        )
+    return puml_graph

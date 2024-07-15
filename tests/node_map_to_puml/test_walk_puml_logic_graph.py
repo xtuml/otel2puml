@@ -3,12 +3,14 @@
 import networkx as nx
 
 from tel2puml.node_map_to_puml.node import (
+    Node,
     merge_markov_without_loops_and_logic_detection_analysis,
 )
 from tel2puml.node_map_to_puml.walk_puml_logic_graph import (
     create_puml_graph_from_node_class_graph,
     check_is_merge_node_for_logic_block,
     LogicBlockHolder,
+    walk_nested_graph
 )
 from tel2puml.puml_graph.graph import (
     PUMLGraph,
@@ -28,6 +30,7 @@ from tel2puml.pipelines.data_creation import (
 from tel2puml.check_puml_equiv import (
     check_puml_graph_equivalence_to_expected_graphs,
     gen_puml_graphs_from_files,
+    check_puml_equivalence
 )
 from tel2puml.tel2puml_types import DUMMY_START_EVENT
 
@@ -267,4 +270,16 @@ def test_check_is_merge_node_for_logic_block() -> None:
         I_,
         logic_holder,
         node_class_graph,
+    )
+
+
+def test_walk_nested_graph(
+    graph: "nx.DiGraph[Node]",
+    expected_graph_puml_graph: PUMLGraph,
+) -> None:
+    """Test the walk_nested_graph function."""
+    puml_graph = walk_nested_graph(graph)
+    assert check_puml_equivalence(
+        puml_graph.write_puml_string(),
+        expected_graph_puml_graph.write_puml_string(),
     )
