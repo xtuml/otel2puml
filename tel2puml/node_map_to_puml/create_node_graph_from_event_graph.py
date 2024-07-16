@@ -47,7 +47,13 @@ def create_node_from_event(event: Event | LoopEvent) -> Node | SubGraphNode:
     """
     # Check for LoopEvent first as it inherits from Event
     if isinstance(event, LoopEvent):
-        return SubGraphNode(uid=event.uid, event_type=event.event_type)
+        return SubGraphNode(
+            uid=event.uid,
+            event_type=event.event_type,
+            start_uid=event.start_uid,
+            end_uid=event.end_uid,
+            break_uids=event.break_uids,
+        )
     else:
         return Node(event_type=event.event_type, uid=event.uid)
 

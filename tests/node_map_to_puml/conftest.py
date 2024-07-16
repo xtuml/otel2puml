@@ -345,8 +345,8 @@ def sub_graph(nested_sub_graph: "DiGraph[Node]") -> "DiGraph[Node]":
 
 @pytest.fixture
 def graph(sub_graph: "DiGraph[Node]") -> "DiGraph[Node]":
-    """Returns a graph with a sub graph node inlcuding a nested sub graph node.
-    """
+    """Returns a graph with a sub graph node inlcuding a
+    nested sub graph node."""
     start_node = Node(uid=DUMMY_START_EVENT, event_type=DUMMY_START_EVENT)
     A = Node(uid="A", event_type="A")
     B = Node(uid="B", event_type="B")
@@ -371,8 +371,8 @@ def graph(sub_graph: "DiGraph[Node]") -> "DiGraph[Node]":
 
 @pytest.fixture
 def expected_nested_sub_graph_puml_graph() -> PUMLGraph:
-    """Returns a PUMLGraph object representing the expected nested sub graph.
-    """
+    """Returns a PUMLGraph object representing the
+    expected nested sub graph."""
     puml_graph = PUMLGraph()
     start_node = puml_graph.create_event_node(DUMMY_START_EVENT)
     end_node = puml_graph.create_event_node(DUMMY_END_EVENT)
@@ -474,7 +474,11 @@ def event_graph_nested_loop_event_and_events(
     event1 = Event(event_type="A", uid="A")
     event2 = Event(event_type="B", uid="B")
     loop_event = LoopEvent(
-        event_type=LOOP_EVENT_TYPE, subgraph=sub_node_sub_event_graph
+        event_type=LOOP_EVENT_TYPE,
+        subgraph=sub_node_sub_event_graph,
+        start_uid="start_uid",
+        end_uid="end_uid",
+        break_uids=set(["break_uid1", "break_uid2"]),
     )
     event_graph: "DiGraph[Event]" = DiGraph()
 

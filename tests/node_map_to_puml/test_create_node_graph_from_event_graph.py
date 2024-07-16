@@ -58,10 +58,19 @@ def test_create_node_class_from_event_class() -> None:
     assert node.event_type == "A"
 
     sub_graph: "DiGraph[Event]" = DiGraph()
-    loop_event = LoopEvent(event_type="B", subgraph=sub_graph)
+    loop_event = LoopEvent(
+        event_type="B",
+        subgraph=sub_graph,
+        start_uid="start_uid",
+        end_uid="end_uid",
+        break_uids=set(["break_uid1", "break_uid2"]),
+    )
     sub_graph_node = create_node_from_event(loop_event)
     assert isinstance(sub_graph_node, SubGraphNode)
     assert sub_graph_node.event_type == "B"
+    assert sub_graph_node.start_uid == "start_uid"
+    assert sub_graph_node.end_uid == "end_uid"
+    assert sub_graph_node.break_uids == set(["break_uid1", "break_uid2"])
     # SubGraphNode raises an error if sub_graph is not set when accessed
     with pytest.raises(ValueError):
         sub_graph_node.sub_graph
@@ -173,6 +182,9 @@ def test_create_node_graph_from_event_graph_with_loop(
     # Check subgraph node
     sub_graph_node = nodes[1][0]
     assert isinstance(sub_graph_node, SubGraphNode)
+    assert sub_graph_node.start_uid == "start_uid"
+    assert sub_graph_node.end_uid == "end_uid"
+    assert sub_graph_node.break_uids == set(["break_uid1", "break_uid2"])
 
     # Check subgraph structure
     check_graph_structure(
