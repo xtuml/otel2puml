@@ -13,6 +13,11 @@ The basic algorithms for setting up the nested node class graph and walking the 
 
 ![](/docs/development/design/2-DN-Nested_walking_puml_graphs/Algorithm_Overview.svg)
 
+It is also required to indentify update the `Node` classes with:
+
+* lonely merge nodes - these are "paths" out of logic nodes, within a loop, in which all other paths from the logic node must be killed as they do not reach the loops end and therefore the lonely merge node is identified so that logic blocks can do a single (or "lonely") merge with the identified node. Implementation details found in [Lonely Merges](./lonely_merge_nodes/lonely_merge_nodes.md)
+* paths that must kill - these are paths from a logic block within a loop that do not reach the end of the loop and therefore are identified as paths that do not merge the logic block when walking the PUML logic graph.
+
 ### Class Diagram
 
 The class diagram for the SCC loop detection is presented below
