@@ -61,6 +61,18 @@ class TestDetectLoops:
             else:
                 assert {EventSet([prev_event_type])} == event.in_event_sets
 
+    def check_loop_event_for_uids(
+        self,
+        loop_event: LoopEvent,
+        start_event: Event,
+        end_event: Event,
+        break_events: set[Event],
+    ) -> None:
+        """Check the sub graph and loop event for the uids of the events."""
+        assert loop_event.start_uid == start_event.uid
+        assert loop_event.end_uid == end_event.uid
+        assert loop_event.break_uids == {event.uid for event in break_events}
+
     def test_detect_loops_simple_loops(self) -> None:
         """Tests the detect_loops method with a graph with simple loops."""
         graph = self.graph_simple_loops()
@@ -77,11 +89,22 @@ class TestDetectLoops:
                 assert isinstance(node, LoopEvent)
                 loop_event_num += 1
                 loop_graph = node.sub_graph
+                start_event = None
+                end_event = None
                 for sub_node in loop_graph.nodes:
                     if sub_node.event_type == "A":
                         loop_a_b = loop_graph
                     if sub_node.event_type == "C":
                         loop_c_d = loop_graph
+                    if sub_node.event_type == DUMMY_START_EVENT:
+                        start_event = sub_node
+                    if sub_node.event_type == DUMMY_END_EVENT:
+                        end_event = sub_node
+                assert start_event is not None
+                assert end_event is not None
+                self.check_loop_event_for_uids(
+                    node, start_event, end_event, set()
+                )
         assert start_event_num == 1
         assert loop_event_num == 2
         # check sub graphs
@@ -204,6 +227,11 @@ class TestDetectLoops:
         dummy_end_from_o = [
             event for event in dummy_end_events if event != dummy_end_loop
         ][0]
+        # check uids of loop event
+        self.check_loop_event_for_uids(
+            loop_event, loop_sub_graph_events[DUMMY_START_EVENT],
+            dummy_end_loop, {loop_sub_graph_events["M"]}
+        )
         self.check_edges_and_event_sets(
             loop_sub_graph,
             [
@@ -254,6 +282,13 @@ class TestDetectLoops:
         assert set(sub_graph_loop_sub_graph_events.keys()) == {
             DUMMY_START_EVENT, "H", "I", DUMMY_END_EVENT,
         }
+        # check uids of loop event
+        self.check_loop_event_for_uids(
+            sub_graph_loop_event,
+            sub_graph_loop_sub_graph_events[DUMMY_START_EVENT],
+            sub_graph_loop_sub_graph_events[DUMMY_END_EVENT],
+            set()
+        )
         self.check_edges_and_event_sets(
             sub_graph_loop_sub_graph,
             [
@@ -312,6 +347,11 @@ class TestDetectLoops:
         assert set(loop_sub_graph_events.keys()) == {
             DUMMY_START_EVENT, "A", DUMMY_END_EVENT,
         }
+        # check uid of loop event
+        self.check_loop_event_for_uids(
+            loop_event, loop_sub_graph_events[DUMMY_START_EVENT],
+            loop_sub_graph_events[DUMMY_END_EVENT], set()
+        )
         self.check_edges_and_event_sets(
             loop_sub_graph,
             [

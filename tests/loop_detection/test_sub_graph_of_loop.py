@@ -377,7 +377,7 @@ class TestAddStartAndEndEventsToSubGraph:
 def test_create_sub_graph_of_loop() -> None:
     """Test the creation of a sub graph of a loop."""
     graph, _, loop = TestAddStartAndEndEventsToSubGraph.graph_events_loop()
-    sub_graph = create_sub_graph_of_loop(loop, graph)
+    sub_graph, start_event, end_event = create_sub_graph_of_loop(loop, graph)
     events = {node.event_type: node for node in sub_graph.nodes}
     assert set(sub_graph.edges) == {
         (events["C"], events["D"]),
@@ -397,6 +397,9 @@ def test_create_sub_graph_of_loop() -> None:
         (events["I"], events[DUMMY_END_EVENT]),
         (events["J"], events[DUMMY_END_EVENT]),
     }
+    # check start and end events are correct
+    assert events[DUMMY_START_EVENT] == start_event
+    assert events[DUMMY_END_EVENT] == end_event
     # check event sets of the dummy start and end events are correct
     assert events[DUMMY_START_EVENT].event_sets == {
         EventSet(["F", "G"]),

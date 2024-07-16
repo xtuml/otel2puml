@@ -63,12 +63,12 @@ def calc_loop_end_break_and_loop_edges(start_events: set[Event], scc_events: set
     """
     pass
 
-def create_sub_graph_of_loop(loop: Loop, graph: EventGraph) -> EventGraph:
+def create_sub_graph_of_loop(loop: Loop, graph: EventGraph) -> tuple[EventGraph, Event, Event]:
     """Create a subgraph of the loop from the graph and the loop components
 
     :param loop: The components of the loop to create the subgraph from
     :param graph: The parent graph to create the subgraph from
-    :return: The subgraph of the loop
+    :return: The subgraph of the loop, the start event of the loop, and the end event of the loop
     """
     pass
 

@@ -33,7 +33,7 @@
                     :Remove out edges of break points and EventSets; 
                 }
                 :Remove nodes that have no path back to loop;
-                :Output final subgraph of Loop;
+                :Output final subgraph of Loop, start and end Event vertices;
             }
             partition "Create Loop Event" {
                 :Create LoopEvent with subgraph added;

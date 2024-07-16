@@ -259,15 +259,16 @@ def create_start_and_end_events(
 def create_sub_graph_of_loop(
     loop: Loop,
     graph: "DiGraph[Event]",
-) -> "DiGraph[Event]":
+) -> tuple["DiGraph[Event]", Event, Event]:
     """Create a sub graph of the loop.
 
     :param loop: The loop to create the sub graph from.
     :type loop: :class:`Loop`
     :param graph: The graph to create the sub graph from.
     :type graph: :class:`DiGraph`[:class:`Event`]
-    :return: The sub graph of the loop.
-    :rtype: :class:`DiGraph`[:class:`Event`]
+    :return: The sub graph of the loop, the start event and the end event.
+    :rtype: tuple[:class:`DiGraph`[:class:`Event`], :class:`Event`,
+    :class:`Event`]
     """
     sub_loop, sub_graph = deepcopy((loop, graph))
     # add start and end events to subgraph
@@ -293,4 +294,4 @@ def create_sub_graph_of_loop(
     add_start_and_end_events_to_graph(
         sub_loop, sub_graph, start_event, end_event
     )
-    return sub_graph
+    return sub_graph, start_event, end_event

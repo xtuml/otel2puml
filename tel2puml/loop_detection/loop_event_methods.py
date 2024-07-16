@@ -157,3 +157,25 @@ def get_event_lists_to_add_from_event_not_within_loop(
         event_list = event_set.to_list()
         if not loop_event_types.intersection(event_list):
             yield event_list
+
+
+def update_loop_event_with_start_end_and_breaks(
+    start_event: Event,
+    end_event: Event,
+    break_events: set[Event],
+    loop_event: LoopEvent,
+) -> None:
+    """Update the loop event with the start, end and break events.
+
+    :param start_event: The start event of the loop.
+    :type start_event: :class:`Event`
+    :param end_event: The end event of the loop.
+    :type end_event: :class:`Event`
+    :param break_events: The break events of the loop.
+    :type break_events: `set`[:class:`Event`]
+    :param loop_event: The loop event to update.
+    :type loop_event: :class:`LoopEvent
+    """
+    loop_event.start_uid = start_event.uid
+    loop_event.end_uid = end_event.uid
+    loop_event.break_uids = {event.uid for event in break_events}

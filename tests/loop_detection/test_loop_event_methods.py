@@ -2,6 +2,7 @@
 
 from networkx import DiGraph
 
+from tel2puml.tel2puml_types import DUMMY_START_EVENT, DUMMY_END_EVENT
 from tel2puml.events import EventSet, Event
 from tel2puml.loop_detection.loop_types import Loop, LoopEvent, LOOP_EVENT_TYPE
 from tel2puml.loop_detection.loop_event_methods import (
@@ -11,7 +12,8 @@ from tel2puml.loop_detection.loop_event_methods import (
     update_loop_event_in_event_sets,
     update_loop_event_out_event_sets,
     get_new_loop_event_type_from_graph,
-    create_loop_event
+    create_loop_event,
+    update_loop_event_with_start_end_and_breaks
 )
 
 
@@ -142,3 +144,20 @@ class TestCreateLoopEvent:
         assert loop_event.in_event_sets == {EventSet(["A"])}
         assert loop_event.event_sets == {EventSet(["E"])}
         assert loop_event.event_type == LOOP_EVENT_TYPE
+
+    def test_update_loop_event_with_start_end_and_breaks(self) -> None:
+        """Tests the update loop event with start end and breaks method."""
+        loop, graph = self.loop_and_graph()
+        loop_event = LoopEvent(LOOP_EVENT_TYPE, graph)
+        start_event = Event(DUMMY_START_EVENT)
+        end_event = Event(DUMMY_END_EVENT)
+        update_loop_event_with_start_end_and_breaks(
+            start_event, end_event, loop.break_events,
+            loop_event
+        )
+
+        assert loop_event.start_uid == start_event.uid
+        assert loop_event.end_uid == end_event.uid
+        assert loop_event.break_uids == {
+            event.uid for event in loop.break_events
+        }
