@@ -384,12 +384,73 @@ class SubGraphNode(Node):
     :type uid: `str` | `None`, optional
     :param event_type: The event type of the sub graph node, defaults to `None`
     :type event_type: `str` | `None`, optional
+    :param start_uid: The start uid of the sub graph node, defaults to `None`
+    :type start_uid: `str` | `None`, optional
+    :param end_uid: The end uid of the sub graph node, defaults to `None`
+    :type end_uid: `str` | `None`, optional
+    :param break_uids: The break uids of the sub graph node, defaults to `None`
+    :type break_uids: `set`[`str`] | `None`, optional
     """
 
-    def __init__(self, uid: str, event_type: str) -> None:
+    def __init__(
+        self,
+        uid: str,
+        event_type: str,
+        start_uid: str | None = None,
+        end_uid: str | None = None,
+        break_uids: set[str] | None = None,
+    ) -> None:
         """Constructor method"""
         super().__init__(uid=uid, event_type=event_type)
         self._sub_graph: "DiGraph[Node]" | None = None
+        self._start_uid: str | None = start_uid
+        self._end_uid: str | None = end_uid
+        self._break_uids: set[str] | None = break_uids
+
+    @property
+    def start_uid(self) -> str:
+        """Getter for start_uid."""
+        if self._start_uid is None:
+            raise AttributeError("start_uid is not set.")
+        return self._start_uid
+
+    @start_uid.setter
+    def start_uid(self, start_uid: str) -> None:
+        """Setter for start_uid."""
+        if self._start_uid is None:
+            self._start_uid = start_uid
+        else:
+            raise AttributeError("start_uid is already set.")
+
+    @property
+    def end_uid(self) -> str:
+        """Getter for end_uid."""
+        if self._end_uid is None:
+            raise AttributeError("end_uid is not set.")
+        return self._end_uid
+
+    @end_uid.setter
+    def end_uid(self, end_uid: str) -> None:
+        """Setter for end_uid."""
+        if self._end_uid is None:
+            self._end_uid = end_uid
+        else:
+            raise AttributeError("end_uid is already set.")
+
+    @property
+    def break_uids(self) -> set[str]:
+        """Getter for break_uids."""
+        if self._break_uids is None:
+            raise AttributeError("break_uids is not set.")
+        return self._break_uids
+
+    @break_uids.setter
+    def break_uids(self, break_uids: set[str]) -> None:
+        """Setter for break_uids."""
+        if self._break_uids is None:
+            self._break_uids = break_uids
+        else:
+            raise AttributeError("break_uids is already set.")
 
     @property
     def sub_graph(self) -> "DiGraph[Node]":

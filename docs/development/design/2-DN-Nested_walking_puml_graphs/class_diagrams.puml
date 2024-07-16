@@ -91,7 +91,10 @@ class Node {
 }
 
 class SubGraphNode {
-    sub_graph: NodeGraph
+    #sub_graph: NodeGraph
+    #start_uid: str
+    #end_uid: str
+    #break_uids: set<str>
 }
 
 class NodeGraph {

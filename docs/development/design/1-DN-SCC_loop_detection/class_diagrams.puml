@@ -20,7 +20,10 @@ struct Loop {
 }
 
 class LoopEvent {
-    sub_graph: EventGraph
+    #sub_graph: EventGraph
+    #start_uid: str
+    #end_uid: str
+    #break_uids: set<str>
 }
 
 class EventTuple {
