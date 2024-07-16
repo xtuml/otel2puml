@@ -415,6 +415,38 @@ class TestNode:
             node = Node(uid="test_operator", operator=operator.name)
             assert node.get_operator_type() == operator
 
+    @staticmethod
+    def test_lonely_merge() -> None:
+        """Test the lonely_merge property."""
+        node = Node(uid="test_event", event_type="test_event")
+        # test with no outgoing logic
+        assert node.lonely_merge is None
+        # test with a single outgoing logic node but with is_loop_kill_path
+        # false for that entry
+        outgoing_logic_node_1 = Node(
+            uid="test_outgoing_logic_node_1",
+            event_type="test_outgoing_logic_node_1",
+        )
+        node.update_logic_list(outgoing_logic_node_1, "outgoing")
+        assert node.lonely_merge is None
+        # test with a single outgoing logic node with is_loop_kill_path entry
+        # set to true
+        node.is_loop_kill_path[0] = True
+        assert node.lonely_merge is None
+        # test with two outgoing logic nodes with is_loop_kill_path entry set
+        # to [False, False]
+        outgoing_logic_node_2 = Node(
+            uid="test_outgoing_logic_node_2",
+            event_type="test_outgoing_logic_node_2",
+        )
+        node.update_logic_list(outgoing_logic_node_2, "outgoing")
+        node.is_loop_kill_path = [False, False]
+        assert node.lonely_merge is None
+        # test with two outgoing logic nodes with is_loop_kill_path entry set
+        # to [True, False]
+        node.is_loop_kill_path[0] = True
+        assert node.lonely_merge == outgoing_logic_node_2
+
 
 def test_load_logic_tree_into_nodes_incoming(
     node: Node,

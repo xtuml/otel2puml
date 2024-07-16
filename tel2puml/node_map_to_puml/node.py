@@ -1,6 +1,6 @@
 """This module holds the 'node' class"""
 
-from typing import Literal, NamedTuple
+from typing import Literal, NamedTuple, Optional
 from uuid import uuid4
 import logging
 
@@ -74,7 +74,6 @@ class Node:
 
         self.event_types = set() if event_types is None else event_types
 
-        self.lonely_merge: "Node" | None = None
         self._event_incoming: Event | None = None
         self.is_loop_kill_path: list[bool] = []
 
@@ -83,6 +82,23 @@ class Node:
 
     def __hash__(self) -> int:
         return hash(self.uid)
+
+    @property
+    def lonely_merge(self) -> Optional["Node"]:
+        """Gets the lonley merge node.
+
+        :return: The lonley merge node.
+        :rtype: :class:`Node` | `None`
+        """
+        lonely_merge = None
+        if len(self.is_loop_kill_path) <= 1:
+            return None
+        for index, path in enumerate(self.is_loop_kill_path):
+            if not path:
+                if lonely_merge is not None:
+                    return None
+                lonely_merge = self.outgoing_logic[index]
+        return lonely_merge
 
     @property
     def event_incoming(self) -> Event:

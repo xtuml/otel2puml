@@ -745,7 +745,7 @@ def get_all_kill_edges_from_loop(
     loop_nodes = extract_loop_nodes_from_graph(graph, loop)
     yield from (
         get_all_kill_edges_from_loop_nodes_and_end_points(
-            graph, loop_nodes, loop.end_points,
+            graph, loop_nodes, loop.end_points.difference(loop.break_points),
             loop.start_points
         )
     )

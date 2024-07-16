@@ -27,15 +27,12 @@ from tel2puml.node_map_to_puml.walk_puml_logic_graph import (
 )
 from tel2puml.detect_loops import (
     detect_loops,
-    get_all_break_edges_from_loops,
-    get_all_lonely_merge_killed_edges_from_loops,
     get_all_kill_edges_from_loops,
 )
 from tel2puml.puml_graph.graph_loop_insert import insert_loops
 from tel2puml.node_map_to_puml.node_update import (
     update_nodes_with_break_points_from_loops,
     get_node_to_node_map_from_edges,
-    update_logic_nodes_with_lonely_merges_from_node_to_node_kill_map,
     add_loop_kill_paths_for_nodes,
 )
 
@@ -83,19 +80,6 @@ def pv_to_puml_string(
     )
     # update the nodes with break points
     update_nodes_with_break_points_from_loops(loops, event_node_reference)
-    # get all break edges
-    break_edges = get_all_break_edges_from_loops(loops)
-    # get all lonely merge kill edges from loops
-    loop_kill_egdes = get_all_lonely_merge_killed_edges_from_loops(
-        markov_graph, loops
-    )
-    kill_edges = break_edges.union(loop_kill_egdes)
-    # get the node to node kill map and update the logic nodes with lonely
-    # merges
-    node_to_node_kill_map = get_node_to_node_map_from_edges(kill_edges)
-    update_logic_nodes_with_lonely_merges_from_node_to_node_kill_map(
-        node_to_node_kill_map, event_node_reference
-    )
     # get all kill edges from loops and update the logic nodes with them
     loop_must_kill_edges = get_all_kill_edges_from_loops(markov_graph, loops)
     must_kill_node_to_node_map = get_node_to_node_map_from_edges(
