@@ -127,11 +127,6 @@ tests/puml_graph/test_graph_loop_insert.py:73: error: Item "None" of "PUMLGraph 
 tests/puml_graph/test_graph_loop_insert.py:79: error: Item "None" of "PUMLGraph | None" has no attribute "subgraph_nodes"  [union-attr]
 tests/puml_graph/test_graph_loop_insert.py:95: error: Argument 1 to "check_networkx_graph_equivalence" has incompatible type "PUMLGraph | None"; expected "DiGraph[Any]"  [arg-type]
 tests/puml_graph/test_graph_loop_insert.py:100: error: Argument 1 to "check_networkx_graph_equivalence" has incompatible type "PUMLGraph | None"; expected "DiGraph[Any]"  [arg-type]
-tel2puml/pipelines/data_ingestion.py:13: error: Missing type parameters for generic type "dict"  [type-arg]
-tel2puml/pipelines/data_ingestion.py:25: error: Argument 1 to "update_all_connections_from_clustered_events" has incompatible type "dict_values[str, list[dict[Any, Any]]]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
-tel2puml/pipelines/data_ingestion.py:120: error: Missing type parameters for generic type "dict"  [type-arg]
-tel2puml/pipelines/data_ingestion.py:134: error: Missing type parameters for generic type "dict"  [type-arg]
-tel2puml/pipelines/data_ingestion.py:140: error: Missing type parameters for generic type "dict"  [type-arg]
 tel2puml/node_map_to_puml/node.py:82: error: Unsupported left operand type for + ("None")  [operator]
 tel2puml/node_map_to_puml/node.py:82: note: Left operand is of type "str | None"
 tel2puml/node_map_to_puml/node.py:322: error: Incompatible return value type (got "tuple[PUMLEvent, ...]", expected "tuple[PUMLEvent]")  [return-value]
@@ -164,13 +159,13 @@ tests/tel2puml/test_logic_detection.py:460: error: Function is missing a return 
 tests/tel2puml/test_logic_detection.py:552: error: Function is missing a type annotation  [no-untyped-def]
 tests/tel2puml/test_logic_detection.py:561: error: Call to untyped function "_check_node_for_repeat_and" in typed context  [no-untyped-call]
 tests/tel2puml/test_logic_detection.py:581: error: Call to untyped function "_check_node_for_repeat_and" in typed context  [no-untyped-call]
-tests/tel2puml/test_logic_detection.py:740: error: Argument 1 to "update_all_connections_from_data" has incompatible type "Generator[dict[Any, Any], Any, None]"; expected "list[dict[Any, Any]]"  [arg-type]
-tests/tel2puml/test_logic_detection.py:779: error: Argument 1 to "update_all_connections_from_data" has incompatible type "Generator[dict[Any, Any], Any, None]"; expected "list[dict[Any, Any]]"  [arg-type]
-tests/tel2puml/test_logic_detection.py:829: error: Argument 1 to "update_all_connections_from_data" has incompatible type "Generator[dict[Any, Any], Any, None]"; expected "list[dict[Any, Any]]"  [arg-type]
-tests/tel2puml/test_logic_detection.py:877: error: Argument 1 to "update_all_connections_from_data" has incompatible type "Generator[dict[Any, Any], Any, None]"; expected "list[dict[Any, Any]]"  [arg-type]
-tests/tel2puml/test_logic_detection.py:927: error: Argument 1 to "update_all_connections_from_data" has incompatible type "Generator[dict[Any, Any], Any, None]"; expected "list[dict[Any, Any]]"  [arg-type]
-tests/tel2puml/test_logic_detection.py:981: error: Argument 1 to "update_all_connections_from_data" has incompatible type "Generator[dict[Any, Any], Any, None]"; expected "list[dict[Any, Any]]"  [arg-type]
-tests/tel2puml/pipelines/test_data_ingestion.py:19: error: Argument 1 to "update_all_connections_from_data" has incompatible type "Generator[dict[Any, Any], Any, None]"; expected "list[dict[Any, Any]]"  [arg-type]
+tests/tel2puml/test_logic_detection.py:740: error: Argument 1 to "update_all_connections_from_data" has incompatible type "Generator[dict[Any, Any], Any, None]"; expected "Iterable[PVEvent]"  [arg-type]
+tests/tel2puml/test_logic_detection.py:779: error: Argument 1 to "update_all_connections_from_data" has incompatible type "Generator[dict[Any, Any], Any, None]"; expected "Iterable[PVEvent]"  [arg-type]
+tests/tel2puml/test_logic_detection.py:829: error: Argument 1 to "update_all_connections_from_data" has incompatible type "Generator[dict[Any, Any], Any, None]"; expected "Iterable[PVEvent]"  [arg-type]
+tests/tel2puml/test_logic_detection.py:877: error: Argument 1 to "update_all_connections_from_data" has incompatible type "Generator[dict[Any, Any], Any, None]"; expected "Iterable[PVEvent]"  [arg-type]
+tests/tel2puml/test_logic_detection.py:927: error: Argument 1 to "update_all_connections_from_data" has incompatible type "Generator[dict[Any, Any], Any, None]"; expected "Iterable[PVEvent]"  [arg-type]
+tests/tel2puml/test_logic_detection.py:981: error: Argument 1 to "update_all_connections_from_data" has incompatible type "Generator[dict[Any, Any], Any, None]"; expected "Iterable[PVEvent]"  [arg-type]
+tests/tel2puml/pipelines/test_data_ingestion.py:19: error: Argument 1 to "update_all_connections_from_data" has incompatible type "Generator[dict[Any, Any], Any, None]"; expected "Iterable[PVEvent]"  [arg-type]
 tests/tel2puml/pipelines/test_data_ingestion.py:72: error: Argument 1 to "get_graph_solutions_from_clustered_events" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tests/node_map_to_puml/test_node.py:86: error: Argument 2 to "load_logic_into_list" of "Node" has incompatible type "str"; expected "Literal['incoming', 'outgoing']"  [arg-type]
 tests/node_map_to_puml/test_node.py:110: error: Argument 2 to "load_logic_into_list" of "Node" has incompatible type "str"; expected "Literal['incoming', 'outgoing']"  [arg-type]
@@ -228,13 +223,14 @@ tests/node_map_to_puml/test_walk_puml_logic_graph.py:225: error: Argument 1 to "
 tests/node_map_to_puml/test_node_update.py:106: error: Argument 1 to "update_logic_nodes_with_lonely_merges_from_node_to_node_kill_map" has incompatible type "dict[str, list[str]]"; expected "dict[str, Iterable[str]]"  [arg-type]
 tests/node_map_to_puml/test_node_update.py:106: note: "Dict" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
 tests/node_map_to_puml/test_node_update.py:106: note: Consider using "Mapping" instead, which is covariant in the value type
-tel2puml/pv_to_puml.py:100: error: Argument 1 to "update_logic_nodes_with_lonely_merges_from_node_to_node_kill_map" has incompatible type "dict[str, set[str]]"; expected "dict[str, Iterable[str]]"  [arg-type]
-tel2puml/pv_to_puml.py:100: note: "Dict" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
-tel2puml/pv_to_puml.py:100: note: Consider using "Mapping" instead, which is covariant in the value type
-tel2puml/pv_to_puml.py:156: error: Returning Any from function declared to return "list[PVEvent]"  [no-any-return]
+tel2puml/pv_to_puml.py:97: error: Argument 1 to "update_logic_nodes_with_lonely_merges_from_node_to_node_kill_map" has incompatible type "dict[str, set[str]]"; expected "dict[str, Iterable[str]]"  [arg-type]
+tel2puml/pv_to_puml.py:97: note: "Dict" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+tel2puml/pv_to_puml.py:97: note: Consider using "Mapping" instead, which is covariant in the value type
+tel2puml/pv_to_puml.py:152: error: Returning Any from function declared to return "list[PVEvent]"  [no-any-return]
+tel2puml/pv_to_puml.py:247: error: Argument 1 to "cluster_events_by_job_id" has incompatible type "Generator[list[PVEvent], Any, None]"; expected "Iterable[PVEvent]"  [arg-type]
 tests/test_pv_to_puml.py:16: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tests/test_pv_to_puml.py:26: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tests/test_pv_to_puml.py:37: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tests/test_pv_to_puml.py:47: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
 tel2puml/utils_test.py:39: error: Argument 1 to "pv_to_puml_string" has incompatible type "Generator[Generator[dict[Any, Any], Any, None], Any, None]"; expected "Iterable[Iterable[PVEvent]]"  [arg-type]
-Found 214 errors in 31 files (checked 62 source files)
+Found 210 errors in 30 files (checked 62 source files)

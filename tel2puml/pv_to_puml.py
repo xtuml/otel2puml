@@ -1,6 +1,7 @@
 """Module to convert a stream of PV event sequences to a PlantUML sequence
 diagram, inferring the logic from the PV event sequences.
 """
+
 from typing import Generator, Iterable, Any
 import json
 import os
@@ -9,33 +10,33 @@ import networkx as nx
 
 from tel2puml.tel2puml_types import PVEvent
 from tel2puml.pipelines.data_ingestion import (
-    update_all_connections_from_clustered_events
+    update_all_connections_from_clustered_events,
+    cluster_events_by_job_id,
 )
 from tel2puml.events import (
     remove_detected_loop_data_from_events,
     events_to_markov_graph,
-    get_event_reference_from_events
+    get_event_reference_from_events,
 )
-from tel2puml.jAlergiaPipeline import (
-    remove_loop_data_from_graph
-)
+from tel2puml.jAlergiaPipeline import remove_loop_data_from_graph
 from tel2puml.node_map_to_puml.node import (
-    merge_markov_without_loops_and_logic_detection_analysis
+    merge_markov_without_loops_and_logic_detection_analysis,
 )
 from tel2puml.node_map_to_puml.walk_puml_logic_graph import (
-    create_puml_graph_from_node_class_graph
+    create_puml_graph_from_node_class_graph,
 )
 from tel2puml.detect_loops import (
-    detect_loops, get_all_break_edges_from_loops,
+    detect_loops,
+    get_all_break_edges_from_loops,
     get_all_lonely_merge_killed_edges_from_loops,
-    get_all_kill_edges_from_loops
+    get_all_kill_edges_from_loops,
 )
 from tel2puml.puml_graph.graph_loop_insert import insert_loops
 from tel2puml.node_map_to_puml.node_update import (
     update_nodes_with_break_points_from_loops,
     get_node_to_node_map_from_edges,
     update_logic_nodes_with_lonely_merges_from_node_to_node_kill_map,
-    add_loop_kill_paths_for_nodes
+    add_loop_kill_paths_for_nodes,
 )
 
 
@@ -55,8 +56,7 @@ def pv_to_puml_string(
     # run the logic detection pipeline
     forward_logic, backward_logic = (
         update_all_connections_from_clustered_events(
-            pv_stream,
-            add_dummy_start=True
+            pv_stream, add_dummy_start=True
         )
     )
     # create the markov chain graph and event reference
@@ -78,9 +78,7 @@ def pv_to_puml_string(
     # merge the Markov graph and the logic trees
     merged_markov_and_logic, event_node_reference = (
         merge_markov_without_loops_and_logic_detection_analysis(
-            (markov_graph, event_reference),
-            backward_logic,
-            forward_logic
+            (markov_graph, event_reference), backward_logic, forward_logic
         )
     )
     # update the nodes with break points
@@ -89,8 +87,7 @@ def pv_to_puml_string(
     break_edges = get_all_break_edges_from_loops(loops)
     # get all lonely merge kill edges from loops
     loop_kill_egdes = get_all_lonely_merge_killed_edges_from_loops(
-        markov_graph,
-        loops
+        markov_graph, loops
     )
     kill_edges = break_edges.union(loop_kill_egdes)
     # get the node to node kill map and update the logic nodes with lonely
@@ -105,8 +102,7 @@ def pv_to_puml_string(
         loop_must_kill_edges
     )
     add_loop_kill_paths_for_nodes(
-        must_kill_node_to_node_map,
-        merged_markov_and_logic
+        must_kill_node_to_node_map, merged_markov_and_logic
     )
     # create the PlantUML graph
     puml_graph = create_puml_graph_from_node_class_graph(
@@ -225,3 +221,34 @@ def pv_jobs_from_files_to_puml_file(
     """
     pv_stream = pv_job_files_to_event_sequence_streams(file_paths)
     pv_to_puml_file(pv_stream, puml_file_path, puml_name)
+
+
+def pv_events_from_folder_to_puml_file(
+    folder_path: str,
+    puml_file_path: str = "default.puml",
+    puml_name: str = "default_name",
+    group_by_job: bool = True,
+) -> None:
+    """Reads a folder of PV json job array files, groups events by jobId and
+    writes the PlantUML sequence diagram
+
+    :param folder_path: The path to the folder containing the PV job json files
+    :type folder_path: `str`
+    :param puml_file_path: The filepath of the puml file output
+    :type puml_file_path: `str`
+    :param group_by_job: Boolean to group events by job id
+    :type group_by_job: `bool`
+    """
+    if not group_by_job:
+        return
+    # parse events from folder into pv stream
+    pv_stream = pv_jobs_from_folder_to_event_sequence_streams(folder_path)
+    # map job id to pv events
+    events_by_job_id = cluster_events_by_job_id(pv_stream)
+
+    # pv_stream expects Iterable[Iterable[PVEvent]]
+    pv_to_puml_file(
+        pv_stream=[pv_stream for pv_stream in events_by_job_id.values()],
+        puml_file_path=puml_file_path,
+        puml_name=puml_name,
+    )

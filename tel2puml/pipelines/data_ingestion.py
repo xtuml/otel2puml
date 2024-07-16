@@ -1,5 +1,6 @@
 """This module contains functions to update the forward and backward
 dictionaries holding the Event's and their EventSet's"""
+
 from typing import Any, Generator, Iterable
 
 from test_event_generator.solutions.event_solution import EventSolution
@@ -10,7 +11,7 @@ from tel2puml.tel2puml_types import PVEvent, DUMMY_START_EVENT
 
 
 def update_all_connections_from_data(
-    events: list[dict],
+    events: Iterable[PVEvent],
 ) -> tuple[dict[str, Event], dict[str, Event]]:
     """This function detects the logic in a stream of PV events and updates
     the forward and backward logic dictionaries of events.
@@ -44,9 +45,7 @@ def update_all_connections_from_clustered_events(
         clustered_events,
         add_dummy_start=add_dummy_start,
     )
-    return update_all_connections_from_graph_solutions(
-        graph_solutions
-    )
+    return update_all_connections_from_graph_solutions(graph_solutions)
 
 
 def update_all_connections_from_graph_solutions(
@@ -117,7 +116,9 @@ def get_events_set_from_events_list(events: list[EventSolution]) -> list[str]:
     return events_set
 
 
-def get_graph_solutions_from_events(events: list[dict]) -> list[GraphSolution]:
+def get_graph_solutions_from_events(
+    events: Iterable[PVEvent],
+) -> list[GraphSolution]:
     """This function gets the graph solutions from a sequence of PV events.
 
     :param events: A sequence of PV events.
@@ -131,13 +132,15 @@ def get_graph_solutions_from_events(events: list[dict]) -> list[GraphSolution]:
     return graph_solutions
 
 
-def cluster_events_by_job_id(events: list[dict]) -> dict[str, list[dict]]:
+def cluster_events_by_job_id(
+    events: Iterable[PVEvent],
+) -> dict[str, list[PVEvent]]:
     """This function clusters PV events into jobs.
 
     :param events: A sequence of PV events.
     :type events: `list`[:class:`dict`]
     """
-    events_by_job_id: dict[str, list[dict]] = {}
+    events_by_job_id: dict[str, list[PVEvent]] = {}
     for event in events:
         job_id = event["jobId"]
         if job_id not in events_by_job_id:
