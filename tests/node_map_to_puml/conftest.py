@@ -14,9 +14,10 @@ from tel2puml.tel2puml_types import (
     DUMMY_END_EVENT,
     DUMMY_START_EVENT,
     PUMLEvent,
-    PUMLOperator
+    PUMLOperator,
 )
 from tel2puml.puml_graph.graph import PUMLGraph
+from tel2puml.loop_detection.loop_types import LoopEvent, LOOP_EVENT_TYPE
 
 
 @pytest.fixture
@@ -313,9 +314,7 @@ def nested_sub_graph() -> "DiGraph[Node]":
     nested_sub_graph_graph.add_edge(start_node, nested_self_loop_event)
     nested_sub_graph_graph.add_edge(nested_self_loop_event, end_node)
     start_node.update_node_list_with_node(nested_self_loop_event, "outgoing")
-    nested_self_loop_event.update_node_list_with_node(
-        end_node, "outgoing"
-    )
+    nested_self_loop_event.update_node_list_with_node(end_node, "outgoing")
     return nested_sub_graph_graph
 
 
@@ -326,8 +325,7 @@ def sub_graph(nested_sub_graph: "DiGraph[Node]") -> "DiGraph[Node]":
     end_node = Node(uid=DUMMY_END_EVENT, event_type=DUMMY_END_EVENT)
     A = Node(uid="A", event_type="A")
     nested_sub_graph_node = SubGraphNode(
-        uid="nested_sub_graph_node",
-        event_type="nested_sub_graph_node"
+        uid="nested_sub_graph_node", event_type="nested_sub_graph_node"
     )
     nested_sub_graph_node.update_event_types(PUMLEvent.LOOP)
     nested_sub_graph_node.sub_graph = nested_sub_graph
@@ -353,8 +351,7 @@ def graph(sub_graph: "DiGraph[Node]") -> "DiGraph[Node]":
     A = Node(uid="A", event_type="A")
     B = Node(uid="B", event_type="B")
     sub_graph_node = SubGraphNode(
-        uid="sub_graph_node",
-        event_type="sub_graph_node"
+        uid="sub_graph_node", event_type="sub_graph_node"
     )
     sub_graph_node.update_event_types(PUMLEvent.LOOP)
     sub_graph_node.sub_graph = sub_graph
@@ -401,13 +398,12 @@ def expected_sub_graph_puml_graph(
         if node.event_type == "nested_sub_graph_node"
     ][0]
     nested_sub_graph_node = puml_graph.create_event_node(
-        "nested_sub_graph_node", PUMLEvent.LOOP,
+        "nested_sub_graph_node",
+        PUMLEvent.LOOP,
         sub_graph=expected_nested_sub_graph_puml_graph,
-        parent_graph_node=nested_sub_graph_node_ref
+        parent_graph_node=nested_sub_graph_node_ref,
     )
-    start_xor, end_xor = puml_graph.create_operator_node_pair(
-        PUMLOperator.XOR
-    )
+    start_xor, end_xor = puml_graph.create_operator_node_pair(PUMLOperator.XOR)
     puml_graph.add_edge(start_node, start_xor)
     puml_graph.add_edge(start_xor, A)
     puml_graph.add_edge(start_xor, nested_sub_graph_node)
@@ -428,22 +424,21 @@ def expected_graph_puml_graph(
     A = puml_graph.create_event_node("A")
     B = puml_graph.create_event_node("B")
     sub_graph_node_ref = [
-        node
-        for node in graph.nodes if node.event_type == "sub_graph_node"
+        node for node in graph.nodes if node.event_type == "sub_graph_node"
     ][0]
     sub_graph_node_1 = puml_graph.create_event_node(
-        "sub_graph_node", PUMLEvent.LOOP,
+        "sub_graph_node",
+        PUMLEvent.LOOP,
         sub_graph=expected_sub_graph_puml_graph,
-        parent_graph_node=sub_graph_node_ref
+        parent_graph_node=sub_graph_node_ref,
     )
     sub_graph_node_2 = puml_graph.create_event_node(
-        "sub_graph_node", PUMLEvent.LOOP,
+        "sub_graph_node",
+        PUMLEvent.LOOP,
         sub_graph=expected_sub_graph_puml_graph,
-        parent_graph_node=sub_graph_node_ref
+        parent_graph_node=sub_graph_node_ref,
     )
-    start_xor, end_xor = puml_graph.create_operator_node_pair(
-        PUMLOperator.XOR
-    )
+    start_xor, end_xor = puml_graph.create_operator_node_pair(PUMLOperator.XOR)
     puml_graph.add_edge(start_node, start_xor)
     puml_graph.add_edge(start_xor, A)
     puml_graph.add_edge(start_xor, sub_graph_node_1)
@@ -452,3 +447,46 @@ def expected_graph_puml_graph(
     puml_graph.add_edge(sub_graph_node_2, end_xor)
     puml_graph.add_edge(end_xor, B)
     return puml_graph
+
+
+@pytest.fixture
+def sub_node_sub_event_graph() -> "DiGraph[Event]":
+    """Returns a sub graph with a self loop event."""
+    start_node = Event(uid=DUMMY_START_EVENT, event_type=DUMMY_START_EVENT)
+    end_node = Event(uid=DUMMY_END_EVENT, event_type=DUMMY_END_EVENT)
+    nested_self_loop_event = Event(
+        uid="nested_self_loop_event", event_type="nested_self_loop_event"
+    )
+    nested_sub_graph_graph: "DiGraph[Event]" = DiGraph()
+    nested_sub_graph_graph.add_edge(start_node, nested_self_loop_event)
+    nested_sub_graph_graph.add_edge(nested_self_loop_event, end_node)
+    for edge in nested_sub_graph_graph.edges:
+        edge[0].update_event_sets([edge[1].event_type])
+        edge[1].update_in_event_sets([edge[0].event_type])
+    return nested_sub_graph_graph
+
+
+@pytest.fixture
+def event_graph_nested_loop_event_and_events(
+    sub_node_sub_event_graph: "DiGraph[Event]",
+) -> tuple["DiGraph[Event]", list[Event]]:
+    """Returns a Loop Event with a sub graph"""
+    event1 = Event(event_type="A", uid="A")
+    event2 = Event(event_type="B", uid="B")
+    loop_event = LoopEvent(
+        event_type=LOOP_EVENT_TYPE, subgraph=sub_node_sub_event_graph
+    )
+    event_graph: "DiGraph[Event]" = DiGraph()
+
+    event_graph.add_node(event1)
+    event_graph.add_node(event2)
+    event_graph.add_node(loop_event)
+
+    event_graph.add_edge(event1, loop_event)
+    event_graph.add_edge(loop_event, event2)
+    for edge in event_graph.edges:
+        edge[0].update_event_sets([edge[1].event_type])
+        edge[1].update_in_event_sets([edge[0].event_type])
+
+    events = [event1, event2, loop_event]
+    return (event_graph, events)

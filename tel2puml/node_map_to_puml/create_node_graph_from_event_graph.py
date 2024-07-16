@@ -33,7 +33,8 @@ def update_outgoing_logic_nodes(event: Event, node: Node) -> None:
     :param event: The event to update the outgoing logic nodes
     :param node: The node to update the outgoing logic nodes
     """
-    node.load_logic_into_list(event.logic_gate_tree, "outgoing")
+    if event.logic_gate_tree:
+        node.load_logic_into_list(event.logic_gate_tree, "outgoing")
 
 
 def create_node_from_event(event: Event | LoopEvent) -> Node | SubGraphNode:
@@ -49,3 +50,49 @@ def create_node_from_event(event: Event | LoopEvent) -> Node | SubGraphNode:
         return SubGraphNode(uid=event.uid, event_type=event.event_type)
     else:
         return Node(event_type=event.event_type, uid=event.uid)
+
+
+def create_node_graph_from_event_graph(
+    event_graph: "DiGraph[Event]",
+) -> "DiGraph[Node]":
+    """Create a node graph from an event graph
+
+    :param event_graph: The event graph to create the node graph from
+    :type event_graph: `:class: DiGraph[Event]
+    :return: The node graph created from the event graph
+    :rtype node_graph: `:class: DiGraph[Node]
+    """
+
+    node_graph: "DiGraph[Node]" = DiGraph()
+
+    event_node_dict: dict[Event, Node] = {}
+
+    events = list(event_graph.nodes(data=True))
+
+    for event, _ in events:
+        node: Node | SubGraphNode = create_node_from_event(event)
+        event_node_dict[event] = node
+
+    event_edges = event_graph.edges
+
+    for start_event, end_event in event_edges:
+        node_edge = NodeTuple(
+            out_node=event_node_dict[start_event],
+            in_node=event_node_dict[end_event],
+        )
+        update_graph_with_node_tuple(node_edge, node_graph)
+
+    for event, node in event_node_dict.items():
+        update_outgoing_logic_nodes(event, node)
+
+    for event, node in event_node_dict.items():
+        if isinstance(event, LoopEvent):
+            if isinstance(node, SubGraphNode):
+                # Set node subgraphs by recursion
+                node.sub_graph = create_node_graph_from_event_graph(
+                    event.sub_graph
+                )
+            else:
+                raise TypeError(f"{node} should be of type SubGraphNode")
+
+    return node_graph
