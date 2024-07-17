@@ -1,5 +1,5 @@
 """A module to detect all loops in a graph."""
-from typing import Self, Optional, Union, Iterable, Generator
+from typing import Self, Optional, Union, Iterable, Generator, TypeVar
 from logging import getLogger
 
 from networkx import (
@@ -8,6 +8,9 @@ from networkx import (
 )
 
 from tel2puml.utils import check_is_sub_list
+
+
+T = TypeVar("T")
 
 
 class Loop:
@@ -754,21 +757,21 @@ def get_all_kill_edges_from_loop(
 
 
 def get_all_kill_edges_from_loop_nodes_and_end_points(
-    graph: "DiGraph[str]",
-    loop_nodes: Iterable[str],
-    end_points: set[str],
-    start_points: set[str],
-) -> Generator[tuple[str, str], None, None]:
+    graph: "DiGraph[T]",
+    loop_nodes: Iterable[T],
+    end_points: set[T],
+    start_points: set[T],
+) -> Generator[tuple[T, T], None, None]:
     """Get all kill edges from the loop nodes and end points.
 
     :param graph: The graph to get the kill edges from.
-    :type graph: :class:`DiGraph`[`str`]
+    :type graph: :class:`DiGraph`[`T`]
     :param loop_nodes: The nodes from the loop.
-    :type loop_nodes: `Iterable`[`Hashable`]
+    :type loop_nodes: `Iterable`[`T`]
     :param end_points: The end points of the loop.
-    :type end_points: `set`[`Hashable`]
+    :type end_points: `set`[`T`]
     :return: The kill edges.
-    :rtype: `Generator`[`tuple`[`Hashable`, `Hashable`], `None`, `None`]
+    :rtype: `Generator`[`tuple`[`T`, `T`], `None`, `None`]
     """
     if len(start_points) != 1:
         for start_point in start_points:

@@ -389,6 +389,17 @@ class Node:
                 self.is_loop_kill_path[index] = True
             else:
                 node.update_loop_kill_paths_from_given_leaf_nodes(leaf_nodes)
+                self.is_loop_kill_path[index] = node.all_paths_are_loop_kill()
+
+    def all_paths_are_loop_kill(self) -> bool:
+        """Checks if all paths kill.
+
+        :return: `True` if all paths kill, `False` otherwise.
+        :rtype: `bool`
+        """
+        if len(self.is_loop_kill_path) == 0:
+            return False
+        return all(self.is_loop_kill_path)
 
 
 class SubGraphNode(Node):

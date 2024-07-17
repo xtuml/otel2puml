@@ -494,3 +494,79 @@ def event_graph_nested_loop_event_and_events(
 
     events = [event1, event2, loop_event]
     return (event_graph, events)
+
+
+@pytest.fixture
+def nested_sub_graph_node_with_kill_paths() -> SubGraphNode:
+    """Returns a nested sub graph with a self loop event."""
+    start_node = Node(uid=DUMMY_START_EVENT, event_type=DUMMY_START_EVENT)
+    end_node = Node(uid=DUMMY_END_EVENT, event_type=DUMMY_END_EVENT)
+    nested_self_loop_event = Node(
+        uid="nested_self_loop_event", event_type="nested_self_loop_event"
+    )
+    nested_kill_path_node = Node(
+        uid="nested_kill_path_node", event_type="nested_kill_path_node"
+    )
+    operator_node = Node(uid="operator_node", operator="XOR")
+    operator_node.update_logic_list(nested_self_loop_event, "outgoing")
+    operator_node.update_logic_list(nested_kill_path_node, "outgoing")
+    start_node.update_logic_list(operator_node, "outgoing")
+    nested_sub_graph_graph: "DiGraph[Node]" = DiGraph()
+    nested_sub_graph_graph.add_edge(start_node, nested_self_loop_event)
+    nested_sub_graph_graph.add_edge(nested_self_loop_event, end_node)
+    nested_sub_graph_graph.add_edge(start_node, nested_kill_path_node)
+    start_node.update_node_list_with_node(nested_self_loop_event, "outgoing")
+    start_node.update_node_list_with_node(nested_kill_path_node, "outgoing")
+    nested_self_loop_event.update_node_list_with_node(end_node, "outgoing")
+    sub_graph_node = SubGraphNode(
+        uid="sub_graph_node", event_type="sub_graph_node",
+        start_uid=start_node.uid, end_uid=end_node.uid, break_uids=set()
+    )
+    sub_graph_node.sub_graph = nested_sub_graph_graph
+    return sub_graph_node
+
+
+@pytest.fixture
+def sub_graph_node_with_kill_paths(
+    nested_sub_graph_node_with_kill_paths: SubGraphNode,
+) -> SubGraphNode:
+    """Returns a sub graph with a nested sub graph node."""
+    start_node = Node(uid=DUMMY_START_EVENT, event_type=DUMMY_START_EVENT)
+    end_node = Node(uid=DUMMY_END_EVENT, event_type=DUMMY_END_EVENT)
+    loop_event = nested_sub_graph_node_with_kill_paths
+    kill_path_node = Node(
+        uid="kill_path_node", event_type="kill_path_node"
+    )
+    operator_node = Node(uid="operator_node", operator="XOR")
+    operator_node.update_logic_list(loop_event, "outgoing")
+    operator_node.update_logic_list(kill_path_node, "outgoing")
+    start_node.update_logic_list(operator_node, "outgoing")
+    nested_sub_graph_graph: "DiGraph[Node]" = DiGraph()
+    nested_sub_graph_graph.add_edge(start_node, loop_event)
+    nested_sub_graph_graph.add_edge(loop_event, end_node)
+    nested_sub_graph_graph.add_edge(start_node, kill_path_node)
+    start_node.update_node_list_with_node(loop_event, "outgoing")
+    start_node.update_node_list_with_node(kill_path_node, "outgoing")
+    loop_event.update_node_list_with_node(end_node, "outgoing")
+    sub_graph_node = SubGraphNode(
+        uid="sub_graph_node", event_type="sub_graph_node",
+        start_uid=start_node.uid, end_uid=end_node.uid, break_uids=set()
+    )
+    sub_graph_node.sub_graph = nested_sub_graph_graph
+    return sub_graph_node
+
+
+@pytest.fixture
+def graph_with_nested_kill_paths(
+    sub_graph_node_with_kill_paths: SubGraphNode,
+) -> "DiGraph[Node]":
+    """Returns a graph with a sub graph node inlcuding a nested sub graph node.
+    """
+    start_node = Node(uid=DUMMY_START_EVENT, event_type=DUMMY_START_EVENT)
+    A = Node(uid="A", event_type="A")
+    graph: "DiGraph[Node]" = DiGraph()
+    graph.add_edge(start_node, A)
+    graph.add_edge(A, sub_graph_node_with_kill_paths)
+    start_node.update_node_list_with_node(A, "outgoing")
+    A.update_node_list_with_node(sub_graph_node_with_kill_paths, "outgoing")
+    return graph
