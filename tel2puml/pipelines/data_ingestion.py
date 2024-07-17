@@ -191,3 +191,65 @@ def update_graph_solution_with_dummy_start_event(
         del graph_solution.start_events[key]
     dummy_start_event.add_to_post_events()
     graph_solution.add_event(dummy_start_event)
+
+
+def update_and_create_events_from_graph_solution(
+    graph_solution: GraphSolution,
+    events: dict[str, Event],
+) -> None:
+    """This function updates and creates events, in a dictionary, from a graph
+    solution.
+
+    :param graph_solution: The graph solution.
+    :type graph_solution: :class:`GraphSolution`
+    :param events: The dictionary of events.
+    :type events: `dict`[`str`, :class:`Event`]
+    """
+    for event in graph_solution.events.values():
+        event_type: str = event.meta_data["EventType"]
+        if event_type not in events:
+            events[event_type] = Event(event_type)
+        events[event_type].update_event_sets(
+            get_events_set_from_events_list(event.post_events)
+        )
+        events[event_type].update_in_event_sets(
+            get_events_set_from_events_list(event.previous_events)
+        )
+
+
+def update_and_create_events_from_graph_solutions(
+    graph_solutions: Iterable[GraphSolution],
+) -> dict[str, Event]:
+    """This function updates and creates events from an iterable of graph
+    solutions.
+
+    :param graph_solutions: An iterable of graph solutions.
+    :type graph_solutions: `Iterable`[:class:`GraphSolution`]
+    :return: A dictionary of events.
+    :rtype: `dict`[`str`, :class:`Event`]
+    """
+    events: dict[str, Event] = {}
+    for graph_solution in graph_solutions:
+        update_and_create_events_from_graph_solution(graph_solution, events)
+    return events
+
+
+def update_and_create_events_from_clustered_pvevents(
+    clustered_events: Iterable[Iterable[PVEvent]],
+    add_dummy_start: bool = False,
+) -> dict[str, Event]:
+    """This function updates and creates events from a sequence of clustered PV
+    events.
+
+    :param clustered_events: A sequence of clustered PV events.
+    :type clustered_events: `Iterable`[`Iterable`[:class:`PVEvent`]]
+    :param add_dummy_start: Whether to add a dummy start event.
+    :type add_dummy_start: `bool`
+    :return: A dictionary of events.
+    :rtype: `dict`[`str`, :class:`Event`]
+    """
+    graph_solutions = get_graph_solutions_from_clustered_events(
+        clustered_events,
+        add_dummy_start=add_dummy_start,
+    )
+    return update_and_create_events_from_graph_solutions(graph_solutions)

@@ -6,7 +6,9 @@ from tel2puml.pipelines.data_creation import (
 )
 from tel2puml.pipelines.data_ingestion import (
     update_all_connections_from_data,
-    get_graph_solutions_from_clustered_events
+    get_graph_solutions_from_clustered_events,
+    update_and_create_events_from_clustered_pvevents,
+    cluster_events_by_job_id
 )
 from tel2puml.tel2puml_types import DUMMY_START_EVENT
 
@@ -84,3 +86,48 @@ def test_get_graph_solutions_from_clustered_events() -> None:
     ]
     assert events["A"].previous_events == [events[DUMMY_START_EVENT]]
     assert events["B"].previous_events == [events[DUMMY_START_EVENT]]
+
+
+def test_update_and_create_events_from_clustered_pvevents() -> None:
+    """Test for method update_and_create_events_from_clustered_pvevents"""
+    puml_file = "puml_files/sequence_xor_fork.puml"
+    data = list(cluster_events_by_job_id(
+        generate_test_data(puml_file)
+    ).values())
+    events = (
+        update_and_create_events_from_clustered_pvevents(data)
+    )
+    assert len(events) == 6
+    assert all(
+        event_type in events
+        for event_type in ["A", "B", "C", "D", "E", "F"]
+    )
+    # check A
+    assert events["A"].event_sets == {
+        EventSet(["B"]),
+    }
+    assert events["A"].in_event_sets == set()
+    # check B
+    assert events["B"].event_sets == {
+        EventSet(["C"]),
+        EventSet(["D"]),
+        EventSet(["E"]),
+    }
+    assert events["B"].in_event_sets == {
+        EventSet(["A"]),
+    }
+    # check C, D, E
+    for event_type in ["C", "D", "E"]:
+        assert events[event_type].event_sets == {
+            EventSet(["F"]),
+        }
+        assert events[event_type].in_event_sets == {
+            EventSet(["B"]),
+        }
+    # check F
+    assert events["F"].event_sets == set()
+    assert events["F"].in_event_sets == {
+        EventSet(["C"]),
+        EventSet(["D"]),
+        EventSet(["E"]),
+    }

@@ -8,7 +8,7 @@ from test_harness.protocol_verifier.simulator_data import (  # type: ignore[impo
     generate_single_events,
 )
 from test_event_generator.io.run import puml_file_to_test_events  # type: ignore[import-untyped]  # noqa: E501
-from tel2puml.tel2puml_types import DUMMY_START_EVENT
+from tel2puml.tel2puml_types import DUMMY_START_EVENT, PVEvent
 
 
 def generate_test_data(
@@ -16,7 +16,7 @@ def generate_test_data(
     template_all_paths: bool = True,
     num_paths_to_template: int = 1,
     is_branch_puml: bool = False,
-) -> Generator[dict, Any, None]:
+) -> Generator[PVEvent, Any, None]:
     """
     This function creates test data from a puml file. It uses the
     test_event_generator package to create the test data.
@@ -34,7 +34,7 @@ def generate_test_data(
     and three branches, defaults to `False`.
     :type is_branch_puml: `bool`, optional
     :return: A generator that yields the test data.
-    :rtype: `Generator[dict, Any, None]`
+    :rtype: `Generator[PVEvent, Any, None]`
     """
     for event_sequence in generate_test_data_event_sequences_from_puml(
         input_puml_file, template_all_paths, num_paths_to_template,
@@ -49,7 +49,7 @@ def generate_test_data_event_sequences_from_puml(
     num_paths_to_template: int = 1,
     is_branch_puml: bool = False,
     remove_dummy_start_event: bool = False,
-) -> Generator[Generator[dict, Any, None], Any, None]:
+) -> Generator[Generator[PVEvent, Any, None], Any, None]:
     """This function creates test data from a puml file as distinct sequences.
     It uses the test_event_generator package to create the test data.
 
@@ -66,8 +66,12 @@ def generate_test_data_event_sequences_from_puml(
     a puml file with branches, that is it will generate branch counts with two
     and three branches, defaults to `False`.
     :type is_branch_puml: `bool`, optional
-    :return: A generator that yields the test data.
-    :rtype: `Generator[str, Any, None]`
+    :param remove_dummy_start_event: If True, the function will remove the
+    dummy start event from the event sequence, defaults to `False`.
+    :type remove_dummy_start_event: `bool`, optional
+    :return: A generator that yields the test data as distinct sequences.
+    :rtype: `Generator`[`Generator`[:class:`PVEvent`, `Any`, `None`],
+    `Any`, `None`]
     """
     test_job_templates = [
         job for job in generate_valid_jobs_from_puml_file(
@@ -103,20 +107,20 @@ def generate_test_data_event_sequences_from_puml(
 
 
 def remove_dummy_start_event_from_event_sequence(
-    event_sequence: Generator[dict, Any, None]
-) -> Generator[dict, Any, None]:
+    event_sequence: Generator[PVEvent, Any, None]
+) -> Generator[PVEvent, Any, None]:
     """This function removes the dummy start event from an event sequence that
     is given the appropriate event type.
 
     :param event_sequence: The event sequence.
-    :type event_sequence: `Generator[dict, Any, None]`
+    :type event_sequence: `Generator`[`PVEvent`, `Any`, `None`]
     :return: A generator that yields the event sequence without the dummy
     start event.
-    :rtype: `Generator[dict, Any, None]`
+    :rtype: `Generator`[`PVEvent`, `Any`, `None`]
     """
     dummy_start_event_id: Optional[str] = None
     prev_event_id_map: dict[str, list[str]] = {}
-    events: dict[str, dict] = {}
+    events: dict[str, PVEvent] = {}
     for event in event_sequence:
         events[event["eventId"]] = event
         if "previousEventIds" in event:
@@ -138,29 +142,68 @@ def remove_dummy_start_event_from_event_sequence(
             if len(previous_event_ids) == 0:
                 del events[event_id]["previousEventIds"]
             else:
-                event["previousEventIds"] = previous_event_ids
+                events[event_id]["previousEventIds"] = previous_event_ids
         del events[dummy_start_event_id]
     yield from events.values()
 
 
+def transform_dict_into_pv_event(
+    pv_dict: dict[str, Any],
+) -> PVEvent:
+    """This function transforms a dictionary into a pv event.
+
+    :param pv_dict: The dictionary to transform.
+    :type pv_dict: `dict`[`str`, `Any`]
+    :return: The pv event.
+    :rtype: :class:`PVEvent`
+    """
+    mandatory_fields = {
+        "eventId", "eventType", "jobId", "timestamp", "applicationName",
+        "jobName"
+    }
+    if not mandatory_fields.issubset(pv_dict.keys()):
+        raise ValueError(
+            "The dictionary does not contain all the mandatory "
+            "fields."
+        )
+    pv_event = PVEvent(
+        eventId=pv_dict["eventId"],
+        eventType=pv_dict["eventType"],
+        jobId=pv_dict["jobId"],
+        timestamp=pv_dict["timestamp"],
+        applicationName=pv_dict["applicationName"],
+        jobName=pv_dict["jobName"],
+    )
+    if "previousEventIds" in pv_dict:
+        if isinstance(pv_dict["previousEventIds"], str):
+            pv_event["previousEventIds"] = [pv_dict["previousEventIds"]]
+        elif isinstance(pv_dict["previousEventIds"], list):
+            pv_event["previousEventIds"] = pv_dict["previousEventIds"]
+        else:
+            raise ValueError(
+                "The previousEventIds field is not a string or a list."
+            )
+    return pv_event
+
+
 def generate_event_jsons(
     jobs: list[Job],
-) -> Generator[dict, Any, None]:
+) -> Generator[PVEvent, Any, None]:
     """This function generates event jsons from a list of jobs.
 
     :param jobs: A list of jobs.
     :type jobs: `list`[:class:`Job`]
     :return: A generator that yields the event jsons.
-    :rtype: `Generator`[`dict`, `Any`, `None`]
+    :rtype: `Generator`[`PVEvent`, `Any`, `None`]
     """
     for generator_of_datums in generate_single_events(jobs):
         for datum in generator_of_datums:
-            yield datum.kwargs["list_dict"][0]
+            yield transform_dict_into_pv_event(datum.kwargs["list_dict"][0])
 
 
 def generate_valid_jobs_from_puml_file(
     input_puml_file: str,
-    **extra_options,
+    **extra_options: Any,
 ) -> Generator[Job, Any, None]:
     """This function generates valid jobs from a puml file.
 
