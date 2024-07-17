@@ -9,7 +9,7 @@ from networkx import DiGraph
 from pm4py import ProcessTree
 from pm4py.objects.process_tree.obj import Operator
 
-from tel2puml.events import Event
+from tel2puml.events import Event, EventSet
 from tel2puml.logic_detection import Operator as Logic_operator
 
 from tel2puml.tel2puml_types import PUMLEvent, PUMLOperator
@@ -74,7 +74,7 @@ class Node:
 
         self.event_types = set() if event_types is None else event_types
 
-        self._event_incoming: Event | None = None
+        self._eventsets_incoming: set[EventSet] | None = None
         self.is_loop_kill_path: list[bool] = []
 
     def __repr__(self) -> str:
@@ -101,26 +101,26 @@ class Node:
         return lonely_merge
 
     @property
-    def event_incoming(self) -> Event:
-        """Gets the event incoming.
+    def eventsets_incoming(self) -> set[EventSet]:
+        """Gets the incoming event sets.
 
-        :return: The event incoming.
-        :rtype: :class:`Event`
+        :return: The incoming event sets.
+        :rtype: :class:`EventSet`
         """
-        if self._event_incoming is None:
-            raise ValueError("Event incoming is not set")
-        return self._event_incoming
+        if self._eventsets_incoming is None:
+            raise ValueError("Event sets incoming is not set")
+        return self._eventsets_incoming
 
-    @event_incoming.setter
-    def event_incoming(self, value: Event) -> None:
-        """Sets the event incoming.
+    @eventsets_incoming.setter
+    def eventsets_incoming(self, value: set[EventSet]) -> None:
+        """Sets the incoming event sets.
 
         :param value: The value to set.
-        :type value: :class:`Event`
+        :type value: :class:`EventSet`
         """
         if self.event_type is None:
             raise ValueError("Event type is not set")
-        self._event_incoming = value
+        self._eventsets_incoming = value
 
     def update_logic_list(
         self, node: "Node", direction: Literal["incoming", "outgoing"]
@@ -631,7 +631,7 @@ def load_all_incoming_events_into_nodes(
     """
     for event_type, event in events.items():
         for node in nodes[event_type]:
-            node.event_incoming = event
+            node.eventsets_incoming = event.event_sets
             if event.logic_gate_tree is not None:
                 if event.logic_gate_tree.operator == Logic_operator.BRANCH:
                     node.update_event_types(PUMLEvent.MERGE)

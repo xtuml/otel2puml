@@ -1,5 +1,6 @@
 """Module to detect logic gates from EventSet's held in Event class and create
 a logic gate process tree"""
+
 from typing import Any, Generator
 from itertools import permutations
 from datetime import datetime, timedelta
@@ -21,6 +22,7 @@ class Operator(Enum):
     """
     Enum to represent the operators in a process tree.
     """
+
     # sequence operator
     SEQUENCE = "->"
     # exclusive choice operator
@@ -58,7 +60,7 @@ class Operator(Enum):
 
 
 def get_non_operator_successor_labels(
-    node: ProcessTree
+    node: ProcessTree,
 ) -> Generator[str, Any, None]:
     """Recursive method to get the leaf label nodes of a process tree.
 
@@ -85,12 +87,10 @@ def calculate_logic_gates(event: "ev.Event") -> ProcessTree:
         return None
     process_tree = calculate_process_tree_from_event_sets(event)
     logic_gate_tree = reduce_process_tree_to_preferred_logic_gates(
-        event,
-        process_tree
+        event, process_tree
     )
     logic_gate_tree_with_repeats = calculate_repeats_in_tree(
-        event,
-        logic_gate_tree
+        event, logic_gate_tree
     )
 
     return logic_gate_tree_with_repeats
@@ -106,10 +106,9 @@ def create_augmented_data_from_event_sets(
     :type event: :class:`tel2puml.events.Event`
     :return: The augmented data.
     :rtype: `Generator`[`dict`[`str`, `Any`], `Any`, `None`]"""
-    for reduced_event_set in event.get_reduced_event_set():
+    for reduced_event_set in ev.get_reduced_event_set(event.event_sets):
         yield from create_augmented_data_from_reduced_event_set(
-            event,
-            reduced_event_set
+            event, reduced_event_set
         )
 
 
@@ -127,9 +126,7 @@ def create_augmented_data_from_reduced_event_set(
     :return: The augmented data.
     :rtype: `Generator`[`dict`[`str`, `Any`], `Any`, `None`]
     """
-    for permutation in permutations(
-        reduced_event_set, len(reduced_event_set)
-    ):
+    for permutation in permutations(reduced_event_set, len(reduced_event_set)):
         case_id = str(uuid4())
         yield from create_data_from_event_sequence(
             [event.event_type, *permutation],
@@ -283,10 +280,9 @@ def check_is_or_operator(
     )
     for event_set in event.event_sets:
         frozen_set = event_set.to_frozenset()
-        if (
-            non_tau_successors_set.intersection(frozen_set) and
-            not removed_tau_children_set.intersection(frozen_set)
-        ):
+        if non_tau_successors_set.intersection(
+            frozen_set
+        ) and not removed_tau_children_set.intersection(frozen_set):
             return True
     return False
 
@@ -313,10 +309,7 @@ def infer_or_gate_from_node(
         if child.operator is None:
             non_tau_children.append(child)
         elif child.operator.value == Operator.XOR.value:
-            if any(
-                str(grandchild) == "tau"
-                for grandchild in child.children
-            ):
+            if any(str(grandchild) == "tau" for grandchild in child.children):
                 tau_children.append(child)
             else:
                 non_tau_children.append(child)
@@ -328,9 +321,7 @@ def infer_or_gate_from_node(
                 if str(grandchild) != "tau":
                     grandchild.parent = node
                     removed_tau_children.append(grandchild)
-        if check_is_or_operator(
-            event, non_tau_children, removed_tau_children
-        ):
+        if check_is_or_operator(event, non_tau_children, removed_tau_children):
             node.operator = Operator.OR
             if len(non_tau_children) > 1:
                 node.children = [
@@ -339,7 +330,7 @@ def infer_or_gate_from_node(
                         Operator.PARALLEL,
                         node,
                         non_tau_children,
-                    )
+                    ),
                 ]
             else:
                 node.children = removed_tau_children + non_tau_children
@@ -385,8 +376,8 @@ def process_missing_and_gates(
     :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
     """
     if (
-            process_tree.operator is not None
-            and process_tree.operator.value == Operator.OR.value
+        process_tree.operator is not None
+        and process_tree.operator.value == Operator.OR.value
     ):
         universe = set()
         insoluble = False
@@ -400,16 +391,13 @@ def process_missing_and_gates(
         if not insoluble:
             recursive_event_set = {
                 event_set
-                for event_set in event.get_reduced_event_set()
+                for event_set in ev.get_reduced_event_set(event.event_sets)
                 if event_set.issubset(universe)
             }
             if universe in recursive_event_set:
                 recursive_event_set.remove(universe)
 
-            weighted_cover = get_weighted_cover(
-                recursive_event_set,
-                universe
-            )
+            weighted_cover = get_weighted_cover(recursive_event_set, universe)
 
             if weighted_cover is not None:
                 children = []
@@ -429,7 +417,7 @@ def process_missing_and_gates(
                             )
                         )
                     else:
-                        label, = event_set
+                        (label,) = event_set
                         children.append(
                             ProcessTree(
                                 label=label,
@@ -479,9 +467,7 @@ def update_tree_with_repeat_logic(event: "ev.Event", node: ProcessTree):
     if node.operator is None:
         counts = event.get_event_set_counts().get(node.label, set())
         if len(counts) == 1 and (count := counts.pop()) > 1:
-            return ProcessTree(
-                Operator.PARALLEL, node.parent, [node] * count
-            )
+            return ProcessTree(Operator.PARALLEL, node.parent, [node] * count)
     else:
         node.children = [
             update_tree_with_repeat_logic(event, child)
@@ -503,8 +489,7 @@ def remove_defunct_sequence_logic(node: ProcessTree) -> Any | ProcessTree:
             return remove_defunct_sequence_logic(node.children[0])
 
         node.children = [
-            remove_defunct_sequence_logic(child)
-            for child in node.children
+            remove_defunct_sequence_logic(child) for child in node.children
         ]
 
     return node

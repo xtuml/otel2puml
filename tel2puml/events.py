@@ -1,6 +1,7 @@
 """This module contains classes to store incoming events and their outgoing
 events. It also contains functions to convert these classes to a Markov graph.
 """
+
 from typing import Iterable
 from copy import deepcopy
 from uuid import uuid4
@@ -10,10 +11,10 @@ from pm4py import (  # type: ignore[import-untyped]
 )
 from networkx import DiGraph
 from test_event_generator.solutions.graph_solution import (  # type: ignore[import-untyped] # noqa: E501
-    GraphSolution
+    GraphSolution,
 )
 from test_event_generator.solutions.event_solution import (  # type: ignore[import-untyped] # noqa: E501
-    EventSolution
+    EventSolution,
 )
 
 from tel2puml.detect_loops import Loop
@@ -72,8 +73,7 @@ class EventSet(dict[str, int]):
         :rtype: `bool`
         """
         return all(
-            count == other.get(event, -1)
-            for event, count in self.items()
+            count == other.get(event, -1) for event, count in self.items()
         )
 
     def to_list(self) -> list[str]:
@@ -83,9 +83,7 @@ class EventSet(dict[str, int]):
         :rtype: `list`[`str`]
         """
         return list(
-            event
-            for event, count in self.items()
-            for _ in range(count)
+            event for event, count in self.items() for _ in range(count)
         )
 
 
@@ -259,29 +257,6 @@ class Event:
 
         self.in_event_sets.add(EventSet(events))
 
-    def has_event_set_as_subset(self, events: list[str]) -> bool:
-        """Method to check if the event set exists as a subset of any of the
-        eventsets.
-
-        :param events: The events.
-        :type events: `list`[`str`]
-        :return: Whether the event set exists.
-        :rtype: `bool`
-        """
-        event_set_to_check = EventSet(events)
-        return any(
-            event_set_to_check.is_subset(event_set)
-            for event_set in self.event_sets
-        )
-
-    def get_reduced_event_set(self) -> set[frozenset[str]]:
-        """This method reduces the event set to a list of unique events.
-
-        :return: The reduced event set.
-        :rtype: `list`[`str`]
-        """
-        return {event_set.to_frozenset() for event_set in self.event_sets}
-
     def get_reduced_in_event_set(self) -> set[frozenset[str]]:
         """This method reduces the event set to a list of unique events.
 
@@ -333,8 +308,7 @@ class Event:
 
 
 def remove_detected_loop_events(
-    mapping: dict[str, list[str]],
-    events: dict[str, Event]
+    mapping: dict[str, list[str]], events: dict[str, Event]
 ) -> None:
     """This function removes the detected loop events from the events.
 
@@ -456,3 +430,31 @@ def create_graph_from_events(
         for out_event in out_events:
             graph.add_edge(event, out_event)
     return graph
+
+
+def has_event_set_as_subset(
+    event_sets: set[EventSet], events: list[str]
+) -> bool:
+    """Function to check if the event set exists as a subset of any of the
+    eventsets.
+
+    :param event_sets: The event sets to check.
+    :type event_sets: `set`[:class:`EventSet`]
+    :param events: The list of events to check
+    :type events: `list`[`str`]
+    :return: Whether the event sets exist as a subset of events
+    :rtype: `bool`
+    """
+    event_set_to_check = EventSet(events)
+    return any(
+        event_set_to_check.is_subset(event_set) for event_set in event_sets
+    )
+
+
+def get_reduced_event_set(event_sets: set[EventSet]) -> set[frozenset[str]]:
+    """This function reduces a set of event sets to a set of unique events.
+
+    :return: The reduced event set.
+    :rtype: `set`[:class:`frozenset`[`str`]]
+    """
+    return {event_set.to_frozenset() for event_set in event_sets}

@@ -104,6 +104,14 @@ tests/puml_graph/test_graph_loop_extract.py:81: error: Argument 1 to "remove" of
 tests/puml_graph/test_graph_loop_extract.py:303: error: Argument 1 to "remove" of "list" has incompatible type "tuple[Hashable, Hashable]"; expected "tuple[tuple[str, str, int], tuple[str, str, int]]"  [arg-type]
 tests/puml_graph/test_graph_loop_extract.py:321: error: Argument 1 to "check_correct_start_and_end_nodes" of "TestGetLoopStartAndEnd" has incompatible type "list[tuple[PUMLNode, PUMLNode]]"; expected "list[tuple[PUMLEventNode, PUMLEventNode]]"  [arg-type]
 tests/puml_graph/test_graph_loop_extract.py:336: error: Argument 1 to "check_correct_start_and_end_nodes" of "TestGetLoopStartAndEnd" has incompatible type "list[tuple[PUMLNode, PUMLNode]]"; expected "list[tuple[PUMLEventNode, PUMLEventNode]]"  [arg-type]
+tel2puml/logic_detection.py:398: error: Argument 1 to "remove" of "set" has incompatible type "set[Any]"; expected "frozenset[str]"  [arg-type]
+tel2puml/logic_detection.py:400: error: Argument 1 to "get_weighted_cover" has incompatible type "set[frozenset[str]]"; expected "set[set[Any] | frozenset[Any]]"  [arg-type]
+tel2puml/logic_detection.py:459: error: Function is missing a return type annotation  [no-untyped-def]
+tel2puml/events.py:43: error: Signature of "__hash__" incompatible with supertype "dict"  [override]
+tel2puml/events.py:43: note:      Superclass:
+tel2puml/events.py:43: note:          None
+tel2puml/events.py:43: note:      Subclass:
+tel2puml/events.py:43: note:          def __hash__(self) -> int
 tel2puml/puml_graph/graph_loop_insert.py:42: error: Argument 1 to "insert_loops" has incompatible type "PUMLGraph | None"; expected "PUMLGraph"  [arg-type]
 tests/puml_graph/test_graph_loop_insert.py:47: error: Item "None" of "PUMLGraph | None" has no attribute "nodes"  [union-attr]
 tests/puml_graph/test_graph_loop_insert.py:57: error: Item "None" of "PUMLGraph | None" has no attribute "nodes"  [union-attr]
@@ -111,14 +119,6 @@ tests/puml_graph/test_graph_loop_insert.py:73: error: Item "None" of "PUMLGraph 
 tests/puml_graph/test_graph_loop_insert.py:79: error: Item "None" of "PUMLGraph | None" has no attribute "subgraph_nodes"  [union-attr]
 tests/puml_graph/test_graph_loop_insert.py:95: error: Argument 1 to "check_networkx_graph_equivalence" has incompatible type "PUMLGraph | None"; expected "DiGraph[Any]"  [arg-type]
 tests/puml_graph/test_graph_loop_insert.py:100: error: Argument 1 to "check_networkx_graph_equivalence" has incompatible type "PUMLGraph | None"; expected "DiGraph[Any]"  [arg-type]
-tel2puml/logic_detection.py:407: error: Argument 1 to "remove" of "set" has incompatible type "set[Any]"; expected "frozenset[str]"  [arg-type]
-tel2puml/logic_detection.py:410: error: Argument 1 to "get_weighted_cover" has incompatible type "set[frozenset[str]]"; expected "set[set[Any] | frozenset[Any]]"  [arg-type]
-tel2puml/logic_detection.py:471: error: Function is missing a return type annotation  [no-untyped-def]
-tel2puml/events.py:42: error: Signature of "__hash__" incompatible with supertype "dict"  [override]
-tel2puml/events.py:42: note:      Superclass:
-tel2puml/events.py:42: note:          None
-tel2puml/events.py:42: note:      Subclass:
-tel2puml/events.py:42: note:          def __hash__(self) -> int
 tel2puml/node_map_to_puml/node.py:81: error: Unsupported left operand type for + ("None")  [operator]
 tel2puml/node_map_to_puml/node.py:81: note: Left operand is of type "str | None"
 tel2puml/node_map_to_puml/node.py:338: error: Incompatible return value type (got "tuple[PUMLEvent, ...]", expected "tuple[PUMLEvent]")  [return-value]
@@ -161,34 +161,34 @@ tests/node_map_to_puml/test_node.py:614: error: Value of type "object" is not in
 tests/node_map_to_puml/test_node.py:627: error: Value of type variable "SupportsRichComparisonT" of "sorted" cannot be "str | None"  [type-var]
 tests/node_map_to_puml/test_node.py:638: error: Value of type variable "SupportsRichComparisonT" of "sorted" cannot be "str | None"  [type-var]
 tests/node_map_to_puml/test_node.py:644: error: Value of type variable "SupportsRichComparisonT" of "sorted" cannot be "str | None"  [type-var]
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:49: error: Incompatible types in assignment (expression has type "None", variable has type "int")  [assignment]
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:114: error: No overload variant of "__setitem__" of "list" matches argument types "int", "PUMLNode"  [call-overload]
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:114: note: Possible overload variants:
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:114: note:     def __setitem__(self, SupportsIndex, PUMLOperatorNode, /) -> None
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:114: note:     def __setitem__(self, slice, Iterable[PUMLOperatorNode], /) -> None
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:148: error: Incompatible types in assignment (expression has type "list[PUMLOperatorNode | PUMLNode]", variable has type "list[PUMLOperatorNode]")  [assignment]
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:153: error: Incompatible return value type (got "tuple[PUMLNode, Node | None]", expected "tuple[PUMLNode, Node]")  [return-value]
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:219: error: Argument 1 to "has_event_set_as_subset" of "Event" has incompatible type "list[str | None]"; expected "list[str]"  [arg-type]
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:338: error: Argument 1 to "create_event_node" of "PUMLGraph" has incompatible type "str | None"; expected "str"  [arg-type]
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:370: error: Incompatible types in assignment (expression has type "PUMLKillNode", variable has type "PUMLEventNode")  [assignment]
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:373: error: Incompatible types in assignment (expression has type "PUMLOperatorNode | PUMLEventNode", variable has type "PUMLEventNode")  [assignment]
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:388: error: Incompatible types in assignment (expression has type "PUMLNode", variable has type "PUMLEventNode")  [assignment]
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:402: error: Argument 2 to "update_puml_graph_with_event_node" has incompatible type "Node | None"; expected "Node"  [arg-type]
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:413: error: Incompatible types in assignment (expression has type "PUMLNode", variable has type "PUMLEventNode")  [assignment]
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:424: error: Incompatible types in assignment (expression has type "PUMLOperatorNode", variable has type "PUMLEventNode")  [assignment]
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:459: error: Argument 1 to "create_operator_node_pair" of "PUMLGraph" has incompatible type "PUMLOperator | None"; expected "PUMLOperator"  [arg-type]
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:469: error: Incompatible return value type (got "tuple[PUMLOperatorNode | PUMLEventNode, Node]", expected "tuple[PUMLOperatorNode, Node]")  [return-value]
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:522: error: No overload variant of "__setitem__" of "list" matches argument types "int", "PUMLEventNode"  [call-overload]
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:522: note: Possible overload variants:
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:522: note:     def __setitem__(self, SupportsIndex, PUMLOperatorNode, /) -> None
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:522: note:     def __setitem__(self, slice, Iterable[PUMLOperatorNode], /) -> None
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:524: error: Incompatible return value type (got "tuple[PUMLNode, Node | None]", expected "tuple[PUMLNode, Node]")  [return-value]
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:540: error: Argument 2 to "create_logic_merge" of "LogicBlockHolder" has incompatible type "Node | None"; expected "Node"  [arg-type]
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:552: error: Argument 3 to "handle_rotate_path" has incompatible type "PUMLNode"; expected "PUMLOperatorNode"  [arg-type]
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:579: error: Incompatible types in assignment (expression has type "PUMLNode", variable has type "PUMLOperatorNode")  [assignment]
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:586: error: Incompatible types in assignment (expression has type "PUMLOperatorNode | PUMLEventNode", variable has type "PUMLOperatorNode")  [assignment]
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:646: error: Incompatible return value type (got "tuple[PUMLNode, Node]", expected "tuple[PUMLOperatorNode | PUMLEventNode, Node]")  [return-value]
-tel2puml/node_map_to_puml/walk_puml_logic_graph.py:686: error: Incompatible types in assignment (expression has type "PUMLEventNode", variable has type "PUMLOperatorNode")  [assignment]
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:50: error: Incompatible types in assignment (expression has type "None", variable has type "int")  [assignment]
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:115: error: No overload variant of "__setitem__" of "list" matches argument types "int", "PUMLNode"  [call-overload]
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:115: note: Possible overload variants:
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:115: note:     def __setitem__(self, SupportsIndex, PUMLOperatorNode, /) -> None
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:115: note:     def __setitem__(self, slice, Iterable[PUMLOperatorNode], /) -> None
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:149: error: Incompatible types in assignment (expression has type "list[PUMLOperatorNode | PUMLNode]", variable has type "list[PUMLOperatorNode]")  [assignment]
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:154: error: Incompatible return value type (got "tuple[PUMLNode, Node | None]", expected "tuple[PUMLNode, Node]")  [return-value]
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:219: error: Argument 2 to "has_event_set_as_subset" has incompatible type "list[str | None]"; expected "list[str]"  [arg-type]
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:335: error: Argument 1 to "create_event_node" of "PUMLGraph" has incompatible type "str | None"; expected "str"  [arg-type]
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:367: error: Incompatible types in assignment (expression has type "PUMLKillNode", variable has type "PUMLEventNode")  [assignment]
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:370: error: Incompatible types in assignment (expression has type "PUMLOperatorNode | PUMLEventNode", variable has type "PUMLEventNode")  [assignment]
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:385: error: Incompatible types in assignment (expression has type "PUMLNode", variable has type "PUMLEventNode")  [assignment]
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:399: error: Argument 2 to "update_puml_graph_with_event_node" has incompatible type "Node | None"; expected "Node"  [arg-type]
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:410: error: Incompatible types in assignment (expression has type "PUMLNode", variable has type "PUMLEventNode")  [assignment]
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:421: error: Incompatible types in assignment (expression has type "PUMLOperatorNode", variable has type "PUMLEventNode")  [assignment]
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:456: error: Argument 1 to "create_operator_node_pair" of "PUMLGraph" has incompatible type "PUMLOperator | None"; expected "PUMLOperator"  [arg-type]
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:466: error: Incompatible return value type (got "tuple[PUMLOperatorNode | PUMLEventNode, Node]", expected "tuple[PUMLOperatorNode, Node]")  [return-value]
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:519: error: No overload variant of "__setitem__" of "list" matches argument types "int", "PUMLEventNode"  [call-overload]
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:519: note: Possible overload variants:
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:519: note:     def __setitem__(self, SupportsIndex, PUMLOperatorNode, /) -> None
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:519: note:     def __setitem__(self, slice, Iterable[PUMLOperatorNode], /) -> None
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:521: error: Incompatible return value type (got "tuple[PUMLNode, Node | None]", expected "tuple[PUMLNode, Node]")  [return-value]
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:537: error: Argument 2 to "create_logic_merge" of "LogicBlockHolder" has incompatible type "Node | None"; expected "Node"  [arg-type]
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:549: error: Argument 3 to "handle_rotate_path" has incompatible type "PUMLNode"; expected "PUMLOperatorNode"  [arg-type]
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:576: error: Incompatible types in assignment (expression has type "PUMLNode", variable has type "PUMLOperatorNode")  [assignment]
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:583: error: Incompatible types in assignment (expression has type "PUMLOperatorNode | PUMLEventNode", variable has type "PUMLOperatorNode")  [assignment]
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:643: error: Incompatible return value type (got "tuple[PUMLNode, Node]", expected "tuple[PUMLOperatorNode | PUMLEventNode, Node]")  [return-value]
+tel2puml/node_map_to_puml/walk_puml_logic_graph.py:683: error: Incompatible types in assignment (expression has type "PUMLEventNode", variable has type "PUMLOperatorNode")  [assignment]
 tel2puml/loop_detection/calculate_loop_components.py:185: error: Incompatible types in assignment (expression has type "Graph[T]", variable has type "DiGraph[T]")  [assignment]
 tests/node_map_to_puml/test_walk_puml_logic_graph.py:15: error: Module "tel2puml.puml_graph.graph" does not explicitly export attribute "PUMLOperatorNodes"  [attr-defined]
 tests/node_map_to_puml/test_walk_puml_logic_graph.py:225: error: Argument 1 to "rotate_path" of "LogicBlockHolder" has incompatible type "Node | None"; expected "Node"  [arg-type]

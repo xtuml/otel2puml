@@ -13,6 +13,7 @@ from tel2puml.puml_graph.graph import (
 )
 from tel2puml.node_map_to_puml.node import Node, get_node_as_list, SubGraphNode
 from tel2puml.tel2puml_types import PUMLEvent
+from tel2puml.events import has_event_set_as_subset, get_reduced_event_set
 
 
 class LogicBlockHolder:
@@ -214,19 +215,15 @@ class LogicBlockHolder:
             for node, merge_node in zip(self.paths, self.merge_nodes)
             if merge_node == potential_merge_node
         ]
-        contains_event_set = (
-            potential_merge_node.event_incoming.has_event_set_as_subset(
-                paths_event_types
-            )
+        contains_event_set = has_event_set_as_subset(
+            potential_merge_node.eventsets_incoming, paths_event_types
         )
         if not contains_event_set:
             # check whether the merge node is a merge count and if so check if
             # at least the frozen event sets are the same
             if PUMLEvent.MERGE in potential_merge_node.get_puml_event_types():
-                if (
-                    frozenset(paths_event_types)
-                    in potential_merge_node.event_incoming.
-                    get_reduced_event_set()
+                if frozenset(paths_event_types) in get_reduced_event_set(
+                    potential_merge_node.eventsets_incoming
                 ):
                     return True
             for index, merge_node in enumerate(self.merge_nodes):
@@ -819,15 +816,13 @@ def walk_nested_graph(
     """
     sub_graph_node_puml_graphs: list[tuple[SubGraphNode, PUMLGraph]] = []
     sub_graph_nodes = [
-        node for node in node_class_graph.nodes if isinstance(
-            node, SubGraphNode
-        )
+        node
+        for node in node_class_graph.nodes
+        if isinstance(node, SubGraphNode)
     ]
     for sub_graph_node in sub_graph_nodes:
         sub_graph_node_puml_graphs.append(
-            (sub_graph_node, walk_nested_graph(
-                sub_graph_node.sub_graph
-            ))
+            (sub_graph_node, walk_nested_graph(sub_graph_node.sub_graph))
         )
     puml_graph = create_puml_graph_from_node_class_graph(node_class_graph)
     for sub_graph_node, sub_graph_puml_graph in sub_graph_node_puml_graphs:

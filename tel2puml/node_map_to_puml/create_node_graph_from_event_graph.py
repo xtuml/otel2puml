@@ -37,25 +37,29 @@ def update_outgoing_logic_nodes(event: Event, node: Node) -> None:
         node.load_logic_into_list(event.logic_gate_tree, "outgoing")
 
 
-def create_node_from_event(event: Event | LoopEvent) -> Node | SubGraphNode:
+def create_node_from_event(
+    event: Event | LoopEvent,
+) -> SubGraphNode | Node:
     """Create a node from an event
 
     :param event: The event to create the node from
-    :type: :class: `Event` | `LoopEvent`
+    :type event: :class:`Event` | :class:`LoopEvent`
     :return: The node created from the event
-    :rtype: :class: `Node` | `SubGraphNode`
+    :rtype: :class:`Node` | :class:`SubGraphNode`
     """
-    # Check for LoopEvent first as it inherits from Event
     if isinstance(event, LoopEvent):
-        return SubGraphNode(
-            uid=event.uid,
-            event_type=event.event_type,
+        node: Node | SubGraphNode = SubGraphNode(
+            uid=event.uid, event_type=event.event_type,
             start_uid=event.start_uid,
             end_uid=event.end_uid,
-            break_uids=event.break_uids,
+            break_uids=event.break_uids
         )
     else:
-        return Node(event_type=event.event_type, uid=event.uid)
+        node = Node(
+            event_type=event.event_type, uid=event.uid
+        )
+    node.eventsets_incoming = event.in_event_sets
+    return node
 
 
 def create_node_graph_from_event_graph(

@@ -1,8 +1,13 @@
 """Tests for the tel2puml.events module."""
+
 from tel2puml.events import (
-    Event, EventSet, get_loop_events_to_remove_mapping,
+    Event,
+    EventSet,
+    get_loop_events_to_remove_mapping,
     remove_detected_loop_data_from_events,
-    remove_detected_loop_events
+    remove_detected_loop_events,
+    has_event_set_as_subset,
+    get_reduced_event_set,
 )
 from tel2puml.detect_loops import Loop
 
@@ -72,6 +77,7 @@ class TestEventSet:
 
 class TestEvent:
     """Tests for the Event class."""
+
     @staticmethod
     def test_update_event_sets() -> None:
         """Tests for method update_event_sets"""
@@ -112,31 +118,6 @@ class TestEvent:
             EventSet(["B", "C", "C"]),
         }
 
-    def test_get_reduced_event_set(self) -> None:
-        """Tests for method get_reduced_event_set"""
-        event = Event("A")
-        event.event_sets = {
-            EventSet(["B", "C"]),
-            EventSet(["B", "B", "C"]),
-            EventSet(["B", "C", "C"]),
-        }
-        reduced_event_set = event.get_reduced_event_set()
-        assert reduced_event_set == {frozenset(["B", "C"])}
-
-        event.event_sets = {
-            EventSet(["A"]),
-            EventSet(["B"]),
-            EventSet(["B", "C"]),
-            EventSet(["B", "B", "C"]),
-            EventSet(["B", "C", "C"]),
-        }
-        reduced_event_set = event.get_reduced_event_set()
-        assert reduced_event_set == {
-            frozenset(["B", "C"]),
-            frozenset(["A"]),
-            frozenset(["B"]),
-            }
-
     def test_get_event_set_counts(self) -> None:
         """Tests for method get_event_set_counts"""
         event = Event("A")
@@ -144,7 +125,7 @@ class TestEvent:
             EventSet(["B"]),
         }
         event_set_counts = event.get_event_set_counts()
-        assert event_set_counts == {'B': {1}}
+        assert event_set_counts == {"B": {1}}
 
         event.event_sets = {
             EventSet(["B", "C"]),
@@ -152,7 +133,7 @@ class TestEvent:
             EventSet(["B", "C", "C"]),
         }
         event_set_counts = event.get_event_set_counts()
-        assert event_set_counts == {'B': {1, 2}, 'C': {1, 2}}
+        assert event_set_counts == {"B": {1, 2}, "C": {1, 2}}
 
         event.event_sets = {
             EventSet(["B"]),
@@ -160,7 +141,7 @@ class TestEvent:
             EventSet(["B", "C", "C"]),
         }
         event_set_counts = event.get_event_set_counts()
-        assert event_set_counts == {'B': {1}, 'C': {1, 2}}
+        assert event_set_counts == {"B": {1}, "C": {1, 2}}
 
         event.event_sets = {
             EventSet(["B", "C"]),
@@ -168,7 +149,7 @@ class TestEvent:
             EventSet(["B", "C", "C", "D"]),
         }
         event_set_counts = event.get_event_set_counts()
-        assert event_set_counts == {'B': {1, 2}, 'C': {1, 2}, 'D': {1}}
+        assert event_set_counts == {"B": {1, 2}, "C": {1, 2}, "D": {1}}
 
     def test_remove_event_type_from_event_sets(self) -> None:
         """Tests for method remove_event_type_from_event_sets"""
@@ -212,8 +193,9 @@ def test_remove_detected_loop_events() -> None:
 
 class TestLoopEdgeRemoval:
     """Tests functionality for loop edge removal from Event class"""
+
     def get_loop_ref_and_events(
-        self
+        self,
     ) -> tuple[list[Loop], dict[str, str], dict[str, Event]]:
         """Helper method to get loop reference and events for testing"""
         # setup loops
@@ -276,12 +258,68 @@ class TestLoopEdgeRemoval:
             self.get_loop_ref_and_events()
         )
         remove_detected_loop_data_from_events(
-            loops,
-            events,
-            node_event_name_reference
+            loops, events, node_event_name_reference
         )
         assert len(events["C"].event_sets) == 1
         assert len(events["E"].event_sets) == 0
         assert len(events["A"].event_sets) == 1
         assert len(events["B"].event_sets) == 1
         assert len(events["D"].event_sets) == 1
+
+
+def test_has_event_set_as_subset() -> None:
+    """Test function has_event_set_as_subset"""
+    # Test case 1: Has subset
+    event1 = Event("A")
+    event1.update_event_sets(["a", "b"])
+    event1.update_event_sets(["b", "b"])
+    event_sets_to_check1 = ["a"]
+    assert has_event_set_as_subset(event1.event_sets, event_sets_to_check1)
+
+    # Test case 2: No subset
+    event2 = Event("A")
+    event2.update_event_sets(["a", "b"])
+    event2.update_event_sets(["b", "b"])
+    event_sets_to_check2 = ["c"]
+    assert not (
+        has_event_set_as_subset(event2.event_sets, event_sets_to_check2)
+    )
+
+    # Test case 3: Empty event sets
+    event3 = Event("A")
+    event_sets_to_check3 = ["a"]
+    assert not (
+        has_event_set_as_subset(event3.event_sets, event_sets_to_check3)
+    )
+
+    # Test case 4: Both empty
+    event4 = Event("A")
+    event_sets_to_check4: list[str] = []
+    assert not (
+        has_event_set_as_subset(event4.event_sets, event_sets_to_check4)
+    )
+
+
+def test_get_reduced_event_set() -> None:
+    """Test for function get_reduced_event_set"""
+    event_sets = {
+        EventSet(["B", "C"]),
+        EventSet(["B", "B", "C"]),
+        EventSet(["B", "C", "C"]),
+    }
+    reduced_event_set = get_reduced_event_set(event_sets)
+    assert reduced_event_set == {frozenset(["B", "C"])}
+
+    event_sets = {
+        EventSet(["A"]),
+        EventSet(["B"]),
+        EventSet(["B", "C"]),
+        EventSet(["B", "B", "C"]),
+        EventSet(["B", "C", "C"]),
+    }
+    reduced_event_set = get_reduced_event_set(event_sets)
+    assert reduced_event_set == {
+        frozenset(["B", "C"]),
+        frozenset(["A"]),
+        frozenset(["B"]),
+    }

@@ -11,7 +11,7 @@ from tel2puml.node_map_to_puml.create_node_graph_from_event_graph import (
     create_node_from_event,
     create_node_graph_from_event_graph,
 )
-from tel2puml.events import Event
+from tel2puml.events import Event, EventSet
 from tel2puml.loop_detection.loop_types import LoopEvent
 from tel2puml.tel2puml_types import DUMMY_START_EVENT, DUMMY_END_EVENT
 
@@ -53,9 +53,12 @@ def test_update_outgoing_logic_nodes(
 def test_create_node_class_from_event_class() -> None:
     """Test the create_node_class_from_event_class function"""
     event = Event(event_type="A")
+    event_list = ["a", "b"]
+    event.update_in_event_sets(event_list)
     node = create_node_from_event(event)
     assert isinstance(node, Node)
     assert node.event_type == "A"
+    assert node.eventsets_incoming == {EventSet(event_list)}
 
     sub_graph: "DiGraph[Event]" = DiGraph()
     loop_event = LoopEvent(
