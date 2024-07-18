@@ -6,6 +6,8 @@ from tel2puml.node_map_to_puml.node import NodeTuple, Node, SubGraphNode
 from tel2puml.events import Event
 from tel2puml.loop_detection.loop_types import LoopEvent
 from tel2puml.tel2puml_types import PUMLEvent
+from tel2puml.logic_detection import calculate_logic_gates
+from tel2puml.logic_detection import Operator as Logic_operator
 
 
 def update_graph_with_node_tuple(
@@ -61,6 +63,11 @@ def create_node_from_event(
             event_type=event.event_type, uid=event.uid
         )
     node.eventsets_incoming = event.in_event_sets
+    if node.eventsets_incoming:
+        if calculate_logic_gates(
+            node.eventsets_incoming
+        ).operator == Logic_operator.BRANCH:
+            node.update_event_types(PUMLEvent.MERGE)
     return node
 
 

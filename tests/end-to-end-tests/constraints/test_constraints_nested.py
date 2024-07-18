@@ -44,12 +44,7 @@ class TestConstraintNestedAND:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "version",
-        [
-            "v1",
-            pytest.param("v2", marks=pytest.mark.xfail(reason="Bug in v2")),
-        ],
-        ids=["version_1", "version_2"]
+        "version", ["v1", "v2",], ids=["version_1", "version_2"]
     )
     def test_AND_branch_count(version: Literal['v1', 'v2']) -> None:
         """Test AND with nested branch count."""
@@ -109,12 +104,7 @@ class TestConstraintNestedOR:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "version",
-        [
-            "v1",
-            pytest.param("v2", marks=pytest.mark.xfail(reason="Bug in v2")),
-        ],
-        ids=["version_1", "version_2"]
+        "version", ["v1", "v2",], ids=["version_1", "version_2"]
     )
     def test_OR_branch_count(version: Literal['v1', 'v2']) -> None:
         """Test OR with nested branch count."""
