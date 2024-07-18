@@ -12,11 +12,13 @@ from tel2puml.tel2puml_types import PVEvent
 from tel2puml.pipelines.data_ingestion import (
     update_all_connections_from_clustered_events,
     cluster_events_by_job_id,
+    update_and_create_events_from_clustered_pvevents
 )
 from tel2puml.events import (
     remove_detected_loop_data_from_events,
     events_to_markov_graph,
     get_event_reference_from_events,
+    create_graph_from_events
 )
 from tel2puml.jAlergiaPipeline import remove_loop_data_from_graph
 from tel2puml.node_map_to_puml.node import (
@@ -24,6 +26,7 @@ from tel2puml.node_map_to_puml.node import (
 )
 from tel2puml.node_map_to_puml.walk_puml_logic_graph import (
     create_puml_graph_from_node_class_graph,
+    walk_nested_graph
 )
 from tel2puml.detect_loops import (
     detect_loops,
@@ -34,6 +37,19 @@ from tel2puml.node_map_to_puml.node_update import (
     update_nodes_with_break_points_from_loops,
     get_node_to_node_map_from_edges,
     add_loop_kill_paths_for_nodes,
+    update_nested_node_graph_with_break_points
+)
+from tel2puml.loop_detection.detect_loops import (
+    detect_loops as detect_loops_v2
+)
+from tel2puml.node_map_to_puml.create_node_graph_from_event_graph import (
+    create_node_graph_from_event_graph
+)
+from tel2puml.node_map_to_puml.find_and_add_loop_kill_paths import (
+    find_and_add_loop_kill_paths_to_nested_graphs,
+)
+from tel2puml.puml_graph.graph import (
+    remove_dummy_start_and_end_events_from_nested_graphs,
 )
 
 
@@ -97,6 +113,39 @@ def pv_to_puml_string(
     # remove the dummy start event
     puml_graph.remove_dummy_start_event_nodes()
     # convert the PlantUML graph to a PlantUML string
+    return puml_graph.write_puml_string(puml_name)
+
+
+def pv_to_puml_string_v2(
+    pv_stream: Iterable[Iterable[PVEvent]],
+    puml_name: str = "default_name",
+) -> str:
+    """Converts a stream of PV event sequences to a PlantUML sequence diagram,
+    inferring the logic from the PV event sequences and the structure from the
+    from connections between events.
+
+    :param pv_stream: A Iterable of PV event sequences
+    :type pv_stream: `Iterable`[`Iterable`[:class:`PVEvent`]]
+    :param puml_name: The name of the PlantUML group to create
+    :type puml_name: `str`
+    :return: The PlantUML string
+    :rtype: `str`
+    """
+    # ingest events and create graph
+    events = update_and_create_events_from_clustered_pvevents(pv_stream)
+    initial_events_graph = create_graph_from_events(events.values())
+    # detect loops
+    nested_loop_event_graph = detect_loops_v2(initial_events_graph)
+    # convert graph to Node graph
+    node_graph = create_node_graph_from_event_graph(nested_loop_event_graph)
+    # update nested graph with break points
+    update_nested_node_graph_with_break_points(node_graph)
+    # add loop kill paths to nested graphs
+    find_and_add_loop_kill_paths_to_nested_graphs(node_graph)
+    # walk the nested graph and create the PlantUML graph
+    puml_graph = walk_nested_graph(node_graph)
+    # remove dummy start and end events
+    remove_dummy_start_and_end_events_from_nested_graphs(puml_graph)
     return puml_graph.write_puml_string(puml_name)
 
 

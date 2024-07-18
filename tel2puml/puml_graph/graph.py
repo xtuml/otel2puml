@@ -14,7 +14,8 @@ from tel2puml.tel2puml_types import (
     PUMLOperatorNodes,
     NXEdgeAttributes,
     NXNodeAttributes,
-    DUMMY_START_EVENT
+    DUMMY_START_EVENT,
+    DUMMY_END_EVENT
 )
 from tel2puml.check_puml_equiv import NXNode
 
@@ -665,6 +666,21 @@ class PUMLGraph(DiGraph):
         for node in nodes_to_remove:
             self.remove_node(node)
 
+    def remove_dummy_end_event_nodes(
+        self
+    ) -> None:
+        """Loops through the nodes of the instance and removes any dummy end
+        event nodes that are present.
+        """
+        nodes_to_remove = [
+            node
+            for node in self.nodes
+            if isinstance(node, PUMLEventNode)
+            and node.node_type == DUMMY_END_EVENT
+        ]
+        for node in nodes_to_remove:
+            self.remove_node(node)
+
     def add_sub_graph_to_puml_nodes_with_ref(
         self, sub_graph: "PUMLGraph", ref: Hashable
     ) -> None:
@@ -681,3 +697,22 @@ class PUMLGraph(DiGraph):
             )
         for puml_event_node in self.parent_graph_nodes_to_node_ref[ref]:
             puml_event_node.sub_graph = sub_graph
+
+
+def remove_dummy_start_and_end_events_from_nested_graphs(
+    nested_graph: PUMLGraph
+) -> None:
+    """Removes the dummy start and end events from the nested graphs.
+
+    :param nested_graph: The nested graph to remove the dummy start and end
+    events from.
+    :type nested_graph: :class:`PUMLGraph`
+    """
+    nested_graph.remove_dummy_start_event_nodes()
+    nested_graph.remove_dummy_end_event_nodes()
+    for node in nested_graph.nodes:
+        if isinstance(node, PUMLEventNode):
+            if node.sub_graph is not None:
+                remove_dummy_start_and_end_events_from_nested_graphs(
+                    node.sub_graph
+                )

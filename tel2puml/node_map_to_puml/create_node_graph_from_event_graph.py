@@ -5,6 +5,7 @@ from networkx import DiGraph
 from tel2puml.node_map_to_puml.node import NodeTuple, Node, SubGraphNode
 from tel2puml.events import Event
 from tel2puml.loop_detection.loop_types import LoopEvent
+from tel2puml.tel2puml_types import PUMLEvent
 
 
 def update_graph_with_node_tuple(
@@ -54,6 +55,7 @@ def create_node_from_event(
             end_uid=event.end_uid,
             break_uids=event.break_uids
         )
+        node.update_event_types(PUMLEvent.LOOP)
     else:
         node = Node(
             event_type=event.event_type, uid=event.uid

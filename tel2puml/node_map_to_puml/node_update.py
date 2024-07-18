@@ -4,7 +4,7 @@ from typing import Iterable
 from networkx import DiGraph
 
 from tel2puml.detect_loops import Loop, get_all_break_points_from_loops
-from tel2puml.node_map_to_puml.node import Node
+from tel2puml.node_map_to_puml.node import Node, SubGraphNode
 from tel2puml.tel2puml_types import PUMLEvent
 
 
@@ -81,3 +81,30 @@ def add_loop_kill_paths_for_nodes(
             logic_node.update_loop_kill_paths_from_given_leaf_nodes(
                 node_to_node_kill_map[node.uid]
             )
+
+
+def update_nested_node_graph_with_break_points(
+    nested_node_graph: "DiGraph[Node]",
+) -> None:
+    """Updates the nested node graph with the break points.
+
+    :param nested_node_graph: The nested node graph to update
+    :type nested_node_graph: :class:`DiGraph`[:class:`Node`]
+    """
+    for node in nested_node_graph.nodes:
+        if isinstance(node, SubGraphNode):
+            update_sub_graph_node_break_points(node)
+            update_nested_node_graph_with_break_points(node.sub_graph)
+
+
+def update_sub_graph_node_break_points(
+    sub_graph_node: SubGraphNode,
+) -> None:
+    """Updates the sub graph node with the break points.
+
+    :param sub_graph_node: The sub graph node to update
+    :type sub_graph_node: :class:`SubGraphNode`
+    """
+    for node in sub_graph_node.sub_graph.nodes:
+        if node.uid in sub_graph_node.break_uids:
+            node.update_event_types(PUMLEvent.BREAK)
