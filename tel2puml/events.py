@@ -211,7 +211,7 @@ class Event:
         :return: The logic gate tree.
         :rtype: :class:`pm4py.objects.process_tree.obj.ProcessTree`"""
         if self._update_since_logic_gate_tree:
-            self._logic_gate_tree = calculate_logic_gates(self)
+            self._logic_gate_tree = calculate_logic_gates(self.event_sets)
             self._update_since_logic_gate_tree = False
         return self._logic_gate_tree
 
@@ -458,3 +458,19 @@ def get_reduced_event_set(event_sets: set[EventSet]) -> set[frozenset[str]]:
     :rtype: `set`[:class:`frozenset`[`str`]]
     """
     return {event_set.to_frozenset() for event_set in event_sets}
+
+
+def get_event_set_counts(event_sets: set[EventSet]) -> dict[str, set[int]]:
+    """Method to get the event set counts.
+
+    :return: The event set counts.
+    :rtype: `dict`[`str`, `set`[`int`]]
+    """
+    event_set_counts: dict[str, set[int]] = {}
+    for event_set in event_sets:
+        for event, count in event_set.items():
+            if event in event_set_counts:
+                event_set_counts[event].add(count)
+            else:
+                event_set_counts[event] = {count}
+    return event_set_counts

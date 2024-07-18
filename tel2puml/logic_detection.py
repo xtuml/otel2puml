@@ -16,6 +16,7 @@ from pm4py import (  # type: ignore[import-untyped]
 
 import tel2puml.events as ev
 from tel2puml.utils import get_weighted_cover
+from tel2puml.tel2puml_types import DUMMY_START_EVENT
 
 
 class Operator(Enum):
@@ -74,53 +75,50 @@ def get_non_operator_successor_labels(
         yield from get_non_operator_successor_labels(child)
 
 
-def calculate_logic_gates(event: "ev.Event") -> ProcessTree:
+def calculate_logic_gates(event_sets: set["ev.EventSet"]) -> ProcessTree:
     """This method calculates the logic gates from the event sets.
 
-    :param event: The event.
-    :type event: :class:`tel2puml.events.Event`
+    :param event_sets: The event sets.
+    :type event_sets: `set`[:class:`tel2puml.events.EventSet`]
     :return: The logic gate tree.
     :rtype: :class:`pm4py.objects.process_tree.obj.ProcessTree`
     """
     # check if we have no event sets then return None
-    if len(event.event_sets) == 0:
+    if len(event_sets) == 0:
         return None
-    process_tree = calculate_process_tree_from_event_sets(event)
+    process_tree = calculate_process_tree_from_event_sets(event_sets)
     logic_gate_tree = reduce_process_tree_to_preferred_logic_gates(
-        event, process_tree
+        event_sets, process_tree
     )
     logic_gate_tree_with_repeats = calculate_repeats_in_tree(
-        event, logic_gate_tree
+        event_sets, logic_gate_tree
     )
 
     return logic_gate_tree_with_repeats
 
 
 def create_augmented_data_from_event_sets(
-    event: "ev.Event",
+    event_sets: set["ev.EventSet"],
 ) -> Generator[dict[str, Any], Any, None]:
     """Method to create augmented data from the event sets and yields
     the data.
 
-    :param event: The event.
-    :type event: :class:`tel2puml.events.Event`
+    :param event_sets: The event sets.
+    :type event_sets: `set`[:class:`tel2puml.events.EventSet`]
     :return: The augmented data.
     :rtype: `Generator`[`dict`[`str`, `Any`], `Any`, `None`]"""
-    for reduced_event_set in ev.get_reduced_event_set(event.event_sets):
+    for reduced_event_set in ev.get_reduced_event_set(event_sets):
         yield from create_augmented_data_from_reduced_event_set(
-            event, reduced_event_set
+            reduced_event_set
         )
 
 
 def create_augmented_data_from_reduced_event_set(
-    event: "ev.Event",
     reduced_event_set: frozenset[str],
 ) -> Generator[dict[str, Any], Any, None]:
     """Method to create augmented data from a single event set then
     yielding the augmented data.
 
-    :param event: The event.
-    :type event: :class:`tel2puml.events.Event`
     :param reduced_event_set: The reduced event set.
     :type reduced_event_set: `frozenset`[`str`]
     :return: The augmented data.
@@ -129,7 +127,7 @@ def create_augmented_data_from_reduced_event_set(
     for permutation in permutations(reduced_event_set, len(reduced_event_set)):
         case_id = str(uuid4())
         yield from create_data_from_event_sequence(
-            [event.event_type, *permutation],
+            [DUMMY_START_EVENT, *permutation],
             case_id,
             start_time=datetime.now(),
         )
@@ -161,17 +159,17 @@ def create_data_from_event_sequence(
 
 
 def calculate_process_tree_from_event_sets(
-    event: "ev.Event",
+    event_sets: set["ev.EventSet"],
 ) -> ProcessTree:
     """This method calculates the pm4py process tree from the event sets.
 
-    :param event: The event.
-    :type event: :class:`tel2puml.events.Event`
+    :param event_sets: The event sets.
+    :type event_sets: `set`[:class:`tel2puml.events.EventSet`]
     :return: The process tree.
     :rtype: :class:`pm4py.objects.process_tree.obj.ProcessTree`
     """
     augmented_dataframe = pd.DataFrame(
-        create_augmented_data_from_event_sets(event)
+        create_augmented_data_from_event_sets(event_sets)
     )
     event_log = format_dataframe(
         augmented_dataframe,
@@ -186,15 +184,15 @@ def calculate_process_tree_from_event_sets(
 
 
 def reduce_process_tree_to_preferred_logic_gates(
-    event: "ev.Event",
+    event_sets: set["ev.EventSet"],
     process_tree: ProcessTree,
 ) -> ProcessTree:
     """This method reduces a process tree to the preferred logic gates by
     removing the first event and getting the subsequent tree and then
     calculating the OR gates and adding missing AND gates.
 
-    :param event: The event.
-    :type event: :class:`tel2puml.events.Event`
+    :param event_sets: The event sets.
+    :type event_sets: `set`[:class:`tel2puml.events.EventSet`]
     :param process_tree: The process tree.
     :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
     :return: The logic gate tree.
@@ -203,55 +201,55 @@ def reduce_process_tree_to_preferred_logic_gates(
     # remove first event and get subsequent tree
     logic_gate_tree: ProcessTree = process_tree.children[1]
     # calculate OR gates
-    process_or_gates(event, logic_gate_tree)
+    process_or_gates(event_sets, logic_gate_tree)
     # process missing AND gates
-    process_missing_and_gates(event, logic_gate_tree)
+    process_missing_and_gates(event_sets, logic_gate_tree)
     return logic_gate_tree
 
 
 def process_or_gates(
-    event: "ev.Event",
+    event_sets: set["ev.EventSet"],
     process_tree: ProcessTree,
 ) -> None:
     """Method to process the OR gates in a process tree by extending
     the OR gates and filtering the defunct OR gates.
 
-    :param event: The event.
-    :type event: :class:`tel2puml.events.Event`
+    :param event_sets: The event sets.
+    :type event_sets: `set`[:class:`tel2puml.events.EventSet`]
     :param process_tree: The process tree.
     :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
     """
-    get_extended_or_gates_from_process_tree(event, process_tree)
+    get_extended_or_gates_from_process_tree(event_sets, process_tree)
     filter_defunct_or_gates(process_tree)
 
 
 def get_extended_or_gates_from_process_tree(
-    event: "ev.Event",
+    event_sets: set["ev.EventSet"],
     process_tree: ProcessTree,
 ) -> None:
     """Static method to get the extended OR gates from a process tree by
     inferring the OR gates from a node.
 
-    :param event: The event.
-    :type event: :class:`tel2puml.events.Event`
+    :param event_sets: The event sets.
+    :type event_sets: `set`[:class:`tel2puml.events.EventSet`]
     :param process_tree: The process tree.
     :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
     """
-    infer_or_gate_from_node(event, process_tree)
+    infer_or_gate_from_node(event_sets, process_tree)
     for node in process_tree.children:
-        get_extended_or_gates_from_process_tree(event, node)
+        get_extended_or_gates_from_process_tree(event_sets, node)
 
 
 def check_is_or_operator(
-    event: "ev.Event",
+    event_sets: set["ev.EventSet"],
     non_tau_children: list[ProcessTree],
     removed_tau_children: list[ProcessTree],
 ) -> bool:
     """Method to check if the operator is an OR operator from the non-tau
     children and removed tau children.
 
-    :param event: The event.
-    :type event: :class:`tel2puml.events.Event`
+    :param event_sets: The event sets.
+    :type event_sets: `set`[:class:`tel2puml.events.EventSet`]
     :param non_tau_children: The non-tau children.
     :type non_tau_children:
     `list`[:class:`pm4py.objects.process_tree.obj.ProcessTree`]
@@ -278,7 +276,7 @@ def check_is_or_operator(
         for child in removed_tau_children
         for label in get_non_operator_successor_labels(child)
     )
-    for event_set in event.event_sets:
+    for event_set in event_sets:
         frozen_set = event_set.to_frozenset()
         if non_tau_successors_set.intersection(
             frozen_set
@@ -288,13 +286,13 @@ def check_is_or_operator(
 
 
 def infer_or_gate_from_node(
-    event: "ev.Event",
+    event_sets: set["ev.EventSet"],
     node: ProcessTree,
 ) -> None:
     """Method to infer the OR gates from a node.
 
-    :param event: The event.
-    :type event: :class:`tel2puml.events.Event`
+    :param event_sets: The event sets.
+    :type event_sets: `set`[:class:`tel2puml.events.EventSet`]
     :param node: The node.
     :type node: :class:`pm4py.objects.process_tree.obj.ProcessTree`
     """
@@ -321,7 +319,9 @@ def infer_or_gate_from_node(
                 if str(grandchild) != "tau":
                     grandchild.parent = node
                     removed_tau_children.append(grandchild)
-        if check_is_or_operator(event, non_tau_children, removed_tau_children):
+        if check_is_or_operator(
+            event_sets, non_tau_children, removed_tau_children
+        ):
             node.operator = Operator.OR
             if len(non_tau_children) > 1:
                 node.children = [
@@ -350,8 +350,6 @@ def filter_defunct_or_gates(
 ) -> None:
     """Method to filter the defunct OR gates from a process tree.
 
-    :param event: The event.
-    :type event: :class:`tel2puml.events.Event`
     :param process_tree: The process tree.
     :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
     """
@@ -365,13 +363,13 @@ def filter_defunct_or_gates(
 
 
 def process_missing_and_gates(
-    event: "ev.Event",
+    event_sets: set["ev.EventSet"],
     process_tree: ProcessTree,
 ) -> None:
     """Method to add missing AND gates to a process tree below OR gates.
 
-    :param event: The event.
-    :type event: :class:`tel2puml.events.Event`
+    :param event_sets: The event sets.
+    :type event_sets: `set`[:class:`tel2puml.events.EventSet`]
     :param process_tree: The process tree.
     :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
     """
@@ -391,7 +389,7 @@ def process_missing_and_gates(
         if not insoluble:
             recursive_event_set = {
                 event_set
-                for event_set in ev.get_reduced_event_set(event.event_sets)
+                for event_set in ev.get_reduced_event_set(event_sets)
                 if event_set.issubset(universe)
             }
             if universe in recursive_event_set:
@@ -427,20 +425,20 @@ def process_missing_and_gates(
                 process_tree.children = children
 
     for child in process_tree.children:
-        process_missing_and_gates(event, child)
+        process_missing_and_gates(event_sets, child)
 
 
 def calculate_repeats_in_tree(
-    event: "ev.Event", logic_gate_tree: ProcessTree
+    event_sets: set["ev.EventSet"], logic_gate_tree: ProcessTree
 ) -> ProcessTree:
     """Method to find the repeats in a process tree.
 
-    :param event: The event.
-    :type event: :class:`tel2puml.events.Event`
+    :param event_sets: The event sets.
+    :type event_sets: `set`[:class:`tel2puml.events.EventSet`]
     :return: The process tree with repeats.
     :rtype: :class:`pm4py.objects.process_tree.obj.ProcessTree`
     """
-    counts = event.get_event_set_counts()
+    counts = ev.get_event_set_counts(event_sets)
     for count in counts.values():
         if len(count) > 1:
             logic_gate_tree = ProcessTree(
@@ -450,27 +448,31 @@ def calculate_repeats_in_tree(
             )
             break
 
-    logic_gate_tree = update_tree_with_repeat_logic(event, logic_gate_tree)
+    logic_gate_tree = update_tree_with_repeat_logic(
+        event_sets, logic_gate_tree
+    )
     logic_gate_tree = remove_defunct_sequence_logic(logic_gate_tree)
 
     return logic_gate_tree
 
 
-def update_tree_with_repeat_logic(event: "ev.Event", node: ProcessTree):
+def update_tree_with_repeat_logic(
+    event_sets: set["ev.EventSet"], node: ProcessTree
+) -> ProcessTree:
     """Method to update a tree with repeat logic.
 
-    :param event: The event.
-    :type event: :class:`tel2puml.events.Event`
+    :param event_sets: The event sets.
+    :type event_sets: `set`[:class:`tel2puml.events.EventSet`]
     :param node: The node.
     :type node: :class:`pm4py.objects.process_tree.obj.ProcessTree`
     """
     if node.operator is None:
-        counts = event.get_event_set_counts().get(node.label, set())
+        counts = ev.get_event_set_counts(event_sets).get(node.label, set())
         if len(counts) == 1 and (count := counts.pop()) > 1:
             return ProcessTree(Operator.PARALLEL, node.parent, [node] * count)
     else:
         node.children = [
-            update_tree_with_repeat_logic(event, child)
+            update_tree_with_repeat_logic(event_sets, child)
             for child in node.children
         ]
 

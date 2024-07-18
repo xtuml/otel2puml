@@ -5,7 +5,7 @@ from pm4py import ProcessTree
 
 from tel2puml.pipelines.data_creation import generate_test_data
 from tel2puml.pipelines.data_ingestion import update_all_connections_from_data
-from tel2puml.events import Event, EventSet
+from tel2puml.events import EventSet
 from tel2puml.logic_detection import (
     Operator,
     create_data_from_event_sequence,
@@ -23,6 +23,7 @@ from tel2puml.logic_detection import (
     remove_defunct_sequence_logic,
     calculate_logic_gates
 )
+from tel2puml.tel2puml_types import DUMMY_START_EVENT
 
 
 class TestOperator:
@@ -56,18 +57,16 @@ def test_create_data_from_event_sequence() -> None:
 
 def test_create_augmented_data_from_reduced_event_set() -> None:
     """Tests for method created_augemented_data_from_event_set"""
-    event = Event("A")
     event_set = EventSet(["B", "C"])
     data = list(
         create_augmented_data_from_reduced_event_set(
-            event,
             event_set,
         )
     )
     assert len(data) == 6
     expected_sequences = [
-        "ABC",
-        "ACB",
+        f"{DUMMY_START_EVENT}BC",
+        f"{DUMMY_START_EVENT}CB",
     ]
     expected_sequences.remove(
         "".join([event_data["activity"] for event_data in data[:3]])
@@ -89,18 +88,17 @@ def test_create_augmented_data_from_reduced_event_set() -> None:
 
 def test_create_augmented_data_from_event_sets() -> None:
     """Tests for method created_augemented_data_from_event_sets"""
-    event = Event("A")
-    event.event_sets = {
+    event_sets = {
         EventSet(["B", "C"]),
         EventSet(["D", "E"]),
     }
-    data = list(create_augmented_data_from_event_sets(event))
+    data = list(create_augmented_data_from_event_sets(event_sets))
     assert len(data) == 12
     expected_sequences = [
-        "ABC",
-        "ACB",
-        "ADE",
-        "AED",
+        f"{DUMMY_START_EVENT}BC",
+        f"{DUMMY_START_EVENT}CB",
+        f"{DUMMY_START_EVENT}DE",
+        f"{DUMMY_START_EVENT}ED",
     ]
     for i in range(4):
         expected_sequences.remove(
@@ -118,17 +116,16 @@ def test_calculate_process_tree_from_event_sets_xor_ands() -> None:
     """Tests for method calculate_process_tree_from_event_sets for XOR and
     AND gates
     """
-    event = Event("A")
-    event.event_sets = {
+    event_sets = {
         EventSet(["B", "C"]),
         EventSet(["D", "E"]),
     }
-    process_tree = calculate_process_tree_from_event_sets(event)
+    process_tree = calculate_process_tree_from_event_sets(event_sets)
     first_children = process_tree.children
     assert len(first_children) == 2
     start_event = first_children[0]
     next_operator = first_children[1]
-    assert start_event.label == "A"
+    assert start_event.label == DUMMY_START_EVENT
     assert next_operator.operator.value == Operator.XOR.value
     second_children = next_operator.children
     assert len(second_children) == 2
@@ -161,18 +158,17 @@ def test_calculate_process_tree_from_event_sets_xor_ands() -> None:
 def test_calculate_process_tree_from_event_sets_or() -> None:
     """Tests for method calculate_process_tree_from_event_sets for OR
     gates"""
-    event = Event("A")
-    event.event_sets = {
+    event_sets = {
         EventSet(["B", "C"]),
         EventSet(["B"]),
         EventSet(["C"]),
     }
-    process_tree = calculate_process_tree_from_event_sets(event)
+    process_tree = calculate_process_tree_from_event_sets(event_sets)
     first_children = process_tree.children
     assert len(first_children) == 2
     start_event = first_children[0]
     next_operator = first_children[1]
-    assert start_event.label == "A"
+    assert start_event.label == DUMMY_START_EVENT
     assert next_operator.operator.value == Operator.PARALLEL.value
     second_children = next_operator.children
     assert len(second_children) == 2
@@ -204,16 +200,15 @@ def test_calculate_process_tree_from_event_sets_or() -> None:
 
 def test_infer_or_gate_from_node() -> None:
     """Tests for method infer_or_gate_from_node"""
-    event = Event("A")
-    event.event_sets = {
+    event_sets = {
         EventSet(["B", "C"]),
         EventSet(["B"]),
         EventSet(["C"]),
     }
-    process_tree = calculate_process_tree_from_event_sets(event)
+    process_tree = calculate_process_tree_from_event_sets(event_sets)
     logic_gate = process_tree.children[1]
     assert logic_gate.operator.value == Operator.PARALLEL.value
-    infer_or_gate_from_node(event, logic_gate)
+    infer_or_gate_from_node(event_sets, logic_gate)
     assert logic_gate.operator.value == Operator.OR.value
     assert len(logic_gate.children) == 2
     labels = ["B", "C"]
@@ -224,7 +219,7 @@ def test_infer_or_gate_from_node() -> None:
     def _check_or_and(tree):
         logic_gate = tree.children[1]
         assert logic_gate.operator.value == Operator.PARALLEL.value
-        infer_or_gate_from_node(event, logic_gate)
+        infer_or_gate_from_node(event_sets, logic_gate)
         assert logic_gate.operator.value == Operator.OR.value
         assert len(logic_gate.children) == 2
         labels_b = ["B"]
@@ -243,7 +238,7 @@ def test_infer_or_gate_from_node() -> None:
     def _check_or(tree):
         logic_gate = tree.children[1]
         assert logic_gate.operator.value == Operator.PARALLEL.value
-        infer_or_gate_from_node(event, logic_gate)
+        infer_or_gate_from_node(event_sets, logic_gate)
         assert logic_gate.operator.value == Operator.OR.value
         assert len(logic_gate.children) == 3
         labels = ["B", "C", "D"]
@@ -251,32 +246,31 @@ def test_infer_or_gate_from_node() -> None:
             labels.remove(child.label)
         assert len(labels) == 0
 
-    event.event_sets = {
+    event_sets = {
         EventSet(["B", "C", "D"]),
         EventSet(["B"]),
     }
-    process_tree = calculate_process_tree_from_event_sets(event)
+    process_tree = calculate_process_tree_from_event_sets(event_sets)
     _check_or(process_tree)
 
-    event.event_sets = {
+    event_sets = {
         EventSet(["B", "C", "D"]),
         EventSet(["C", "D"]),
     }
-    process_tree = calculate_process_tree_from_event_sets(event)
+    process_tree = calculate_process_tree_from_event_sets(event_sets)
     _check_or_and(process_tree)
 
 
 def test_get_extended_or_gates_from_process_tree() -> None:
     """Tests for method get_extended_or_gates_from_process_tree"""
-    event = Event("A")
-    event.event_sets = {
+    event_sets = {
         EventSet(["B", "C"]),
         EventSet(["B"]),
         EventSet(["C"]),
     }
-    process_tree = calculate_process_tree_from_event_sets(event)
+    process_tree = calculate_process_tree_from_event_sets(event_sets)
     logic_gates_tree = process_tree.children[1]
-    get_extended_or_gates_from_process_tree(event, logic_gates_tree)
+    get_extended_or_gates_from_process_tree(event_sets, logic_gates_tree)
     assert logic_gates_tree.operator.value == Operator.OR.value
     assert len(logic_gates_tree.children) == 2
     labels = ["B", "C"]
@@ -287,15 +281,14 @@ def test_get_extended_or_gates_from_process_tree() -> None:
 
 def test_filter_defunct_or_gates() -> None:
     """Tests for method filter_defunct_or_gates"""
-    event = Event("A")
-    event.event_sets = {
+    event_sets = {
         EventSet(["B", "C"]),
         EventSet(["B"]),
         EventSet(["C"]),
     }
-    process_tree = calculate_process_tree_from_event_sets(event)
+    process_tree = calculate_process_tree_from_event_sets(event_sets)
     logic_gates_tree = process_tree.children[1]
-    get_extended_or_gates_from_process_tree(event, logic_gates_tree)
+    get_extended_or_gates_from_process_tree(event_sets, logic_gates_tree)
     filter_defunct_or_gates(logic_gates_tree)
     assert logic_gates_tree.operator.value == Operator.OR.value
     assert len(logic_gates_tree.children) == 2
@@ -308,15 +301,15 @@ def test_filter_defunct_or_gates() -> None:
 
 def test_process_missing_and_gates() -> None:
     """Test for method process_missing_and_gates"""
-    def _process(event: Event) -> ProcessTree:
-        process_tree = calculate_process_tree_from_event_sets(event)
+    def _process(event_sets: set[EventSet]) -> ProcessTree:
+        process_tree = calculate_process_tree_from_event_sets(event_sets)
         logic_gates_tree = process_tree.children[1]
-        process_or_gates(event, logic_gates_tree)
-        process_missing_and_gates(event, logic_gates_tree)
+        process_or_gates(event_sets, logic_gates_tree)
+        process_missing_and_gates(event_sets, logic_gates_tree)
         return logic_gates_tree
 
-    def _check_and_case(event: Event) -> None:
-        logic_gates_tree = _process(event)
+    def _check_and_case(event_sets: set[EventSet]) -> None:
+        logic_gates_tree = _process(event_sets)
         assert logic_gates_tree.operator.value == Operator.OR.value
         assert len(logic_gates_tree.children) == 2
         labels = ["B", "C", "D"]
@@ -330,17 +323,16 @@ def test_process_missing_and_gates() -> None:
                     labels.remove(grandchild.label)
         assert len(labels) == 0
 
-    event = Event("A")
-    event.event_sets = {
+    event_sets = {
         EventSet(["B", "C", "D"]),
         EventSet(["C", "D"]),
         EventSet(["B"]),
 
     }
-    _check_and_case(event)
+    _check_and_case(event_sets)
 
-    def _check_or_case(event: Event) -> None:
-        logic_gates_tree = _process(event)
+    def _check_or_case(event_sets: set[EventSet]) -> None:
+        logic_gates_tree = _process(event_sets)
         assert logic_gates_tree.operator.value == Operator.OR.value
         assert len(logic_gates_tree.children) == 3
         labels = ["B", "C", "D"]
@@ -348,32 +340,32 @@ def test_process_missing_and_gates() -> None:
             labels.remove(child.label)
         assert len(labels) == 0
 
-    event.event_sets = {
+    event_sets = {
         EventSet(["B", "C", "D"]),
         EventSet(["C", "D"]),
         EventSet(["B", "C"]),
         EventSet(["B"]),
         EventSet(["D"]),
     }
-    _check_or_case(event)
+    _check_or_case(event_sets)
 
-    event.event_sets = {
+    event_sets = {
         EventSet(["B", "C", "D"]),
         EventSet(["C", "D"]),
         EventSet(["B", "C"]),
         EventSet(["B"]),
     }
-    _check_or_case(event)
+    _check_or_case(event_sets)
 
-    event.event_sets = {
+    event_sets = {
         EventSet(["B", "C", "D"]),
         EventSet(["B", "C"]),
         EventSet(["B"]),
     }
-    _check_or_case(event)
+    _check_or_case(event_sets)
 
-    def _check_and_or_case(event: Event) -> None:
-        logic_gates_tree = _process(event)
+    def _check_and_or_case(event_sets: set[EventSet]) -> None:
+        logic_gates_tree = _process(event_sets)
         assert logic_gates_tree.operator.value == Operator.PARALLEL.value
         assert len(logic_gates_tree.children) == 2
         labels = ["B", "C", "D"]
@@ -387,15 +379,15 @@ def test_process_missing_and_gates() -> None:
                     labels.remove(grandchild.label)
         assert len(labels) == 0
 
-    event.event_sets = {
+    event_sets = {
         EventSet(["B", "C", "D"]),
         EventSet(["B", "C"]),
         EventSet(["B", "D"]),
     }
-    _check_and_or_case(event)
+    _check_and_or_case(event_sets)
 
-    def _check_recursive_case(event: Event) -> None:
-        logic_gates_tree = _process(event)
+    def _check_recursive_case(event_sets: set[EventSet]) -> None:
+        logic_gates_tree = _process(event_sets)
         assert logic_gates_tree.operator.value == Operator.XOR.value
         assert len(logic_gates_tree.children) == 2
         for operator_child in logic_gates_tree.children:
@@ -421,20 +413,19 @@ def test_process_missing_and_gates() -> None:
                             labels.remove(grandchild.label)
                 assert len(labels) == 0
 
-    event.event_sets = {
+    event_sets = {
         EventSet(["B", "C"]),
         EventSet(["D", "E", "F"]),
         EventSet(["E", "F"]),
         EventSet(["D"]),
 
     }
-    _check_recursive_case(event)
+    _check_recursive_case(event_sets)
 
 
 def test_process_or_gates() -> None:
     """Tests for method process_or_gates"""
-    event = Event("A")
-    event.event_sets = {
+    event_sets = {
         EventSet(["B", "C", "D"]),
         EventSet(["B", "C"]),
         EventSet(["C", "D"]),
@@ -443,9 +434,9 @@ def test_process_or_gates() -> None:
         EventSet(["C"]),
         EventSet(["D"]),
     }
-    process_tree = calculate_process_tree_from_event_sets(event)
+    process_tree = calculate_process_tree_from_event_sets(event_sets)
     logic_gates_tree = process_tree.children[1]
-    process_or_gates(event, logic_gates_tree)
+    process_or_gates(event_sets, logic_gates_tree)
     assert logic_gates_tree.operator.value == Operator.OR.value
     assert len(logic_gates_tree.children) == 3
     labels = ["B", "C", "D"]
@@ -460,7 +451,7 @@ def test_reduce_process_tree_to_preferred_logic_gates() -> None:
     def _test_logic_gate(process_tree: ProcessTree):
         logic_gates_tree = (
             reduce_process_tree_to_preferred_logic_gates(
-                event, process_tree
+                event_sets, process_tree
             )
         )
         assert logic_gates_tree.operator.value == Operator.OR.value
@@ -471,8 +462,7 @@ def test_reduce_process_tree_to_preferred_logic_gates() -> None:
             labels.remove(child.label)
         assert len(labels) == 0
 
-    event = Event("A")
-    event.event_sets = {
+    event_sets = {
         EventSet(["B", "C", "D"]),
         EventSet(["B", "C"]),
         EventSet(["C", "D"]),
@@ -481,16 +471,16 @@ def test_reduce_process_tree_to_preferred_logic_gates() -> None:
         EventSet(["C"]),
         EventSet(["D"]),
     }
-    process_tree = calculate_process_tree_from_event_sets(event)
+    process_tree = calculate_process_tree_from_event_sets(event_sets)
     _test_logic_gate(process_tree)
 
-    event.event_sets = {
+    event_sets = {
         EventSet(["B", "C", "D"]),
         EventSet(["C", "D"]),
         EventSet(["D"]),
         EventSet(["B"]),
     }
-    process_tree = calculate_process_tree_from_event_sets(event)
+    process_tree = calculate_process_tree_from_event_sets(event_sets)
     _test_logic_gate(process_tree)
 
     main_tree = ProcessTree(
@@ -534,20 +524,19 @@ def test_reduce_process_tree_to_preferred_logic_gates() -> None:
 
 def test_update_tree_with_repeat_logic() -> None:
     """Tests for method update_tree_with_branch_logic"""
-    event = Event("A")
-    event.event_sets = {
+    event_sets = {
         EventSet(["B"]),
     }
     node_1 = ProcessTree(None, None, None, "B")
-    updated_node_1 = update_tree_with_repeat_logic(event, node_1)
+    updated_node_1 = update_tree_with_repeat_logic(event_sets, node_1)
     assert updated_node_1.label == "B"
     assert len(updated_node_1.children) == 0
 
-    event.event_sets = {
+    event_sets = {
         EventSet(["B", "B"]),
     }
     node_2 = ProcessTree(None, None, None, "B")
-    updated_node_2 = update_tree_with_repeat_logic(event, node_2)
+    updated_node_2 = update_tree_with_repeat_logic(event_sets, node_2)
 
     def _check_node_for_repeat_and(node):
         assert node.operator.value == Operator.PARALLEL.value
@@ -560,7 +549,7 @@ def test_update_tree_with_repeat_logic() -> None:
 
     _check_node_for_repeat_and(updated_node_2)
 
-    event.event_sets = {
+    event_sets = {
         EventSet(["B", "B", "C"]),
     }
     node_3 = ProcessTree(None, None, None, "C")
@@ -569,7 +558,7 @@ def test_update_tree_with_repeat_logic() -> None:
         None,
         [node_2, node_3],
     )
-    updated_node_4 = update_tree_with_repeat_logic(event, node_4)
+    updated_node_4 = update_tree_with_repeat_logic(event_sets, node_4)
     assert updated_node_4.operator.value == Operator.PARALLEL.value
     assert len(updated_node_4.children) == 2
 
@@ -584,17 +573,16 @@ def test_update_tree_with_repeat_logic() -> None:
 
 def test_calculate_repeats_in_tree() -> None:
     """Tests for method find_branches_in_process_tree"""
-    event = Event("A")
-    event.event_sets = {
+    event_sets = {
         EventSet(["B", "B"]),
         EventSet(["C", "D"]),
     }
-    process_tree = calculate_process_tree_from_event_sets(event)
+    process_tree = calculate_process_tree_from_event_sets(event_sets)
     logic_gates_tree = reduce_process_tree_to_preferred_logic_gates(
-        event, process_tree
+        event_sets, process_tree
     )
     logic_gate_tree_with_branches = calculate_repeats_in_tree(
-        event, logic_gates_tree
+        event_sets, logic_gates_tree
     )
 
     assert (
@@ -613,17 +601,17 @@ def test_calculate_repeats_in_tree() -> None:
     assert len(labels_b) == 0
     assert len(labels_cd) == 0
 
-    event.event_sets = {
+    event_sets = {
         EventSet(["B", "B"]),
         EventSet(["B"]),
     }
 
-    process_tree = calculate_process_tree_from_event_sets(event)
+    process_tree = calculate_process_tree_from_event_sets(event_sets)
     logic_gates_tree = reduce_process_tree_to_preferred_logic_gates(
-        event, process_tree
+        event_sets, process_tree
     )
     logic_gate_tree_with_branches = calculate_repeats_in_tree(
-        event, logic_gates_tree
+        event_sets, logic_gates_tree
     )
 
     assert (
@@ -633,18 +621,18 @@ def test_calculate_repeats_in_tree() -> None:
     child, = logic_gate_tree_with_branches.children
     assert child.label == "B"
 
-    event.event_sets = {
+    event_sets = {
         EventSet(["B", "B", "B"]),
         EventSet(["B", "B"]),
         EventSet(["B"]),
     }
 
-    process_tree = calculate_process_tree_from_event_sets(event)
+    process_tree = calculate_process_tree_from_event_sets(event_sets)
     logic_gates_tree = reduce_process_tree_to_preferred_logic_gates(
-        event, process_tree
+        event_sets, process_tree
     )
     logic_gate_tree_with_branches = calculate_repeats_in_tree(
-        event, logic_gates_tree
+        event_sets, logic_gates_tree
     )
 
     assert (
@@ -654,18 +642,18 @@ def test_calculate_repeats_in_tree() -> None:
     child, = logic_gate_tree_with_branches.children
     assert child.label == "B"
 
-    event.event_sets = {
+    event_sets = {
         EventSet(["C", "D"]),
         EventSet(["B", "B"]),
         EventSet(["B"]),
     }
 
-    process_tree = calculate_process_tree_from_event_sets(event)
+    process_tree = calculate_process_tree_from_event_sets(event_sets)
     logic_gates_tree = reduce_process_tree_to_preferred_logic_gates(
-        event, process_tree
+        event_sets, process_tree
     )
     logic_gate_tree_with_branches = calculate_repeats_in_tree(
-        event, logic_gates_tree
+        event_sets, logic_gates_tree
     )
 
     assert (
@@ -709,8 +697,7 @@ def test_remove_defunct_sequence_logic() -> None:
 
 def test_calculate_logic_gates() -> None:
     """Tests for method calculate_logic_gates"""
-    event = Event("A")
-    event.event_sets = {
+    event_sets = {
         EventSet(["B", "C", "D"]),
         EventSet(["B", "C"]),
         EventSet(["C", "D"]),
@@ -719,7 +706,7 @@ def test_calculate_logic_gates() -> None:
         EventSet(["C"]),
         EventSet(["D"]),
     }
-    logic_gates_tree = calculate_logic_gates(event)
+    logic_gates_tree = calculate_logic_gates(event_sets)
     assert logic_gates_tree.operator.value == Operator.OR.value
     assert len(logic_gates_tree.children) == 3
     labels = ["B", "C", "D"]
@@ -728,8 +715,8 @@ def test_calculate_logic_gates() -> None:
         labels.remove(child.label)
     assert len(labels) == 0
     # test when there are no event sets
-    event.event_sets = set()
-    assert calculate_logic_gates(event) is None
+    event_sets = set()
+    assert calculate_logic_gates(event_sets) is None
 
 
 def test_get_logic_from_xor_puml_file() -> None:
