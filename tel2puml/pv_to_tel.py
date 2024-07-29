@@ -185,7 +185,7 @@ def write_to_file(
 
 if __name__ == "__main__":
     puml_file_path = "puml_files/simple_sequence.puml"
-    otel_output_folder_path = "tel2puml/OtelSpan_output"
+    otel_output_folder_path = "data"
     job_name = "Test_job_name"
     application_name = "Test_application_name"
     file_name_prefix = "otel_simple_sequence"
