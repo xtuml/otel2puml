@@ -12,7 +12,10 @@ from .loop_event_methods import (
     create_loop_event,
     update_loop_event_with_start_end_and_breaks,
 )
-from .calculate_updated_graph import calculate_updated_graph_with_loop_event
+from .calculate_updated_graph import (
+    calculate_updated_graph_with_loop_event,
+    filter_and_replace_breaks_connected_to_end_events
+)
 
 
 def detect_loops(graph: "DiGraph[Event]") -> "DiGraph[Event]":
@@ -31,6 +34,7 @@ def detect_loops(graph: "DiGraph[Event]") -> "DiGraph[Event]":
             if not graph.has_edge(node, node):
                 continue
         loop = calc_components_of_loop(scc_nodes, graph)
+        filter_and_replace_breaks_connected_to_end_events(graph, loop)
         sub_graph, start_event, end_event = create_sub_graph_of_loop(
             loop, graph
         )

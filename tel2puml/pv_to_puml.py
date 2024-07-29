@@ -50,6 +50,7 @@ from tel2puml.node_map_to_puml.find_and_add_loop_kill_paths import (
 )
 from tel2puml.puml_graph.graph import (
     remove_dummy_start_and_end_events_from_nested_graphs,
+    update_nested_sub_graphs_for_dummy_break_event_nodes
 )
 
 
@@ -145,6 +146,7 @@ def pv_to_puml_string_v2(
     # walk the nested graph and create the PlantUML graph
     puml_graph = walk_nested_graph(node_graph)
     # remove dummy start and end events
+    update_nested_sub_graphs_for_dummy_break_event_nodes(puml_graph)
     remove_dummy_start_and_end_events_from_nested_graphs(puml_graph)
     return puml_graph.write_puml_string(puml_name)
 
@@ -165,7 +167,7 @@ def pv_to_puml_file(
     :param puml_name: The name of the PlantUML group to create
     :type puml_name: `str`
     """
-    puml_string = pv_to_puml_string(pv_stream, puml_name)
+    puml_string = pv_to_puml_string_v2(pv_stream, puml_name)
     with open(puml_file_path, "w") as puml_file:
         puml_file.write(puml_string)
 

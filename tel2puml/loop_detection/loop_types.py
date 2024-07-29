@@ -114,3 +114,5 @@ class Loop(NamedTuple):
 
 
 LOOP_EVENT_TYPE = "LOOP"
+
+DUMMY_BREAK_EVENT_TYPE = "DUMMY_BREAK"

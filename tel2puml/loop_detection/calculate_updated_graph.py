@@ -7,14 +7,16 @@ import pandas as pd
 
 from tel2puml.utils import (
     get_innodes_not_in_set, get_outnodes_not_in_set,
-    remove_nodes_without_path_back_to_loop
+    remove_nodes_without_path_back_to_loop,
+    has_path_back_to_chosen_nodes
 )
 from tel2puml.events import Event, EventSet
 from tel2puml.loop_detection.sub_graph_of_loop import (
     remove_event_edges_and_event_sets
 )
+from tel2puml.tel2puml_types import DUMMY_END_EVENT
 from tel2puml.loop_detection.loop_types import (
-    LoopEvent, Loop, EventEdge
+    LoopEvent, Loop, EventEdge, DUMMY_BREAK_EVENT_TYPE
 )
 
 
@@ -65,21 +67,23 @@ def calculate_updated_graph_with_loop_event(
         )
     }
     update_graph_for_loop_end_events(
-        break_events_without_path_back_to_root, loop.loop_events, loop_event,
-        graph
+        break_events_without_path_back_to_root,
+        loop.loop_events | loop.break_events,
+        loop_event,
+        graph,
     )
     # handle break events with path back to root event
     break_events_with_path_back_to_root = (
         loop.break_events - break_events_without_path_back_to_root
     )
     update_graph_for_break_events_with_path_to_root_event(
-        break_events_with_path_back_to_root, loop.loop_events, loop_event,
-        graph
+        break_events_with_path_back_to_root,
+        loop.loop_events | loop.break_events,
+        loop_event,
+        graph,
     )
     remove_nodes_without_path_back_to_loop(
-        set(graph.nodes),
-        {root_event},
-        graph
+        set(graph.nodes), {root_event}, graph
     )
     return graph
 
@@ -357,3 +361,71 @@ def update_graph_for_break_events_with_path_to_root_event(
             event.update_in_event_sets(event_list_to_add)
     for event in events_out_of_break_events:
         graph.add_edge(loop_event, event)
+
+
+# TODO: Test this method
+def filter_and_replace_breaks_connected_to_end_events(
+    graph: "DiGraph[Event]", loop: Loop
+) -> None:
+    """Filter and replace the breaks connected to the end events of the loop,
+    that is they are out events of the end events of the loop.
+
+    :param graph: The graph to filter and replace the breaks connected to the
+    end events of the loop.
+    :type graph: :class:`DiGraph`[:class:`Event`]
+    :param loop: The loop to filter and replace the breaks connected to the end
+    events of the loop.
+    :type loop: :class:`Loop`
+    """
+    for break_event in loop.break_events:
+        # check if break event has any out edges to a dummy end event
+        # or if it is not connected to any out events of the end events
+        # that are not in the loop. If either of these is true we need to
+        # create a dummy break event and add it in between the break event
+        # and the event it is connected to.
+        if any(
+            out_edge[1].event_type == DUMMY_END_EVENT
+            for out_edge in graph.out_edges([break_event])
+        ) or break_event in get_outnodes_not_in_set(
+            loop.end_events, loop.loop_events, graph
+        ):
+            dummy_break_event = Event(DUMMY_BREAK_EVENT_TYPE)
+            for event, _ in list(graph.in_edges(break_event)):
+                # check if the in event to the break event has a path back to
+                # the loop nodes not including the end events of the loop and
+                # make sure it is not an end event of the loop (this ensures
+                # that for break events that are out events of end events that
+                # the end events are not included in the following)
+                if has_path_back_to_chosen_nodes(
+                    event, loop.loop_events.difference(loop.end_events), graph
+                ) and event not in loop.end_events:
+                    # update all events set connections and add the dummy
+                    # break event in between the break event and the event
+                    event_types_overlap = (
+                        get_event_types_and_event_sets_overlap(
+                            event.event_sets, {break_event.event_type}
+                        )
+                    )
+                    event_lists_to_add = get_event_lists_with_loop_events(
+                        event.event_sets,
+                        event_types_overlap,
+                        DUMMY_BREAK_EVENT_TYPE,
+                    )
+                    for event_set in break_event.in_event_sets:
+                        if event.event_type in event_set.to_frozenset():
+                            dummy_break_event.update_in_event_sets(
+                                event_set.to_list()
+                            )
+                    dummy_break_event.update_event_sets(
+                        [break_event.event_type]
+                    )
+                    remove_event_edges_and_event_sets(
+                        {EventEdge(event, break_event)}, graph
+                    )
+                    for event_list_to_add in event_lists_to_add:
+                        event.update_event_sets(event_list_to_add)
+                    break_event.update_in_event_sets([DUMMY_BREAK_EVENT_TYPE])
+                    graph.add_edge(event, dummy_break_event)
+                    graph.add_edge(dummy_break_event, break_event)
+                    loop.break_events.add(dummy_break_event)
+            loop.break_events.remove(break_event)

@@ -12,7 +12,9 @@ from tel2puml.loop_detection.calculate_loop_components import (
     get_loop_edges,
     calc_loop_end_break_and_loop_edges,
     calc_components_of_loop_generic,
-    calc_components_of_loop
+    calc_components_of_loop,
+    does_node_set_have_intersection_with_nodes_to_check,
+    filter_break_out_nodes_based_on_overlaps
 )
 
 
@@ -46,8 +48,9 @@ class TestCalculateLoopComponents:
         """Tests the get_break_nodes_from_potential_break_outnodes method."""
         graph = self.create_graph_happy_path()
         assert get_break_nodes_from_potential_break_outnodes(
-            {"B", "D", "C"}, {"F"}, {"E"}, graph
-        ) == {"H", "K"}
+            {"B", "D", "C"}, {"F"}, graph,
+            {"A", "B", "C", "D", "E"}
+        ) == {"H", "K", "I"}
 
     def test_get_break_nodes_if_end_to_start_exists(
         self,
@@ -56,8 +59,9 @@ class TestCalculateLoopComponents:
         method."""
         graph = self.create_graph_happy_path()
         assert get_break_nodes_if_end_to_start_exists(
-            {"E"}, {"B", "D", "C"}, {"A"}, graph
-        ) == {"H", "K"}
+            {"E"}, {"B", "D", "C"}, {"A"}, graph,
+            {"A", "B", "C", "D", "E"}
+        ) == {"H", "K", "I"}
 
     @staticmethod
     def create_graph_unhappy_path() -> "DiGraph[str]":
@@ -167,7 +171,7 @@ class TestCalculateLoopComponents:
             graph
         ) == (
             {"E"},
-            {"K", "H"},
+            {"K", "H", "I"},
             {
                 ("E", "A"),
             }
@@ -184,7 +188,7 @@ class TestCalculateLoopComponents:
         ) == (
             {"A"},
             {"E"},
-            {"H", "K"},
+            {"H", "K", "I"},
             {
                 ("E", "A"),
             }
@@ -218,3 +222,33 @@ class TestCalculateLoopComponents:
                 EventEdge(events["C"], events["A"]),
             }
         )
+
+
+def test_does_node_set_have_intersection_with_nodes_to_check() -> None:
+    """Tests the does_node_set_have_intersection_with_nodes_to_check method.
+    """
+    assert does_node_set_have_intersection_with_nodes_to_check(
+        {"A", "B", "C"},
+        {"A", "D", "E"}
+    )
+    assert not does_node_set_have_intersection_with_nodes_to_check(
+        {"A", "B", "C"},
+        {"D", "E"}
+    )
+    assert not does_node_set_have_intersection_with_nodes_to_check(
+        set(),
+        set()
+    )
+
+
+def test_filter_break_out_nodes_based_on_overlaps() -> None:
+    """Tests the filter_break_out_nodes_based_on_overlaps method."""
+    assert filter_break_out_nodes_based_on_overlaps(
+        {"A", "B", "C", "D"},
+        {
+            "A": [{"I", "J", "K"}],
+            "C": [{"G"}, {"I", "J"}],
+            "D": [{"G", "H", "I"}]
+        },
+        {"G", "H"}
+    ) == {"A", "B", "C"}

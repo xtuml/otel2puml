@@ -9,7 +9,7 @@ from uuid import uuid4
 from pm4py import (  # type: ignore[import-untyped]
     ProcessTree,
 )
-from networkx import DiGraph
+from networkx import DiGraph, Graph, connected_components
 from test_event_generator.solutions.graph_solution import (  # type: ignore[import-untyped] # noqa: E501
     GraphSolution,
 )
@@ -455,7 +455,7 @@ def get_reduced_event_set(event_sets: set[EventSet]) -> set[frozenset[str]]:
     """This function reduces a set of event sets to a set of unique events.
 
     :return: The reduced event set.
-    :rtype: `set`[:class:`frozenset`[`str`]]
+    :rtype: `set`[`frozenset`[`str`]]
     """
     return {event_set.to_frozenset() for event_set in event_sets}
 
@@ -474,3 +474,89 @@ def get_event_set_counts(event_sets: set[EventSet]) -> dict[str, set[int]]:
             else:
                 event_set_counts[event] = {count}
     return event_set_counts
+
+
+def get_overlapping_event_types(
+    event_sets: set[EventSet],
+) -> set[frozenset[str]]:
+    """This function gets the overlapping events from a set of event sets.
+
+    :param event_sets: The event sets.
+    :type event_sets: `set`[:class:`EventSet`]
+    :return: The overlapping events.
+    :rtype: `set`[`frozenset`[`str`]]
+    """
+    graph: "Graph[str]" = Graph()
+    for event_set in event_sets:
+        if len(event_set) > 1:
+            graph.add_edges_from(
+                {
+                    (event1, event2)
+                    for event1 in event_set
+                    for event2 in event_set
+                }
+            )
+    return {frozenset(component) for component in connected_components(graph)}
+
+
+def get_overlapping_events_from_event_sets_and_connected_events(
+    event_sets: set[EventSet], connected_events: set[Event]
+) -> list[set[Event]]:
+    """This function gets the overlapping events from a set of event sets.
+
+    :param event_sets: The event sets.
+    :type event_sets: `set`[:class:`EventSet`]
+    :param connected_events: The connected events.
+    :type connected_events: `set`[:class:`Event`]
+    :return: The overlapping events.
+    :rtype: `set`[`frozenset`[:class:`str`]]
+    """
+    overlapping_event_types = get_overlapping_event_types(event_sets)
+    return [
+        {
+            event
+            for event in connected_events
+            if event.event_type in over_lapping_event_types_set
+        }
+        for over_lapping_event_types_set in overlapping_event_types
+    ]
+
+
+def get_overlapping_events_from_event_and_graph(
+    event: Event, graph: "DiGraph[Event]"
+) -> list[set[Event]]:
+    """This function gets the overlapping events from a set of event sets.
+
+    :param event: The event.
+    :type event: :class:`Event`
+    :param graph: The graph.
+    :type graph: :class:`DiGraph`[:class:`Event`]
+    :return: The overlapping events.
+    :rtype: `set`[`frozenset`[`str`]]
+    """
+    return get_overlapping_events_from_event_sets_and_connected_events(
+        event.event_sets, set(
+            edge[1] for edge in graph.out_edges(event)
+        )
+    )
+
+
+def get_event_to_over_lapping_events_map(
+    graph: "DiGraph[Event]",
+) -> dict[Event, list[set[Event]]]:
+    """This function gets the event to overlapping events mapping from the
+    graph.
+
+    :param graph: The graph.
+    :type graph: :class:`DiGraph`[:class:`Event`]
+    :return: The event to overlapping events mapping.
+    :rtype: `dict`[:class:`Event`, `list`[`set`[:class:`Event`]]]
+    """
+    event_to_overlapping_events_map: dict[Event, list[set[Event]]] = {}
+    for event in graph.nodes:
+        over_lapping_events = get_overlapping_events_from_event_and_graph(
+            event, graph
+        )
+        if over_lapping_events:
+            event_to_overlapping_events_map[event] = over_lapping_events
+    return event_to_overlapping_events_map

@@ -2,9 +2,14 @@
 """
 import pytest
 
-from tel2puml.puml_graph.graph import PUMLGraph, PUMLEventNode
+from tel2puml.puml_graph.graph import (
+    PUMLGraph,
+    PUMLEventNode,
+    PUMLOperatorNode,
+)
 from tel2puml.tel2puml_types import PUMLOperator, PUMLEvent
 from tel2puml.detect_loops import Loop
+from tel2puml.loop_detection.loop_types import DUMMY_BREAK_EVENT_TYPE
 
 
 @pytest.fixture
@@ -223,3 +228,56 @@ def expected_loop_2_graph() -> PUMLGraph:
     graph.add_edge(G, LOOP)
     graph.add_edge(LOOP, INODE)
     return graph
+
+
+@pytest.fixture
+def graph_with_dummy_break_event(
+) -> tuple[PUMLGraph, dict[str, PUMLEventNode | PUMLOperatorNode]]:
+    """Return a PUMLGraph instance with a dummy break event.
+
+    The graph is as follows:
+    ```
+    START -> A -> XOR_START_1 -> B -> XOR_END_1
+    START -> A -> XOR_START_1 -> XOR_START_2 -> C -> XOR_END_2 -> XOR_END_1
+    START -> A -> XOR_START_1 -> XOR_START_2 -> DUMMY_BREAK_EVENT -> XOR_END_2\
+    -> XOR_END_1
+    ```
+    :return: PUMLGraph instance
+    :rtype: :class:`PUMLGraph`
+    """
+    graph = PUMLGraph()
+    START = graph.create_event_node(
+        "START", parent_graph_node="START"
+    )
+    A = graph.create_event_node(
+        "A", parent_graph_node="A"
+    )
+    XOR_START_1, XOR_END_1 = graph.create_operator_node_pair(PUMLOperator.XOR)
+    B = graph.create_event_node("B", parent_graph_node="B")
+    XOR_START_2, XOR_END_2 = graph.create_operator_node_pair(PUMLOperator.XOR)
+    C = graph.create_event_node("C", parent_graph_node="C")
+    DUMMY_BREAK_EVENT = graph.create_event_node(
+        DUMMY_BREAK_EVENT_TYPE, event_types=PUMLEvent.BREAK
+    )
+    graph.add_edge(START, A)
+    graph.add_edge(A, XOR_START_1)
+    graph.add_edge(XOR_START_1, B)
+    graph.add_edge(XOR_START_1, XOR_START_2)
+    graph.add_edge(B, XOR_END_1)
+    graph.add_edge(XOR_START_2, C)
+    graph.add_edge(XOR_START_2, DUMMY_BREAK_EVENT)
+    graph.add_edge(C, XOR_END_2)
+    graph.add_edge(XOR_END_1, XOR_END_2)
+    graph.add_edge(DUMMY_BREAK_EVENT, XOR_END_2)
+    nodes: dict[str, PUMLEventNode | PUMLOperatorNode] = {
+        "START": START,
+        "A": A,
+        "B": B,
+        "C": C,
+        DUMMY_BREAK_EVENT_TYPE: DUMMY_BREAK_EVENT,
+        "XOR_START_1": XOR_START_1,
+        "XOR_END_1": XOR_END_1,
+        "XOR_START_2": XOR_START_2,
+        "XOR_END_2": XOR_END_2
+    }
+    return graph, nodes

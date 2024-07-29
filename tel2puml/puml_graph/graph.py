@@ -5,7 +5,8 @@ from abc import ABC, abstractmethod
 from copy import copy
 
 from networkx import (
-    DiGraph, topological_sort, dfs_successors, weakly_connected_components
+    DiGraph, topological_sort, dfs_successors, weakly_connected_components,
+    dfs_predecessors
 )
 
 from tel2puml.tel2puml_types import (
@@ -18,6 +19,7 @@ from tel2puml.tel2puml_types import (
     DUMMY_END_EVENT
 )
 from tel2puml.check_puml_equiv import NXNode
+from tel2puml.loop_detection.loop_types import DUMMY_BREAK_EVENT_TYPE
 
 # Mapping of operator nodes to PlantUML strings, the number of indents to
 # be added to the block proceeding the operator node and the number of indents
@@ -173,6 +175,8 @@ class PUMLEventNode(PUMLNode):
                 blocks = self.sub_graph.write_uml_blocks(
                     indent, tab_size=tab_size
                 )
+            if PUMLEvent.BREAK in self.event_types:
+                blocks.append(f"{' ' * indent}break")
         else:
             blocks = self._write_event_blocks(indent)
         next_indent_diff_total = 0 * tab_size
@@ -714,5 +718,152 @@ def remove_dummy_start_and_end_events_from_nested_graphs(
         if isinstance(node, PUMLEventNode):
             if node.sub_graph is not None:
                 remove_dummy_start_and_end_events_from_nested_graphs(
+                    node.sub_graph
+                )
+
+
+def update_graph_for_dummy_break_event_node(
+    dummy_break_event_node: PUMLEventNode, graph: PUMLGraph
+) -> None:
+    """Updates the graph for a dummy break event node. This method is used to
+    remove the dummy break event node and replace it with the event node that
+    precedes it. If there are nested start operator nodes that are XOR, between
+    the event node and the dummy break event node, then the event node is
+    brought down to all branches and child branches of the top level XOR
+    operator. Note this will fail if the dummy break event node is beneath an
+    AND operator or an END_ operator of all types.
+
+    :param dummy_break_event_node: The dummy break event node to update the
+    graph for.
+    :type dummy_break_event_node: :class:`PUMLEventNode`
+    :param graph: The graph to update.
+    :type graph: :class:`PUMLGraph`
+    """
+    dummy_break_event_in_node: PUMLNode = list(
+        graph.in_edges([dummy_break_event_node])
+    )[0][0]
+    dummy_break_event_out_node: PUMLNode = list(
+        graph.out_edges([dummy_break_event_node])
+    )[0][1] if list(graph.out_edges([dummy_break_event_node])) else None
+    if isinstance(dummy_break_event_in_node, PUMLEventNode):
+        graph.remove_node(dummy_break_event_node)
+        if dummy_break_event_out_node is not None:
+            graph.add_edge(
+                dummy_break_event_in_node,
+                dummy_break_event_out_node
+            )
+        dummy_break_event_in_node.event_types = (
+            *dummy_break_event_node.event_types,
+            PUMLEvent.BREAK,
+        )
+        return
+    predecessors: dict[PUMLNode, PUMLEventNode | PUMLOperatorNode] = (
+        dfs_predecessors(graph)
+    )
+    ancestry: list[PUMLEventNode | PUMLOperatorNode] = [dummy_break_event_node]
+    while True:
+        ancestry.append(predecessors[ancestry[-1]])
+        if isinstance(ancestry[-1], PUMLOperatorNode):
+            if ancestry[-1].operator_type in [
+                PUMLOperatorNodes.START_AND,
+                PUMLOperatorNodes.END_AND,
+                PUMLOperatorNodes.START_OR,
+                PUMLOperatorNodes.END_OR,
+                PUMLOperatorNodes.END_XOR
+            ]:
+                raise NotImplementedError(
+                    "Break event has an operator ancestor that is not "
+                    "START_XOR"
+                )
+        if isinstance(ancestry[-1], PUMLEventNode):
+            break
+    ancestry.pop(0)
+    event_node = ancestry.pop()
+    if not isinstance(event_node, PUMLEventNode):
+        raise RuntimeError(
+            "Break event node does not have an event node predecessor"
+        )
+    event_node_in_node: PUMLNode = list(graph.in_edges([event_node]))[0][0]
+    event_node_out_node: PUMLNode = list(graph.out_edges([event_node]))[0][1]
+    graph.remove_node(event_node)
+    graph.add_edge(event_node_in_node, event_node_out_node)
+    reversed_ancestry = list(reversed(ancestry))
+    for operator_node, child_operator in zip(
+        reversed_ancestry, reversed_ancestry[1:] + [None]
+    ):
+        if not isinstance(operator_node, PUMLOperatorNode):
+            raise RuntimeError(
+                "Break event node does not have an operator node ancestor"
+            )
+        if operator_node.operator_type != PUMLOperatorNodes.START_XOR:
+            raise RuntimeError(
+                "Break event node does not have a stat XOR operator node"
+                " ancestor"
+            )
+        for _, out_node in list(graph.out_edges([operator_node])):
+            if out_node == child_operator:
+                pass
+            else:
+                new_event_node = graph.create_event_node(
+                    event_name=event_node.node_type,
+                    event_types=event_node.event_types,
+                    sub_graph=event_node.sub_graph,
+                    parent_graph_node=event_node.parent_graph_node,
+                )
+                if out_node == dummy_break_event_node:
+                    graph.remove_node(dummy_break_event_node)
+                    graph.add_edge(new_event_node, dummy_break_event_out_node)
+                    new_event_node.event_types = (
+                        *new_event_node.event_types,
+                        PUMLEvent.BREAK,
+                    )
+                else:
+                    graph.remove_edge(operator_node, out_node)
+                    graph.add_edge(new_event_node, out_node)
+                graph.add_edge(operator_node, new_event_node)
+
+
+def update_graph_for_dummy_break_event_nodes(graph: PUMLGraph) -> None:
+    """Updates the graph for dummy break event nodes. This method is used to
+    remove all dummy break event nodes from the graph and replace them with the
+    event nodes that precede them. If there are nested start operator nodes
+    that are XOR, between the event node and the dummy break event node, then
+    the event node is brought down to all branches and child branches of the
+    top level XOR operator. Note this will fail if the dummy break event node
+    is beneath an AND operator or an END_ operator of all types.
+
+    :param graph: The graph to update.
+    :type graph: :class:`PUMLGraph`
+    """
+    dummy_break_event_nodes = [
+        node
+        for node in graph.nodes
+        if isinstance(node, PUMLEventNode)
+        and node.node_type == DUMMY_BREAK_EVENT_TYPE
+    ]
+    for dummy_break_event_node in dummy_break_event_nodes:
+        update_graph_for_dummy_break_event_node(dummy_break_event_node, graph)
+
+
+def update_nested_sub_graphs_for_dummy_break_event_nodes(
+    graph: PUMLGraph,
+) -> None:
+    """Updates the nested subgraphs for dummy break event nodes. This method is
+    used to remove all dummy break event nodes from the nested subgraphs and
+    replace them with the event nodes that precede them. If there are nested
+    start operator nodes that are XOR, between the event node and the dummy
+    break event node, then the event node is brought down to all branches and
+    child branches of the top level XOR operator. Note this will fail if the
+    dummy break event node is beneath an AND operator or an END_ operator of
+    all types.
+
+    :param graph: The graph to update.
+    :type graph: :class:`PUMLGraph`
+    """
+    update_graph_for_dummy_break_event_nodes(graph)
+    for node in graph.nodes:
+        if isinstance(node, PUMLEventNode):
+            if node.sub_graph is not None:
+                update_nested_sub_graphs_for_dummy_break_event_nodes(
                     node.sub_graph
                 )

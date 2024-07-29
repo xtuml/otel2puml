@@ -176,6 +176,7 @@ class TestDetectLoops:
                 (events_dict[LOOP_EVENT_TYPE], events_dict["J"]),
                 (events_dict[LOOP_EVENT_TYPE], events_dict["K"]),
                 (events_dict[LOOP_EVENT_TYPE], events_dict["L"]),
+                (events_dict[LOOP_EVENT_TYPE], events_dict["O"]),
                 (events_dict["L"], events_dict["N"]),
                 (events_dict["L"], events_dict["P"]),
                 (events_dict["N"], events_dict["O"]),
@@ -187,7 +188,7 @@ class TestDetectLoops:
             [
                 (1, 1), (1, 1), (1, 1), (1, 1), (1, 1), (1, 2), (1, 1), (1, 1),
                 (1, 1), (1, 1), (1, 1), (1, 1), (1, 1), (1, 1), (1, 1), (1, 1),
-                (1, 1),
+                (1, 1), (1, 1)
             ],
         )
         # check loop event and subgraph
@@ -199,38 +200,21 @@ class TestDetectLoops:
         loop_event = events_dict[LOOP_EVENT_TYPE]
         assert isinstance(loop_event, LoopEvent)
         loop_sub_graph = loop_event.sub_graph
-        loop_sub_graph_events: dict[str, Event] = {}
-        end_event_counter = 0
-        for event in loop_sub_graph.nodes:
-            if event.event_type == DUMMY_END_EVENT:
-                loop_sub_graph_events[
-                    f"{event.event_type}_{end_event_counter}"
-                ] = event
-                end_event_counter += 1
-            else:
-                loop_sub_graph_events[event.event_type] = event
-        assert len(loop_sub_graph.nodes) == 11
-        assert set(loop_sub_graph_events.keys()) == {
-            DUMMY_START_EVENT, DUMMY_END_EVENT + "_0", DUMMY_END_EVENT + "_1",
-            "D", "E", "F", "G", "N", "O", "M", LOOP_EVENT_TYPE,
+        loop_sub_graph_events: dict[str, Event] = {
+            event.event_type: event for event in loop_sub_graph.nodes
         }
-        # check dummy end events
-        dummy_end_events = [
-            loop_sub_graph_events[DUMMY_END_EVENT + f"_{i}"]
-            for i in range(end_event_counter)
-        ]
-        dummy_end_loop = [
-            event
-            for event in dummy_end_events
-            if event.in_event_sets == {EventSet([LOOP_EVENT_TYPE])}
-        ][0]
-        dummy_end_from_o = [
-            event for event in dummy_end_events if event != dummy_end_loop
-        ][0]
+        assert len(loop_sub_graph.nodes) == 9
+        assert set(loop_sub_graph_events.keys()) == {
+            DUMMY_START_EVENT, DUMMY_END_EVENT,
+            "D", "E", "F", "G", "N", "M", LOOP_EVENT_TYPE,
+        }
+        dummy_end_loop = loop_sub_graph_events[DUMMY_END_EVENT]
         # check uids of loop event
         self.check_loop_event_for_uids(
             loop_event, loop_sub_graph_events[DUMMY_START_EVENT],
-            dummy_end_loop, {loop_sub_graph_events["M"]}
+            dummy_end_loop, {
+                loop_sub_graph_events["M"], loop_sub_graph_events["N"],
+            }
         )
         self.check_edges_and_event_sets(
             loop_sub_graph,
@@ -257,10 +241,8 @@ class TestDetectLoops:
                 (loop_sub_graph_events[LOOP_EVENT_TYPE], dummy_end_loop),
                 (loop_sub_graph_events["G"], loop_sub_graph_events["M"]),
                 (loop_sub_graph_events["F"], loop_sub_graph_events["N"]),
-                (loop_sub_graph_events["N"], loop_sub_graph_events["O"]),
-                (loop_sub_graph_events["O"], dummy_end_from_o),
             ],
-            [(1, 2)] + [(1, 1)] * 11,
+            [(1, 2)] + [(1, 1)] * 9,
         )
         # check check loop event of sub graph and its sub graph
         """After detecting loops the sub graph of the loop in the sub graph

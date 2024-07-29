@@ -11,12 +11,14 @@ from tel2puml.puml_graph.graph import (
     PUMLGraph,
     PUMLEventNode,
     PUMLOperatorNode,
-    OPERATOR_NODE_PUML_MAP
+    OPERATOR_NODE_PUML_MAP,
+    update_graph_for_dummy_break_event_node,
 )
 from tel2puml.check_puml_equiv import (
     create_networkx_graph_from_parsed_puml,
     check_networkx_graph_equivalence
 )
+from tel2puml.loop_detection.loop_types import DUMMY_BREAK_EVENT_TYPE
 
 
 class TestPUMLEventNode:
@@ -759,3 +761,99 @@ class TestPUMLGraph:
             graph.add_sub_graph_to_puml_nodes_with_ref(
                 sub_graph=sub_graph_a, ref="C"
             )
+
+
+def test_update_graph_for_dummy_break_event_node(
+    graph_with_dummy_break_event: tuple[
+        PUMLGraph, dict[str, PUMLOperatorNode | PUMLEventNode]
+    ]
+) -> None:
+    """Tests the update_graph_for_dummy_break_event_node function."""
+    # test case with two nested XOR above the dummy break event node
+    graph, nodes = graph_with_dummy_break_event
+    DUMMY_BREAK = nodes[DUMMY_BREAK_EVENT_TYPE]
+    assert isinstance(DUMMY_BREAK, PUMLEventNode)
+    update_graph_for_dummy_break_event_node(
+        DUMMY_BREAK, graph
+    )
+    # check that the dummy break event node has been removed
+    assert DUMMY_BREAK_EVENT_TYPE not in graph.nodes
+    # check that the A node has been taken out and the start node is now
+    # connected to the first XOR
+    assert (nodes["START"], nodes["A"]) not in graph.edges
+    assert (nodes["A"], nodes["XOR_START_1"]) not in graph.edges
+    assert (nodes["START"], nodes["XOR_START_1"]) in graph.edges
+    # check that the first XOR now has an outgoing edge to a new replica of A
+    # in between the XOR and the B node
+    assert (nodes["XOR_START_1"], nodes["B"]) not in graph.edges
+    xor_start_out_edges = list(graph.out_edges(nodes["XOR_START_1"]))
+    assert len(xor_start_out_edges) == 2
+    xor_start_out_edges.remove((nodes["XOR_START_1"], nodes["XOR_START_2"]))
+    new_a_event_node = xor_start_out_edges[0][1]
+    assert isinstance(new_a_event_node, PUMLEventNode)
+    assert new_a_event_node.node_type == "A"
+    assert (new_a_event_node, nodes["B"]) in graph.edges
+    # check that the second XOR now has two outgoing edges both of which are
+    # of event type A. However one will be a break node and the other will be
+    # connected to the C node
+    xor_start_2_out_nodes: list[PUMLEventNode] = list(
+        edge[1]
+        for edge in graph.out_edges(nodes["XOR_START_2"])
+    )
+    assert len(xor_start_2_out_nodes) == 2
+    breaks = 0
+    for node in xor_start_2_out_nodes:
+        assert node.node_type == "A"
+        if PUMLEvent.BREAK in node.event_types:
+            assert (node, nodes["XOR_END_2"]) in graph.edges
+            breaks += 1
+        else:
+            assert (node, nodes["C"]) in graph.edges
+    assert breaks == 1
+    # test case with an event node above the dummy break event node and
+    # nothing below
+    graph = PUMLGraph()
+    A = graph.create_event_node("A")
+    DUMMY_BREAK = graph.create_event_node(
+        DUMMY_BREAK_EVENT_TYPE,
+        event_types=(PUMLEvent.BREAK,)
+    )
+    graph.add_edge(A, DUMMY_BREAK)
+    update_graph_for_dummy_break_event_node(DUMMY_BREAK, graph)
+    assert DUMMY_BREAK not in graph.nodes
+    assert PUMLEvent.BREAK in A.event_types
+    # test case with an event node above the dummy break event node and
+    # another node below
+    A = graph.create_event_node("A")
+    DUMMY_BREAK = graph.create_event_node(
+        DUMMY_BREAK_EVENT_TYPE,
+        event_types=(PUMLEvent.BREAK,)
+    )
+    B = graph.create_event_node("B")
+    graph.add_edge(A, DUMMY_BREAK)
+    graph.add_edge(DUMMY_BREAK, B)
+    update_graph_for_dummy_break_event_node(DUMMY_BREAK, graph)
+    assert DUMMY_BREAK not in graph.nodes
+    assert PUMLEvent.BREAK in A.event_types
+    assert (A, B) in graph.edges
+    # test case with incorrect operators in the ancestry above break node
+    for operator_type in [
+        PUMLOperatorNodes.START_AND,
+        PUMLOperatorNodes.END_AND,
+        PUMLOperatorNodes.START_OR,
+        PUMLOperatorNodes.END_OR,
+        PUMLOperatorNodes.END_XOR,
+    ]:
+        puml_graph = PUMLGraph()
+        A = puml_graph.create_event_node("A")
+        DUMMY_BREAK = puml_graph.create_event_node(
+            DUMMY_BREAK_EVENT_TYPE,
+            event_types=(PUMLEvent.BREAK,)
+        )
+        operator_node = PUMLOperatorNode(operator_type, 0)
+        puml_graph.add_node(operator_node)
+        puml_graph.increment_occurrence_count(operator_type.value)
+        puml_graph.add_edge(A, operator_node)
+        puml_graph.add_edge(operator_node, DUMMY_BREAK)
+        with pytest.raises(NotImplementedError):
+            update_graph_for_dummy_break_event_node(DUMMY_BREAK, puml_graph)
