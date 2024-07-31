@@ -27,8 +27,6 @@ class Node:
     """
     Represents a node in a graph.
 
-    :param data: The data stored in the node i.e. uid, defaults to `None`
-    :type data: `str` | `None`, optional
     :param uid: The unique identifier of the node, defaults to `None`
     :type uid: `str` | `None`, optional
     :param operator: The operator of the node, defaults to `None`
@@ -47,7 +45,6 @@ class Node:
 
     def __init__(
         self,
-        data: str | None = None,
         uid: str | None = None,
         operator: str | None = None,
         event_type: str | None = None,
@@ -59,15 +56,11 @@ class Node:
         event_types: set["PUMLEvent"] | None = None,
     ) -> None:
         """Constructor method."""
-        self.data = data if data is not None else operator
         self.incoming = [] if incoming is None else incoming
         self.outgoing = [] if outgoing is None else outgoing
         self.incoming_logic = [] if incoming_logic is None else incoming_logic
         self.outgoing_logic = [] if outgoing_logic is None else outgoing_logic
-        self.uid = uid if uid is not None else self.data
-        # this remains here until the code is refactored to be simpler
-        if self.data is None:
-            self.data = self.uid
+        self.uid = uid
         self.operator = operator
         self.event_type = event_type
         self.is_stub = is_stub
@@ -259,7 +252,6 @@ class Node:
             ):
                 node_id = str(uuid4())
                 node_to_add = Node(
-                    data=node_id,
                     uid=node_id,
                     event_type=logic_tree.label,
                     is_stub=True,

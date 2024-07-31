@@ -44,7 +44,7 @@ def nodes(uids_and_event_types: list[tuple[str, str]]) -> list[Node]:
     :rtype: `list`[:class:`Node`]
     """
     return [
-        Node(data=uid, event_type=event_type)
+        Node(uid=uid, event_type=event_type)
         for uid, event_type in uids_and_event_types
     ]
 
@@ -58,7 +58,7 @@ def node(nodes: list[Node]) -> Node:
     :return: The node.
     :rtype: :class:`Node`
     """
-    return_node = Node("test_data", "test_event_type")
+    return_node = Node(uid="test_data", event_type="test_event_type")
     return_node.update_node_list_with_nodes(deepcopy(nodes), "incoming")
     return_node.update_node_list_with_nodes(deepcopy(nodes), "outgoing")
     return return_node
@@ -73,7 +73,7 @@ def node_with_child_to_stub(nodes: list[Node]) -> Node:
     :return: The node with a child missing.
     :rtype: :class:`Node`
     """
-    return_node = Node("test_data", "test_event_type")
+    return_node = Node(uid="test_data", event_type="test_event_type")
     return_node.update_node_list_with_nodes(deepcopy(nodes)[:-1], "incoming")
     return_node.update_node_list_with_nodes(deepcopy(nodes)[:-1], "outgoing")
     return return_node
@@ -219,7 +219,7 @@ def node_map(
     :rtype: `dict`[`str`, `list`[:class:`Node`]]"""
     node_map = {}
     for event_type in events.keys():
-        node = Node(data=event_type, event_type=event_type)
+        node = Node(uid=event_type, event_type=event_type)
         node.update_node_list_with_nodes(nodes, "incoming")
         node.update_node_list_with_nodes(nodes, "outgoing")
         node_map[event_type] = [node]
@@ -227,19 +227,12 @@ def node_map(
 
 
 @pytest.fixture
-def process_tree_with_BRANCH(
-    uids_and_event_types: list[tuple[str, str]],
-) -> ProcessTree:
+def process_tree_with_BRANCH() -> ProcessTree:
     """
     Creates a process tree with a BRANCH operator.
 
-    Args:
-        uids_and_event_types (list[tuple[str, str]]): A list of tuples
-            containing uids and event types.
-
-    Returns:
-        ProcessTree: The process tree with the BRANCH operator.
-
+    :return: The process tree with a BRANCH operator.
+    :rtype: :class:`ProcessTree`
     """
 
     process_tree = ProcessTree(

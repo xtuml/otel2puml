@@ -33,10 +33,10 @@ class TestNode:
     @staticmethod
     def test_event_node_map_incoming() -> None:
         """Test the event_node_map property for incoming nodes."""
-        node = Node(data="test_data", event_type="test_event_type")
+        node = Node(uid="test_data", event_type="test_event_type")
         assert len(node.event_node_map_incoming) == 0
         incoming_nodes = [
-            Node(data=f"test_data_{i}", event_type=f"test_event_type_{i}")
+            Node(uid=f"test_data_{i}", event_type=f"test_event_type_{i}")
             for i in range(3)
         ]
         node.update_node_list_with_nodes(incoming_nodes, "incoming")
@@ -50,10 +50,10 @@ class TestNode:
     @staticmethod
     def test_event_node_map_outgoing() -> None:
         """Test the event_node_map property for outgoing nodes."""
-        node = Node(data="test_data", event_type="test_event_type")
+        node = Node(uid="test_data", event_type="test_event_type")
         assert len(node.event_node_map_outgoing) == 0
         outgoing_nodes = [
-            Node(data=f"test_data_{i}", event_type=f"test_event_type_{i}")
+            Node(uid=f"test_data_{i}", event_type=f"test_event_type_{i}")
             for i in range(3)
         ]
         node.update_node_list_with_nodes(outgoing_nodes, "outgoing")
