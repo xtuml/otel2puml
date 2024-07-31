@@ -5,7 +5,7 @@ from copy import deepcopy, copy
 from pm4py import ProcessTree
 import networkx as nx
 
-from tel2puml.node_map_to_puml.node import (
+from tel2puml.walk_puml_graph.node import (
     Node,
     load_logic_tree_into_nodes,
     load_all_logic_trees_into_nodes,
@@ -13,7 +13,7 @@ from tel2puml.node_map_to_puml.node import (
     create_networkx_graph_of_nodes_from_markov_graph,
     merge_markov_without_loops_and_logic_detection_analysis,
 )
-from tel2puml.pipelines.data_ingestion import (
+from tel2puml.data_pipelines.data_ingestion import (
     update_all_connections_from_clustered_events,
 )
 from tel2puml.events import (
@@ -21,7 +21,7 @@ from tel2puml.events import (
     events_to_markov_graph,
     get_event_reference_from_events,
 )
-from tel2puml.pipelines.data_creation import (
+from tel2puml.data_pipelines.data_creation import (
     generate_test_data_event_sequences_from_puml,
 )
 from tel2puml.tel2puml_types import PUMLEvent, PUMLOperator

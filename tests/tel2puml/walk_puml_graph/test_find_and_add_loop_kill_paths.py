@@ -1,9 +1,9 @@
-"""Tests for the `node_map_to_puml.find_and_add_loop_kill_paths` module."""
+"""Tests for the `walk_puml_graph.find_and_add_loop_kill_paths` module."""
 
 from networkx import DiGraph
 
-from tel2puml.node_map_to_puml.node import Node, SubGraphNode
-from tel2puml.node_map_to_puml.find_and_add_loop_kill_paths import (
+from tel2puml.walk_puml_graph.node import Node, SubGraphNode
+from tel2puml.walk_puml_graph.find_and_add_loop_kill_paths import (
     find_and_add_loop_kill_paths_to_nested_graphs,
     find_and_add_loop_kill_paths_to_sub_graph_node,
 )

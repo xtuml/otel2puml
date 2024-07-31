@@ -9,7 +9,7 @@ import os
 import networkx as nx
 
 from tel2puml.tel2puml_types import PVEvent
-from tel2puml.pipelines.data_ingestion import (
+from tel2puml.data_pipelines.data_ingestion import (
     update_all_connections_from_clustered_events,
     cluster_events_by_job_id,
     update_and_create_events_from_clustered_pvevents
@@ -20,20 +20,20 @@ from tel2puml.events import (
     get_event_reference_from_events,
     create_graph_from_events
 )
-from tel2puml.jAlergiaPipeline import remove_loop_data_from_graph
-from tel2puml.node_map_to_puml.node import (
+from tel2puml.walk_puml_graph.node import (
     merge_markov_without_loops_and_logic_detection_analysis,
 )
-from tel2puml.node_map_to_puml.walk_puml_logic_graph import (
+from tel2puml.walk_puml_graph.walk_puml_logic_graph import (
     create_puml_graph_from_node_class_graph,
     walk_nested_graph
 )
 from tel2puml.detect_loops import (
     detect_loops,
     get_all_kill_edges_from_loops,
+    remove_loop_data_from_graph
 )
 from tel2puml.puml_graph.graph_loop_insert import insert_loops
-from tel2puml.node_map_to_puml.node_update import (
+from tel2puml.walk_puml_graph.node_update import (
     update_nodes_with_break_points_from_loops,
     get_node_to_node_map_from_edges,
     add_loop_kill_paths_for_nodes,
@@ -42,10 +42,10 @@ from tel2puml.node_map_to_puml.node_update import (
 from tel2puml.loop_detection.detect_loops import (
     detect_loops as detect_loops_v2
 )
-from tel2puml.node_map_to_puml.create_node_graph_from_event_graph import (
+from tel2puml.walk_puml_graph.create_node_graph_from_event_graph import (
     create_node_graph_from_event_graph
 )
-from tel2puml.node_map_to_puml.find_and_add_loop_kill_paths import (
+from tel2puml.walk_puml_graph.find_and_add_loop_kill_paths import (
     find_and_add_loop_kill_paths_to_nested_graphs,
 )
 from tel2puml.puml_graph.graph import (

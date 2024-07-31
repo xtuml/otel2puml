@@ -4,7 +4,7 @@ from typing import Iterable
 from networkx import DiGraph
 
 from tel2puml.detect_loops import Loop, get_all_break_points_from_loops
-from tel2puml.node_map_to_puml.node import Node, SubGraphNode
+from tel2puml.walk_puml_graph.node import Node, SubGraphNode
 from tel2puml.tel2puml_types import PUMLEvent
 
 

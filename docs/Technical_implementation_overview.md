@@ -38,7 +38,7 @@ The technical implementation of the project is broken down into the following co
 - PUML Logical graph generation
 
 ## Data ingestion
-Currently data ingestion stands at ingesting linked sequences of PV JSON events. The data is ingested using methods in `tel2puml/pipelines/data_ingestion.py`.
+Currently data ingestion stands at ingesting linked sequences of PV JSON events. The data is ingested using methods in `tel2puml/data_pipelines/data_ingestion.py`.
 
 The methodology to ingest data is the following:
 1. Read in the linked sequences of PV JSON events from file/s
@@ -163,7 +163,7 @@ and the subgraph of the loop node in that graph is then given by:
 
 ## PUML Logical graph generation
 
-The PUML Logical graph generation component is responsible for generating the PlantUML logical graph from the Markov graph with the loop nodes containing subgraphs. The PUML Logical graph generation component is implemented in `tel2puml/node_map_to_puml/walk_puml_logic_graph.py`.
+The PUML Logical graph generation component is responsible for generating the PlantUML logical graph from the Markov graph with the loop nodes containing subgraphs. The PUML Logical graph generation component is implemented in `tel2puml/walk_puml_graph/walk_puml_logic_graph.py`.
 
 The basic methodology for generating the PUML logical graph is to walk the Markov graph with the loop nodes and generate the PlantUML code for the logical graph. The walking of the graph is performed in the following way (starting at the root node of the Markov graph with loop edges removed):
 1. look at the logical out gate that follows the current node

@@ -1,4 +1,4 @@
-"""Configuration for the tests in the node_map_to_puml directory."""
+"""Configuration for the tests in the walk_puml_graph directory."""
 
 from copy import deepcopy
 
@@ -9,7 +9,7 @@ from networkx import DiGraph
 
 from tel2puml.events import Event
 from tel2puml.logic_detection import Operator as Logic_operator
-from tel2puml.node_map_to_puml.node import Node, SubGraphNode
+from tel2puml.walk_puml_graph.node import Node, SubGraphNode
 from tel2puml.tel2puml_types import (
     DUMMY_END_EVENT,
     DUMMY_START_EVENT,

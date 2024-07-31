@@ -3,8 +3,10 @@ from datetime import datetime, timedelta
 from pm4py import ProcessTree
 
 
-from tel2puml.pipelines.data_creation import generate_test_data
-from tel2puml.pipelines.data_ingestion import update_all_connections_from_data
+from tel2puml.data_pipelines.data_creation import generate_test_data
+from tel2puml.data_pipelines.data_ingestion import (
+    update_all_connections_from_data
+)
 from tel2puml.events import EventSet
 from tel2puml.logic_detection import (
     Operator,

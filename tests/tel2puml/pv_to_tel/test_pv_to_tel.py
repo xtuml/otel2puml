@@ -49,7 +49,7 @@ def test_puml_to_otel_file(
     )
 
     puml_file_path: str = "test.puml"
-    otel_output_folder_path: str = "tests/pv_to_tel/otel_output"
+    otel_output_folder_path: str = "tests/tel2puml/pv_to_tel/otel_output"
     job_name: str = "TestJob"
     application_name: str = "TestApp"
     file_name_prefix: str = "test_prefix"

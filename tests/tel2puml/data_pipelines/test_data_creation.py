@@ -1,5 +1,5 @@
 """tests for module test_data_creation.py"""
-from tel2puml.pipelines.data_creation import (
+from tel2puml.data_pipelines.data_creation import (
     generate_valid_jobs_from_puml_file,
     generate_event_jsons,
     generate_test_data,

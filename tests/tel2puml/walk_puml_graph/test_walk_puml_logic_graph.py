@@ -2,11 +2,11 @@
 
 import networkx as nx
 
-from tel2puml.node_map_to_puml.node import (
+from tel2puml.walk_puml_graph.node import (
     Node,
     merge_markov_without_loops_and_logic_detection_analysis,
 )
-from tel2puml.node_map_to_puml.walk_puml_logic_graph import (
+from tel2puml.walk_puml_graph.walk_puml_logic_graph import (
     create_puml_graph_from_node_class_graph,
     check_is_merge_node_for_logic_block,
     LogicBlockHolder,
@@ -17,14 +17,14 @@ from tel2puml.puml_graph.graph import (
     PUMLOperatorNode,
     PUMLOperatorNodes,
 )
-from tel2puml.pipelines.data_ingestion import (
+from tel2puml.data_pipelines.data_ingestion import (
     update_all_connections_from_clustered_events,
 )
 from tel2puml.events import (
     events_to_markov_graph,
     get_event_reference_from_events,
 )
-from tel2puml.pipelines.data_creation import (
+from tel2puml.data_pipelines.data_creation import (
     generate_test_data_event_sequences_from_puml,
 )
 from tel2puml.check_puml_equiv import (
