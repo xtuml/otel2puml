@@ -1,7 +1,7 @@
 @startuml
     partition "calc_loop_end_break_and_loop_edges" {
         start
-        :input start events, SCC loop events and graph;
+        :input start events, SCC loop events, graph and map of nodes\nto overlapping following nodes sets;
         group "main algorithm"
         :input start events, SCC loop events and graph;
         :find all nodes that have an edge not pointing back into scc;
@@ -9,11 +9,14 @@
         if (check if edges exiting loop exist) then (no edges exist)
             :no break edges; 
         else (edges exist)
-            :get set of end nodes that intersect with nodes that exit loop;
+            :get set of end nodes that intersect\nwith nodes that exit loop;
+            :get potential break out nodes;
+            :filter break out nodes with\n"filter_break_out_nodes_based_on_overlaps"\nalgorithm;
             if (check size of subset) then (subset empty)
-                :break nodes are the nodes that exit the loop;
+                :break nodes are the nodes that\nexit the loop from break out nodes;
             else (subset not empty)
-                :break nodes are calculated as nodes at the end of the paths\nbetween those nodes not in the\nsubset and between the exits points from end nodes;
+                :break nodes are calculated as inward nodes\ninto the exit points of the end nodes if there\nis a path back to a break out nodes;
+                :additional break nodes are calculated as nodes\ndirectly following the breakout nodes that do not\nhave a path to end node exit points;
             endif
         endif
         :set loop edges as all edges between\nend events and start events;
@@ -32,14 +35,29 @@
                     :set as other potential end node;
                     :check if other potential end node\nhas path to potential end node but not vice versa;
                     if () then (true)
-                        :potential end node is not a loop end node and remove from set;
+                        :potential end node is not a loop\nend node and remove from set;
                         break
-                    else (false)
-                        :continue;
                     endif
                 repeat while (for each potential end node)
             repeat while (for each potential end node)
             :output end nodes that were not removed from set;
+            end group
+            end
+            start
+            :input potential break out nodes, node to\noverlapping nodes map and scc nodes;
+            group "filter_break_out_nodes_based_on_overlaps"
+                :create empty set of new break out nodes;
+                repeat
+                    if (check if potential break out node\nin node to overlapping map) then (true)
+                        :add to new break out nodes;
+                    else (false)
+                        :check if potential break out node has\nany overlapping node sets that overlap\nthe scc suggesting AND or OR logic;
+                        if (if it does) then (true)
+                            :add to new break out nodes;
+                        endif
+                    endif
+                repeat while (for each node in potential break out nodes)
+                :output new break out nodes;
             end group
             end
         }

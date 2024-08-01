@@ -16,6 +16,7 @@
                     :Calculate "end points" and "break points" of loop;
                     :Output end and break points of loop and\nedges that create loop;
                 }
+                :filter and replace break points with dummy break events\nif they are an out node, not in SCC, of an end event;
                 :Output start, end and break points of loop\nand edges that create loop;
             }
             partition "Create sub graph of Loop" {
