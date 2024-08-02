@@ -1,0 +1,24 @@
+@startuml
+allowmixing
+
+abstract class OTELDataSource
+abstract class DataHolder
+
+file "OTel Data" as otelData
+
+database "Data store" as db
+
+collections "Unique graphs" as unique_graphs
+
+class IngestData
+component FindUniqueGraphs
+
+OTELDataSource <.. IngestData : Pulls data from data source
+
+otelData --> OTELDataSource : Raw data
+IngestData --> DataHolder : Load data
+DataHolder --> db : Saves data
+FindUniqueGraphs --> db : Read/Write data
+db --> FindUniqueGraphs : Returns data
+FindUniqueGraphs --> unique_graphs
+@enduml

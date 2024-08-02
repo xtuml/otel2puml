@@ -1,0 +1,43 @@
+@startuml
+    start
+    :Input time_buffer, batch_size, sql_data_holder;
+    partition "find_unique_graphs_sql" {
+    :Input time_buffer, sql_data_holder;
+    partition "get_time_window" {
+        :get time window;
+    }
+    :Input time_window, sql_data_holder;
+    partition "create_db_view_root_nodes_in_time_window" {
+        :create view of root nodes with start_timestamp within time window;
+    }
+        :<color:Blue>get number of root nodes;
+        repeat
+        :Input i, batch_size, sql_data_holder;
+        partition "get_root_nodes" {
+        :<color:Blue>get root nodes;
+        }
+        :input root_nodes;
+            partition "compute_graph_hashes_for_batch" {
+                :get distinct trace_ids from root_nodes;
+                :input trace_ids, sql_data_holder;
+                partition "get_batch_nodes" {
+                    :<color:Blue>get graph node data;
+                }
+                :input graph_nodes;
+                partition "create_span_id_to_child_nodes_map" {
+                    :create dict mapping span_id to list of child Node;
+                }
+            repeat
+            :input root_node, span_id_to_child_node_map;
+            partition "compute_graph_hash_recursive" {
+                :node_hash = hash(node.event_type + sorted(hash(child.event_type) for child in node.children));
+            }
+            :update root_node.graph_hash;
+            repeat while(for root_node in root_nodes)
+            }
+            :<color:Blue>commit to database;
+        repeat while (for i in range(0, total_root_nodes, batch_size))
+        :<color:Blue>get trace_ids by distinct graph hashes and group by job_name;
+    }
+    end
+@enduml
