@@ -3,24 +3,24 @@
 # Fail if any part of this script fails
 set -e
 
-# test event generator
+# janus - test event generator
 cd /tmp/
-git clone git@github.com:SmartDCSITlimited/test-event-generator.git
-cd test-event-generator
+git clone https://github.com/xtuml/janus.git
+cd janus
 git fetch --all --tags
-git checkout tags/v1.0.1 -b latest 
+git checkout tags/v1.0.0 -b latest 
 pip install -r requirements.txt
 pip install .
 cd ..
-rm -f -r test-event-generator/
+rm -f -r janus/
 
-# test harness
+# erebus - test harness
 cd /tmp/
-git clone git@github.com:SmartDCSITlimited/test-harness.git
-cd test-harness
+git clone https://github.com/xtuml/erebus.git
+cd erebus
 git fetch --all --tags
-git checkout tags/v1.1.3 -b latest 
+git checkout tags/v0.2.1-beta -b latest 
 pip install -r requirements.txt
 pip install .
 cd ..
-rm -f -r test-harness/
+rm -f -r erebus/

@@ -25,20 +25,6 @@ jobs:
       - name: Setup Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Checkout (test-event-generator)
-        uses: actions/checkout@v4
-        with:
-          repository: SmartDCSITlimited/test-event-generator
-          ssh-key: ${{ secrets.GH_CDS_TEST_EVENT_GENERATOR_GITHUB_WORKFLOW_KEY }}
-          path: test-event-generator
-
-      - name: Setup Checkout (test-harness)
-        uses: actions/checkout@v4
-        with:
-          repository: SmartDCSITlimited/test-harness
-          ssh-key: ${{ secrets.GH_CDS_TEST_HARNESS_GITHUB_WORKFLOW_KEY }}
-          path: test-harness
-
       - name: Setup-conda
         uses: s-weigand/setup-conda@v1
         with:
@@ -51,25 +37,12 @@ jobs:
           conda install -y -c conda-forge cvxopt
           conda install -y -c conda-forge pygraphviz
 
-      - name: Install Requirements (test-event-generator)
+      - name: Install janus and erebus as packages
         run: |
-          cd test-event-generator
-          git fetch --all --tags
-          git checkout tags/v1.0.1 -b latest
-          pip install -r requirements.txt
-          pip install .
-          cd ..
-          rm -rf test-event-generator
-
-      - name: Install Requirements (test-harness)
-        run: |
-          cd test-harness
-          git fetch --all --tags
-          git checkout tags/v1.1.3 -b latest
-          pip install -r requirements.txt
-          pip install .
-          cd ..
-          rm -rf test-harness
+          chmod +x ./scripts/install_repositories.sh && ./scripts/install_repositories.sh
+      
+      - name: Add GitHub workspace to PYTHONPATH
+        run: echo "PYTHONPATH=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
       
       - name: Install Requirements
         run: |
@@ -83,5 +56,4 @@ jobs:
 
       - name: Run Tests
         run: |
-          export PYTHONPATH=/workspaces/test-harness:$PYTHONPATH
           pytest

@@ -40,7 +40,7 @@
 	// Use 'postCreateCommand' to run commands after the container is created.
 	"postCreateCommand": {
 		"1": "conda install -y python=3.11.8 && conda install -y -c conda-forge cvxopt && conda install -y -c conda-forge pygraphviz && pip3 install --user -r requirements.txt && bash scripts/install_repositories.sh",
-		"2": "echo 'export PYTHONPATH=/workspaces/test-harness:$PYTHONPATH' >> ~/.bashrc"
+		"2": "echo 'export PYTHONPATH=/workspaces/erebus:$PYTHONPATH' >> ~/.bashrc"
 	},
 	// Add repo to safe directories
 	"postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
