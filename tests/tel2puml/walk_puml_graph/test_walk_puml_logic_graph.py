@@ -20,8 +20,8 @@ from tel2puml.puml_graph.graph import (
 from tel2puml.data_pipelines.data_ingestion import (
     update_all_connections_from_clustered_events,
 )
-from tel2puml.events import (
-    events_to_markov_graph,
+from tel2puml.events import events_to_markov_graph
+from tel2puml.legacy_loop_detection.events import (
     get_event_reference_from_events,
 )
 from tel2puml.data_pipelines.data_creation import (

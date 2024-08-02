@@ -86,7 +86,7 @@ def events(graph: "DiGraph[Event]") -> dict[str, Event]:
 
 
 @pytest.fixture
-def loop(events: dict[str, Event]) -> Loop:
+def loop(events: dict[str, "Event"]) -> Loop:
     """Returns a Loop object for the graph."""
     return Loop(
         loop_events={

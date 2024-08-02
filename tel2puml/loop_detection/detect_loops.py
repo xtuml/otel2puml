@@ -39,7 +39,7 @@ def detect_loops(graph: "DiGraph[Event]") -> "DiGraph[Event]":
             loop, graph
         )
         sub_graph = detect_loops(sub_graph)
-        loop_event = create_loop_event(loop, graph, sub_graph)
+        loop_event = create_loop_event(loop, sub_graph)
         update_loop_event_with_start_end_and_breaks(
             start_event, end_event, loop.break_events, loop_event
         )

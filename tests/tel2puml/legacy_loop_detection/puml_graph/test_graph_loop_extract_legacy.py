@@ -3,7 +3,7 @@
 import pytest
 
 from tel2puml.puml_graph.graph import PUMLGraph, PUMLEventNode
-from tel2puml.puml_graph.graph_loop_extract import (
+from tel2puml.legacy_loop_detection.puml_graph.graph_loop_extract import (
     extract_loops_starts_and_ends_from_loop,
     get_event_nodes_from_loop,
     get_unique_loops_from_start_and_end_nodes,
@@ -15,7 +15,7 @@ from tel2puml.puml_graph.graph_loop_extract import (
     LoopNodes,
     filter_end_nodes_with_successors
 )
-from tel2puml.detect_loops import Loop
+from tel2puml.legacy_loop_detection.detect_loops import Loop
 
 
 def test_get_event_nodes_from_loop(

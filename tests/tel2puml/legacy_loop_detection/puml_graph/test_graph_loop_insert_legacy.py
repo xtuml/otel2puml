@@ -1,8 +1,10 @@
 """Tests for the puml_graph.graph_loop_insert module."""
 
-from tel2puml.detect_loops import Loop
+from tel2puml.legacy_loop_detection.detect_loops import Loop
 from tel2puml.puml_graph.graph import PUMLEventNode, PUMLGraph
-from tel2puml.puml_graph.graph_loop_insert import insert_loops
+from tel2puml.legacy_loop_detection.puml_graph.graph_loop_insert import (
+    insert_loops
+)
 from tel2puml.check_puml_equiv import check_networkx_graph_equivalence
 from tel2puml.tel2puml_types import PUMLEvent
 

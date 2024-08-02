@@ -8,7 +8,9 @@ from networkx import (
 )
 
 from tel2puml.utils import check_is_sub_list
-
+from tel2puml.loop_detection.calculate_loop_components import (
+    get_all_kill_edges_from_loop_nodes_and_end_points
+)
 
 T = TypeVar("T")
 
@@ -754,50 +756,6 @@ def get_all_kill_edges_from_loop(
     )
     for sub_loop in loop.sub_loops:
         yield from get_all_kill_edges_from_loop(graph, sub_loop)
-
-
-def get_all_kill_edges_from_loop_nodes_and_end_points(
-    graph: "DiGraph[T]",
-    loop_nodes: Iterable[T],
-    end_points: set[T],
-    start_points: set[T],
-) -> Generator[tuple[T, T], None, None]:
-    """Get all kill edges from the loop nodes and end points.
-
-    :param graph: The graph to get the kill edges from.
-    :type graph: :class:`DiGraph`[`T`]
-    :param loop_nodes: The nodes from the loop.
-    :type loop_nodes: `Iterable`[`T`]
-    :param end_points: The end points of the loop.
-    :type end_points: `set`[`T`]
-    :return: The kill edges.
-    :rtype: `Generator`[`tuple`[`T`, `T`], `None`, `None`]
-    """
-    if len(start_points) != 1:
-        for start_point in start_points:
-            if all(
-                not has_path(graph, start_point, end_point)
-                for end_point in end_points
-            ):
-                in_edges = graph.in_edges(start_point)
-                if len(in_edges) != 1:
-                    raise ValueError(
-                        "Multiple in edges to start point in a loop with "
-                        "multiple start points"
-                    )
-                yield in_edges[0]
-    for node in loop_nodes:
-        if node in end_points:
-            continue
-        out_edges = graph.out_edges(node)
-        if len(out_edges) <= 1:
-            continue
-        for edge in out_edges:
-            if all(
-                not has_path(graph, edge[1], end_point)
-                for end_point in end_points
-            ):
-                yield edge
 
 
 def remove_loop_data_from_graph(

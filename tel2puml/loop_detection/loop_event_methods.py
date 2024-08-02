@@ -9,15 +9,12 @@ from tel2puml.events import Event, EventSet
 
 def create_loop_event(
     loop: Loop,
-    graph: "DiGraph[Event]",
     sub_graph: "DiGraph[Event]",
 ) -> LoopEvent:
     """Create the loop event.
 
     :param loop: The loop to create the event from.
     :type loop: :class:`Loop`
-    :param graph: The graph to add the loop event to.
-    :type graph: :class:`DiGraph`[:class:`Event`]
     :return: The loop event
     :rtype: :class:`LoopEvent`
     """

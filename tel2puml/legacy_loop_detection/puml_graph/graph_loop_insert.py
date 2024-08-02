@@ -1,10 +1,10 @@
 """Contains the functions to insert the detected loops into the PlantUML graph.
 """
-from tel2puml.detect_loops import Loop
+from tel2puml.legacy_loop_detection.detect_loops import Loop
 from tel2puml.puml_graph.graph import (
     PUMLGraph
 )
-from tel2puml.puml_graph.graph_loop_extract import (
+from tel2puml.legacy_loop_detection.puml_graph.graph_loop_extract import (
     extract_loops_starts_and_ends_from_loop
 )
 from tel2puml.tel2puml_types import PUMLEvent
