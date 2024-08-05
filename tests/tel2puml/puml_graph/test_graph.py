@@ -87,6 +87,12 @@ class TestPUMLEventNode:
         assert break_event.write_uml_blocks(indent=4, tab_size=4) == (
             ["    :event;", "    break"], 0
         )
+        # check case where Break event type is added after init
+        break_event = PUMLEventNode("event", 0)
+        break_event.event_types = (PUMLEvent.BREAK,)
+        assert break_event.write_uml_blocks(indent=4, tab_size=4) == (
+            ["    :event;", "    break"], 0
+        )
 
     @staticmethod
     def test_write_uml_block_sub_graph() -> None:
