@@ -1,0 +1,16 @@
+@startuml
+partition "ORFork_loop_a" {
+    group "ORFork_loop_a"
+        #green:A;
+        split
+            :B;
+            repeat
+                :D;
+            repeat while
+        split again
+            :C;
+        end split
+        #red:E;
+    end group
+}
+@enduml

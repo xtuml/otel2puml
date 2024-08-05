@@ -1,0 +1,22 @@
+@startuml
+partition "loop nested break point" {
+    group "loop nested break point"
+        #green:A;
+        repeat
+            :B;
+            repeat
+            :C;
+            if (XOR) then (true)
+                    :D;
+                    break
+            else (false)
+                    :E;
+                    :F;
+            endif
+            repeat while
+            :G;
+        repeat while
+        #red:H; 
+    end group
+}
+@enduml

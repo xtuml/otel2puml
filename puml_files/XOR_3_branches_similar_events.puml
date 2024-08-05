@@ -1,0 +1,23 @@
+@startuml
+    partition "XOR_similar_events" {
+        group "XOR_similar_events"
+            :A;
+            switch (XOR)
+                case ("1")
+                    :B;
+                    :C;
+                    :D,BCNT,user=D,name=BC2;
+                    :E;
+                    :F;
+                case ("2")
+                    :G;
+                case ("3")
+                    :D;
+                    :C;
+                    :F;
+                    :E;
+            endswitch
+            :H;
+        end group
+    }
+@enduml

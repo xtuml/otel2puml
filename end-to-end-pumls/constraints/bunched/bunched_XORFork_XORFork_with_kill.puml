@@ -1,0 +1,27 @@
+@startuml
+partition "bunched_XORFork_XORFork" {
+    group "bunched_XORFork_XORFork"
+        #green:A;
+        switch (XOR)
+            case ("1")
+                if (XOR) then (true)
+                    :D;
+                else (false)
+                    :E;
+                endif
+                :B;
+            case ("2")
+                if (XOR) then (true)
+                    :F;
+                else (false)
+                    :G;
+                endif
+                :C;
+            case ("3")
+                :H;
+                kill
+        endswitch
+        #red:I;
+    end group
+}
+@enduml

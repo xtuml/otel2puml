@@ -1,0 +1,14 @@
+@startuml
+partition "ORFork_branch_count" {
+    group "ORFork_branch_count"
+        #green:A;
+        split
+            :B,BCNT,user=B,name=BC1;
+            :D;
+        split again
+            :C;
+        end split
+        #red:F;
+    end group
+}
+@enduml

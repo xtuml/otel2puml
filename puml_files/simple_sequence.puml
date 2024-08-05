@@ -1,0 +1,9 @@
+@startuml
+partition "Simple_Sequence" {
+    group "Simple_Sequence"
+        :A;
+        :B;
+        :C;
+    end group
+}
+@enduml

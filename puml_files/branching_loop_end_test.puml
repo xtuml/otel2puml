@@ -1,0 +1,20 @@
+@startuml
+    partition "Branch_Counts" {
+        group "Branch_Counts"
+            :A;
+            if (XOR) then (0)
+                repeat
+                    :B;
+                    :C;
+                repeat while (unconstrained)
+            else (1)
+                repeat
+                    :B;
+                    :D;
+                repeat while (unconstrained)
+                :E;
+            endif
+            :F;
+        end group
+    }
+@enduml

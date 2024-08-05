@@ -1,0 +1,17 @@
+@startuml
+partition "loop nested OR" {
+    group "loop nested OR"
+        #green:A;
+        repeat
+            :B;
+            split
+                :C;
+            split again
+                :D;
+            end split
+            :E;
+        repeat while
+        #red:F;
+    end group
+}
+@enduml

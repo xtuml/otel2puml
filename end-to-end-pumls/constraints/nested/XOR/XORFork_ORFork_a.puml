@@ -1,0 +1,18 @@
+@startuml
+partition "XORFork_ORFork_a" {
+    group "XORFork_ORFork_a"
+        #green:A;
+        if (XOR) then (true)
+            :B;
+            split
+                :D;
+            split again
+                :E;
+            end split
+        else (false)
+            :C;
+        endif
+        #red:F;
+    end group
+}
+@enduml

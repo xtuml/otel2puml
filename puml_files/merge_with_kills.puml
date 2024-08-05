@@ -1,0 +1,20 @@
+@startuml
+partition "merge_with_kills" {
+    group "merge_with_kills"
+        :A;
+        switch (XOR)
+            case ("1")
+                :B;
+            case ("2")
+                :C;
+            case ("3")
+                :D;
+                kill
+            case ("4")
+                :E;
+                kill
+        endswitch
+        :F;
+    end group
+}
+@enduml

@@ -1,0 +1,10 @@
+@startuml
+    partition "double_branch_count" {
+        group "double_branch_count"
+            :A;
+            :B,BCNT,user=B,name=BC1;
+            :C,BCNT,user=C,name=BC2;
+            :D;
+        end group
+    }
+@enduml

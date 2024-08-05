@@ -1,0 +1,63 @@
+@startuml
+
+struct OTelEvent {
+    job_name: str
+    job_id: str
+    event_type: str
+    event_id: str
+    start_timestamp: str
+    end_timestamp: str
+    application_name: str
+    parent_event_id: str
+    child_event_ids: Optional[list[str], None]
+}
+
+abstract class OTELDataSource {
+    +__iter__(): self
+    +__next__(): OTelEvent
+}
+
+class JSONDataSource
+
+class SQLDataHolder {
+    #data_to_save: list<OTelEvent>
+    #batch_size: int
+    #engine: str
+    +create_db_tables(): None
+}
+
+class NodeModel {
+    job_name: str
+    job_id: str
+    event_type: str
+    event_id: str
+    start_timestamp: str
+    end_timestamp: str
+    application_name: str
+    parent_event_id: str
+    child_event_ids: Optional[list[str], None]
+}
+
+class Base {
+    ""SQLAlchemy declarative base class""
+}
+
+abstract class DataHolder {
+    +save_data(OTelEvent): None
+}
+
+class IngestData {
+    #otel_data_source : OTELDataSource
+    #data_holder : DataHolder
+    +load_to_data_holder(): None
+}
+
+IngestData ..> OTELDataSource
+IngestData ..> DataHolder
+OTELDataSource ..> OTelEvent
+JSONDataSource --> OTELDataSource
+SQLDataHolder --> DataHolder
+NodeModel --> SQLDataHolder
+Base --> NodeModel
+
+@enduml

@@ -1,0 +1,22 @@
+@startuml
+partition "kill_with_merge_on_parent" {
+    group "kill_with_merge_on_parent"
+        #green:A;
+        fork
+            :E;
+            fork
+                :B;
+                kill
+            fork again
+                :C;
+                kill
+            fork again
+                :D;
+            end fork
+        fork again
+            :G;
+        end fork
+        :F;
+    end group
+}
+@enduml

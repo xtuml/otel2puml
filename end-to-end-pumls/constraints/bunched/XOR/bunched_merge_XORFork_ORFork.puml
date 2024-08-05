@@ -1,0 +1,17 @@
+@startuml
+partition "bunched_merge_XORFork_ORFork" {
+    group "bunched_merge_XORFork_ORFork"
+        #green:A;
+        if (XOR) then (true)
+            split
+                :D;
+            split again
+                :E;
+            end split
+        else (false)
+            :C;
+        endif
+        #red:F;
+    end group
+}
+@enduml
