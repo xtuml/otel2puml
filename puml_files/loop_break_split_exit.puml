@@ -1,0 +1,22 @@
+@startuml
+partition "loop_break_split_exit" {
+    group "loop_break_split_exit"
+        #green:A;
+        repeat
+            :B;
+            if (XOR) then (true)
+                :C;
+                break
+            else (false)
+                :D;
+            endif
+        repeat while
+        if (XOR) then (true)
+            :E;
+        else (false)
+            :F;
+        endif
+        #red:G; 
+    end group
+}
+@enduml

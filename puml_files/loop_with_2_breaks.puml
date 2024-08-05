@@ -1,0 +1,25 @@
+@startuml
+partition "loop_with_2_breaks" {
+    group "loop_with_2_breaks"
+        #green:A;
+        repeat
+            :B;
+            if (XOR) then (true)
+                :C;
+                break
+            else (false)
+                :D;
+                if (XOR) then (true)
+                    :E;
+                    :F;
+                    :G;
+                    break
+                else (false)
+                    :H;
+                endif
+            endif
+        repeat while
+        #red:I; 
+    end group
+}
+@enduml

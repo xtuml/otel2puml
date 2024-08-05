@@ -1,0 +1,11 @@
+@startuml
+    partition "self loop" {
+        group "self loop"
+            :A;
+            repeat
+                :B;
+            repeat while
+            :C;
+        end group
+    }
+@enduml

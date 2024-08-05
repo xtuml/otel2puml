@@ -1,0 +1,17 @@
+@startuml
+partition "bunched_merge_ANDFork_ANDFork" {
+    group "bunched_merge_ANDFork_ANDFork"
+        #green:A;
+        fork
+            fork
+                :D;
+            fork again
+                :E;
+            end fork
+        fork again
+            :C;
+        end fork
+        #red:F;
+    end group
+}
+@enduml

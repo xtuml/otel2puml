@@ -1,0 +1,17 @@
+@startuml
+partition "merge from similar paths XOR" {
+    group "merge from similar paths XOR"
+        #green:A;
+        switch (XOR)
+            case ()
+                :E;
+                :B;
+                :C;
+            case ()
+                :C;
+        endswitch
+        :D;
+        #red:F;
+    end group
+}
+@enduml

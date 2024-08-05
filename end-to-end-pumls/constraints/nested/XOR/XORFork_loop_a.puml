@@ -1,0 +1,16 @@
+@startuml
+partition "XORFork_loop_a" {
+    group "XORFork_loop_a"
+        #green:A;
+        if (XOR) then (true)
+            :B;
+            repeat
+                :D;
+            repeat while
+        else (false)
+            :C;
+        endif
+        #red:E;
+    end group
+}
+@enduml

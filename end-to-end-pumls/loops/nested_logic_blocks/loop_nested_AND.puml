@@ -1,0 +1,17 @@
+@startuml
+partition "loop nested AND" {
+    group "loop nested AND"
+        #green:A;
+        repeat
+            :B;
+            fork
+                :C;
+            fork again
+                :D;
+            end fork
+            :E;
+        repeat while
+        #red:F;
+    end group
+}
+@enduml

@@ -1,0 +1,16 @@
+@startuml
+partition "simple OR" {
+    group "simple OR"
+        #green:A;
+        split
+            :B;
+        split again
+            :D;
+        split again
+            :E;
+        end split
+        :C;
+        #red:F;
+    end group
+}
+@enduml

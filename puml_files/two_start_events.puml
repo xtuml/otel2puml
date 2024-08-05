@@ -1,0 +1,13 @@
+@startuml
+    partition "two_start_events" {
+        group "two_start_events"
+            :|||START|||;
+            fork
+                :A;
+            fork again
+                :B;
+            end fork
+            :C;
+        end group
+    }
+@enduml

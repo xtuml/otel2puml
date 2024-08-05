@@ -1,0 +1,19 @@
+@startuml
+partition "simple_loop_with_break" {
+    group "simple_loop_with_break"
+        #green:A;
+        repeat
+            :B;
+            if (XOR) then (true)
+                :C;
+                :D;
+                break
+            else (false)
+                :E;
+                :F;
+            endif
+        repeat while
+        #red:G; 
+    end group
+}
+@enduml

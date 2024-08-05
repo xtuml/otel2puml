@@ -1,0 +1,18 @@
+@startuml
+partition "ANDFork_ORFork_a" {
+    group "ANDFork_ORFork_a"
+        #green:A;
+        fork
+            :B;
+            split
+                :D;
+            split again
+                :E;
+            end split
+        fork again
+            :C;
+        end fork
+        #red:F;
+    end group
+}
+@enduml

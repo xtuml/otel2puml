@@ -1,0 +1,16 @@
+@startuml
+partition "nested normal loops" {
+    group "nested normal loops"
+        #green:A;
+        repeat
+            :B;
+            repeat
+                :C;
+                :D;
+            repeat while
+            :E;
+        repeat while
+        #red:F;
+    end group
+}
+@enduml

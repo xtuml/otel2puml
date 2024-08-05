@@ -1,0 +1,27 @@
+@startuml
+partition "break_loop_in_break_loop" {
+    group "break_loop_in_break_loop"
+        #green:A;
+        repeat
+            :B;
+            if (XOR) then (true)
+                repeat
+                    :C;
+                    if (XOR) then (true)
+                        :D;
+                        break
+                    else (false)
+                        :E;
+                    endif
+                repeat while
+                :F;
+                break
+            else (false)
+                :G;
+                :H;
+            endif
+        repeat while
+        #red:I; 
+    end group
+}
+@enduml

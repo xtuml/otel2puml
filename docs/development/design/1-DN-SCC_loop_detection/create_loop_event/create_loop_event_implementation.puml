@@ -1,0 +1,14 @@
+@startuml
+    partition "create_loop_event" {
+        start
+        :input "Loop" paired with parent graph and sub graph;
+        group "main algorithm"
+            :search graph nodes for other loop events and add 1 to the highest loop number;
+            :create loop event with loop number as event type and sub graph as sub graph;
+            :update in event sets as the set of in events sets of the start\nevents that do not contain events from within the loop;
+            :update out event sets as the set of out events sets from break events\nand end events that do not contain events from within the loop;
+            :output Loop event;
+        end group
+        end
+    }
+@enduml

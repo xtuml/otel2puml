@@ -1,0 +1,120 @@
+@startuml
+
+
+enum PUMLEvent {
+    NORMAL
+    BRANCH
+    MERGE
+    BREAK
+    LOOP
+}
+
+enum PUMLOperatorNodes {
+
+    START_XOR
+    PATH_XOR
+    END_XOR
+    START_AND
+    PATH_AND
+    END_AND
+    START_OR
+    PATH_OR
+    END_OR
+    START_LOOP
+    END_LOOP
+}
+
+
+class PUMLNode {
+    node_id: Hashable
+    node_type: str
+    extra_info: dict<str, bool>
+    +write_uml_blocks(int, int): list[str], int
+}
+
+class PUMLEventNode {
+    branch_number: int
+    sub_graph: PUMLGraph
+    event_types: set<PUMLEvent>
+    +__init__(str, int, set<PUMLEvent>, PUMLGraph, int, Hashable)
+    -_write_event_blocks(int): list[str]
+}
+
+class PUMLOperatorNode {
+    operator_type: PUMLOperatorNodes
+    +__init__(PUMLOperatorNodes, int)
+    -_write_operator_blocks(int): list[str]
+}
+
+class PUMLKillNode {
+    +__init__(int)
+}
+
+class PUMLGraph {
+    node_counts: dict<Hashable, int>
+    branch_counts: int
+    kill_counts: int
+    parent_graph_nodes_to_node_ref: dict<Hashable, []PUMLEventNode>
+    sub_graph_nodes: set<PUMLEventNode>
+    edges: set<PUMLNodeTuple>
+    nodes: set<PUMLNode>
+}
+
+class PUMLNodeTuple {
+    #out_node : PUMLNode
+    #in_node : PUMLNode
+    +__hash__() : int
+    +__eq__(PUMLNodeTuple): bool
+}
+
+PUMLGraph ..> PUMLNode
+PUMLGraph ..> PUMLEventNode
+PUMLGraph ..> PUMLNodeTuple
+PUMLNodeTuple ..> PUMLNode
+PUMLEventNode --|> PUMLNode
+PUMLOperatorNode --|> PUMLNode
+PUMLKillNode --|> PUMLNode
+PUMLEventNode ..> PUMLGraph
+PUMLEventNode ..> PUMLEvent
+PUMLOperatorNode ..> PUMLOperatorNodes
+
+class Node {
+    uid: str
+    event_type: str | None
+    operator: str | None
+    event_types: set<PUMLEvent>
+    incoming: []Node
+    outgoing: []Node
+    incoming_logic: []Node
+    outgoing_logic: []Node
+    is_stub: bool
+}
+
+class SubGraphNode {
+    #sub_graph: NodeGraph
+    #start_uid: str
+    #end_uid: str
+    #break_uids: set<str>
+}
+
+class NodeGraph {
+    nodes: set<Node>
+    edges: set<NodeTuple>
+}
+
+class NodeTuple {
+    #out_node : Node
+    #in_node : Node
+    +__hash__() : int
+    +__eq__(NodeTuple): bool
+}
+
+
+
+NodeGraph ..> Node
+NodeGraph ..> NodeTuple
+NodeTuple ..> Node
+SubGraphNode --|> Node
+SubGraphNode ..> NodeGraph
+Node ..> PUMLEvent
+@enduml

@@ -1,0 +1,17 @@
+@startuml
+partition "bunched_merge_ORFork_ORFork" {
+    group "bunched_merge_ORFork_ORFork"
+        #green:A;
+        split
+            split
+                :D;
+            split again
+                :E;
+            end split
+        split again
+            :C;
+        end split
+        #red:F;
+    end group
+}
+@enduml

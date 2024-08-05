@@ -1,0 +1,17 @@
+@startuml
+partition "loop nested XOR" {
+    group "loop nested XOR"
+        #green:A;
+        repeat
+            :B;
+            if (XOR) then (true)
+                :C;
+            else (false)
+                :D;
+            endif
+            :E;
+        repeat while
+        #red:F;
+    end group
+}
+@enduml

@@ -1,0 +1,15 @@
+@startuml
+    partition "nested self loop" {
+        group "nested self loop"
+            :A;
+            repeat
+                :B;
+                repeat
+                    :C;
+                repeat while
+                :D;
+            repeat while
+            :E;
+        end group
+    }
+@enduml
