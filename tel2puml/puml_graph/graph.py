@@ -202,7 +202,7 @@ class PUMLEventNode(PUMLNode):
             )
         blocks = []
         blocks.append(f"{' ' * indent}:{self.node_type}{branch_info};")
-        if self.extra_info.get("is_break", False):
+        if PUMLEvent.BREAK in self.event_types:
             blocks.append(f"{' ' * indent}break")
         return blocks
 
