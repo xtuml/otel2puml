@@ -1,0 +1,17 @@
+@startuml
+partition "two_different_loops_follow_same_event" {
+    group "two_different_loops_follow_same_event"
+        #green:A;
+        if ("") then (yes)
+            repeat
+                :B;
+            repeat while (false)
+        else (no)
+            repeat
+                :C;
+            repeat while (false)
+        endif
+        :D;
+    end group
+}
+@enduml
