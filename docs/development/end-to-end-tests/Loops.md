@@ -81,3 +81,8 @@ Tests a case in which there is a loop with a break in it with the start of a log
 Tests a case where paths in a logic block should be kill paths in a loop due to starting after the loop ends.
 
 ![](/end-to-end-pumls/loops/edge_cases/paths_should_kill_in_loop.svg)
+
+#### Two different loops follow the same event
+Tests a case where two different loops follow the same event
+
+![](/end-to-end-pumls/loops/edge_cases/two_different_loops_follow_same_event.svg)

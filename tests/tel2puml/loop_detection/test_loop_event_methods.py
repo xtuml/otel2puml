@@ -140,10 +140,10 @@ class TestCreateLoopEvent:
     def test_create_loop_event(self) -> None:
         """Tests the create loop event method."""
         loop, graph = self.loop_and_graph()
-        loop_event = create_loop_event(loop, graph)
+        loop_event = create_loop_event(loop, graph, graph)
         assert loop_event.in_event_sets == {EventSet(["A"])}
         assert loop_event.event_sets == {EventSet(["E"])}
-        assert loop_event.event_type == LOOP_EVENT_TYPE
+        assert loop_event.event_type == LOOP_EVENT_TYPE + "_1"
 
     def test_update_loop_event_with_start_end_and_breaks(self) -> None:
         """Tests the update loop event with start end and breaks method."""

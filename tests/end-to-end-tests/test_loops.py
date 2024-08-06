@@ -175,3 +175,17 @@ class TestEdgeCases:
             "end-to-end-pumls/loops/edge_cases/paths_should_kill_in_loop.puml",
             version=version,
         )
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "version", ["v1", "v2"], ids=["version_1", "version_2"]
+    )
+    def test_two_different_loops_follow_same_event(
+        version: Literal["v1", "v2"],
+    ) -> None:
+        """Test two different loops following the same event."""
+        end_to_end_test(
+            "end-to-end-pumls/loops/edge_cases/"
+            "two_different_loops_follow_same_event.puml",
+            version=version,
+        )
