@@ -193,12 +193,14 @@ def add_end_event_to_graph(
     `list`[`list`[`str`]]], optional
     """
     if end_event_to_event_lists is None:
-        end_event_to_event_lists: dict[Event, list[list[str]]] = {}
+        end_event_to_event_lists_used: dict[Event, list[list[str]]] = {}
+    else:
+        end_event_to_event_lists_used = end_event_to_event_lists
     for loop_end_event in loop.end_events:
         graph.add_edge(loop_end_event, end_event)
-        event_lists = end_event_to_event_lists.get(loop_end_event, [])
+        event_lists = end_event_to_event_lists_used.get(loop_end_event, [])
         if event_lists:
-            for event_list in end_event_to_event_lists[loop_end_event]:
+            for event_list in end_event_to_event_lists_used[loop_end_event]:
                 loop_end_event.update_event_sets(event_list)
         else:
             loop_end_event.update_event_sets([DUMMY_END_EVENT])
