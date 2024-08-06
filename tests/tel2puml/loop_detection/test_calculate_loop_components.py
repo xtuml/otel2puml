@@ -44,6 +44,34 @@ class TestCalculateLoopComponents:
         graph.add_edge("E", "A")
         return graph
 
+    def create_graph_two_breaks_both_in_nodes_to_exit_point_without_path(
+        self
+    ) -> "DiGraph[str]":
+        """Creates a graph with two breaks both in nodes to the exit point
+        and one does not have a path back to the ."""
+        graph: "DiGraph[str]" = DiGraph()
+        graph.add_edge("A", "B")
+        graph.add_edge("B", "C")
+        graph.add_edge("C", "B")
+        graph.add_edge("C", "D")
+        graph.add_edge("B", "E")
+        graph.add_edge("E", "F")
+        graph.add_edge("E", "D")
+        graph.add_edge("F", "D")
+        return graph
+
+    def create_graph_two_breaks_both_in_nodes_to_exit_point_with_path(
+        self
+    ) -> "DiGraph[str]":
+        """Creates a graph with two breaks both in nodes to the exit point
+        and both have a path back to the start."""
+        graph = (
+            self.
+            create_graph_two_breaks_both_in_nodes_to_exit_point_without_path()
+        )
+        graph.add_edge("B", "F")
+        return graph
+
     def test_get_break_nodes_from_potential_break_outnodes(self) -> None:
         """Tests the get_break_nodes_from_potential_break_outnodes method."""
         graph = self.create_graph_happy_path()
@@ -51,6 +79,26 @@ class TestCalculateLoopComponents:
             {"B", "D", "C"}, {"F"}, graph,
             {"A", "B", "C", "D", "E"}
         ) == {"H", "K", "I"}
+        # test with two breaks both in nodes to the exit point and one does
+        # not have a path back to the start
+        graph = (
+            self.
+            create_graph_two_breaks_both_in_nodes_to_exit_point_without_path()
+        )
+        assert get_break_nodes_from_potential_break_outnodes(
+            {"B"}, {"D"}, graph,
+            {"B", "C"}
+        ) == {"E"}
+        # test with two breaks both in nodes to the exit point and both have
+        # a path back to the start
+        graph = (
+            self.
+            create_graph_two_breaks_both_in_nodes_to_exit_point_with_path()
+        )
+        assert get_break_nodes_from_potential_break_outnodes(
+            {"B"}, {"D"}, graph,
+            {"B", "C"}
+        ) == {"E", "F"}
 
     def test_get_break_nodes_if_end_to_start_exists(
         self,
