@@ -2,6 +2,7 @@
 
 from typing import NamedTuple, Optional
 
+
 class OTelEvent(NamedTuple):
     """Named tuple for OTel event.
 
@@ -24,6 +25,7 @@ class OTelEvent(NamedTuple):
     :param child_event_ids: A list of IDs of child events. Defaults to `None`
     :type child_event_ids: Optional[`list`[`str`]]
     """
+
     job_name: str
     job_id: str
     event_type: str
