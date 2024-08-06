@@ -15,9 +15,12 @@ End to end test cases for cases involving loops.
   * Two breaks in loop
   * Break point in nested loop
 * [Nested Branch Counts](/docs/development/end-to-end-tests/Loops.md#nested-branch-counts)
+  * Nested branch count at start of loop
+  * Nested branch count at end of loop
 * [Edge Cases](/docs/development/end-to-end-tests/Loops.md#edge-cases)
   * Loop with break with logic directly after loop
   * Paths should kill in loop
+  * Two different loops follow the same event
 
 ## Cases
 ### Self Loops
@@ -67,9 +70,17 @@ Tests a case where a break point is within a nested loop[]
 
 ![](/end-to-end-pumls/loops/break_points/loop_nested_break_point.svg)
 ### Nested Branch Counts
+Tests cases where branch counts are nested within loops
+#### Nested Branch Count At Start Of Loop
 Tests a case where a branch count is nested in a loop, starts the loop and then its children loop back to it again
 
 ![](/end-to-end-pumls/loops/nested_branch_counts/loop_nested_branch_counts.svg)
+
+#### Nested Branch Count At End Of Loop
+Tests a case where a branch count is nested in a loop, ends the loop and then its children loop back to it again
+
+
+![](/end-to-end-pumls/loops/nested_branch_counts/loop_nested_branch_counts_event_at_end_of_loop_equiv.svg)
 ### Edge Cases
 Tests any further edge cases that are considered to be less common
 #### Loop with break with logic directly after loop 

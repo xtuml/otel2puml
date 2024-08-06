@@ -91,17 +91,39 @@ class TestNestedLogicBlocks:
         )
 
 
-@pytest.mark.parametrize(
-    "version", ["v1", "v2"], ids=["version_1", "version_2"]
-)
-def test_nested_branch_counts(version: Literal['v1', 'v2']) -> None:
-    """Test nested branch counts in loop."""
-    end_to_end_test(
-        "end-to-end-pumls/loops/nested_branch_counts/"
-        "loop_nested_branch_counts.puml",
-        is_branch_puml=True,
-        version=version,
+class TestNestedBranchCounts:
+    """End to end tests for nested branch counts in loops."""
+    @staticmethod
+    @pytest.mark.parametrize(
+        "version", ["v1", "v2"], ids=["version_1", "version_2"]
     )
+    def test_nested_branch_counts(version: Literal['v1', 'v2']) -> None:
+        """Test nested branch counts in loop."""
+        end_to_end_test(
+            "end-to-end-pumls/loops/nested_branch_counts/"
+            "loop_nested_branch_counts.puml",
+            is_branch_puml=True,
+            version=version,
+        )
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "version", ["v1", "v2"], ids=["version_1", "version_2"]
+    )
+    def test_loop_nested_branch_counts_event_at_end_of_loop(
+        version: Literal['v1', 'v2']
+    ) -> None:
+        """Test loop with nested branch counts and event at end of loop."""
+        end_to_end_test(
+            "end-to-end-pumls/loops/nested_branch_counts/"
+            "loop_nested_branch_counts_event_at_end_of_loop.puml",
+            is_branch_puml=True,
+            version=version,
+            equivalent_pumls=[
+                "end-to-end-pumls/loops/nested_branch_counts/"
+                "loop_nested_branch_counts_event_at_end_of_loop_equiv.puml",
+            ]
+        )
 
 
 class TestBreakPoints:
