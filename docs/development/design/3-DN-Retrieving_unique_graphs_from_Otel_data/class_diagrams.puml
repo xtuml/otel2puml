@@ -55,8 +55,8 @@ class IngestData {
 IngestData ..> OTELDataSource
 IngestData ..> DataHolder
 OTELDataSource ..> OTelEvent
-JSONDataSource --> OTELDataSource
-SQLDataHolder --> DataHolder
+JSONDataSource <-- OTELDataSource
+SQLDataHolder <-- DataHolder
 NodeModel <.. SQLDataHolder
 Base --> NodeModel
 DataHolder ..> OTelEvent
