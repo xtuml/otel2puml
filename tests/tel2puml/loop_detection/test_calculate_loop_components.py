@@ -110,6 +110,26 @@ class TestCalculateLoopComponents:
             {"E"}, {"B", "D", "C"}, {"A"}, graph,
             {"A", "B", "C", "D", "E"}
         ) == {"H", "K", "I"}
+        # test with two breaks both in nodes to the exit point and one does
+        # not have a path back to the start
+        graph = (
+            self.
+            create_graph_two_breaks_both_in_nodes_to_exit_point_without_path()
+        )
+        assert get_break_nodes_if_end_to_start_exists(
+            {"C"}, {"B"}, {"B"},
+            graph, {"B", "C"}
+        ) == {"E"}
+        # test with two breaks both in nodes to the exit point and both have
+        # a path back to the start
+        graph = (
+            self.
+            create_graph_two_breaks_both_in_nodes_to_exit_point_with_path()
+        )
+        assert get_break_nodes_if_end_to_start_exists(
+            {"C"}, {"B"}, {"B"},
+            graph, {"B", "C"}
+        ) == {"E", "F"}
 
     @staticmethod
     def create_graph_unhappy_path() -> "DiGraph[str]":
