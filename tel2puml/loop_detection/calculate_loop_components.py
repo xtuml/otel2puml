@@ -199,12 +199,15 @@ def get_break_nodes_from_potential_break_outnodes(
     for node in potential_break_outnodes:
         # get all break nodes that have a path to the exit points
         # from the break out node
-        in_nodes_with_path_from_node = [
-            in_node
-            for in_node in in_nodes_to_exit_points_not_end_nodes
-            if has_path(graph, node, in_node)
-        ]
-        break_nodes.update(in_nodes_with_path_from_node)
+        for in_node in in_nodes_to_exit_points_not_end_nodes:
+            copy_graph: DiGraph[T] = graph.copy()
+            copy_graph.remove_nodes_from(
+                (
+                    in_nodes_to_exit_points_not_end_nodes - {in_node}
+                ) | (scc_nodes - {node})
+            )
+            if has_path(copy_graph, node, in_node):
+                break_nodes.add(in_node)
         # get all break nodes that have no path to the exit points
         # from the break out node
         break_nodes.update([
