@@ -53,8 +53,8 @@ class Base(DeclarativeBase):
     pass
 
 
-node_association = Table(
-    "node_association",
+NODE_ASSOCIATION = Table(
+    "NODE_ASSOCIATION",
     Base.metadata,
     Column("parent_id", Integer, ForeignKey("nodes.id"), primary_key=True),
     Column("child_id", Integer, ForeignKey("nodes.id"), primary_key=True),
@@ -82,9 +82,9 @@ class NodeModel(Base):
 
     children = relationship(
         "NodeModel",
-        secondary=node_association,
-        primaryjoin=(id == node_association.c.parent_id),
-        secondaryjoin=(id == node_association.c.child_id),
+        secondary=NODE_ASSOCIATION,
+        primaryjoin=(id == NODE_ASSOCIATION.c.parent_id),
+        secondaryjoin=(id == NODE_ASSOCIATION.c.child_id),
         backref="parents",
     )
 
