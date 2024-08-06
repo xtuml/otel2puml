@@ -1,11 +1,9 @@
 data_sources:
   json:
-    type: JSONDataSource
     path: /path/to/your/json/directory/or/file
 
 data_holders:
   sql:
-    type: SQLDataHolder
     db_uri: sqlite:///graph_database.db
     batch_size: 100
     time_buffer: 15 # minutes
