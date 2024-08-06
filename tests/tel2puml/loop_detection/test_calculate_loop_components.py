@@ -48,7 +48,7 @@ class TestCalculateLoopComponents:
         self
     ) -> "DiGraph[str]":
         """Creates a graph with two breaks both in nodes to the exit point
-        and one does not have a path back to the ."""
+        and one does not have a path back to the break out node."""
         graph: "DiGraph[str]" = DiGraph()
         graph.add_edge("A", "B")
         graph.add_edge("B", "C")
