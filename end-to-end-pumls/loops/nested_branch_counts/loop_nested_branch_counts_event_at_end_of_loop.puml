@@ -1,0 +1,11 @@
+@startuml
+    partition "loop_nested_branch_counts_event_at_end_of_loop" {
+        group "loop_nested_branch_counts_event_at_end_of_loop"
+            :A;
+            :B;
+            :B;
+            :B,BCNT,name=BC1;
+            :C;
+        end group
+    }
+@enduml

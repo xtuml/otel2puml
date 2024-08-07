@@ -3,7 +3,7 @@ import pytest
 from networkx import DiGraph
 
 from tel2puml.events import Event, EventSet
-from tel2puml.loop_detection.loop_types import LoopEvent, Loop
+from tel2puml.loop_detection.loop_types import LoopEvent, Loop, EventEdge
 from tel2puml.loop_detection.calculate_updated_graph import (
     get_event_list_from_event_sets_intersecting_with_event_types_set,
     check_eventsets_indicate_branch_for_set_of_event_types,
@@ -13,8 +13,71 @@ from tel2puml.loop_detection.calculate_updated_graph import (
     update_graph_for_loop_start_events,
     update_graph_for_loop_end_events,
     update_graph_for_break_events_with_path_to_root_event,
-    calculate_updated_graph_with_loop_event
+    calculate_updated_graph_with_loop_event,
+    remove_event_sets_mirroring_removed_edges,
+    remove_event_edges_and_event_sets
 )
+
+
+class TestsRemoveEdgesAndEventSets:
+    """Group of tests for removal of edges and event sets:
+
+    * remove_event_sets_mirroring_removed_edges
+    * remove_event_edges_and_event_sets
+    """
+    @staticmethod
+    def test_remove_event_sets_mirroring_removed_edges(
+        graph_and_events: tuple["DiGraph[Event]", dict[str, Event]]
+    ) -> None:
+        """Test the removal of event sets that mirror the removal of edges."""
+        _, events = graph_and_events
+        # Test removing a single event edge from the graph
+        assert events["A"].in_event_sets == {EventSet(["D"])}
+        assert events["D"].event_sets == {EventSet(["E"]), EventSet(["A"])}
+        remove_event_sets_mirroring_removed_edges(
+            [EventEdge(events["D"], events["A"])]
+        )
+        assert events["A"].in_event_sets == set()
+        assert events["D"].event_sets == {EventSet(["E"])}
+        # test removing an event sets that are asynchronous events
+        assert events["A"].event_sets == {EventSet(["B", "C"])}
+        assert events["B"].in_event_sets == {EventSet(["A"])}
+        assert events["C"].in_event_sets == {EventSet(["A"])}
+        remove_event_sets_mirroring_removed_edges(
+            [EventEdge(events["A"], events["B"])]
+        )
+        assert events["A"].event_sets == set()
+        assert events["B"].in_event_sets == set()
+        assert events["C"].in_event_sets == {EventSet(["A"])}
+
+    @staticmethod
+    def test_remove_event_edges_and_event_sets(
+        graph_and_events: tuple["DiGraph[Event]", dict[str, Event]]
+    ) -> None:
+        """Test the removal of event edges and event sets."""
+        graph, events = graph_and_events
+        # Test removing a single event edge from the graph
+        assert events["A"].in_event_sets == {EventSet(["D"])}
+        assert events["D"].event_sets == {EventSet(["E"]), EventSet(["A"])}
+        remove_event_edges_and_event_sets(
+            [EventEdge(events["D"], events["A"])],
+            graph,
+        )
+        assert events["A"].in_event_sets == set()
+        assert events["D"].event_sets == {EventSet(["E"])}
+        assert EventEdge(events["D"], events["A"]) not in graph.edges()
+        # test removing an event sets that are asynchronous events
+        assert events["A"].event_sets == {EventSet(["B", "C"])}
+        assert events["B"].in_event_sets == {EventSet(["A"])}
+        assert events["C"].in_event_sets == {EventSet(["A"])}
+        remove_event_edges_and_event_sets(
+            [EventEdge(events["A"], events["B"])],
+            graph,
+        )
+        assert events["A"].event_sets == set()
+        assert events["B"].in_event_sets == set()
+        assert events["C"].in_event_sets == {EventSet(["A"])}
+        assert EventEdge(events["A"], events["B"]) not in graph.edges()
 
 
 class TestGetEventListsWithLoopEvents:

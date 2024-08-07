@@ -1,6 +1,6 @@
 """Module to calculate the updated graph after a new loop event has been
 created"""
-from typing import Any, Generator
+from typing import Any, Generator, Iterable
 
 from networkx import DiGraph, has_path
 import pandas as pd
@@ -11,9 +11,6 @@ from tel2puml.utils import (
     has_path_back_to_chosen_nodes
 )
 from tel2puml.events import Event, EventSet
-from tel2puml.loop_detection.sub_graph_of_loop import (
-    remove_event_edges_and_event_sets
-)
 from tel2puml.tel2puml_types import DUMMY_END_EVENT
 from tel2puml.loop_detection.loop_types import (
     LoopEvent, Loop, EventEdge, DUMMY_BREAK_EVENT_TYPE
@@ -429,3 +426,33 @@ def filter_and_replace_breaks_connected_to_end_events(
                     graph.add_edge(dummy_break_event, break_event)
                     loop.break_events.add(dummy_break_event)
             loop.break_events.remove(break_event)
+
+
+def remove_event_sets_mirroring_removed_edges(
+    event_edges: Iterable[EventEdge],
+) -> None:
+    """Remove the :class:`EventSet`s that are associated with the removed
+    edges.
+
+    :param event_edges: The edges to remove the :class:`EventSet`s from.
+    :type event_edges: `Iterable`[:class:`EventEdge`]
+    """
+    for out_event, in_event in event_edges:
+        out_event.remove_event_type_from_event_sets(in_event.event_type)
+        in_event.remove_event_type_from_in_event_sets(out_event.event_type)
+
+
+def remove_event_edges_and_event_sets(
+    event_edges: Iterable[EventEdge],
+    graph: "DiGraph[Event]",
+) -> None:
+    """Remove the edges from the graph and the :class:`EventSet`s that are
+    associated with the removed edges.
+
+    :param event_edges: The edges to remove.
+    :type event_edges: `Iterable`[:class:`EventEdge`]
+    :param graph: The graph to remove the edges from.
+    :type graph: :class:`DiGraph`[:class:`Event`]
+    """
+    graph.remove_edges_from(event_edges)
+    remove_event_sets_mirroring_removed_edges(event_edges)

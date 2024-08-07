@@ -1,11 +1,16 @@
 """Module for creating sub graph of loop"""
 from copy import deepcopy
-from typing import Iterable, TypeVar
+from typing import TypeVar
 
 from networkx import DiGraph, weakly_connected_components
 
 from tel2puml.events import Event
 from tel2puml.loop_detection.loop_types import Loop, EventEdge
+from tel2puml.loop_detection.calculate_updated_graph import (
+    get_event_lists_with_loop_events,
+    remove_event_edges_and_event_sets,
+    remove_event_sets_mirroring_removed_edges
+)
 from tel2puml.tel2puml_types import DUMMY_START_EVENT, DUMMY_END_EVENT
 from tel2puml.utils import (
     get_innodes_not_in_set, get_outnodes_not_in_set,
@@ -43,36 +48,6 @@ def remove_loop_edges(
     )
     remove_event_edges_and_event_sets(break_points_out_edges, graph)
     remove_event_edges_and_event_sets(loop.edges_to_remove, graph)
-
-
-def remove_event_sets_mirroring_removed_edges(
-    event_edges: Iterable[EventEdge],
-) -> None:
-    """Remove the :class:`EventSet`s that are associated with the removed
-    edges.
-
-    :param event_edges: The edges to remove the :class:`EventSet`s from.
-    :type event_edges: `Iterable`[:class:`EventEdge`]
-    """
-    for out_event, in_event in event_edges:
-        out_event.remove_event_type_from_event_sets(in_event.event_type)
-        in_event.remove_event_type_from_in_event_sets(out_event.event_type)
-
-
-def remove_event_edges_and_event_sets(
-    event_edges: Iterable[EventEdge],
-    graph: "DiGraph[Event]",
-) -> None:
-    """Remove the edges from the graph and the :class:`EventSet`s that are
-    associated with the removed edges.
-
-    :param event_edges: The edges to remove.
-    :type event_edges: `Iterable`[:class:`EventEdge`]
-    :param graph: The graph to remove the edges from.
-    :type graph: :class:`DiGraph`[:class:`Event`]
-    """
-    graph.remove_edges_from(event_edges)
-    remove_event_sets_mirroring_removed_edges(event_edges)
 
 
 def get_disconnected_loop_sub_graph(
@@ -118,11 +93,45 @@ def add_start_and_end_events_to_sub_graph(
     loop.loop_events.add(end_event)
 
 
+def create_end_event_to_event_lists_mapping(
+    end_events: set[Event],
+    loop: Loop,
+    graph: "DiGraph[Event]",
+) -> dict[Event, list[list[str]]]:
+    """Create a mapping from the end events to the event lists that are
+    associated with the end events.
+
+    :param end_events: The end events to create the mapping for.
+    :type end_events: `set`[:class:`Event`]
+    :param loop: The loop to get the event lists from.
+    :type loop: :class:`Loop`
+    :param graph: The graph to get the event lists from.
+    :type graph: :class:`DiGraph`[:class:`Event`]
+    :return: The mapping from the end events to the event lists.
+    :rtype: `dict`[:class:`Event`, `list`[`list`[`str`]]]
+    """
+    end_event_to_event_lists: dict[Event, list[list[str]]] = {}
+    for end_event in end_events:
+        out_event_types = {
+            out_event.event_type
+            for out_event in
+            get_outnodes_not_in_set({end_event}, loop.loop_events, graph)
+        }
+        event_lists = get_event_lists_with_loop_events(
+            end_event.event_sets,
+            out_event_types,
+            DUMMY_END_EVENT
+        )
+        end_event_to_event_lists[end_event] = event_lists
+    return end_event_to_event_lists
+
+
 def add_start_and_end_events_to_graph(
     loop: Loop,
     graph: "DiGraph[Event]",
     start_event: Event,
     end_event: Event,
+    end_event_to_event_lists: dict[Event, list[list[str]]] | None = None,
 ) -> None:
     """Add the start and end events to the graph.
 
@@ -134,9 +143,13 @@ def add_start_and_end_events_to_graph(
     :type start_event: :class:`Event`
     :param end_event: The end event to add to the graph.
     :type end_event: :class:`Event`
+    :param end_event_to_event_lists: The mapping from the end events to the
+    event lists that are associated with the end events, defaults to None.
+    :type end_event_to_event_lists: `dict`[:class:`Event`,
+    `list`[`list`[`str`]]], optional
     """
     add_start_event_to_graph(start_event, loop, graph)
-    add_end_event_to_graph(end_event, loop, graph)
+    add_end_event_to_graph(end_event, loop, graph, end_event_to_event_lists)
     loop.loop_events.add(start_event)
     loop.loop_events.add(end_event)
 
@@ -164,6 +177,7 @@ def add_end_event_to_graph(
     end_event: Event,
     loop: Loop,
     graph: "DiGraph[Event]",
+    end_event_to_event_lists: dict[Event, list[list[str]]] | None = None,
 ) -> None:
     """Add the edges from the loop end events to the end event.
 
@@ -173,10 +187,24 @@ def add_end_event_to_graph(
     :type loop: :class:`Loop`
     :param graph: The graph to add the edges to.
     :type graph: :class:`DiGraph`[:class:`Event`]
+    :param end_event_to_event_lists: The mapping from the end events to the
+    event lists that are associated with the end events, defaults to None.
+    :type end_event_to_event_lists: `dict`[:class:`Event`,
+    `list`[`list`[`str`]]], optional
     """
+    if end_event_to_event_lists is None:
+        end_event_to_event_lists_used: dict[Event, list[list[str]]] = {}
+    else:
+        end_event_to_event_lists_used = end_event_to_event_lists
     for loop_end_event in loop.end_events:
         graph.add_edge(loop_end_event, end_event)
-        loop_end_event.update_event_sets([DUMMY_END_EVENT])
+        event_lists = end_event_to_event_lists_used.get(loop_end_event, [])
+        if event_lists:
+            for event_list in end_event_to_event_lists_used[loop_end_event]:
+                loop_end_event.update_event_sets(event_list)
+        else:
+            loop_end_event.update_event_sets([DUMMY_END_EVENT])
+        end_event.update_in_event_sets([loop_end_event.event_type])
 
 
 def create_start_event(
@@ -273,6 +301,11 @@ def create_sub_graph_of_loop(
     sub_loop, sub_graph = deepcopy((loop, graph))
     # add start and end events to subgraph
     start_event, end_event = create_start_and_end_events(sub_loop, sub_graph)
+    # get end event to event lists mapping so that we can make sure branch
+    # events are still accounted for in loops
+    end_event_to_event_lists_mapping = create_end_event_to_event_lists_mapping(
+        sub_loop.end_events, sub_loop, sub_graph
+    )
     # remove loop edges from sub graph
     remove_loop_edges(sub_loop, sub_graph)
     # get nodes without path back to loop nodes and then remove event sets
@@ -292,6 +325,7 @@ def create_sub_graph_of_loop(
     # remove nodes from the graph without a path back to the loop events
     sub_graph.remove_nodes_from(nodes_without_path_back)
     add_start_and_end_events_to_graph(
-        sub_loop, sub_graph, start_event, end_event
+        sub_loop, sub_graph, start_event, end_event,
+        end_event_to_event_lists=end_event_to_event_lists_mapping
     )
     return sub_graph, start_event, end_event

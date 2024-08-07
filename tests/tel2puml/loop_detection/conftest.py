@@ -102,3 +102,39 @@ def loop(events: dict[str, "Event"]) -> Loop:
             EventEdge(events["I"], events["F"]),
         },
     )
+
+
+@pytest.fixture
+def graph_and_events() -> tuple["DiGraph[Event]", dict[str, Event]]:
+    """Create a graph for testing"""
+    graph: "DiGraph[Event]" = DiGraph()
+    A = Event("A")
+    B = Event("B")
+    C = Event("C")
+    D = Event("D")
+    E = Event("E")
+    F = Event("F")
+    G = Event("G")
+    graph.add_edge(A, B)
+    graph.add_edge(A, C)
+    graph.add_edge(B, D)
+    graph.add_edge(C, D)
+    graph.add_edge(D, E)
+    graph.add_edge(B, F)
+    graph.add_edge(F, G)
+    graph.add_edge(G, E)
+    graph.add_edge(D, A)
+    for edge in graph.edges:
+        if not edge[0].event_type == "A":
+            edge[0].update_event_sets([edge[1].event_type])
+        edge[1].update_in_event_sets([edge[0].event_type])
+    A.update_event_sets(["B", "C"])
+    return graph, {
+        "A": A,
+        "B": B,
+        "C": C,
+        "D": D,
+        "E": E,
+        "F": F,
+        "G": G,
+    }
