@@ -110,6 +110,7 @@ class TestJSONDataSource:
         "mock_yaml_config", "mock_path_exists", "mock_filepath_in_dir"
     )
     def test_init() -> None:
+        """Tests the classes init method."""
         json_source = JSONDataSource()
         assert json_source.file_ext == "json"
         assert json_source.dirpath == "/path/to/json/directory"
@@ -120,6 +121,7 @@ class TestJSONDataSource:
     def test_get_file_list_filepath(
         mock_yaml_config_string: str,
     ) -> None:
+        """Tests getting the json filepath if directory is not specified."""
         no_dir_path_yaml = mock_yaml_config_string.replace(
             "dirpath: /path/to/json/directory", 'dirpath: ""'
         )
@@ -132,6 +134,7 @@ class TestJSONDataSource:
     def test_get_file_list_dirpath(
         mock_file_list: list[str],
     ) -> None:
+        """Tests getting the json filepaths if the directory is specified."""
         with patch(
             "os.listdir",
             return_value=["/mock/dir/file1.json", "/mock/dir/file2.json"],
@@ -145,6 +148,7 @@ class TestJSONDataSource:
         mock_json_data: list[dict[str, Any]],
         mock_yaml_config_string: str,
     ) -> None:
+        """Tests parsing a json file."""
         no_dir_path_yaml = mock_yaml_config_string.replace(
             "dirpath: /path/to/json/directory", 'dirpath: ""'
         )
@@ -169,6 +173,7 @@ class TestJSONDataSource:
     def test_create_otel_object(
         mock_json_data: list[dict[str, Any]],
     ) -> None:
+        """Tests creating an OTelEvent object."""
         json_source = JSONDataSource()
         otel_event = json_source.create_otel_object(mock_json_data[0])
 
@@ -189,6 +194,7 @@ class TestJSONDataSource:
         mock_yaml_config_string: str,
         mock_json_data: list[dict[str, Any]],
     ) -> None:
+        """Tests the __iter__ method."""
         with patch(
             "builtins.open", mock_open(read_data=mock_yaml_config_string)
         ):
