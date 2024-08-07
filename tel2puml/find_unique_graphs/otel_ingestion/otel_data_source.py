@@ -24,7 +24,7 @@ class OTELDataSource(ABC):
         """Returns the yaml config as a dictionary.
 
         :return: Config file represented as a dictionary,
-        :rtype: `Dict`[`str`,`Any`]
+        :rtype: `Any`
         """
         with open("tel2puml/find_unique_graphs/config.yaml", "r") as f:
             return yaml.load(f, Loader=yaml.SafeLoader)
@@ -32,7 +32,7 @@ class OTELDataSource(ABC):
     def set_file_ext(self) -> str:
         """Set the file ext.
 
-        :return: The file extension used.
+        :return: The type of file used.
         :rtype: `str`
         """
         file_ext: str = self.yaml_config["ingest_data"]["data_source"]
@@ -85,7 +85,7 @@ class JSONDataSource(OTELDataSource):
         """Set the directory path.
 
         :return: The directory path
-        :rtype: `str`
+        :rtype: `str` | `None`
         """
         dirpath: str = self.yaml_config["data_sources"][f"{self.file_ext}"][
             "dirpath"
@@ -101,7 +101,7 @@ class JSONDataSource(OTELDataSource):
         """Set the filepath.
 
         :return: The filepath
-        :rtype: `str`
+        :rtype: `str` | `None`
         """
         filepath: str = self.yaml_config["data_sources"][f"{self.file_ext}"][
             "filepath"
