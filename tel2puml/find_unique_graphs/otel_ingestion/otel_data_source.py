@@ -2,8 +2,9 @@
 
 import yaml
 import os
+import ijson
 from abc import ABC, abstractmethod
-from typing import Self, Any, Dict
+from typing import Self, Any, Iterator
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     OTelEvent,
@@ -25,7 +26,7 @@ class OTELDataSource(ABC):
                 """No directory or files found. Please check yaml config."""
             )
 
-    def get_yaml_config(self) -> Dict[str, Any]:
+    def get_yaml_config(self) -> Any:
         """Returns the yaml config as a dictionary.
 
         :return: Config file represented as a dictionary,
@@ -40,7 +41,7 @@ class OTELDataSource(ABC):
         :return: The file extension used.
         :rtype: `str`
         """
-        file_ext = self.yaml_config["ingest_data"]["data_source"]
+        file_ext: str = self.yaml_config["ingest_data"]["data_source"]
         if file_ext not in self.valid_file_exts:
             raise ValueError(
                 f"""
@@ -56,8 +57,9 @@ class OTELDataSource(ABC):
         :return: The directory path
         :rtype: `str`
         """
-        file_ext = self.yaml_config["ingest_data"]["data_source"]
-        dirpath = self.yaml_config["data_sources"][f"{file_ext}"]["dirpath"]
+        dirpath: str = self.yaml_config["data_sources"][f"{self.file_ext}"][
+            "dirpath"
+        ]
 
         if not dirpath:
             return None
@@ -71,13 +73,14 @@ class OTELDataSource(ABC):
         :return: The filepath
         :rtype: `str`
         """
-        file_ext = self.yaml_config["ingest_data"]["data_source"]
-        filepath = self.yaml_config["data_sources"][f"{file_ext}"]["filepath"]
+        filepath: str = self.yaml_config["data_sources"][f"{self.file_ext}"][
+            "filepath"
+        ]
 
         if not filepath:
             return None
-        elif not filepath.endswith(f".{file_ext}"):
-            raise ValueError(f"File provided is not .{file_ext} format.")
+        elif not filepath.endswith(f".{self.file_ext}"):
+            raise ValueError(f"File provided is not .{self.file_ext} format.")
         elif not os.path.isfile(filepath):
             raise ValueError(f"{filepath} does not exist.")
         return filepath
@@ -101,12 +104,85 @@ class OTELDataSource(ABC):
 
 
 class JSONDataSource(OTELDataSource):
-    """Class to handle parsing JSON OTel data, returning OTelEvent ojects"""
+    """Class to handle parsing JSON OTel data from a file or directory,
+    returning OTelEvent objects.
+    """
+
+    def __init__(self) -> None:
+        """Constructor method."""
+        super().__init__()
+        self.file_list = self.get_file_list()
+        self.current_file_index = 0
+        self.current_parser: Iterator[OTelEvent] | None = None
+
+    def get_file_list(self) -> list[str]:
+        """Get a list of JSON filepaths to process.
+
+        :return: A list of filepaths.
+        :rtype: `list`[`str`]
+        """
+        if self.dirpath:
+            return [
+                os.path.join(self.dirpath, f)
+                for f in os.listdir(self.dirpath)
+                if f.endswith(f".{self.file_ext}")
+            ]
+        elif self.filepath:
+            return [self.filepath]
+        raise ValueError("Directory/Filepath not set.")
+
+    def parse_json_stream(self, filepath: str) -> Iterator[OTelEvent]:
+        """Parse JSON file.
+
+        :return: An OTelEvent object
+        :rtype: `Iterator`[`OTelEvent`]
+        """
+        with open(filepath, "rb") as file:
+            for record in ijson.items(file, "item"):
+                yield self.create_otel_object(record)
+
+    def create_otel_object(self, record: dict[str, Any]) -> OTelEvent:
+        """Creates an OTelEvent object from a JSON record.
+
+        :return: OTelEvent object
+        :rtype: :class:`OTelEvent`
+        """
+        return OTelEvent(
+            job_name=record["job_name"],
+            job_id=record["job_id"],
+            event_type=record["event_type"],
+            event_id=record["event_id"],
+            start_timestamp=record["start_timestamp"],
+            end_timestamp=record["end_timestamp"],
+            application_name=record["application_name"],
+            parent_event_id=record["parent_event_id"],
+            child_event_ids=record.get("child_event_ids", None),
+        )
 
     def __next__(self) -> OTelEvent:
-        """Returns the next item in the sequence.
+        """Returns the next OTelEvent in the sequence.
 
-        :return: The next OTelEvent in the sequence
+        :return: An OTelEvent object.
         :rtype: :class: `OTelEvent`
         """
-        pass
+        while self.current_file_index < len(self.file_list):
+            if self.current_parser is None:
+                self.current_parser = self.parse_json_stream(
+                    self.file_list[self.current_file_index]
+                )
+            try:
+                return next(self.current_parser)
+            except StopIteration:
+                self.current_file_index += 1
+                self.current_parser = None
+
+        raise StopIteration
+
+
+if __name__ == "__main__":
+    # Create an instance of JSONDataSource
+    json_source = JSONDataSource()
+
+    # Loop through the data
+    for otel_event in json_source:
+        print(otel_event)
