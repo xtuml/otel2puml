@@ -1,7 +1,7 @@
 """Tests for otel_data_source module."""
 
-import pytest
 import json
+import pytest
 from typing import Any
 
 from unittest.mock import mock_open, patch
@@ -32,7 +32,7 @@ class TestOTELDataSource:
         "mock_yaml_config", "mock_path_exists", "mock_filepath_in_dir"
     )
     def test_set_file_ext_valid() -> None:
-        """Tests for valid file ext within the data source object."""
+        """Tests for valid file ext."""
         data_source = JSONDataSource()
         assert data_source.file_ext == "json"
 
@@ -45,6 +45,10 @@ class TestOTELDataSource:
         ), patch("os.path.isfile", return_value=True):
             with pytest.raises(ValueError, match="is not a valid file ext"):
                 JSONDataSource()
+
+
+class TestJSONDataSource:
+    """Tests for JSONDataSource class."""
 
     @staticmethod
     @pytest.mark.usefixtures(
@@ -100,10 +104,6 @@ class TestOTELDataSource:
                 FileNotFoundError, match="No directory or files found"
             ):
                 JSONDataSource()
-
-
-class TestJSONDataSource:
-    """Tests for JSONDataSource class."""
 
     @staticmethod
     @pytest.mark.usefixtures(
