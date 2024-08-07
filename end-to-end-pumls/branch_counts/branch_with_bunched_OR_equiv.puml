@@ -1,0 +1,14 @@
+@startuml
+    partition "branch_with_bunched_OR" {
+        group "branch_with_bunched_OR"
+            :A;
+            :B,BCNT,user=B,name=BC1;
+            if () then (true)
+                :C;
+            else (false)
+                :D;
+            endif
+            :E;
+        end group
+    }
+@enduml

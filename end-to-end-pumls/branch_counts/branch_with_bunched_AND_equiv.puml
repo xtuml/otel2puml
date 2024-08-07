@@ -1,0 +1,14 @@
+@startuml
+    partition "branch_with_bunched_AND" {
+        group "branch_with_bunched_AND"
+            :A;
+            :B,BCNT,user=B,name=BC1;
+            fork
+                :C;
+            fork again
+                :D;
+            end fork
+            :E;
+        end group
+    }
+@enduml

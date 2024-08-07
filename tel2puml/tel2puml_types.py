@@ -87,6 +87,8 @@ DUMMY_START_EVENT = "|||START|||"
 
 DUMMY_END_EVENT = "|||END|||"
 
+DUMMY_EVENT = "|||DUMMY|||"
+
 
 class OtelSpan(TypedDict):
     """TypedDict for OtelSpan"""
