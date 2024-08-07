@@ -51,8 +51,17 @@ class OTelEvent(NamedTuple):
 
 class OTELDataSource(ABC):
     """Abstract class for returning a OTelEvent object from a data source."""
+
+    def __init__(self) -> None:
+        """Constructor method."""
+        self.yaml_config: dict[str, Any]
+        self.valid_file_exts: list[str]
+        self.file_ext: str
+        self.dirpath : str
+        self.filepath: str
+        self.file_list: list[str]
     
-    def __iter__(self) -> self:
+    def __iter__(self) -> Self:
         """Returns the iterator object.
 
         :return: The iterator object
@@ -68,9 +77,54 @@ class OTELDataSource(ABC):
         :rtype: :class: `OTelEvent`
         """
 
+    def get_yaml_config(self) -> Any:
+        """Returns the yaml config as a dictionary.
+
+        :return: Config file represented as a dictionary,
+        :rtype: `Dict`[`str`,`Any`]
+        """
+        pass
+
+    def set_file_ext(self) -> str:
+        """Set the file ext.
+
+        :return: The file extension used.
+        :rtype: `str`
+        """
+        pass
+
+    def set_dirpath(self) -> str | None:
+        """Set the directory path.
+
+        :return: The directory path
+        :rtype: `str`
+        """
+        pass
+
+    def set_filepath(self) -> str | None:
+        """Set the filepath.
+
+        :return: The filepath
+        :rtype: `str`
+        """
+        pass
+
+    def get_file_list(self) -> list[str]:
+        """Get a list of filepaths to process.
+
+        :return: A list of filepaths.
+        :rtype: `list`[`str`]
+        """
+        pass
 
 class JSONDataSource(OTELDataSource):
     """A class to handle OTel Data in JSON format"""
+
+    def __init__(self) -> None:
+        """Constructor method."""
+        super().__init__()
+        self.current_file_index: int
+        self.current_parser: Iterator[OTelEvent] | None
 
     def __next__(self) -> OTelEvent:
         """Returns the next item in the sequence.
@@ -78,6 +132,22 @@ class JSONDataSource(OTELDataSource):
         :return: The next OTelEvent in the sequence
         :rtype: :class: `OTelEvent`
         """
+    
+    def parse_json_stream(self, filepath: str) -> Iterator[OTelEvent]:
+        """Parse JSON file. ijson iteratively parses the json file.
+
+        :return: An OTelEvent object
+        :rtype: `Iterator`[`OTelEvent`]
+        """
+        pass
+
+    def create_otel_object(self, record: dict[str, Any]) -> OTelEvent:
+        """Creates an OTelEvent object from a JSON record.
+
+        :return: OTelEvent object
+        :rtype: :class:`OTelEvent`
+        """
+        pass
 
 class DataHolder(ABC):
     """An abstract class to handle saving processed OTel data."""
