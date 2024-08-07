@@ -1,7 +1,7 @@
 """Module to detect logic gates from EventSet's held in Event class and create
 a logic gate process tree"""
 
-from typing import Any, Generator
+from typing import Any, Generator, TypeVar
 from itertools import permutations
 from datetime import datetime, timedelta
 from uuid import uuid4
@@ -13,10 +13,15 @@ from pm4py import (  # type: ignore[import-untyped]
     ProcessTree,
     format_dataframe,
 )
+import numpy as np
+from numpy.typing import NDArray
 
 import tel2puml.events as ev
 from tel2puml.utils import get_weighted_cover
 from tel2puml.tel2puml_types import DUMMY_START_EVENT
+
+
+T = TypeVar("T", bound=np.generic, covariant=True)
 
 
 class Operator(Enum):
@@ -428,6 +433,204 @@ def process_missing_and_gates(
         process_missing_and_gates(event_sets, child)
 
 
+def get_process_tree_leaves(
+    process_tree: ProcessTree,
+) -> Generator[str, Any, None]:
+    """Method to get the leaves of a process tree.
+
+    :param process_tree: The process tree.
+    :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+    :return: The leaves.
+    :rtype: `Generator`[:class:`pm4py.objects.process_tree.obj.ProcessTree`,
+    `Any`, `None`]
+    """
+    if process_tree.label is not None:
+        if not isinstance(process_tree.label, str):
+            raise ValueError("Label must be a string")
+        yield process_tree.label
+    else:
+        for child in process_tree.children:
+            yield from get_process_tree_leaves(child)
+
+
+def get_matrix_of_event_counts_from_event_sets_and_leaves(
+    event_sets: set["ev.EventSet"],
+    leaves: set[str],
+) -> NDArray[np.int32]:
+    """Method to get a matrix of event counts from event sets and leaves.
+
+    :param event_sets: The event sets.
+    :type event_sets: `set`[:class:`tel2puml.events.EventSet`]
+    :param leaves: The leaves.
+    :type leaves: `set`[`str`]
+    :return: The matrix of event counts.
+    :rtype: :class:`numpy.ndarray`
+    """
+    records: list[list[int]] = []
+    for event_set in event_sets:
+        if event_set.has_intersection_with_event_types(
+            leaves
+        ):
+            event_counts = (
+                event_set.get_event_type_counts_for_given_event_types(
+                        leaves
+                )
+            )
+            records.append(
+                [
+                    event_counts.get(leaf, 0)
+                    for leaf in leaves
+                ]
+            )
+    return np.array(records, dtype=np.int32)
+
+
+def order_matrix_of_event_counts(
+    matrix: NDArray[np.int32]
+) -> NDArray[np.int32]:
+    """Method to order a matrix of event counts so that rows that have more of
+    the same columns with non-zero values are grouped together.
+
+    :param matrix: The matrix.
+    :type matrix: :class:`numpy.ndarray`
+    :return: The ordered matrix.
+    :rtype: :class:`numpy.ndarray`
+    """
+    matrix_of_ones: NDArray[np.intp] = np.sign(matrix, dtype=np.intp)
+    unique_rows, row_indices = np.unique(
+        matrix_of_ones, return_inverse=True, axis=0
+    )
+    sorted_unique_indexes: NDArray[np.intp] = np.lexsort(
+        unique_rows.T[::-1]
+    )
+    sorted_row_indices: list[int] = [
+        int(index[0])
+        for sorted_index in sorted_unique_indexes
+        for index in np.argwhere(row_indices == sorted_index)
+    ]
+    return matrix[sorted_row_indices]
+
+
+def check_is_ok_or_and_under_branch(
+    event_sets: set["ev.EventSet"],
+    leaves: set[str],
+) -> bool:
+    """Method to check if the OR/AND operators are correct under a branch given
+    the event sets and leaves. Checks to see if there is at least some positive
+    evidence of OR/AND with no contradictions.
+
+    :param event_sets: The event sets.
+    :type event_sets: `set`[:class:`tel2puml.events.EventSet`]
+    :param leaves: The leaves.
+    :type leaves: `set`[`str`]
+    :return: Whether the OR/AND operators is correct.
+    :rtype: `bool`
+    """
+    matrix = get_matrix_of_event_counts_from_event_sets_and_leaves(
+        event_sets, leaves
+    )
+    # order matrix of event counts so that rows that are similar in terms of
+    # having non-zero columns are grouped together
+    ordered_matrix = order_matrix_of_event_counts(matrix)
+    # set any zeros to for division
+    float_ordered_matrix = ordered_matrix.astype(float)
+    float_ordered_matrix[ordered_matrix == 0] = np.nan
+    # look for positive evidence of OR/AND. If there is any contradiction
+    # or no evidence then return False
+    evidence = False
+    for i in range(1, len(float_ordered_matrix)):
+        unique_vals = np.unique(
+            float_ordered_matrix[i] / float_ordered_matrix[i - 1],
+            equal_nan=True
+        )
+        if any(np.isnan(unique_vals)):
+            if len(unique_vals) == 2:
+                evidence = True
+            elif len(unique_vals) > 2:
+                return False
+            else:
+                continue
+        else:
+            if len(unique_vals) > 1:
+                return False
+            evidence = True
+    return evidence
+
+
+def assure_or_and_operators_are_correct_under_branch(
+    process_tree: ProcessTree,
+    event_sets: set["ev.EventSet"],
+) -> None:
+    """Method to assure that the OR and AND operators are correct under a
+    branch operator.
+
+    :param process_tree: The process tree.
+    :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+    """
+    if process_tree.operator is None:
+        return
+    if process_tree.operator.value in (
+        Operator.OR.value, Operator.PARALLEL.value
+    ):
+        leaves = set(get_process_tree_leaves(process_tree))
+        if not check_is_ok_or_and_under_branch(event_sets, leaves):
+            process_tree.operator = Operator.XOR
+        for child in process_tree.children:
+            assure_or_and_operators_are_correct_under_branch(
+                child, event_sets
+            )
+
+
+def flatten_nested_xor_operators(
+    process_tree: ProcessTree,
+) -> None:
+    """Method to flatten nested XOR operators in a process tree.
+
+    :param process_tree: The process tree.
+    :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+    """
+    if process_tree.operator is None:
+        return
+    for child in process_tree.children:
+        flatten_nested_xor_operators(child)
+    if process_tree.operator.value == Operator.XOR.value:
+        new_children: list[ProcessTree] = []
+        for child in process_tree.children:
+            if child.operator is not None:
+                if child.operator.value == Operator.XOR.value:
+                    new_children.extend(child.children)
+                    continue
+            new_children.append(child)
+
+
+def create_branch_tree_from_logic_gate_tree(
+    logic_gate_tree: ProcessTree,
+    event_sets: set["ev.EventSet"],
+) -> ProcessTree:
+    """Method to create a branch tree from a logic gate tree and check that the
+    OR/AND operators are correct under the branch.
+
+    :param logic_gate_tree: The logic gate tree.
+    :type logic_gate_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+    :param event_sets: The event sets.
+    :type event_sets: `set`[:class:`tel2puml.events.EventSet`]
+    :return: The logic gate tree with branch added.
+    :rtype: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+    """
+    old_tree = logic_gate_tree
+    assure_or_and_operators_are_correct_under_branch(
+        old_tree, event_sets
+    )
+    logic_gate_tree = ProcessTree(
+        Operator.BRANCH,
+        logic_gate_tree.parent,
+        [old_tree],
+    )
+    old_tree.parent = logic_gate_tree
+    flatten_nested_xor_operators(old_tree)
+    return logic_gate_tree
+
+
 def calculate_repeats_in_tree(
     event_sets: set["ev.EventSet"], logic_gate_tree: ProcessTree
 ) -> ProcessTree:
@@ -441,10 +644,8 @@ def calculate_repeats_in_tree(
     counts = ev.get_event_set_counts(event_sets)
     for count in counts.values():
         if len(count) > 1:
-            logic_gate_tree = ProcessTree(
-                Operator.BRANCH,
-                logic_gate_tree.parent,
-                [logic_gate_tree],
+            logic_gate_tree = create_branch_tree_from_logic_gate_tree(
+                logic_gate_tree, event_sets
             )
             break
 
