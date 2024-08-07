@@ -25,6 +25,7 @@ class OTELDataSource(ABC):
             raise FileNotFoundError(
                 """No directory or files found. Please check yaml config."""
             )
+        self.file_list = self.get_file_list()
 
     def get_yaml_config(self) -> Any:
         """Returns the yaml config as a dictionary.
@@ -127,12 +128,11 @@ class JSONDataSource(OTELDataSource):
     def __init__(self) -> None:
         """Constructor method."""
         super().__init__()
-        self.file_list = self.get_file_list()
         self.current_file_index = 0
         self.current_parser: Iterator[OTelEvent] | None = None
 
     def parse_json_stream(self, filepath: str) -> Iterator[OTelEvent]:
-        """Parse JSON file.
+        """Parse JSON file. ijson iteratively parses the json file.
 
         :return: An OTelEvent object
         :rtype: `Iterator`[`OTelEvent`]
