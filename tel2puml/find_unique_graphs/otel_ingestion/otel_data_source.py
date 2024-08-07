@@ -19,13 +19,6 @@ class OTELDataSource(ABC):
         self.yaml_config = self.get_yaml_config()
         self.valid_file_exts = ["json"]
         self.file_ext = self.set_file_ext()
-        self.dirpath = self.set_dirpath()
-        self.filepath = self.set_filepath()
-        if not self.dirpath and not self.filepath:
-            raise FileNotFoundError(
-                """No directory or files found. Please check yaml config."""
-            )
-        self.file_list = self.get_file_list()
 
     def get_yaml_config(self) -> Any:
         """Returns the yaml config as a dictionary.
@@ -51,6 +44,42 @@ class OTELDataSource(ABC):
                 """
             )
         return file_ext
+
+    def __iter__(self) -> Self:
+        """Returns the iterator object.
+
+        :return: The iterator object
+        :rtype: `self`
+        """
+        return self
+
+    @abstractmethod
+    def __next__(self) -> OTelEvent:
+        """Returns the next item in the sequence.
+
+        :return: The next OTelEvent in the sequence
+        :rtype: :class: `OTelEvent`
+        """
+        pass
+
+
+class JSONDataSource(OTELDataSource):
+    """Class to handle parsing JSON OTel data from a file or directory,
+    returning OTelEvent objects.
+    """
+
+    def __init__(self) -> None:
+        """Constructor method."""
+        super().__init__()
+        self.current_file_index = 0
+        self.current_parser: Iterator[OTelEvent] | None = None
+        self.dirpath = self.set_dirpath()
+        self.filepath = self.set_filepath()
+        if not self.dirpath and not self.filepath:
+            raise FileNotFoundError(
+                """No directory or files found. Please check yaml config."""
+            )
+        self.file_list = self.get_file_list()
 
     def set_dirpath(self) -> str | None:
         """Set the directory path.
@@ -101,35 +130,6 @@ class OTELDataSource(ABC):
         elif self.filepath:
             return [self.filepath]
         raise ValueError("Directory/Filepath not set.")
-
-    def __iter__(self) -> Self:
-        """Returns the iterator object.
-
-        :return: The iterator object
-        :rtype: `self`
-        """
-        return self
-
-    @abstractmethod
-    def __next__(self) -> OTelEvent:
-        """Returns the next item in the sequence.
-
-        :return: The next OTelEvent in the sequence
-        :rtype: :class: `OTelEvent`
-        """
-        pass
-
-
-class JSONDataSource(OTELDataSource):
-    """Class to handle parsing JSON OTel data from a file or directory,
-    returning OTelEvent objects.
-    """
-
-    def __init__(self) -> None:
-        """Constructor method."""
-        super().__init__()
-        self.current_file_index = 0
-        self.current_parser: Iterator[OTelEvent] | None = None
 
     def parse_json_stream(self, filepath: str) -> Iterator[OTelEvent]:
         """Parse JSON file. ijson iteratively parses the json file.
