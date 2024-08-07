@@ -177,12 +177,3 @@ class JSONDataSource(OTELDataSource):
                 self.current_parser = None
 
         raise StopIteration
-
-
-if __name__ == "__main__":
-    # Create an instance of JSONDataSource
-    json_source = JSONDataSource()
-
-    # Loop through the data
-    for otel_event in json_source:
-        print(otel_event)
