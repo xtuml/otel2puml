@@ -1,6 +1,8 @@
 data_sources:
   json:
-    path: /path/to/your/json/directory/or/file
+    # dirpath takes precedent over filepath
+    dirpath: /path/to/your/json/directory
+    filepath: /path/to/your/json/file
 
 data_holders:
   sql:
