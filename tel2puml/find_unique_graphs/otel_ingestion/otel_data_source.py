@@ -85,6 +85,22 @@ class OTELDataSource(ABC):
             raise ValueError(f"{filepath} does not exist.")
         return filepath
 
+    def get_file_list(self) -> list[str]:
+        """Get a list of filepaths to process.
+
+        :return: A list of filepaths.
+        :rtype: `list`[`str`]
+        """
+        if self.dirpath:
+            return [
+                os.path.join(self.dirpath, f)
+                for f in os.listdir(self.dirpath)
+                if f.endswith(f".{self.file_ext}")
+            ]
+        elif self.filepath:
+            return [self.filepath]
+        raise ValueError("Directory/Filepath not set.")
+
     def __iter__(self) -> Self:
         """Returns the iterator object.
 
@@ -114,22 +130,6 @@ class JSONDataSource(OTELDataSource):
         self.file_list = self.get_file_list()
         self.current_file_index = 0
         self.current_parser: Iterator[OTelEvent] | None = None
-
-    def get_file_list(self) -> list[str]:
-        """Get a list of JSON filepaths to process.
-
-        :return: A list of filepaths.
-        :rtype: `list`[`str`]
-        """
-        if self.dirpath:
-            return [
-                os.path.join(self.dirpath, f)
-                for f in os.listdir(self.dirpath)
-                if f.endswith(f".{self.file_ext}")
-            ]
-        elif self.filepath:
-            return [self.filepath]
-        raise ValueError("Directory/Filepath not set.")
 
     def parse_json_stream(self, filepath: str) -> Iterator[OTelEvent]:
         """Parse JSON file.
