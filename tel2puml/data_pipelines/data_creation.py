@@ -8,7 +8,7 @@ from test_harness.protocol_verifier.simulator_data import (  # type: ignore[impo
     generate_single_events,
 )
 from test_event_generator.io.run import puml_file_to_test_events  # type: ignore[import-untyped]  # noqa: E501
-from tel2puml.tel2puml_types import DUMMY_START_EVENT, PVEvent
+from tel2puml.tel2puml_types import DUMMY_START_EVENT, PVEvent, DUMMY_EVENT
 
 
 def generate_test_data(
@@ -121,6 +121,7 @@ def remove_dummy_start_event_from_event_sequence(
     dummy_start_event_id: Optional[str] = None
     prev_event_id_map: dict[str, list[str]] = {}
     events: dict[str, PVEvent] = {}
+    dummy_event_ids: list[str] = []
     for event in event_sequence:
         events[event["eventId"]] = event
         if "previousEventIds" in event:
@@ -133,6 +134,8 @@ def remove_dummy_start_event_from_event_sequence(
                 prev_event_id_map[previous_event_id].append(event["eventId"])
         if event["eventType"] == DUMMY_START_EVENT:
             dummy_start_event_id = event["eventId"]
+        if event["eventType"] == DUMMY_EVENT:
+            dummy_event_ids.append(event["eventId"])
     if dummy_start_event_id is not None:
         for event_id in prev_event_id_map[dummy_start_event_id]:
             previous_event_ids = events[event_id]["previousEventIds"]
@@ -144,6 +147,29 @@ def remove_dummy_start_event_from_event_sequence(
             else:
                 events[event_id]["previousEventIds"] = previous_event_ids
         del events[dummy_start_event_id]
+    # check for dummy events
+    if dummy_event_ids:
+        for dummy_event_id in dummy_event_ids:
+            # get children of dummy event
+            children_ids = prev_event_id_map[dummy_event_id]
+            # get parents of dummy event
+            parents_ids = events[dummy_event_id]["previousEventIds"]
+            if isinstance(parents_ids, str):
+                parents_ids = [parents_ids]
+            # remove dummy event from children previous event ids and add
+            # parents to children previous event ids
+            for child_id in children_ids:
+                previous_event_ids = events[child_id]["previousEventIds"]
+                if isinstance(previous_event_ids, str):
+                    previous_event_ids = [previous_event_ids]
+                previous_event_ids.remove(dummy_event_id)
+                previous_event_ids.extend(parents_ids)
+                if len(previous_event_ids) == 0:
+                    del events[child_id]["previousEventIds"]
+                else:
+                    events[child_id]["previousEventIds"] = previous_event_ids
+            del events[dummy_event_id]
+
     yield from events.values()
 
 

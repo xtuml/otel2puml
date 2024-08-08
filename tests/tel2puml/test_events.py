@@ -70,6 +70,34 @@ class TestEventSet:
         event_set = EventSet(["A", "B", "A", "C", "B", "A"])
         assert event_set.get_repeated_events() == {"A": 3, "B": 2}
 
+    @staticmethod
+    def test_has_intersection_with_event_types() -> None:
+        """Tests for the has_intersection_with_event_types method."""
+        event_set = EventSet(["A", "B", "C"])
+        assert event_set.has_intersection_with_event_types(["A", "B"])
+        assert event_set.has_intersection_with_event_types(["A", "B", "C"])
+        assert event_set.has_intersection_with_event_types(["A", "D"])
+        assert not event_set.has_intersection_with_event_types(["D", "E"])
+        assert not event_set.has_intersection_with_event_types([])
+
+    @staticmethod
+    def test_get_event_type_counts_for_given_event_types() -> None:
+        """Tests for the get_event_type_counts_for_given_event_types method."""
+        event_set = EventSet(["A", "A", "B", "C"])
+        assert event_set.get_event_type_counts_for_given_event_types(
+            ["A", "B"]
+        ) == {"A": 2, "B": 1}
+        assert event_set.get_event_type_counts_for_given_event_types(
+            ["A", "B", "C"]
+        ) == {"A": 2, "B": 1, "C": 1}
+        assert event_set.get_event_type_counts_for_given_event_types(
+            ["A", "D"]
+        ) == {"A": 2, "D": 0}
+        assert event_set.get_event_type_counts_for_given_event_types(
+            ["D", "E"]
+        ) == {"D": 0, "E": 0}
+        assert event_set.get_event_type_counts_for_given_event_types([]) == {}
+
 
 class TestEvent:
     """Tests for the Event class."""

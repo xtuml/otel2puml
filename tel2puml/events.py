@@ -85,6 +85,36 @@ class EventSet(dict[str, int]):
             event for event, count in self.items() for _ in range(count)
         )
 
+    def has_intersection_with_event_types(
+        self, event_types: Iterable[str]
+    ) -> bool:
+        """Method to check if the event set has an intersection with the event
+        types.
+
+        :param event_types: The event types.
+        :type event_types: `Iterable`[`str`]
+        :return: Whether the event set has an intersection with the event
+        types.
+        :rtype: `bool`
+        """
+        return bool(self.to_frozenset().intersection(event_types))
+
+    def get_event_type_counts_for_given_event_types(
+        self,
+        event_types: Iterable[str],
+    ) -> dict[str, int]:
+        """Method to get the event type counts from an event set.
+
+        :param event_types: The event types.
+        :type event_types: `Iterable`[`str`]
+        :return: The event type counts.
+        :rtype: `dict`[`str`, `int`]
+        """
+        return {
+            event_type: (self[event_type] if event_type in self else 0)
+            for event_type in event_types
+        }
+
 
 class Event:
     """Class to detect the logic in a sequence of PV events.
