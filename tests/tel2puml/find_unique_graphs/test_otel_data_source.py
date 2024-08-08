@@ -127,7 +127,9 @@ class TestJSONDataSource:
         )
         with patch("builtins.open", mock_open(read_data=no_dir_path_yaml)):
             json_data_source = JSONDataSource()
-            assert json_data_source.get_file_list() == ["/path/to/json/file.json"]
+            assert json_data_source.get_file_list() == [
+                "/path/to/json/file.json"
+            ]
 
     @staticmethod
     @pytest.mark.usefixtures("mock_yaml_config", "mock_path_exists")
@@ -159,7 +161,9 @@ class TestJSONDataSource:
             with patch(
                 "builtins.open", mock_open(read_data=mock_file_content)
             ):
-                events = list(json_data_source.parse_json_stream("mock_file.json"))
+                events = list(
+                    json_data_source.parse_json_stream("mock_file.json")
+                )
 
             assert len(events) == 2
             assert isinstance(events[0], OTelEvent)
@@ -185,7 +189,7 @@ class TestJSONDataSource:
         assert otel_event.start_timestamp == "2023-01-01T00:00:00"
         assert otel_event.end_timestamp == "2023-01-01T00:01:00"
         assert otel_event.application_name == "app1"
-        assert otel_event.parent_event_id == None
+        assert otel_event.parent_event_id is None
         assert otel_event.child_event_ids == ["event2"]
 
     @staticmethod
