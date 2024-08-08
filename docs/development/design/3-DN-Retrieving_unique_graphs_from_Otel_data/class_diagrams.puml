@@ -14,8 +14,8 @@ struct OTelEvent {
 
 abstract class OTELDataSource {
     #yaml_config: dict[str, Any]
-    #valid_file_exts: list[str]
-    #file_ext: str
+    #valid_data_sources: list[str]
+    #data_source: str
     +__init__(): None
     +__iter__(): Self
     +__next__(): OTelEvent

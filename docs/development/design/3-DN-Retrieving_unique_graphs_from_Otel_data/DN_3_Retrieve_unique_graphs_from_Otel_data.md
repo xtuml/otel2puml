@@ -55,8 +55,8 @@ class OTELDataSource(ABC):
     def __init__(self) -> None:
         """Constructor method."""
         self.yaml_config: dict[str, Any]
-        self.valid_file_exts: list[str]
-        self.file_ext: str
+        self.valid_data_sources: list[str]
+        self.data_source: str
     
     def __iter__(self) -> Self:
         """Returns the iterator object.
@@ -82,10 +82,10 @@ class OTELDataSource(ABC):
         """
         pass
 
-    def set_file_ext(self) -> str:
-        """Set the file ext.
+    def set_data_source(self) -> str:
+        """Set the data source.
 
-        :return: The file extension used.
+        :return: type of file used.
         :rtype: `str`
         """
         pass
