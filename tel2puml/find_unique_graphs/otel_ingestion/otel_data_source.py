@@ -40,7 +40,8 @@ class OTELDataSource(ABC):
             raise ValueError(
                 f"""
                 '{data_source}' is not a valid data source.
-                Please edit config.yaml and select from {self.valid_data_sources}
+                Please edit config.yaml and select from
+                {self.valid_data_sources}
                 """
             )
         return data_source
@@ -103,14 +104,16 @@ class JSONDataSource(OTELDataSource):
         :return: The filepath
         :rtype: `str` | `None`
         """
-        filepath: str = self.yaml_config["data_sources"][f"{self.data_source}"][
-            "filepath"
-        ]
+        filepath: str = self.yaml_config["data_sources"][
+            f"{self.data_source}"
+        ]["filepath"]
 
         if not filepath:
             return None
         elif not filepath.endswith(f".{self.data_source}"):
-            raise ValueError(f"File provided is not .{self.data_source} format.")
+            raise ValueError(
+                f"File provided is not .{self.data_source} format."
+            )
         elif not os.path.isfile(filepath):
             raise ValueError(f"{filepath} does not exist.")
         return filepath
