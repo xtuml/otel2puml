@@ -13,11 +13,31 @@ struct OTelEvent {
 }
 
 abstract class OTELDataSource {
-    +__iter__(): self
+    #yaml_config: dict[str, Any]
+    #valid_data_sources: list[str]
+    #data_source: str
+    +__init__(): None
+    +__iter__(): Self
     +__next__(): OTelEvent
+    +get_yaml_config(): Any
+    +set_file_ext(): str
 }
 
-class JSONDataSource
+class JSONDataSource {
+    #current_file_index: int
+    #current_parser: Iterator[OTelEvent] | None
+    #dirpath : str
+    #filepath: str
+    #file_list: list[str]
+    +__init__(): None
+    +__iter__(): Self
+    +__next__(): OTelEvent
+    +parse_json_stream(filepath: str): Iterator[OTelEvent]
+    +create_otel_object(record: dict[str, Any]): OTelEvent
+    +set_dirpath(): str | None
+    +set_filepath(): str | None
+    +get_file_list(): list[str]
+}
 
 class SQLDataHolder {
     #data_to_save: list<OTelEvent>

@@ -1,7 +1,12 @@
 """Module containing classes to handle different OTel data sources."""
 
+import yaml
+import os
+import ijson
+import jsonschema
 from abc import ABC, abstractmethod
-from typing import Self
+from typing import Self, Any, Iterator, TypedDict
+from jsonschema import ValidationError
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     OTelEvent,
@@ -10,6 +15,10 @@ from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
 
 class OTELDataSource(ABC):
     """Abstract class for returning a OTelEvent object from a data source."""
+
+    def __init__(self) -> None:
+        """Constructor method."""
+        self.valid_data_sources = ["json"]
 
     def __iter__(self) -> Self:
         """Returns the iterator object.
@@ -27,3 +36,147 @@ class OTELDataSource(ABC):
         :rtype: :class: `OTelEvent`
         """
         pass
+
+
+class JSONDataSourceConfig(TypedDict):
+    filepath: str
+    dirpath: str
+    field_mapping: dict[str, str]
+
+
+class JSONDataSource(OTELDataSource):
+    """Class to handle parsing JSON OTel data from a file or directory,
+    returning OTelEvent objects.
+    """
+
+    def __init__(self, config: JSONDataSourceConfig) -> None:
+        """Constructor method."""
+        super().__init__()
+        self.config = config
+        self.current_file_index = 0
+        self.current_parser: Iterator[OTelEvent] | None = None
+        self.dirpath = self.set_dirpath()
+        self.filepath = self.set_filepath()
+        if not self.dirpath and not self.filepath:
+            raise FileNotFoundError(
+                """No directory or files found. Please check yaml config."""
+            )
+        self.file_list = self.get_file_list()
+        self.json_schema = self.config["schema"]
+
+    def set_dirpath(self) -> str | None:
+        """Set the directory path.
+
+        :return: The directory path
+        :rtype: `str` | `None`
+        """
+        dirpath: str = self.config["dirpath"]
+
+        if not dirpath:
+            return None
+        elif not os.path.isdir(dirpath):
+            raise ValueError(f"{dirpath} directory does not exist.")
+        return dirpath
+
+    def set_filepath(self) -> str | None:
+        """Set the filepath.
+
+        :return: The filepath
+        :rtype: `str` | `None`
+        """
+        filepath: str = self.config["filepath"]
+
+        if not filepath:
+            return None
+        elif not filepath.endswith(".json"):
+            raise ValueError("File provided is not .json format.")
+        elif not os.path.isfile(filepath):
+            raise ValueError(f"{filepath} does not exist.")
+        return filepath
+
+    def get_file_list(self) -> list[str]:
+        """Get a list of filepaths to process.
+
+        :return: A list of filepaths.
+        :rtype: `list`[`str`]
+        """
+        if self.dirpath:
+            return [
+                os.path.join(self.dirpath, f)
+                for f in os.listdir(self.dirpath)
+                if f.endswith(".json")
+            ]
+        elif self.filepath:
+            return [self.filepath]
+        raise ValueError("Directory/Filepath not set.")
+
+    def parse_json_stream(self, filepath: str) -> Iterator[OTelEvent]:
+        """Parse JSON file. ijson iteratively parses the json file.
+
+        :return: An OTelEvent object
+        :rtype: `Iterator`[`OTelEvent`]
+        """
+        with open(filepath, "rb") as file:
+            for record in ijson.items(file, "item"):
+                try:
+                    jsonschema.validate(record, self.json_schema)
+                    yield self.create_otel_object(record)
+                except ValidationError as e:
+                    print(f"Invalid json record - {e}")
+
+    def create_otel_object(self, record: dict[str, Any]) -> OTelEvent:
+        """Creates an OTelEvent object from a JSON record.
+
+        :return: OTelEvent object
+        :rtype: :class:`OTelEvent`
+        """
+        return OTelEvent(
+            job_name=record[self.config["field_mapping"]["job_name"]],
+            job_id=record[self.config["field_mapping"]["job_id"]],
+            event_type=record[self.config["field_mapping"]["event_type"]],
+            event_id=record[self.config["field_mapping"]["event_id"]],
+            start_timestamp=record[
+                self.config["field_mapping"]["start_timestamp"]
+            ],
+            end_timestamp=record[
+                self.config["field_mapping"]["end_timestamp"]
+            ],
+            application_name=record[
+                self.config["field_mapping"]["application_name"]
+            ],
+            parent_event_id=record[
+                self.config["field_mapping"]["parent_event_id"]
+            ],
+            child_event_ids=record.get(
+                self.config["field_mapping"]["child_event_ids"], None
+            ),
+        )
+
+    def __next__(self) -> OTelEvent:
+        """Returns the next OTelEvent in the sequence.
+
+        :return: An OTelEvent object.
+        :rtype: :class: `OTelEvent`
+        """
+        while self.current_file_index < len(self.file_list):
+            if self.current_parser is None:
+                self.current_parser = self.parse_json_stream(
+                    self.file_list[self.current_file_index]
+                )
+            try:
+                return next(self.current_parser)
+            except StopIteration:
+                self.current_file_index += 1
+                self.current_parser = None
+
+        raise StopIteration
+
+
+if __name__ == "__main__":
+    with open("tel2puml/find_unique_graphs/config.yaml", "r") as f:
+        config = yaml.load(f, Loader=yaml.SafeLoader)
+
+    json_data_source = JSONDataSource(config["data_sources"]["json"])
+
+    for data in json_data_source:
+        print(data)

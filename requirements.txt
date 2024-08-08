@@ -7,3 +7,4 @@ networkx==3.2.1
 types-networkx==3.2.1.20240425
 pandas-stubs==2.2.1.240316
 numba~=0.59.0
+ijson~=3.3.0
