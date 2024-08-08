@@ -1,8 +1,54 @@
 data_sources:
   json:
-    # dirpath takes precedent over filepath
-    dirpath: /path/to/your/json/directory
-    filepath: /path/to/your/json/file
+    # Specify the file path to the JSON data
+    dirpath: null
+    filepath: otel.json
+    # Define the field mapping from the application to your JSON structure
+    field_mapping:
+      job_name: job_name
+      job_id: job_id
+      event_type: event_type
+      event_id: event_id
+      start_timestamp: start_timestamp
+      end_timestamp: end_timestamp
+      application_name: application_name
+      parent_event_id: parent_event_id
+      child_event_ids: child_event_ids
+    schema:
+      type: object
+      properties:
+        job_name:
+          type: string
+        job_id:
+          type: string
+        event_type:
+          type: string
+        event_id:
+          type: string
+        start_timestamp:
+          type: string
+        end_timestamp:
+          type: string
+        application_name:
+          type: string
+        parent_event_id:
+          anyOf:
+            - type: string
+            - type: 'null'
+        child_event_ids:
+          type: array
+          items:
+            type: string
+      required:
+        - job_name
+        - job_id
+        - event_type
+        - event_id
+        - start_timestamp
+        - end_timestamp
+        - application_name
+        - parent_event_id
+          
 
 data_holders:
   sql:

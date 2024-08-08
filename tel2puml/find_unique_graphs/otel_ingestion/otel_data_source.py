@@ -3,8 +3,10 @@
 import yaml
 import os
 import ijson
+import jsonschema
 from abc import ABC, abstractmethod
-from typing import Self, Any, Iterator
+from typing import Self, Any, Iterator, TypedDict
+from jsonschema import ValidationError
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     OTelEvent,
@@ -16,35 +18,7 @@ class OTELDataSource(ABC):
 
     def __init__(self) -> None:
         """Constructor method."""
-        self.yaml_config = self.get_yaml_config()
         self.valid_data_sources = ["json"]
-        self.data_source = self.set_data_source()
-
-    def get_yaml_config(self) -> Any:
-        """Returns the yaml config as a dictionary.
-
-        :return: Config file represented as a dictionary,
-        :rtype: `Any`
-        """
-        with open("tel2puml/find_unique_graphs/config.yaml", "r") as f:
-            return yaml.load(f, Loader=yaml.SafeLoader)
-
-    def set_data_source(self) -> str:
-        """Set the data source.
-
-        :return: The type of file used.
-        :rtype: `str`
-        """
-        data_source: str = self.yaml_config["ingest_data"]["data_source"]
-        if data_source not in self.valid_data_sources:
-            raise ValueError(
-                f"""
-                '{data_source}' is not a valid data source.
-                Please edit config.yaml and select from
-                {self.valid_data_sources}
-                """
-            )
-        return data_source
 
     def __iter__(self) -> Self:
         """Returns the iterator object.
@@ -64,14 +38,21 @@ class OTELDataSource(ABC):
         pass
 
 
+class JSONDataSourceConfig(TypedDict):
+    filepath: str
+    dirpath: str
+    field_mapping: dict[str, str]
+
+
 class JSONDataSource(OTELDataSource):
     """Class to handle parsing JSON OTel data from a file or directory,
     returning OTelEvent objects.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, config: JSONDataSourceConfig) -> None:
         """Constructor method."""
         super().__init__()
+        self.config = config
         self.current_file_index = 0
         self.current_parser: Iterator[OTelEvent] | None = None
         self.dirpath = self.set_dirpath()
@@ -81,6 +62,7 @@ class JSONDataSource(OTELDataSource):
                 """No directory or files found. Please check yaml config."""
             )
         self.file_list = self.get_file_list()
+        self.json_schema = self.config["schema"]
 
     def set_dirpath(self) -> str | None:
         """Set the directory path.
@@ -88,9 +70,7 @@ class JSONDataSource(OTELDataSource):
         :return: The directory path
         :rtype: `str` | `None`
         """
-        dirpath: str = self.yaml_config["data_sources"][f"{self.data_source}"][
-            "dirpath"
-        ]
+        dirpath: str = self.config["dirpath"]
 
         if not dirpath:
             return None
@@ -104,16 +84,12 @@ class JSONDataSource(OTELDataSource):
         :return: The filepath
         :rtype: `str` | `None`
         """
-        filepath: str = self.yaml_config["data_sources"][
-            f"{self.data_source}"
-        ]["filepath"]
+        filepath: str = self.config["filepath"]
 
         if not filepath:
             return None
-        elif not filepath.endswith(f".{self.data_source}"):
-            raise ValueError(
-                f"File provided is not .{self.data_source} format."
-            )
+        elif not filepath.endswith(".json"):
+            raise ValueError("File provided is not .json format.")
         elif not os.path.isfile(filepath):
             raise ValueError(f"{filepath} does not exist.")
         return filepath
@@ -128,7 +104,7 @@ class JSONDataSource(OTELDataSource):
             return [
                 os.path.join(self.dirpath, f)
                 for f in os.listdir(self.dirpath)
-                if f.endswith(f".{self.data_source}")
+                if f.endswith(".json")
             ]
         elif self.filepath:
             return [self.filepath]
@@ -142,7 +118,11 @@ class JSONDataSource(OTELDataSource):
         """
         with open(filepath, "rb") as file:
             for record in ijson.items(file, "item"):
-                yield self.create_otel_object(record)
+                try:
+                    jsonschema.validate(record, self.json_schema)
+                    yield self.create_otel_object(record)
+                except ValidationError as e:
+                    print(f"Invalid json record - {e}")
 
     def create_otel_object(self, record: dict[str, Any]) -> OTelEvent:
         """Creates an OTelEvent object from a JSON record.
@@ -151,15 +131,25 @@ class JSONDataSource(OTELDataSource):
         :rtype: :class:`OTelEvent`
         """
         return OTelEvent(
-            job_name=record["job_name"],
-            job_id=record["job_id"],
-            event_type=record["event_type"],
-            event_id=record["event_id"],
-            start_timestamp=record["start_timestamp"],
-            end_timestamp=record["end_timestamp"],
-            application_name=record["application_name"],
-            parent_event_id=record["parent_event_id"],
-            child_event_ids=record.get("child_event_ids", None),
+            job_name=record[self.config["field_mapping"]["job_name"]],
+            job_id=record[self.config["field_mapping"]["job_id"]],
+            event_type=record[self.config["field_mapping"]["event_type"]],
+            event_id=record[self.config["field_mapping"]["event_id"]],
+            start_timestamp=record[
+                self.config["field_mapping"]["start_timestamp"]
+            ],
+            end_timestamp=record[
+                self.config["field_mapping"]["end_timestamp"]
+            ],
+            application_name=record[
+                self.config["field_mapping"]["application_name"]
+            ],
+            parent_event_id=record[
+                self.config["field_mapping"]["parent_event_id"]
+            ],
+            child_event_ids=record.get(
+                self.config["field_mapping"]["child_event_ids"], None
+            ),
         )
 
     def __next__(self) -> OTelEvent:
@@ -180,3 +170,13 @@ class JSONDataSource(OTELDataSource):
                 self.current_parser = None
 
         raise StopIteration
+
+
+if __name__ == "__main__":
+    with open("tel2puml/find_unique_graphs/config.yaml", "r") as f:
+        config = yaml.load(f, Loader=yaml.SafeLoader)
+
+    json_data_source = JSONDataSource(config["data_sources"]["json"])
+
+    for data in json_data_source:
+        print(data)
