@@ -7,6 +7,7 @@ from typing import Generator, Any
 
 @pytest.fixture
 def mock_yaml_config_string() -> str:
+    """String to mock yaml config file."""
     return """
             ingest_data:
                 data_source: json
@@ -21,6 +22,7 @@ def mock_yaml_config_string() -> str:
 def mock_yaml_config(
     mock_yaml_config_string: str,
 ) -> Generator[None, None, None]:
+    """Mocks reading the config.yaml file with the custom string."""
     with patch("builtins.open", mock_open(read_data=mock_yaml_config_string)):
         yield
 
@@ -30,6 +32,8 @@ def mock_path_exists() -> Generator[None, None, None]:
     with patch("os.path.isdir", return_value=True), patch(
         "os.path.isfile", return_value=True
     ):
+        """Mocks os.path.isdir and os.path.isfile functions, returning True for
+        both."""
         yield
 
 
@@ -39,11 +43,14 @@ def mock_filepath_in_dir() -> Generator[None, None, None]:
         "os.listdir",
         return_value=["/mock/dir/file1.json"],
     ):
+        """Mocks os.listdir function, returning a custom list containing a
+        json file."""
         yield
 
 
 @pytest.fixture
 def mock_json_data() -> list[dict[str, Any]]:
+    """Mock OTel JSON data."""
     return [
         {
             "job_name": "job1",
@@ -72,4 +79,5 @@ def mock_json_data() -> list[dict[str, Any]]:
 
 @pytest.fixture
 def mock_file_list() -> list[str]:
+    """Mocks a list of json files."""
     return ["/mock/dir/file1.json", "/mock/dir/file2.json"]
