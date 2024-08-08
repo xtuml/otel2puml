@@ -17,8 +17,8 @@ class OTELDataSource(ABC):
     def __init__(self) -> None:
         """Constructor method."""
         self.yaml_config = self.get_yaml_config()
-        self.valid_file_exts = ["json"]
-        self.file_ext = self.set_file_ext()
+        self.valid_data_sources = ["json"]
+        self.data_source = self.set_data_source()
 
     def get_yaml_config(self) -> Any:
         """Returns the yaml config as a dictionary.
@@ -29,21 +29,21 @@ class OTELDataSource(ABC):
         with open("tel2puml/find_unique_graphs/config.yaml", "r") as f:
             return yaml.load(f, Loader=yaml.SafeLoader)
 
-    def set_file_ext(self) -> str:
-        """Set the file ext.
+    def set_data_source(self) -> str:
+        """Set the data source.
 
         :return: The type of file used.
         :rtype: `str`
         """
-        file_ext: str = self.yaml_config["ingest_data"]["data_source"]
-        if file_ext not in self.valid_file_exts:
+        data_source: str = self.yaml_config["ingest_data"]["data_source"]
+        if data_source not in self.valid_data_sources:
             raise ValueError(
                 f"""
-                '{file_ext}' is not a valid file ext.
-                Please edit config.yaml and select from {self.valid_file_exts}
+                '{data_source}' is not a valid data source.
+                Please edit config.yaml and select from {self.valid_data_sources}
                 """
             )
-        return file_ext
+        return data_source
 
     def __iter__(self) -> Self:
         """Returns the iterator object.
@@ -87,7 +87,7 @@ class JSONDataSource(OTELDataSource):
         :return: The directory path
         :rtype: `str` | `None`
         """
-        dirpath: str = self.yaml_config["data_sources"][f"{self.file_ext}"][
+        dirpath: str = self.yaml_config["data_sources"][f"{self.data_source}"][
             "dirpath"
         ]
 
@@ -103,14 +103,14 @@ class JSONDataSource(OTELDataSource):
         :return: The filepath
         :rtype: `str` | `None`
         """
-        filepath: str = self.yaml_config["data_sources"][f"{self.file_ext}"][
+        filepath: str = self.yaml_config["data_sources"][f"{self.data_source}"][
             "filepath"
         ]
 
         if not filepath:
             return None
-        elif not filepath.endswith(f".{self.file_ext}"):
-            raise ValueError(f"File provided is not .{self.file_ext} format.")
+        elif not filepath.endswith(f".{self.data_source}"):
+            raise ValueError(f"File provided is not .{self.data_source} format.")
         elif not os.path.isfile(filepath):
             raise ValueError(f"{filepath} does not exist.")
         return filepath
@@ -125,7 +125,7 @@ class JSONDataSource(OTELDataSource):
             return [
                 os.path.join(self.dirpath, f)
                 for f in os.listdir(self.dirpath)
-                if f.endswith(f".{self.file_ext}")
+                if f.endswith(f".{self.data_source}")
             ]
         elif self.filepath:
             return [self.filepath]
