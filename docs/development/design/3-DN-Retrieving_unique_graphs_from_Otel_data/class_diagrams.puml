@@ -43,7 +43,12 @@ class Base {
 }
 
 abstract class DataHolder {
+    #yaml_config: Any
+    #valid_types: list[str]
+    #type: str
     +save_data(OTelEvent): None
+    +get_yaml_config(): Any
+    +set_data_holder_type(): str
 }
 
 class IngestData {

@@ -81,6 +81,11 @@ class JSONDataSource(OTELDataSource):
 
 class DataHolder(ABC):
     """An abstract class to handle saving processed OTel data."""
+
+    def __init__(self) -> None:
+        self.yaml_config: Any
+        self.valid_types: list[str]
+        self.type: str
     
     @abstractmethod
     def save_data(self, otel_event: OTelEvent) -> None:
@@ -88,6 +93,22 @@ class DataHolder(ABC):
         
         :param otel_event: An OTelEvent object
         :type otel_event: :class: `OTelEvent`
+        """
+        pass
+
+    def get_yaml_config(self) -> Any:
+        """Returns the yaml config as a dictionary.
+
+        :return: Config file represented as a dictionary,
+        :rtype: `Any`
+        """
+        pass
+
+    def set_data_holder_type(self) -> str:
+        """Set the data holder type.
+
+        :return: The data holder type.
+        :rtype: `str`
         """
         pass
     
