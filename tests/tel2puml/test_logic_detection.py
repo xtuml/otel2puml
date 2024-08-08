@@ -1,6 +1,8 @@
 """Tests for the logic_detection module."""
 from datetime import datetime, timedelta
 from pm4py import ProcessTree
+import numpy as np
+from numpy.typing import NDArray
 
 
 from tel2puml.data_pipelines.data_creation import generate_test_data
@@ -23,7 +25,14 @@ from tel2puml.logic_detection import (
     update_tree_with_repeat_logic,
     calculate_repeats_in_tree,
     remove_defunct_sequence_logic,
-    calculate_logic_gates
+    calculate_logic_gates,
+    get_process_tree_leaves,
+    get_matrix_of_event_counts_from_event_sets_and_leaves,
+    order_matrix_of_event_counts,
+    check_is_ok_and_under_branch,
+    assure_or_and_operators_are_correct_under_branch,
+    flatten_nested_xor_operators,
+    create_branch_tree_from_logic_gate_tree
 )
 from tel2puml.tel2puml_types import DUMMY_START_EVENT
 
@@ -1007,3 +1016,299 @@ def test_get_logic_from_and_under_or_puml_file() -> None:
     for event in ["C", "D", "E", "F", "G"]:
         assert events_forward_logic[event].logic_gate_tree.label == "H"
         assert events_backward_logic[event].logic_gate_tree.label == "A"
+
+
+def test_get_process_tree_leaves() -> None:
+    """Test method for getting leaves of a process tree"""
+    process_tree = ProcessTree(
+        operator=Operator.BRANCH,
+        children=[
+            ProcessTree(
+                operator=Operator.PARALLEL,
+                children=[
+                    ProcessTree(
+                        operator=Operator.XOR,
+                        children=[
+                            ProcessTree(label="A"),
+                            ProcessTree(label="B"),
+                        ],
+                    ),
+                    ProcessTree(label="C"),
+                ],
+            ),
+        ],
+    )
+    leaves = list(get_process_tree_leaves(process_tree))
+    assert len(leaves) == 3
+    assert leaves == ["A", "B", "C"]
+    # check process tree with no logic gate
+    leaves = list(get_process_tree_leaves(ProcessTree(label="A")))
+    assert len(leaves) == 1
+    assert leaves == ["A"]
+
+
+class TestCreateBranchTreeFromLogicGateTree:
+    @staticmethod
+    def event_sets() -> set[EventSet]:
+        """Return a set of event sets"""
+        return {
+            EventSet(["B", "B", "C", "D"]),
+            EventSet(["B", "C"]),
+            EventSet(["C", "D"]),
+            EventSet(["B", "D"]),
+            EventSet(["B"]),
+            EventSet(["C"]),
+            EventSet(["D"]),
+        }
+
+    @staticmethod
+    def expected_matrix() -> NDArray[np.int32]:
+        """Return the expected matrix of event counts"""
+        return np.array(
+            [
+                [0, 1, 1],
+                [1, 1, 2],
+                [0, 0, 1],
+                [0, 1, 0],
+                [1, 0, 0],
+                [1, 0, 1],
+                [1, 1, 0],
+            ],
+            dtype=np.int32,
+        )
+
+    @staticmethod
+    def expected_ordered_matrix() -> NDArray[np.int32]:
+        """Return the expected ordered matrix of event counts"""
+        return np.array(
+            [
+                [0, 0, 1],
+                [0, 1, 0],
+                [0, 1, 1],
+                [1, 0, 0],
+                [1, 0, 1],
+                [1, 1, 0],
+                [1, 1, 2],
+            ],
+            dtype=np.int32,
+        )
+
+    def test_get_matrix_of_event_counts_from_event_sets_and_leaves(
+        self
+    ) -> None:
+        """Test method for getting matrix of event counts from event sets and
+        leaves"""
+        event_sets = self.event_sets()
+        matrix = get_matrix_of_event_counts_from_event_sets_and_leaves(
+            event_sets, ["C", "D", "B"]
+        )
+        expected_matrix = np.sort(
+            self.expected_matrix(), axis=0
+        )
+        assert np.array_equal(np.sort(matrix, axis=0), expected_matrix)
+
+    def test_order_matrix_of_event_counts(self) -> None:
+        """Test method for ordering matrix of event counts"""
+        matrix = self.expected_matrix()
+        ordered_matrix = order_matrix_of_event_counts(matrix)
+        expected_ordered_matrix = self.expected_ordered_matrix()
+        assert np.array_equal(ordered_matrix, expected_ordered_matrix)
+
+    def test_check_is_ok_and_under_branch(self) -> None:
+        """Test method for checking if event sets are OK and under a branch"""
+        event_sets = self.event_sets()
+        # check positive cases
+        assert check_is_ok_and_under_branch(event_sets, ["C", "D", "B"])
+        event_sets = {
+            EventSet(["B", "C"]),
+            EventSet(["B" "B", "C", "C"]),
+        }
+        assert check_is_ok_and_under_branch(event_sets, ["C", "B"])
+        # check negative case
+        event_sets = {
+            EventSet(["B", "C"]),
+            EventSet(["B", "B", "C"]),
+        }
+        assert not check_is_ok_and_under_branch(event_sets, ["C", "B"])
+
+    def test_assure_or_and_operators_are_correct_under_branch(self) -> None:
+        """Test method for assuring OR and AND operators are correct under a
+        branch
+        """
+        event_sets = self.event_sets()
+        # check OR case
+        logic_gates_tree = ProcessTree(
+            operator=Operator.OR,
+            children=[
+                ProcessTree(label="B"),
+                ProcessTree(label="C"),
+                ProcessTree(label="D"),
+            ],
+        )
+        assure_or_and_operators_are_correct_under_branch(
+            logic_gates_tree, event_sets
+        )
+        assert logic_gates_tree.operator.value == Operator.XOR.value
+        # check single AND case that requires no changes
+        logic_gates_tree = ProcessTree(
+            operator=Operator.PARALLEL,
+            children=[
+                ProcessTree(label="B"),
+                ProcessTree(label="C"),
+                ProcessTree(label="D"),
+            ],
+        )
+        event_sets = {
+            EventSet(["B", "C", "D"]),
+            EventSet(["B", "C", "D"] * 2),
+        }
+        assure_or_and_operators_are_correct_under_branch(
+            logic_gates_tree, event_sets
+        )
+        assert logic_gates_tree.operator.value == Operator.PARALLEL.value
+        # check single AND case that should be converted to an XOR
+        event_sets.update({EventSet(["B", "B", "C", "D"])})
+        assure_or_and_operators_are_correct_under_branch(
+            logic_gates_tree, event_sets
+        )
+        assert logic_gates_tree.operator.value == Operator.XOR.value
+        # check nested AND case that requires no change
+        logic_gates_tree = ProcessTree(
+            operator=Operator.XOR,
+            children=[
+                ProcessTree(
+                    operator=Operator.PARALLEL,
+                    children=[
+                        ProcessTree(label="B"),
+                        ProcessTree(label="C"),
+                    ],
+                ),
+                ProcessTree(label="D"),
+            ],
+        )
+        event_sets = {
+            EventSet(["B", "C"]),
+            EventSet(["B", "C"] * 2),
+            EventSet(["D"]),
+            EventSet(["D"] * 2),
+        }
+        assure_or_and_operators_are_correct_under_branch(
+            logic_gates_tree, event_sets
+        )
+        assert (
+            logic_gates_tree.children[0].operator.value
+            == Operator.PARALLEL.value
+        )
+        # check nested AND case that should be converted to an XOR
+        event_sets.update({EventSet(["B", "B", "C"])})
+        assure_or_and_operators_are_correct_under_branch(
+            logic_gates_tree, event_sets
+        )
+        assert (
+            logic_gates_tree.children[0].operator.value
+            == Operator.XOR.value
+        )
+
+    @staticmethod
+    def test_flatten_nested_xor_operators() -> None:
+        """Test method for flattening nested XOR operators"""
+        children = [
+            ProcessTree(label="A"), ProcessTree(label="B"),
+            ProcessTree(label="C")
+        ]
+        process_tree = ProcessTree(
+            operator=Operator.XOR,
+            children=[
+                ProcessTree(
+                    operator=Operator.XOR,
+                    children=children[:2],
+                ),
+                children[2],
+            ],
+        )
+        flatten_nested_xor_operators(process_tree)
+        assert process_tree.operator.value == Operator.XOR.value
+        assert process_tree.children == children
+        # test case with AND operator in between XOR operators
+        children = [
+            ProcessTree(
+                operator=Operator.PARALLEL,
+                children=[
+                    ProcessTree(
+                        operator=Operator.XOR,
+                        children=children[:2],
+                    ),
+                    children[2],
+                ],
+            ),
+            ProcessTree(label="D"),
+        ]
+        process_tree = ProcessTree(
+            operator=Operator.XOR,
+            children=children,
+        )
+        flatten_nested_xor_operators(process_tree)
+        assert process_tree.operator.value == Operator.XOR.value
+        assert process_tree.children == children
+
+    def test_create_branch_tree_from_logic_gate_tree(self) -> None:
+        """Test method for creating a branch tree from a logic gate tree"""
+        def check_process_tree_correct(
+            process_tree: ProcessTree, children: list[ProcessTree],
+            expected_operator: Operator
+        ) -> None:
+            """Check if the process tree is correct"""
+            assert process_tree.operator.value == Operator.BRANCH.value
+            branch_children: list[ProcessTree] = list(process_tree.children)
+            assert len(branch_children) == 1
+            child = branch_children[0]
+            assert child.operator.value == expected_operator.value
+            assert child.children == children
+
+        event_sets = self.event_sets()
+        children = [
+            ProcessTree(label="B"), ProcessTree(label="C"),
+            ProcessTree(label="D")
+        ]
+        logic_gates_tree = ProcessTree(
+            operator=Operator.OR,
+            children=children,
+        )
+        branch_tree = create_branch_tree_from_logic_gate_tree(
+            logic_gates_tree, event_sets
+        )
+        check_process_tree_correct(branch_tree, children, Operator.XOR)
+        # test case with incorrect AND operators with nested XOR to be
+        # flattened
+        event_sets = {
+            EventSet(["B", "D"]),
+            EventSet(["C", "D"]),
+            EventSet(["B", "D", "D"]),
+        }
+        logic_gates_tree = ProcessTree(
+            operator=Operator.PARALLEL,
+            children=[
+                ProcessTree(
+                    operator=Operator.XOR,
+                    children=children[:2],
+                ),
+                children[2],
+            ]
+        )
+        branch_tree = create_branch_tree_from_logic_gate_tree(
+            logic_gates_tree, event_sets
+        )
+        check_process_tree_correct(branch_tree, children, Operator.XOR)
+        # test case with correct AND
+        event_sets = {
+            EventSet(["B", "C", "D"]),
+            EventSet(["B", "C", "D"] * 2),
+        }
+        logic_gates_tree = ProcessTree(
+            operator=Operator.PARALLEL,
+            children=children
+        )
+        branch_tree = create_branch_tree_from_logic_gate_tree(
+            logic_gates_tree, event_sets
+        )
+        check_process_tree_correct(branch_tree, children, Operator.PARALLEL)
