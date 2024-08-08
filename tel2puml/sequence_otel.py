@@ -171,16 +171,24 @@ class Span:
         """
         self.child_spans[span.span_id] = span
 
-    def child_spans_sequence_order(self) -> list[list["Span"]]:
+    def child_spans_sequence_order(
+        self, sync_spans: bool = False
+    ) -> list[list["Span"]]:
         """Return the child spans in sequence order
 
+        :param sync_spans: Whether to assume the spans are synchronous,
+        defaults to `False`
+        :type sync_spans: `bool`, optional
         :return: The child spans in sequence order
         :rtype: `list`[`list`[:class:`Span`]]"""
         if not self.child_spans:
             return []
         ordered_spans = self.start_time_order
         time_array = np.array([span.time_array() for span in ordered_spans])
-        slice_indexes = get_slice_indexes(time_array)
+        if sync_spans:
+            slice_indexes = list(range(len(time_array) + 1))
+        else:
+            slice_indexes = get_slice_indexes(time_array)
         return [
             ordered_spans[slice_indexes[i]:slice_indexes[i + 1]]
             for i in range(len(slice_indexes) - 1)
@@ -188,7 +196,7 @@ class Span:
 
     def update_graph_with_connections_start_end(
         self, graph: nx.DiGraph, previous_spans: list["Span"] | None = None,
-        with_end_span: bool = False
+        with_end_span: bool = False, sync_spans: bool = False
     ) -> list["Span"]:
         """Update the graph with connections
 
@@ -198,6 +206,9 @@ class Span:
         :type previous_spans: `list`[:class:`Span`]
         :param with_end_span: Whether to add an end span, defaults to `False`
         :type with_end_span: `bool`, optional
+        :param sync_spans: Whether to assume the spans are synchronous,
+        defaults to `False`
+        :type sync_spans: `bool`, optional
         :return: The previous spans
         :rtype: `list`[:class:`Span`]
         """
@@ -213,7 +224,7 @@ class Span:
             for previous_span in previous_spans:
                 graph.add_edge(previous_span, start_span)
         previous_spans = [start_span]
-        for async_span_group in self.child_spans_sequence_order():
+        for async_span_group in self.child_spans_sequence_order(sync_spans):
             next_previous_spans = []
             for span in async_span_group:
                 next_previous_spans.extend(
@@ -245,17 +256,22 @@ class Span:
         return [self]
 
     def update_graph_with_connections(
-        self, graph: nx.DiGraph
+        self, graph: nx.DiGraph, sync_spans: bool = False
     ) -> list["Span"]:
         """Update the graph with connections
 
         :param graph: The graph to update
         :type graph: :class:`nx.DiGraph`
+        :param sync_spans: Whether to assume the spans are synchronous,
+        defaults to `False`
+        :type sync_spans: `bool`, optional
         :return: The previous spans
         :rtype: `list`[:class:`Span`]
         """
         previous_spans = [self]
-        for async_span_group in reversed(self.child_spans_sequence_order()):
+        for async_span_group in reversed(
+            self.child_spans_sequence_order(sync_spans)
+        ):
             next_previous_spans = []
             for span in async_span_group:
                 for previous_span in previous_spans:
@@ -393,7 +409,7 @@ class Trace:
 
     def yield_pv_event_sequence(
         self, include_start_end_status: bool = False,
-        with_end_span: bool = False
+        with_end_span: bool = False, sync_spans: bool = False
     ) -> Generator[PVEvent, Any, None]:
         """Return the pv event sequence
 
@@ -402,16 +418,19 @@ class Trace:
         :type include_start_end_status: `bool`, optional
         :param with_end_span: Whether to add an end span, defaults to `False`
         :type with_end_span: `bool`, optional
+        :param sync_spans: Whether to assume the spans are synchronous,
+        defaults to `False`
+        :type sync_spans: `bool`, optional
         :return: The pv event sequence
         :rtype: `Generator`[:class:`PVEvent`, `Any`, `None`]
         """
         graph = self._graph
         if include_start_end_status:
             self.root_span.update_graph_with_connections_start_end(
-                graph, with_end_span=with_end_span
+                graph, with_end_span=with_end_span, sync_spans=sync_spans
             )
         else:
-            self.root_span.update_graph_with_connections(graph)
+            self.root_span.update_graph_with_connections(graph, sync_spans)
         for span in (
             self.spans.values()
             if not include_start_end_status else graph.nodes()
