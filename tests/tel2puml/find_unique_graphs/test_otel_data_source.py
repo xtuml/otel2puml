@@ -31,19 +31,19 @@ class TestOTELDataSource:
     @pytest.mark.usefixtures(
         "mock_yaml_config", "mock_path_exists", "mock_filepath_in_dir"
     )
-    def test_set_file_ext_valid() -> None:
+    def test_set_data_source_valid() -> None:
         """Tests for valid file ext."""
-        data_source = JSONDataSource()
-        assert data_source.file_ext == "json"
+        json_data_source = JSONDataSource()
+        assert json_data_source.data_source == "json"
 
     @staticmethod
-    def test_set_file_ext_invalid(mock_yaml_config_string: str) -> None:
+    def test_set_data_source_invalid(mock_yaml_config_string: str) -> None:
         """Tests invalid file extension in yaml config."""
         invalid_yaml = mock_yaml_config_string.replace("json", "invalid")
         with patch("builtins.open", mock_open(read_data=invalid_yaml)), patch(
             "os.path.isdir", return_value=True
         ), patch("os.path.isfile", return_value=True):
-            with pytest.raises(ValueError, match="is not a valid file ext"):
+            with pytest.raises(ValueError, match="is not a valid data source"):
                 JSONDataSource()
 
 
@@ -56,8 +56,8 @@ class TestJSONDataSource:
     )
     def test_set_dirpath_valid() -> None:
         """Tests set_dirpath method."""
-        data_source = JSONDataSource()
-        assert data_source.dirpath == "/path/to/json/directory"
+        json_data_source = JSONDataSource()
+        assert json_data_source.dirpath == "/path/to/json/directory"
 
     @staticmethod
     @pytest.mark.usefixtures("mock_yaml_config")
@@ -75,8 +75,8 @@ class TestJSONDataSource:
     )
     def test_set_filepath_valid() -> None:
         """Tests the set_filepath method."""
-        data_source = JSONDataSource()
-        assert data_source.filepath == "/path/to/json/file.json"
+        jsond_data_source = JSONDataSource()
+        assert jsond_data_source.filepath == "/path/to/json/file.json"
 
     @staticmethod
     @pytest.mark.usefixtures("mock_yaml_config")
@@ -111,10 +111,10 @@ class TestJSONDataSource:
     )
     def test_init() -> None:
         """Tests the classes init method."""
-        json_source = JSONDataSource()
-        assert json_source.file_ext == "json"
-        assert json_source.dirpath == "/path/to/json/directory"
-        assert json_source.filepath == "/path/to/json/file.json"
+        json_data_source = JSONDataSource()
+        assert json_data_source.data_source == "json"
+        assert json_data_source.dirpath == "/path/to/json/directory"
+        assert json_data_source.filepath == "/path/to/json/file.json"
 
     @staticmethod
     @pytest.mark.usefixtures("mock_path_exists")
@@ -126,8 +126,8 @@ class TestJSONDataSource:
             "dirpath: /path/to/json/directory", 'dirpath: ""'
         )
         with patch("builtins.open", mock_open(read_data=no_dir_path_yaml)):
-            json_source = JSONDataSource()
-            assert json_source.get_file_list() == ["/path/to/json/file.json"]
+            json_data_source = JSONDataSource()
+            assert json_data_source.get_file_list() == ["/path/to/json/file.json"]
 
     @staticmethod
     @pytest.mark.usefixtures("mock_yaml_config", "mock_path_exists")
@@ -139,8 +139,8 @@ class TestJSONDataSource:
             "os.listdir",
             return_value=["/mock/dir/file1.json", "/mock/dir/file2.json"],
         ):
-            json_source = JSONDataSource()
-            assert json_source.get_file_list() == mock_file_list
+            json_data_source = JSONDataSource()
+            assert json_data_source.get_file_list() == mock_file_list
 
     @staticmethod
     @pytest.mark.usefixtures("mock_path_exists")
@@ -153,13 +153,13 @@ class TestJSONDataSource:
             "dirpath: /path/to/json/directory", 'dirpath: ""'
         )
         with patch("builtins.open", mock_open(read_data=no_dir_path_yaml)):
-            json_source = JSONDataSource()
+            json_data_source = JSONDataSource()
             mock_file_content = json.dumps(mock_json_data)
 
             with patch(
                 "builtins.open", mock_open(read_data=mock_file_content)
             ):
-                events = list(json_source.parse_json_stream("mock_file.json"))
+                events = list(json_data_source.parse_json_stream("mock_file.json"))
 
             assert len(events) == 2
             assert isinstance(events[0], OTelEvent)
@@ -174,8 +174,8 @@ class TestJSONDataSource:
         mock_json_data: list[dict[str, Any]],
     ) -> None:
         """Tests creating an OTelEvent object."""
-        json_source = JSONDataSource()
-        otel_event = json_source.create_otel_object(mock_json_data[0])
+        json_data_source = JSONDataSource()
+        otel_event = json_data_source.create_otel_object(mock_json_data[0])
 
         assert isinstance(otel_event, OTelEvent)
         assert otel_event.job_name == "job1"
@@ -198,13 +198,13 @@ class TestJSONDataSource:
         with patch(
             "builtins.open", mock_open(read_data=mock_yaml_config_string)
         ):
-            json_source = JSONDataSource()
+            json_data_source = JSONDataSource()
             mock_file_content = json.dumps(mock_json_data)
 
             with patch(
                 "builtins.open", mock_open(read_data=mock_file_content)
             ):
-                events = list(json_source)
+                events = list(json_data_source)
 
         assert len(events) == 2
         assert isinstance(events[0], OTelEvent)
