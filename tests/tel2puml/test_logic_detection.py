@@ -1048,6 +1048,8 @@ def test_get_process_tree_leaves() -> None:
 
 
 class TestCreateBranchTreeFromLogicGateTree:
+    """Tests for method create_branch_tree_from_logic_gate_tree and sub methods
+    """
     @staticmethod
     def event_sets() -> set[EventSet]:
         """Return a set of event sets"""

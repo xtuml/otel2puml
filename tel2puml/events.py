@@ -85,12 +85,14 @@ class EventSet(dict[str, int]):
             event for event, count in self.items() for _ in range(count)
         )
 
-    def has_intersection_with_event_types(self, event_types: set[str]) -> bool:
+    def has_intersection_with_event_types(
+        self, event_types: Iterable[str]
+    ) -> bool:
         """Method to check if the event set has an intersection with the event
         types.
 
         :param event_types: The event types.
-        :type event_types: `set`[`str`]
+        :type event_types: `Iterable`[`str`]
         :return: Whether the event set has an intersection with the event
         types.
         :rtype: `bool`
