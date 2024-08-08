@@ -99,12 +99,12 @@ class EventSet(dict[str, int]):
 
     def get_event_type_counts_for_given_event_types(
         self,
-        event_types: set[str],
+        event_types: Iterable[str],
     ) -> dict[str, int]:
         """Method to get the event type counts from an event set.
 
         :param event_types: The event types.
-        :type event_types: `set`[`str`]
+        :type event_types: `Iterable`[`str`]
         :return: The event type counts.
         :rtype: `dict`[`str`, `int`]
         """

@@ -1,7 +1,7 @@
 """Module to detect logic gates from EventSet's held in Event class and create
 a logic gate process tree"""
 
-from typing import Any, Generator, TypeVar
+from typing import Any, Generator, TypeVar, Iterable
 from itertools import permutations
 from datetime import datetime, timedelta
 from uuid import uuid4
@@ -441,8 +441,7 @@ def get_process_tree_leaves(
     :param process_tree: The process tree.
     :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
     :return: The leaves.
-    :rtype: `Generator`[:class:`pm4py.objects.process_tree.obj.ProcessTree`,
-    `Any`, `None`]
+    :rtype: `Generator`[`str`, `Any`, `None`]
     """
     if process_tree.label is not None:
         if not isinstance(process_tree.label, str):
@@ -455,14 +454,14 @@ def get_process_tree_leaves(
 
 def get_matrix_of_event_counts_from_event_sets_and_leaves(
     event_sets: set["ev.EventSet"],
-    leaves: set[str],
+    leaves: Iterable[str],
 ) -> NDArray[np.int32]:
     """Method to get a matrix of event counts from event sets and leaves.
 
     :param event_sets: The event sets.
     :type event_sets: `set`[:class:`tel2puml.events.EventSet`]
     :param leaves: The leaves.
-    :type leaves: `set`[`str`]
+    :type leaves: `Iterable`[`str`]
     :return: The matrix of event counts.
     :rtype: :class:`numpy.ndarray`
     """
@@ -511,9 +510,9 @@ def order_matrix_of_event_counts(
     return matrix[sorted_row_indices]
 
 
-def check_is_ok_or_and_under_branch(
+def check_is_ok_and_under_branch(
     event_sets: set["ev.EventSet"],
-    leaves: set[str],
+    leaves: Iterable[str],
 ) -> bool:
     """Method to check if the OR/AND operators are correct under a branch given
     the event sets and leaves. Checks to see if there is at least some positive
@@ -522,13 +521,15 @@ def check_is_ok_or_and_under_branch(
     :param event_sets: The event sets.
     :type event_sets: `set`[:class:`tel2puml.events.EventSet`]
     :param leaves: The leaves.
-    :type leaves: `set`[`str`]
+    :type leaves: `Iterable`[`str`]
     :return: Whether the OR/AND operators is correct.
     :rtype: `bool`
     """
     matrix = get_matrix_of_event_counts_from_event_sets_and_leaves(
         event_sets, leaves
     )
+    if len(matrix) == 1:
+        return True
     # order matrix of event counts so that rows that are similar in terms of
     # having non-zero columns are grouped together
     ordered_matrix = order_matrix_of_event_counts(matrix)
@@ -569,16 +570,16 @@ def assure_or_and_operators_are_correct_under_branch(
     """
     if process_tree.operator is None:
         return
-    if process_tree.operator.value in (
-        Operator.OR.value, Operator.PARALLEL.value
-    ):
+    if process_tree.operator.value == Operator.PARALLEL.value:
         leaves = set(get_process_tree_leaves(process_tree))
-        if not check_is_ok_or_and_under_branch(event_sets, leaves):
+        if not check_is_ok_and_under_branch(event_sets, leaves):
             process_tree.operator = Operator.XOR
-        for child in process_tree.children:
-            assure_or_and_operators_are_correct_under_branch(
-                child, event_sets
-            )
+    if process_tree.operator.value == Operator.OR.value:
+        process_tree.operator = Operator.XOR
+    for child in process_tree.children:
+        assure_or_and_operators_are_correct_under_branch(
+            child, event_sets
+        )
 
 
 def flatten_nested_xor_operators(
@@ -601,6 +602,7 @@ def flatten_nested_xor_operators(
                     new_children.extend(child.children)
                     continue
             new_children.append(child)
+        process_tree.children = new_children
 
 
 def create_branch_tree_from_logic_gate_tree(
