@@ -91,6 +91,10 @@ class TestSpan:
                 for i in range(2, 5)
             ]
         ]
+        assert spans["span"].child_spans_sequence_order(sync_spans=True) == [
+            [spans[f"child_span_{i}"]]
+            for i in range(1, 5)
+        ]
 
     def test_update_graph_with_connections(self) -> None:
         """Test the `update_graph_with_connections` method."""
@@ -98,7 +102,7 @@ class TestSpan:
         spans = self.spans_for_test()
         graph = nx.DiGraph()
         spans["span"].update_graph_with_connections(graph)
-        assert graph.edges == {
+        assert set(graph.edges) == {
             (spans["child_span_1"], spans["child_span_2"]),
             (spans["child_span_1"], spans["child_span_3"]),
             (spans["child_span_1"], spans["child_span_4"]),
@@ -106,16 +110,36 @@ class TestSpan:
             (spans["child_span_3"], spans["span"]),
             (spans["child_span_4"], spans["span"])
         }
+        # check purely synchronous case
+        graph = nx.DiGraph()
+        spans["span"].update_graph_with_connections(graph, sync_spans=True)
+        assert set(graph.edges) == {
+            (spans["child_span_1"], spans["child_span_2"]),
+            (spans["child_span_2"], spans["child_span_3"]),
+            (spans["child_span_3"], spans["child_span_4"]),
+            (spans["child_span_4"], spans["span"])
+        }
         # check case where some child spans have children
         spans = self.updated_spans_for_test()
         graph = nx.DiGraph()
         spans["span"].update_graph_with_connections(graph)
-        assert graph.edges == {
+        assert set(graph.edges) == {
             (spans["child_span_1"], spans["child_span_2"]),
             (spans["child_span_1"], spans["child_span_3"]),
             (spans["child_span_1"], spans["child_span_4"]),
             (spans["child_span_2"], spans["span"]),
             (spans["child_span_3"], spans["span"]),
+            (spans["child_span_4"], spans["span"]),
+            (spans["grand_child_span_1"], spans["child_span_1"]),
+            (spans["grand_child_span_2"], spans["child_span_1"])
+        }
+        # check purely synchronous case
+        graph = nx.DiGraph()
+        spans["span"].update_graph_with_connections(graph, sync_spans=True)
+        assert set(graph.edges) == {
+            (spans["child_span_1"], spans["child_span_2"]),
+            (spans["child_span_2"], spans["child_span_3"]),
+            (spans["child_span_3"], spans["child_span_4"]),
             (spans["child_span_4"], spans["span"]),
             (spans["grand_child_span_1"], spans["child_span_1"]),
             (spans["grand_child_span_2"], spans["child_span_1"])
@@ -242,6 +266,65 @@ class TestTrace:
                 date_time=datetime.fromtimestamp(8*1e-9)
             ),
             "previousEventIds": ["2"],
+            "applicationName": "default_app",
+            "jobName": "default_job",
+            "eventType": "a_child_span_4"
+        }
+        # check case where spans are synchronous
+        trace = self.trace_for_test()
+        events = list(trace.yield_pv_event_sequence(sync_spans=True))
+        assert len(events) == 5
+        assert events[0] == {
+            "jobId": "1",
+            "eventId": "1",
+            "timestamp": datetime_to_pv_string(
+                date_time=datetime.fromtimestamp(8*1e-9)
+            ),
+            "previousEventIds": ["5"],
+            "applicationName": "default_app",
+            "jobName": "default_job",
+            "eventType": "a_span"
+        }
+        assert events[1] == {
+            "jobId": "1",
+            "eventId": "2",
+            "timestamp": datetime_to_pv_string(
+                date_time=datetime.fromtimestamp(3*1e-9)
+            ),
+            "previousEventIds": [],
+            "applicationName": "default_app",
+            "jobName": "default_job",
+            "eventType": "a_child_span_1"
+        }
+        assert events[2] == {
+            "jobId": "1",
+            "eventId": "3",
+            "timestamp": datetime_to_pv_string(
+                date_time=datetime.fromtimestamp(6*1e-9)
+            ),
+            "previousEventIds": ["2"],
+            "applicationName": "default_app",
+            "jobName": "default_job",
+            "eventType": "a_child_span_2"
+        }
+        assert events[3] == {
+            "jobId": "1",
+            "eventId": "4",
+            "timestamp": datetime_to_pv_string(
+                date_time=datetime.fromtimestamp(7*1e-9)
+            ),
+            "previousEventIds": ["3"],
+            "applicationName": "default_app",
+            "jobName": "default_job",
+            "eventType": "a_child_span_3"
+        }
+        assert events[4] == {
+            "jobId": "1",
+            "eventId": "5",
+            "timestamp": datetime_to_pv_string(
+                date_time=datetime.fromtimestamp(8*1e-9)
+            ),
+            "previousEventIds": ["4"],
             "applicationName": "default_app",
             "jobName": "default_job",
             "eventType": "a_child_span_4"
