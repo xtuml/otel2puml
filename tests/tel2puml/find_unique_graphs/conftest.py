@@ -29,22 +29,22 @@ def mock_yaml_config(
 
 @pytest.fixture
 def mock_path_exists() -> Generator[None, None, None]:
+    """Mocks os.path.isdir and os.path.isfile functions, returning True for
+    both."""
     with patch("os.path.isdir", return_value=True), patch(
         "os.path.isfile", return_value=True
     ):
-        """Mocks os.path.isdir and os.path.isfile functions, returning True for
-        both."""
         yield
 
 
 @pytest.fixture
 def mock_filepath_in_dir() -> Generator[None, None, None]:
+    """Mocks os.listdir function, returning a custom list containing a
+    json file."""
     with patch(
         "os.listdir",
         return_value=["/mock/dir/file1.json"],
     ):
-        """Mocks os.listdir function, returning a custom list containing a
-        json file."""
         yield
 
 
@@ -79,5 +79,5 @@ def mock_json_data() -> list[dict[str, Any]]:
 
 @pytest.fixture
 def mock_file_list() -> list[str]:
-    """Mocks a list of json files."""
+    """Mocks a list of json"""
     return ["/mock/dir/file1.json", "/mock/dir/file2.json"]
