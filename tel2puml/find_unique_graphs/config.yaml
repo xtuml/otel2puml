@@ -34,7 +34,6 @@ data_sources:
         key_paths: [parent_span_id]
         value_type: string
 
-
     schema:
       type: object
       properties:
@@ -69,7 +68,6 @@ data_sources:
         - end_timestamp
         - application_name
         - parent_event_id
-          
 
 data_holders:
   sql:

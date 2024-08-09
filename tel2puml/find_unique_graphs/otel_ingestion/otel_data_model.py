@@ -1,6 +1,6 @@
 """Module containing classes to ingest OTel data into a data holder."""
 
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, TypedDict
 
 from sqlalchemy import (
     Column,
@@ -50,6 +50,7 @@ class OTelEvent(NamedTuple):
 
 class Base(DeclarativeBase):
     """Base class for SQLAlchemy models"""
+
     pass
 
 
@@ -102,3 +103,12 @@ class NodeModel(Base):
         child_event_ids='{[child.event_id for child in self.children]}'
         )>
         """
+
+
+class JSONDataSourceConfig(TypedDict):
+    """Typed dict for JSONDataSourceConfig."""
+
+    filepath: str
+    dirpath: str
+    field_mapping: dict[str, str]
+    schema: dict[str, str]

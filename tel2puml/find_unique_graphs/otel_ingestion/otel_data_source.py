@@ -6,11 +6,12 @@ import time
 import ijson
 import jsonschema
 from abc import ABC, abstractmethod
-from typing import Self, Any, Iterator, TypedDict
+from typing import Self, Any, Iterator
 from jsonschema import ValidationError
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     OTelEvent,
+    JSONDataSourceConfig
 )
 from tel2puml.find_unique_graphs.otel_ingestion import json_data_converter
 
@@ -38,14 +39,6 @@ class OTELDataSource(ABC):
         :rtype: :class: `OTelEvent`
         """
         pass
-
-
-class JSONDataSourceConfig(TypedDict):
-    """Typed dict for JSONDataSourceConfig."""
-
-    filepath: str
-    dirpath: str
-    field_mapping: dict[str, str]
 
 
 class JSONDataSource(OTELDataSource):
@@ -150,7 +143,7 @@ class JSONDataSource(OTELDataSource):
             start_timestamp=record["start_timestamp"],
             end_timestamp=record["end_timestamp"],
             application_name=record["application_name"],
-            parent_event_id=["parent_event_id"],
+            parent_event_id=record["parent_event_id"],
             child_event_ids=record.get("child_event_ids", None),
         )
 

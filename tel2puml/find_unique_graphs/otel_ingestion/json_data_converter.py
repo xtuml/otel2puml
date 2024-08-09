@@ -3,6 +3,9 @@
 import flatdict
 from typing import Any
 from datetime import datetime
+from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
+    JSONDataSourceConfig,
+)
 
 
 def flatten_json_dict(json_data: dict[str, Any]) -> Any:
@@ -17,21 +20,22 @@ def flatten_json_dict(json_data: dict[str, Any]) -> Any:
 
 
 def map_data_to_json_schema(
-    mapping_config: dict[str, Any], flattened_data: Any
+    mapping_config: JSONDataSourceConfig, flattened_data: Any
 ) -> dict[str, str]:
     """
     Function that maps flattened JSON data to a schema defined in the
     mapping_config.
 
     :param mapping_config: The mapping config pulled from the yaml config file
-    :type mapping_config: `dict`[`str`,`Any`]
+    :type mapping_config: :class:`JSONDataSourceConfig`
     :param flattened_data: JSON data as a flattened dictionary
     :type flattened_data: `Any`
     :return: The mapped data
     :rtype: `dict`[`str`, `str`]
     """
     result: dict[str, str] = {}
-    for field_name, field_config in mapping_config["field_mapping"].items():
+    field_mapping: dict[str, Any] = mapping_config["field_mapping"]
+    for field_name, field_config in field_mapping.items():
         process_field(field_name, field_config, flattened_data, result)
     return result
 
@@ -48,7 +52,7 @@ def process_field(
     :param field_name: The field name within the mapping config
     :type field_name: `str`
     :param field_config: The config for the field name
-    :type field_config: `dict`[`str`,`Any`]
+    :type field_config: `str` | `dict`[`str`,`Any`]
     :param flattened_data: JSON data as a flattened dictionary
     :type flattened_data: `Any`
     :param result: The mapped data
@@ -220,13 +224,13 @@ def process_unix_nano(unix_nano: int) -> str:
 
 
 def flatten_and_map_data(
-    json_config: dict[str, Any], raw_json: dict[str, Any]
+    json_config: JSONDataSourceConfig, raw_json: dict[str, Any]
 ) -> dict[str, str]:
     """Function to handle flattening raw json and mapping the data to the
     specified configuration.
 
     :param json_config: The json config
-    :type json_config: `dict`[`str`,`Any`]
+    :type json_config: :class: `JSONDataSourceConfig`
     :param json_data: The JSON data to flatten.
     :param json_data: `dict`[`str`,`Any`]
     return: The mapped data
