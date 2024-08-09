@@ -111,4 +111,3 @@ class JSONDataSourceConfig(TypedDict):
     filepath: str
     dirpath: str
     field_mapping: dict[str, str]
-    schema: dict[str, str]
