@@ -461,7 +461,7 @@ def handle_logic_node_cases(
     :param logic_list: The list of logic blocks.
     :type logic_list: `list`[:class:`LogicBlockHolder`]
     :param previous_puml_node: The previous PlantUML node.
-    :type previous_puml_node: :class:`PUMLOperatorNode`
+    :type previous_puml_node: :class:`PUMLNode`
     :param previous_node_class: The previous node class.
     :type previous_node_class: :class:`Node`
     :return: A tuple containing the newly created PlantUML node and the event
@@ -505,14 +505,14 @@ def handle_reach_potential_merge_point(
     :param logic_block: The logic block to handle.
     :type logic_block: :class:`LogicBlock
     :param previous_puml_node: The previous PlantUML node.
-    :type previous_puml_node: :class:`PUMLOperatorNode`
+    :type previous_puml_node: :class:`PUMLNode`
     :param previous_node_class: The previous node class.
     :type previous_node_class: :class:`Node`
     :param next_node_class: The next node class.
     :type next_node_class: :class:`Node`
     :return: A tuple containing the newly created PlantUML node and the event
     node.
-    :rtype: `tuple`[:class:`PUMLOperatorNode`, :class:`Node`]
+    :rtype: `tuple`[:class:`PUMLNode`, :class:`Node`]
     """
     logic_block = logic_list[-1]
     if logic_block.handle_path_merge(next_node_class):
@@ -593,12 +593,12 @@ def handle_rotate_path(
     :param logic_block: The logic block to handle.
     :type logic_block: :class:`LogicBlock
     :param previous_puml_node: The previous PlantUML node.
-    :type previous_puml_node: :class:`PUMLOperatorNode`
+    :type previous_puml_node: :class:`PUMLNode`
     :param previous_node_class: The previous node class.
     :type previous_node_class: :class:`Node`
     :return: A tuple containing the newly created PlantUML node and the event
     node.
-    :rtype: `tuple`[:class:`PUMLOperatorNode`, :class:`Node`]
+    :rtype: `tuple`[:class:`PUMLNode`, :class:`Node`]
     """
     previous_puml_node, previous_node_class = logic_list[-1].rotate_path(
         previous_node_class, previous_puml_node
