@@ -1,8 +1,8 @@
 data_sources:
   json:
     # Specify the file path to the JSON data
-    dirpath: null
-    filepath: data.json
+    dirpath: tel2puml/find_unique_graphs/otel_ingestion/folder1
+    filepath: null
     # Define the field mapping from the application to your JSON structure
     field_mapping:
       job_name:
