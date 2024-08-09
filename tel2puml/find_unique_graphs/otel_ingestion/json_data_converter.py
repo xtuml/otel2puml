@@ -132,7 +132,7 @@ def handle_empty_segments(
         segment_count += 1
 
     if segment_count > 50:
-        raise RuntimeError("Could not find attribute.")
+        raise RuntimeError(f"Could not find data for '{field_name}'")
 
 
 def handle_regular_path(
@@ -188,7 +188,7 @@ def add_or_append_value(
     field_name: str, value: str | int, result: dict[str, str], value_type: str
 ) -> None:
     """
-    Function that adds a new value or appends to an existingone in the result
+    Function that adds a new value or appends to an existing one in the result
     dictionary.
 
     :param field_name: The field name within the mapping config
@@ -202,7 +202,7 @@ def add_or_append_value(
     """
     if value_type == "unix_nano":
         if isinstance(value, int):
-            value = process_unix_nano(value)
+            value = unix_nano_to_datetime_str(value)
     if not isinstance(value, str):
         value = str(value)
     if field_name not in result:
@@ -211,7 +211,7 @@ def add_or_append_value(
         result[field_name] += f" {value}"
 
 
-def process_unix_nano(unix_nano: int) -> str:
+def unix_nano_to_datetime_str(unix_nano: int) -> str:
     """Function to process time from unix nano to datetime string.
 
     :param unix_nano: The time in unix nano format
@@ -231,8 +231,8 @@ def flatten_and_map_data(
 
     :param json_config: The json config
     :type json_config: :class: `JSONDataSourceConfig`
-    :param json_data: The JSON data to flatten.
-    :param json_data: `dict`[`str`,`Any`]
+    :param raw_json: The JSON data to flatten.
+    :param raw_json: `dict`[`str`,`Any`]
     return: The mapped data
     :rtype: `dict`[`str`, `str`]
     """

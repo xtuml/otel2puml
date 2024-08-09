@@ -4,10 +4,8 @@ import os
 import yaml
 import time
 import ijson
-import jsonschema
 from abc import ABC, abstractmethod
 from typing import Self, Any, Iterator
-from jsonschema import ValidationError
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     OTelEvent,
@@ -59,7 +57,6 @@ class JSONDataSource(OTELDataSource):
                 """No directory or files found. Please check yaml config."""
             )
         self.file_list = self.get_file_list()
-        self.json_schema = self.config["schema"]
 
     def set_dirpath(self) -> str | None:
         """Set the directory path.
@@ -120,14 +117,13 @@ class JSONDataSource(OTELDataSource):
         """
         with open(filepath, "rb") as file:
             for record in ijson.items(file, "item"):
-                try:
+                if isinstance(record, dict):
                     processed_json = json_data_converter.flatten_and_map_data(
                         self.config, record
                     )
-                    jsonschema.validate(processed_json, self.json_schema)
                     yield self.create_otel_object(processed_json)
-                except ValidationError as e:
-                    print(f"Invalid json record - {e}")
+                else:
+                    raise TypeError("json is not of type dict.")
 
     def create_otel_object(self, record: dict[str, Any]) -> OTelEvent:
         """Creates an OTelEvent object from a JSON record.

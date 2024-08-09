@@ -1,8 +1,8 @@
 data_sources:
   json:
     # Specify the file path to the JSON data
-    dirpath: tel2puml/find_unique_graphs/otel_ingestion/folder1
-    filepath: null
+    dirpath: null
+    filepath: path/to/json/file
     # Define the field mapping from the application to your JSON structure
     field_mapping:
       job_name:
@@ -33,41 +33,8 @@ data_sources:
       parent_event_id:
         key_paths: [parent_span_id]
         value_type: string
-
-    schema:
-      type: object
-      properties:
-        job_name:
-          type: string
-        job_id:
-          type: string
-        event_type:
-          type: string
-        event_id:
-          type: string
-        start_timestamp:
-          type: string
-        end_timestamp:
-          type: string
-        application_name:
-          type: string
-        parent_event_id:
-          anyOf:
-            - type: string
-            - type: 'null'
-        child_event_ids:
-          type: array
-          items:
-            type: string
-      required:
-        - job_name
-        - job_id
-        - event_type
-        - event_id
-        - start_timestamp
-        - end_timestamp
-        - application_name
-        - parent_event_id
+      child_event_ids:
+        key_paths: []
 
 data_holders:
   sql:
