@@ -39,7 +39,7 @@ class EventSet(dict[str, int]):
     def __key(self) -> tuple[tuple[str, int], ...]:
         return tuple((k, self[k]) for k in sorted(self))
 
-    def __hash__(self) -> int:
+    def __hash__(self) -> int:  # type: ignore[override]
         return hash(self.__key())
 
     def __eq__(self, other: object) -> bool:

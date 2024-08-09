@@ -53,8 +53,8 @@ def get_event_nodes_from_loop(
     :return: The event nodes from the loop.
     :rtype: `set`[:class:`PUMLEventNode`]
     """
-    start_loop_nodes = set()
-    end_loop_nodes = set()
+    start_loop_nodes: set[PUMLEventNode] = set()
+    end_loop_nodes: set[PUMLEventNode] = set()
     for start_point in loop.start_points:
         puml_graph.add_graph_node_to_set_from_reference(
             start_loop_nodes, start_point

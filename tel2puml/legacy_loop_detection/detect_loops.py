@@ -1,5 +1,14 @@
 """A module to detect all loops in a graph."""
-from typing import Self, Optional, Union, Iterable, Generator, TypeVar
+from typing import (
+    Self,
+    Optional,
+    Union,
+    Iterable,
+    Generator,
+    TypeVar,
+    overload,
+    Literal
+)
 from logging import getLogger
 
 from networkx import (
@@ -88,12 +97,12 @@ class Loop:
 
     def add_break_point_edges_to_remove(
         self,
-        graph: DiGraph,
+        graph: "DiGraph[str]",
     ) -> None:
         """Add the break point edges to remove from the loop.
 
         :param graph: The graph to get the break point edges from.
-        :type graph: `DiGraph`
+        :type graph: `DiGraph`[`str`]
         """
         break_edges = get_break_point_edges_to_remove_from_loop(graph, self)
         for break_edge in break_edges:
@@ -209,7 +218,7 @@ def detect_loops(graph: "DiGraph[str]") -> list[Loop]:
     loops = update_subloops(loops)
     loops = merge_loops(loops)
     loops = update_break_edges_and_exits(loops, edges)
-    loops = update_break_points(graph, loops)
+    loops = update_break_points(graph, loops, sub_loop=False)
     loops = merge_break_points(loops)
     update_break_point_edges_to_remove(graph, loops)
     return loops
@@ -447,6 +456,18 @@ def merge_loops(loops: list[Loop]) -> list[Loop]:
     return merged_loops
 
 
+@overload
+def update_break_points(
+    graph: "DiGraph[str]", loops: list[Loop], sub_loop: Literal[False]
+) -> list[Loop]: ...
+
+
+@overload
+def update_break_points(
+    graph: "DiGraph[str]", loops: list[Loop], sub_loop: Literal[True]
+) -> list[str]: ...
+
+
 def update_break_points(
     graph: "DiGraph[str]",
     loops: list[Loop],
@@ -556,7 +577,7 @@ def get_break_point_edges_to_remove_from_loop(
     :param loop: The loop to get the break point edges to remove.
     :type loop: `Loop`
     """
-    break_edges = []
+    break_edges: list[tuple[str, str]] = []
     for break_point in loop.break_points:
         break_edges.extend(graph.out_edges(break_point))
     return break_edges
@@ -759,14 +780,14 @@ def get_all_kill_edges_from_loop(
 
 
 def remove_loop_data_from_graph(
-    graph: DiGraph,
+    graph: "DiGraph[str]",
     loops: list[Loop],
 ) -> None:
     """Removes the loop data from the given graph. Removes the indicated edges
     and recursively removes the loop data from the sub loops.
 
     :param graph: The graph to remove the loop data from
-    :type graph: :class:`DiGraph`
+    :type graph: :class:`DiGraph`[`str`]
     :param loops: The loops used to remove the loop data from the graph
     :type loops: `list`[:class:`Loop`]
     """
@@ -776,13 +797,13 @@ def remove_loop_data_from_graph(
 
 
 def remove_loop_edges_from_graph(
-    graph: DiGraph,
+    graph: "DiGraph[str]",
     loop: Loop,
 ) -> None:
     """Removes the given loop's edges to remove from the given graph.
 
     :param graph: The graph to remove the edges from
-    :type graph: :class:`DiGraph`
+    :type graph: :class:`DiGraph`[`str`]
     :param loop: The loop containing the edges to remove
     :type loop: :class:`Loop`
     """

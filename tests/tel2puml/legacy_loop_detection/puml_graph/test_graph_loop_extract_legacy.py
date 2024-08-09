@@ -1,8 +1,9 @@
 """Tests for the graph_loop_insert module."""
+from typing import Hashable
 
 import pytest
 
-from tel2puml.puml_graph.graph import PUMLGraph, PUMLEventNode
+from tel2puml.puml_graph.graph import PUMLGraph, PUMLEventNode, PUMLNode
 from tel2puml.legacy_loop_detection.puml_graph.graph_loop_extract import (
     extract_loops_starts_and_ends_from_loop,
     get_event_nodes_from_loop,
@@ -51,14 +52,14 @@ def test_walk_until_minimal_nodes_found(
     loop_found = walk_until_minimal_nodes_found(
         graph, list(loop_nodes["start_loop_nodes"])[0], loop_nodes, loop_1
     )
-    expected_start_node_parent_graph_nodes = ["q1", "q2"]
+    expected_start_node_parent_graph_nodes: list[Hashable] = ["q1", "q2"]
     assert len(loop_found["start_loop_nodes"]) == 2
     for node in loop_found["start_loop_nodes"]:
         assert node.parent_graph_node in expected_start_node_parent_graph_nodes
         expected_start_node_parent_graph_nodes.remove(node.parent_graph_node)
     assert len(expected_start_node_parent_graph_nodes) == 0
     assert len(loop_found["end_loop_nodes"]) == 2
-    expected_end_node_parent_graph_nodes = ["q3", "q4"]
+    expected_end_node_parent_graph_nodes: list[Hashable] = ["q3", "q4"]
     for node in loop_found["end_loop_nodes"]:
         assert node.parent_graph_node in expected_end_node_parent_graph_nodes
         expected_end_node_parent_graph_nodes.remove(node.parent_graph_node)
@@ -284,11 +285,11 @@ class TestGetLoopStartAndEnd:
     check that the correct unique loops were found."""
     @staticmethod
     def check_correct_start_and_end_nodes(
-        unique_loops: list[tuple[PUMLEventNode, PUMLEventNode]],
+        unique_loops: list[tuple[PUMLNode, PUMLNode]],
     ) -> None:
         """Helper method for checking the correct unique loops were
         found"""
-        expected_loop_start_end_ids = [
+        expected_loop_start_end_ids: list[tuple[Hashable, Hashable]] = [
             (("START", "XOR", 0), ("END", "XOR", 0)),
             (("START", "XOR", 1), ("END", "XOR", 1)),
         ]
@@ -341,7 +342,7 @@ class TestGetLoopStartAndEnd:
         puml_graph = PUMLGraph()
         A = puml_graph.create_event_node("A")
         B = puml_graph.create_event_node("B")
-        puml_graph.add_edge(A, B)
+        puml_graph.add_puml_edge(A, B)
         filtered_end_nodes = filter_end_nodes_with_successors(
             {A, B}, puml_graph
         )

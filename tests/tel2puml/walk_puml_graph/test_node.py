@@ -1,6 +1,7 @@
 """Tests for the node module."""
 
 from copy import copy
+from typing import Literal
 
 from pm4py import ProcessTree
 
@@ -57,8 +58,12 @@ class TestNode:
         :param process_tree_no_logic: The process tree with no logic.
         :type process_tree_no_logic: :class:`ProcessTree`
         """
+        directions: list[Literal["incoming", "outgoing"]] = [
+            "incoming",
+            "outgoing",
+        ]
         for direction, direction_node_list, direction_logic_list in zip(
-            ["incoming", "outgoing"],
+            directions,
             [node.incoming, node.outgoing],
             [node.incoming_logic, node.outgoing_logic],
         ):
@@ -81,8 +86,12 @@ class TestNode:
         AND logic gate.
         :type process_tree_with_and_logic_gate: :class:`ProcessTree`
         """
+        directions: list[Literal["incoming", "outgoing"]] = [
+            "incoming",
+            "outgoing",
+        ]
         for direction, direction_node_list, direction_logic_list in zip(
-            ["incoming", "outgoing"],
+            directions,
             [node.incoming, node.outgoing],
             [node.incoming_logic, node.outgoing_logic],
         ):
@@ -113,8 +122,12 @@ class TestNode:
         OR logic gate.
         :type process_tree_with_or_logic_gate: :class:`ProcessTree`
         """
+        directions: list[Literal["incoming", "outgoing"]] = [
+            "incoming",
+            "outgoing",
+        ]
         for direction, direction_node_list, direction_logic_list in zip(
-            ["incoming", "outgoing"],
+            directions,
             [node.incoming, node.outgoing],
             [node.incoming_logic, node.outgoing_logic],
         ):
@@ -145,8 +158,12 @@ class TestNode:
             XOR logic gate.
         :type process_tree_with_xor_logic_gate: :class:`ProcessTree`
         """
+        directions: list[Literal["incoming", "outgoing"]] = [
+            "incoming",
+            "outgoing",
+        ]
         for direction, direction_node_list, direction_logic_list in zip(
-            ["incoming", "outgoing"],
+            directions,
             [node.incoming, node.outgoing],
             [node.incoming_logic, node.outgoing_logic],
         ):
@@ -178,8 +195,12 @@ class TestNode:
             AND logic gate and an XOR logic gate nested underneath.
         :type process_tree_with_and_xor_logic_gate: :class:`ProcessTree`
         """
+        directions: list[Literal["incoming", "outgoing"]] = [
+            "incoming",
+            "outgoing",
+        ]
         for direction, direction_node_list, direction_logic_list in zip(
-            ["incoming", "outgoing"],
+            directions,
             [node.incoming, node.outgoing],
             [node.incoming_logic, node.outgoing_logic],
         ):
@@ -219,8 +240,12 @@ class TestNode:
         :param process_tree_no_logic: The process tree with no logic.
         :type process_tree_no_logic: :class:`ProcessTree`
         """
+        directions: list[Literal["incoming", "outgoing"]] = [
+            "incoming",
+            "outgoing",
+        ]
         for direction, direction_node_list, direction_logic_list in zip(
-            ["incoming", "outgoing"],
+            directions,
             [
                 node_with_child_to_stub.incoming,
                 node_with_child_to_stub.outgoing,
@@ -267,7 +292,11 @@ class TestNode:
         node. This should not update any of the lists on the stub node.
         """
         node = Node(uid="test_stub", event_type="test_stub", is_stub=True)
-        for direction in ["incoming", "outgoing"]:
+        directions: list[Literal["incoming", "outgoing"]] = [
+            "incoming",
+            "outgoing",
+        ]
+        for direction in directions:
             assert len(getattr(node, direction)) == 0
             assert len(getattr(node, f"{direction}_logic")) == 0
             node.load_logic_into_list(
@@ -305,8 +334,9 @@ class TestNode:
 
         node = node_for_BRANCH_plus_XOR
 
-        direction = "outgoing"
-        node.load_logic_into_list(process_tree_with_BRANCH_plus_XOR, direction)
+        node.load_logic_into_list(
+            process_tree_with_BRANCH_plus_XOR, "outgoing"
+        )
         assert len(node.event_types) == 1
         assert PUMLEvent.BRANCH in node.event_types
         assert len(node.outgoing_logic) == 1

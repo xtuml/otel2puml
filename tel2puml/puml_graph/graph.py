@@ -1,6 +1,6 @@
 """Module for creating PlantUML graph."""
 
-from typing import Hashable, Optional
+from typing import Hashable, Optional, Callable, Union
 from abc import ABC, abstractmethod
 from copy import copy
 
@@ -40,7 +40,9 @@ OPERATOR_NODE_PUML_MAP = {
 }
 
 
-OPERATOR_PATH_FUNCTION_MAP = {
+OPERATOR_PATH_FUNCTION_MAP: dict[
+    PUMLOperatorNodes, Callable[[int], Union["PUMLOperatorNode", None]]
+] = {
     PUMLOperatorNodes.START_XOR: lambda x: (
         None if x == 0
         else PUMLOperatorNode(PUMLOperatorNodes.PATH_XOR, x)
@@ -53,10 +55,7 @@ OPERATOR_PATH_FUNCTION_MAP = {
         None if x == 0
         else PUMLOperatorNode(PUMLOperatorNodes.PATH_OR, x)
     ),
-    PUMLOperatorNodes.START_LOOP: lambda x: (
-        None if x == 0
-        else PUMLOperatorNode(PUMLOperatorNodes.PATH_LOOP, x)
-    )
+    PUMLOperatorNodes.START_LOOP: lambda x: None
 }
 
 
@@ -298,7 +297,7 @@ class PUMLKillNode(PUMLNode):
         )
 
 
-class PUMLGraph(DiGraph):
+class PUMLGraph(DiGraph):  # type: ignore[type-arg]
     """Class for creating PlantUML graph."""
 
     def __init__(self) -> None:
@@ -350,7 +349,7 @@ class PUMLGraph(DiGraph):
             branch_number=branch_number,
             parent_graph_node=parent_graph_node,
         )
-        self.add_node(node)
+        self.add_puml_node(node)
         self.increment_occurrence_count(event_name)
         if parent_graph_node is not None:
             self.add_parent_graph_node_to_node_ref(parent_graph_node, node)
@@ -383,18 +382,18 @@ class PUMLGraph(DiGraph):
         operator block.
         :rtype: `tuple[:class:`PUMLOperatorNode`, :class:`PUMLOperatorNode`]`
         """
-        nodes = []
+        nodes: list[PUMLOperatorNode] = []
         for operator_node in operator.value[:2]:
             node = PUMLOperatorNode(
                 operator_type=operator_node,
                 occurrence=self.get_occurrence_count(operator_node.value),
             )
-            self.add_node(
+            self.add_puml_node(
                 node,
             )
             self.increment_occurrence_count(operator_node.value)
             nodes.append(node)
-        return tuple(nodes)
+        return (nodes[0], nodes[1])
 
     def create_operator_path_node(
         self,
@@ -409,7 +408,7 @@ class PUMLGraph(DiGraph):
             operator_type=operator.value[2],
             occurrence=self.get_occurrence_count(operator.value[2].value),
         )
-        self.add_node(
+        self.add_puml_node(
             node,
         )
         self.increment_occurrence_count(operator.value[2].value)
@@ -422,7 +421,7 @@ class PUMLGraph(DiGraph):
         :rtype: :class:`PUMLKillNode`
         """
         node = PUMLKillNode(self.kill_counts)
-        self.add_node(node)
+        self.add_puml_node(node)
         self.kill_counts += 1
         return node
 
@@ -442,7 +441,7 @@ class PUMLGraph(DiGraph):
         """
         self.node_counts[node_type] = self.get_occurrence_count(node_type) + 1
 
-    def add_node(self, node: PUMLNode) -> None:
+    def add_puml_node(self, node: PUMLNode) -> None:
         """Adds a node to the PlantUML graph.
 
         :param node: The node to be added.
@@ -453,7 +452,7 @@ class PUMLGraph(DiGraph):
         )
         super().add_node(node, **attrs)
 
-    def add_edge(self, start_node: PUMLNode, end_node: PUMLNode) -> None:
+    def add_puml_edge(self, start_node: PUMLNode, end_node: PUMLNode) -> None:
         """Adds an edge to the PlantUML graph.
 
         :param start_node: The start node of the edge.
@@ -462,8 +461,13 @@ class PUMLGraph(DiGraph):
         :type end_node: :class:`PUMLNode`
         """
         attrs = NXEdgeAttributes(
-            start_node_attr=self.nodes[start_node],
-            end_node_attr=self.nodes[end_node]
+            start_node_attr=NXNodeAttributes(
+                node_type=start_node.node_type,
+                extra_info=start_node.extra_info
+            ),
+            end_node_attr=NXNodeAttributes(
+                node_type=end_node.node_type, extra_info=end_node.extra_info
+            )
         )
         super().add_edge(start_node, end_node, **attrs)
 
@@ -517,10 +521,10 @@ class PUMLGraph(DiGraph):
     def _order_nodes_from_dfs_successors_dict(
         node: PUMLNode,
         dfs_successor_dict: dict[
-            PUMLEventNode | PUMLOperatorNode,
-            list[PUMLEventNode | PUMLOperatorNode]
+            PUMLNode,
+            list[PUMLNode]
         ]
-    ) -> list[PUMLEventNode | PUMLOperatorNode]:
+    ) -> list[PUMLNode]:
         """Orders the nodes in the graph based on the depth-first search
         successors. If the node is an operator node that is the start of the
         operator, it adds a path node based how many paths have been traversed
@@ -535,6 +539,10 @@ class PUMLGraph(DiGraph):
         """
         ordered_nodes = [node]
         if node in dfs_successor_dict:
+            # assert isinstance(
+            #     node,
+            #     (PUMLOperatorNode, PUMLEventNode, PUMLKillNode)
+            # )
             # loop over the successors in reverse order to get the correct
             # order of the nodes
             for i, successor in enumerate(reversed(dfs_successor_dict[node])):
@@ -638,15 +646,15 @@ class PUMLGraph(DiGraph):
             event_types=event_types
         )
         for edge in start_node_in_edge:
-            self.add_edge(edge[0], subgraph_node)
+            self.add_puml_edge(edge[0], subgraph_node)
         for edge in end_node_out_edge:
-            self.add_edge(subgraph_node, edge[1])
+            self.add_puml_edge(subgraph_node, edge[1])
         self.subgraph_nodes.add(subgraph_node)
         return subgraph_node
 
     def __copy__(self) -> "PUMLGraph":
         """Creates a copy of the PlantUML graph. This is a shallow copy."""
-        copy_graph = self.copy()
+        copy_graph: PUMLGraph = self.copy()  # type: ignore[assignment]
         copy_graph.node_counts = self.node_counts
         copy_graph.branch_counts = self.branch_counts
         copy_graph.kill_counts = self.kill_counts
@@ -748,7 +756,7 @@ def update_graph_for_dummy_break_event_node(
     if isinstance(dummy_break_event_in_node, PUMLEventNode):
         graph.remove_node(dummy_break_event_node)
         if dummy_break_event_out_node is not None:
-            graph.add_edge(
+            graph.add_puml_edge(
                 dummy_break_event_in_node,
                 dummy_break_event_out_node
             )
@@ -786,7 +794,7 @@ def update_graph_for_dummy_break_event_node(
     event_node_in_node: PUMLNode = list(graph.in_edges([event_node]))[0][0]
     event_node_out_node: PUMLNode = list(graph.out_edges([event_node]))[0][1]
     graph.remove_node(event_node)
-    graph.add_edge(event_node_in_node, event_node_out_node)
+    graph.add_puml_edge(event_node_in_node, event_node_out_node)
     reversed_ancestry = list(reversed(ancestry))
     for operator_node, child_operator in zip(
         reversed_ancestry, reversed_ancestry[1:] + [None]
@@ -812,15 +820,18 @@ def update_graph_for_dummy_break_event_node(
                 )
                 if out_node == dummy_break_event_node:
                     graph.remove_node(dummy_break_event_node)
-                    graph.add_edge(new_event_node, dummy_break_event_out_node)
+                    graph.add_puml_edge(
+                        new_event_node,
+                        dummy_break_event_out_node
+                    )
                     new_event_node.event_types = (
                         *new_event_node.event_types,
                         PUMLEvent.BREAK,
                     )
                 else:
                     graph.remove_edge(operator_node, out_node)
-                    graph.add_edge(new_event_node, out_node)
-                graph.add_edge(operator_node, new_event_node)
+                    graph.add_puml_edge(new_event_node, out_node)
+                graph.add_puml_edge(operator_node, new_event_node)
 
 
 def update_graph_for_dummy_break_event_nodes(graph: PUMLGraph) -> None:

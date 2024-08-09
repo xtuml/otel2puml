@@ -39,4 +39,6 @@ def insert_loop(puml_graph: PUMLGraph, loop: Loop) -> None:
                 PUMLEvent.LOOP
             )
         )
+        if sub_graph_node.sub_graph is None:
+            raise ValueError("Sub graph node has no sub graph")
         insert_loops(sub_graph_node.sub_graph, loop.sub_loops)

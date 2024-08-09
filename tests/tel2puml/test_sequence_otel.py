@@ -100,7 +100,7 @@ class TestSpan:
         """Test the `update_graph_with_connections` method."""
         # check case where child spans have no children
         spans = self.spans_for_test()
-        graph = nx.DiGraph()
+        graph: "nx.DiGraph[Span]" = nx.DiGraph()
         spans["span"].update_graph_with_connections(graph)
         assert set(graph.edges) == {
             (spans["child_span_1"], spans["child_span_2"]),
@@ -148,7 +148,7 @@ class TestSpan:
     def test_to_pv_event(self) -> None:
         """Test the `to_pv_event` method."""
         spans = self.spans_for_test()
-        graph = nx.DiGraph()
+        graph: "nx.DiGraph[Span]" = nx.DiGraph()
         spans["span"].update_graph_with_connections(graph)
         output_event = spans["span"].to_pv_event(
             "1", "a_job", graph
@@ -172,13 +172,18 @@ class TestTrace:
     def trace_for_test() -> Trace:
         """Return a trace for testing."""
         trace = Trace("1")
-        for span_details in [
+        spans_to_add: list[
+            tuple[str, str, float, float] |
+            tuple[str, str, float, float, str]
+        ] = [
             ("1", "a_span", 2, 8),
             ("2", "a_child_span_1", 2, 3, "1"),
             ("3", "a_child_span_2", 4, 6, "1"),
             ("4", "a_child_span_3", 5, 7, "1"),
             ("5", "a_child_span_4", 6, 8, "1")
-        ]:
+        ]
+
+        for span_details in spans_to_add:
             trace.add_span(*span_details)
         return trace
 

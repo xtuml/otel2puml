@@ -26,18 +26,18 @@ class NXNode:
     :param node_type: the type of the node
     :type node_type: `str`
     :param extra_info: extra information about the node, defaults to `None`
-    :type extra_info: `dict`[:class:`str`, `str`] | `None`, optional
+    :type extra_info: `dict`[`str`, `Any`] | `None`, optional
     """
     def __init__(
         self,
         node_id: Hashable,
         node_type: str,
-        extra_info: dict[str, str] | None = None,
+        extra_info: dict[str, Any] | None = None,
     ) -> None:
         """Constructor method"""
         self.node_id = node_id
         self.node_type = node_type
-        self.extra_info: dict[str, str] = (
+        self.extra_info: dict[str, Any] = (
             extra_info
             if extra_info is not None
             else {}
@@ -51,11 +51,11 @@ class NXNode:
         """Method to return the hash of the node"""
         return hash(self.node_id)
 
-    def update_extra_info(self, update_dict: dict) -> None:
+    def update_extra_info(self, update_dict: dict[str, Any]) -> None:
         """Method to add extra information to the node
 
         :param update_dict: dictionary of extra information to add
-        :type update_dict: `dict`
+        :type update_dict: `dict`[`str`, `Any`]
         """
         self.extra_info = {**self.extra_info, **update_dict}
 
@@ -78,7 +78,7 @@ def parse_raw_job_def(puml_string: str) -> Generator[list[str], Any, None]:
 
 
 def update_collected_attributes(
-    collected_attributes: dict[tuple[str, int], dict[str, Any]],
+    collected_attributes: dict[Hashable, dict[str, Any]],
     event_data: EventData,
 ) -> None:
     """Method to update the collected attributes dictionary with the event data
@@ -109,7 +109,7 @@ def create_networkx_graph_from_parsed_puml(
             Literal["XOR", "AND", "OR", "LOOP"],
         ]
     ],
-) -> DiGraph:
+) -> "DiGraph[NXNode]":
     """Method to create a networkx DiGraph from a parsed puml list
 
     :param parsed_puml: list of parsed puml lines
@@ -117,17 +117,17 @@ def create_networkx_graph_from_parsed_puml(
     `tuple`[:class:`Literal`[`"START"`, `"END"`, `"PATH"`],
     :class:`Literal`[`"XOR"`, `"AND"`, `"OR"`, `"LOOP"`]]
     :return: networkx DiGraph
-    :rtype: :class:`DiGraph`
+    :rtype: :class:`DiGraph`[:class:`NXNode`]
     """
     logic_list: list[tuple[NXNode, NXNode]] = []
     prev_node = None
     prev_parsed_line = None
-    graph = DiGraph()
+    graph: "DiGraph[NXNode]" = DiGraph()
     counters = {
         "XOR": 0, "AND": 0, "OR": 0, "LOOP": 0, "KILL": 0
     }
     prev_parsed_lines = [None] + parsed_puml[:-1]
-    collected_attributes = {}
+    collected_attributes: dict[Hashable, dict[str, Any]] = {}
     for parsed_line, prev_parsed_line in zip(parsed_puml, prev_parsed_lines):
         # check if parsed_line is an EventData object. If start create a logic
         # tuple of node otherwise handle paths and ends of logic
@@ -164,6 +164,8 @@ def create_networkx_graph_from_parsed_puml(
                     continue
             # add the edge from the previous node to the end node of the
             # current logic tuple
+            if prev_node is None:
+                raise ValueError("Previous node is None")
             graph.add_edge(
                 prev_node, logic_list[-1][1],
             )
@@ -204,7 +206,7 @@ def create_networkx_graph_from_parsed_puml(
             })
     for edge in graph.edges:
         set_edge_attributes(
-            graph,
+            graph,  # type: ignore[arg-type]
             {
                 edge: {
                     "start_node_attr": graph.nodes[edge[0]],
@@ -217,7 +219,7 @@ def create_networkx_graph_from_parsed_puml(
 
 def get_network_x_graph_from_puml_string(
     puml_string: str
-) -> Generator[DiGraph, Any, None]:
+) -> Generator["DiGraph[NXNode]", Any, None]:
     """Method to get a networkx graph from a puml string
 
     :param puml_string: puml string
@@ -226,7 +228,10 @@ def get_network_x_graph_from_puml_string(
     :rtype: `Generator`[:class:`DiGraph`, `Any`, `None`]
     """
     for parsed_puml in parse_raw_job_def(puml_string):
-        yield create_networkx_graph_from_parsed_puml(parsed_puml)
+        # ignore arg-type due to incorrect typing in parse_raw_job_def
+        yield create_networkx_graph_from_parsed_puml(
+            parsed_puml  # type: ignore[arg-type]
+        )
 
 
 def node_match(
@@ -267,7 +272,7 @@ def edge_match(
 
 
 def check_networkx_graph_equivalence(
-    graph_1: DiGraph, graph_2: DiGraph
+    graph_1: "DiGraph[NXNode]", graph_2: "DiGraph[NXNode]"
 ) -> bool:
     """Method to check the equivalence of two networkx graphs
 
@@ -278,13 +283,18 @@ def check_networkx_graph_equivalence(
     :return: whether the two networkx graphs are equivalent
     :rtype: `bool`
     """
-    return graph_edit_distance(
+    g_edit = graph_edit_distance(
         graph_1, graph_2,
         node_match=node_match,
         edge_match=edge_match,
         timeout=10,
         upper_bound=1
-    ) == 0
+    )
+    if g_edit is None:
+        return False
+    if not isinstance(g_edit, (int, float)):
+        raise ValueError("Graph edit distance not a number")
+    return g_edit == 0
 
 
 def check_puml_equivalence(
@@ -305,16 +315,16 @@ def check_puml_equivalence(
 
 
 def check_puml_graph_equivalence_to_expected_graphs(
-    puml_graph: DiGraph,
-    expected_puml_graphs: Iterable[DiGraph]
+    puml_graph: "DiGraph[NXNode]",
+    expected_puml_graphs: Iterable["DiGraph[NXNode]"]
 ) -> bool:
     """Method to check if a puml graph is equivalent to any of the expected
     puml graphs
 
     :param puml_graph: the puml graph to check
-    :type puml_graph: :class:`DiGraph`
+    :type puml_graph: :class:`DiGraph`[:class:`NXNode`]
     :param expected_puml_graphs: the expected puml graphs
-    :type expected_puml_graphs: `Iterable`[:class:`DiGraph`]
+    :type expected_puml_graphs: `Iterable`[:class:`DiGraph`[:class:`NXNode`]]
     :return: whether the puml graph is equivalent to any of the expected puml
     graphs
     :rtype: `bool`
@@ -327,7 +337,7 @@ def check_puml_graph_equivalence_to_expected_graphs(
 
 def gen_puml_graphs_from_files(
     file_names: Iterable[str]
-) -> Generator[DiGraph, Any, None]:
+) -> Generator["DiGraph[NXNode]", Any, None]:
     """Method to generate networkx graphs from a list of puml files
 
     :param file_names: list of puml file names

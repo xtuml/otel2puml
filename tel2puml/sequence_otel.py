@@ -11,7 +11,7 @@ from tel2puml.tel2puml_types import PVEvent, OtelSpan
 from tel2puml.utils import datetime_to_pv_string
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=True)  # type: ignore[misc]
 def get_slice_indexes(
     time_array: npt.NDArray[np.float_]
 ) -> list[int]:
@@ -28,7 +28,7 @@ def get_slice_indexes(
     return slice_indexes
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=True)  # type: ignore[misc]
 def has_time_overlap(
     time_vec_1: npt.NDArray[np.float_], time_vec_2: npt.NDArray[np.float_]
 ) -> np.bool_:
@@ -195,13 +195,14 @@ class Span:
         ]
 
     def update_graph_with_connections_start_end(
-        self, graph: nx.DiGraph, previous_spans: list["Span"] | None = None,
+        self, graph: "nx.DiGraph[Span]",
+        previous_spans: list["Span"] | None = None,
         with_end_span: bool = False, sync_spans: bool = False
     ) -> list["Span"]:
         """Update the graph with connections
 
         :param graph: The graph to update
-        :type graph: :class:`nx.DiGraph
+        :type graph: :class:`nx.DiGraph`[:class:`Span`]
         :param previous_spans: The previous spans
         :type previous_spans: `list`[:class:`Span`]
         :param with_end_span: Whether to add an end span, defaults to `False`
@@ -256,12 +257,12 @@ class Span:
         return [self]
 
     def update_graph_with_connections(
-        self, graph: nx.DiGraph, sync_spans: bool = False
+        self, graph: "nx.DiGraph[Span]", sync_spans: bool = False
     ) -> list["Span"]:
         """Update the graph with connections
 
         :param graph: The graph to update
-        :type graph: :class:`nx.DiGraph`
+        :type graph: :class:`nx.DiGraph`[:class:`Span`]
         :param sync_spans: Whether to assume the spans are synchronous,
         defaults to `False`
         :type sync_spans: `bool`, optional
@@ -286,7 +287,7 @@ class Span:
         self,
         job_id: str,
         job_name: str,
-        graph: nx.DiGraph
+        graph: "nx.DiGraph[Span]"
     ) -> PVEvent:
         """Return the span as a pv event
 
@@ -295,7 +296,8 @@ class Span:
         :param job_name: The job name of the pv event
         :type job_name: `str`
         :param graph: The graph to get the previous event ids from
-        :type graph: :class:`nx.DiGraph"""
+        :type graph: :class:`nx.DiGraph`[:class:`Span`]
+        """
         return PVEvent(
             jobId=job_id, eventId=self.span_id,
             timestamp=datetime_to_pv_string(self.end_time),
@@ -305,12 +307,12 @@ class Span:
         )
 
     def get_previous_event_ids(
-        self, graph: nx.DiGraph
+        self, graph: "nx.DiGraph[Span]"
     ) -> list[str]:
         """Return the previous event ids
 
         :param graph: The graph to get the previous event ids from
-        :type graph: :class:`nx.DiGraph
+        :type graph: :class:`nx.DiGraph`[:class:`Span`]
         :return: The previous event ids
         :rtype: `list`[`str`]"""
         return [
@@ -335,7 +337,7 @@ class Trace:
         self.spans: dict[str, Span] = {}
         self._root_span: Span | None = None
         self.job_name = job_name
-        self._graph = nx.DiGraph()
+        self._graph: "nx.DiGraph[Span]" = nx.DiGraph()
 
     @property
     def trace_id(self) -> str | None:
@@ -424,6 +426,8 @@ class Trace:
         :return: The pv event sequence
         :rtype: `Generator`[:class:`PVEvent`, `Any`, `None`]
         """
+        if self.trace_id is None:
+            raise ValueError("Trace id has not been set")
         graph = self._graph
         if include_start_end_status:
             self.root_span.update_graph_with_connections_start_end(

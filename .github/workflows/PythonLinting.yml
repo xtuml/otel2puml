@@ -25,6 +25,10 @@ jobs:
           mypy --version
 
           pip install -r requirements.txt
+      
+      - name: Install janus and erebus as packages
+        run: |
+          chmod +x ./scripts/install_repositories.sh && ./scripts/install_repositories.sh
 
       - name: Flake8
         if: '!cancelled()'

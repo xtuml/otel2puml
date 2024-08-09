@@ -5,13 +5,14 @@ from typing import Optional, Generator, Any, TypeVar, Iterable, Hashable
 
 import networkx as nx
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 
 T = TypeVar("T")
 
 
 def get_weighted_cover(
-        event_sets: set[set[Any] | frozenset[Any]],
-        universe: set[Any]
+    event_sets: set[frozenset[Any]],
+    universe: frozenset[Any]
 ) -> Optional[set[Any]]:
     """
     Get the weighted cover of the event set with respect to the universe, if it
@@ -74,15 +75,15 @@ def convert_nested_generator_to_generator_of_list(
 
 
 def get_graphviz_plot(
-    nx_graph: nx.DiGraph, figsize: tuple | None = (10, 10)
-) -> plt.Figure:
+    nx_graph: "nx.DiGraph[Any]", figsize: tuple[int, int] | None = (10, 10)
+) -> Figure:
     """Creates a :class:`plt.Figure` object containing the plot of the
     input graph
 
     :param nx_graph: the networkx Directed Graph to plot
-    :type nx_graph: :class:`nx.DiGraph`
-    :return: Returns a :class:`plt.Figure` objects containing the plot
-    :rtype: :class:`plt.Figure`
+    :type nx_graph: :class:`nx.DiGraph`[`Any`]
+    :return: Returns a :class:`Figure` objects containing the plot
+    :rtype: :class:`Figure`
     """
     pos = nx.nx_agraph.graphviz_layout(nx_graph, prog="dot")
     fig, axis = plt.subplots(figsize=figsize)
@@ -105,7 +106,7 @@ def get_graphviz_plot(
 
 
 def check_has_path_not_through_nodes(
-    graph: nx.DiGraph,
+    graph: "nx.DiGraph[Any]",
     source_node: Hashable,
     target_node: Hashable,
     nodes_to_avoid: Iterable[Hashable]
@@ -113,6 +114,8 @@ def check_has_path_not_through_nodes(
     """Checks if there is a path between the source and target nodes that
     does not pass through any of the nodes to avoid.
 
+    :param graph: The graph to check.
+    :type graph: :class:`DiGraph`[`Any`]
     :param source_node: The source node to check.
     :type source_node: :class:`Hashable`
     :param target_node: The target node to check.
@@ -139,11 +142,13 @@ def check_has_path_not_through_nodes(
 
 
 def check_has_path_between_all_nodes(
-    graph: nx.DiGraph, source_nodes: Iterable[Hashable],
+    graph: "nx.DiGraph[Any]", source_nodes: Iterable[Hashable],
     target_nodes: Iterable[Hashable]
 ) -> bool:
     """Checks if there is a path between all source and target nodes.
 
+    :param graph: The graph to check.
+    :type graph: :class:`DiGraph`[`Any`]
     :param source_nodes: The source nodes to check.
     :type source_nodes: `Iterable[:class:`Hashable`]`
     :param target_nodes: The target nodes to check.

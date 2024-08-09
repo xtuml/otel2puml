@@ -2,9 +2,9 @@
 
 import networkx as nx
 
-from tel2puml.walk_puml_graph.node import (
-    Node,
-    merge_markov_without_loops_and_logic_detection_analysis,
+from tel2puml.walk_puml_graph.node import Node
+from tel2puml.legacy_loop_detection.walk_puml_graph.node import (
+    merge_markov_without_loops_and_logic_detection_analysis
 )
 from tel2puml.walk_puml_graph.walk_puml_logic_graph import (
     create_puml_graph_from_node_class_graph,
@@ -15,7 +15,6 @@ from tel2puml.walk_puml_graph.walk_puml_logic_graph import (
 from tel2puml.puml_graph.graph import (
     PUMLGraph,
     PUMLOperatorNode,
-    PUMLOperatorNodes,
 )
 from tel2puml.data_pipelines.data_ingestion import (
     update_all_connections_from_clustered_events,
@@ -32,7 +31,7 @@ from tel2puml.check_puml_equiv import (
     gen_puml_graphs_from_files,
     check_puml_equivalence
 )
-from tel2puml.tel2puml_types import DUMMY_START_EVENT
+from tel2puml.tel2puml_types import DUMMY_START_EVENT, PUMLOperatorNodes
 
 
 class TestCreatePumlGraphFromNodeClassGraph:
@@ -221,6 +220,7 @@ def test_check_is_merge_node_for_logic_block() -> None:
     B = [node for node in node_class_graph.nodes if node.event_type == "B"][0]
     # make sure current path is B
     while logic_holder.current_path != B:
+        assert logic_holder.current_path is not None
         logic_holder.rotate_path(
             logic_holder.current_path, logic_holder.start_node
         )

@@ -242,7 +242,7 @@ def get_end_nodes_using_start_nodes(
     nodes_with_edge_to_start_nodes = get_nodes_with_outedges_in_set(
         nodes, start_nodes, graph
     )
-    copy_graph: DiGraph["T"] = graph.subgraph(nodes).copy()
+    copy_graph = DiGraph(graph.subgraph(nodes).copy())
     copy_graph.remove_edges_from(graph.in_edges(start_nodes))
     end_nodes = get_end_nodes_from_potential_end_nodes(
         nodes_with_edge_to_start_nodes, copy_graph
