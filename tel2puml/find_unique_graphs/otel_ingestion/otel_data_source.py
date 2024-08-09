@@ -106,10 +106,12 @@ class JSONDataSource(OTELDataSource):
         :rtype: `list`[`str`]
         """
         if self.dirpath:
+            # Recursively search through directories for .json files
             return [
-                os.path.join(self.dirpath, f)
-                for f in os.listdir(self.dirpath)
-                if f.endswith(".json")
+                os.path.join(root, filename)
+                for root, _, filenames in os.walk(self.config["dirpath"])
+                for filename in filenames
+                if filename.endswith(".json")
             ]
         elif self.filepath:
             return [self.filepath]
