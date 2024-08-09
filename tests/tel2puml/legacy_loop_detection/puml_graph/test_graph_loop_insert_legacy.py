@@ -46,7 +46,11 @@ def test_insert_loops(
     ]
     # check the first subgraph loop node
     assert PUMLEvent.LOOP in loop_1_subgraph_nodes[0].event_types
-    for node in loop_1_subgraph_nodes[0].sub_graph.nodes:
+    loop_1_subgraph_nodes_node_1_subgraph = (
+        loop_1_subgraph_nodes[0].sub_graph
+    )
+    assert isinstance(loop_1_subgraph_nodes_node_1_subgraph, PUMLGraph)
+    for node in loop_1_subgraph_nodes_node_1_subgraph.nodes:
         assert node.node_id in expected_node_ids
         expected_node_ids.remove(node.node_id)
     assert len(expected_node_ids) == 6
@@ -56,7 +60,11 @@ def test_insert_loops(
     )
     # check the next subgraph loop node
     assert PUMLEvent.LOOP in loop_1_subgraph_nodes[1].event_types
-    for node in loop_1_subgraph_nodes[1].sub_graph.nodes:
+    loop_1_subgraph_nodes_node_2_subgraph = (
+        loop_1_subgraph_nodes[1].sub_graph
+    )
+    assert isinstance(loop_1_subgraph_nodes_node_2_subgraph, PUMLGraph)
+    for node in loop_1_subgraph_nodes_node_2_subgraph.nodes:
         assert node.node_id in expected_node_ids
         expected_node_ids.remove(node.node_id)
     assert len(expected_node_ids) == 0
@@ -72,6 +80,7 @@ def test_insert_loops(
         ("I", 0),
     ]
     assert PUMLEvent.LOOP in loop_2_subgraph_node.event_types
+    assert isinstance(loop_2_subgraph_node.sub_graph, PUMLGraph)
     for node in loop_2_subgraph_node.sub_graph.nodes:
         assert node.node_id in expected_node_ids
         expected_node_ids.remove(node.node_id)
@@ -82,6 +91,7 @@ def test_insert_loops(
     )[0]
     assert nested_loop_subgraph_node.node_id == ("LOOP", 3)
     assert PUMLEvent.LOOP in nested_loop_subgraph_node.event_types
+    assert isinstance(nested_loop_subgraph_node.sub_graph, PUMLGraph)
     nested_loop_subgraph = nested_loop_subgraph_node.sub_graph
     assert len(nested_loop_subgraph.nodes) == 1
     for node in nested_loop_subgraph.nodes:
@@ -93,6 +103,7 @@ def test_insert_loops(
     )
     # check the loop 1 graph is correct
     for sub_graph_node in loop_1_subgraph_nodes:
+        assert isinstance(sub_graph_node.sub_graph, PUMLGraph)
         assert check_networkx_graph_equivalence(
             sub_graph_node.sub_graph,
             expected_loop_1_graph

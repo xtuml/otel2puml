@@ -103,8 +103,8 @@ class TestPUMLEventNode:
         start_loop_node, end_loop_node = sub_graph.create_operator_node_pair(
             PUMLOperator.LOOP
         )
-        sub_graph.add_edge(start_loop_node, event_node)
-        sub_graph.add_edge(event_node, end_loop_node)
+        sub_graph.add_puml_edge(start_loop_node, event_node)
+        sub_graph.add_puml_edge(event_node, end_loop_node)
 
         event = PUMLEventNode(
             "event", 0,
@@ -238,14 +238,14 @@ class TestPUMLOperatorNode:
 class TestPUMLGraph:
     """Tests for the PUMLGraph class."""
     @staticmethod
-    def test_add_node() -> None:
-        """Tests the add_node method."""
+    def test_add_puml_node() -> None:
+        """Tests the add_puml_node method."""
         # test puml event node
         graph = PUMLGraph()
         event_node = PUMLEventNode(
             "event", 0
         )
-        graph.add_node(event_node)
+        graph.add_puml_node(event_node)
         assert len(graph.nodes) == 1
         assert graph.nodes[event_node] == {
             "node_type": "event",
@@ -254,7 +254,7 @@ class TestPUMLGraph:
         operator_node = PUMLOperatorNode(
             PUMLOperatorNodes.START_XOR, 0
         )
-        graph.add_node(operator_node)
+        graph.add_puml_node(operator_node)
         assert len(graph.nodes) == 2
         assert graph.nodes[operator_node] == {
             "node_type": "START_XOR", "extra_info": {}
@@ -266,9 +266,9 @@ class TestPUMLGraph:
         graph = PUMLGraph()
         event_node_1 = PUMLEventNode("event", 0)
         event_node_2 = PUMLEventNode("event", 1)
-        graph.add_node(event_node_1)
-        graph.add_node(event_node_2)
-        graph.add_edge(event_node_1, event_node_2)
+        graph.add_puml_node(event_node_1)
+        graph.add_puml_node(event_node_2)
+        graph.add_puml_edge(event_node_1, event_node_2)
         assert len(graph.edges) == 1
         assert graph.edges[event_node_1, event_node_2] == {
             "start_node_attr": {
@@ -365,7 +365,7 @@ class TestPUMLGraph:
         graph = PUMLGraph()
         event_node_1 = graph.create_event_node("event")
         event_node_2 = graph.create_event_node("event")
-        graph.add_edge(event_node_1, event_node_2)
+        graph.add_puml_edge(event_node_1, event_node_2)
         assert graph.write_uml_blocks() == [":event;", ":event;"]
 
         # test loop block
@@ -374,8 +374,8 @@ class TestPUMLGraph:
         start_loop_node, end_loop_node = graph.create_operator_node_pair(
             PUMLOperator.LOOP
         )
-        graph.add_edge(start_loop_node, event_node)
-        graph.add_edge(event_node, end_loop_node)
+        graph.add_puml_edge(start_loop_node, event_node)
+        graph.add_puml_edge(event_node, end_loop_node)
         assert graph.write_uml_blocks() == [
             "repeat",
             "    :event;",
@@ -393,14 +393,14 @@ class TestPUMLGraph:
         start_xor_node_2, end_xor_node_2 = graph.create_operator_node_pair(
             PUMLOperator.XOR
         )
-        graph.add_edge(start_xor_node_1, start_xor_node_2)
-        graph.add_edge(start_xor_node_2, event_node_1)
-        graph.add_edge(event_node_1, end_xor_node_2)
-        graph.add_edge(start_xor_node_2, event_node_3)
-        graph.add_edge(event_node_3, end_xor_node_2)
-        graph.add_edge(start_xor_node_1, event_node_2)
-        graph.add_edge(event_node_2, end_xor_node_1)
-        graph.add_edge(end_xor_node_2, end_xor_node_1)
+        graph.add_puml_edge(start_xor_node_1, start_xor_node_2)
+        graph.add_puml_edge(start_xor_node_2, event_node_1)
+        graph.add_puml_edge(event_node_1, end_xor_node_2)
+        graph.add_puml_edge(start_xor_node_2, event_node_3)
+        graph.add_puml_edge(event_node_3, end_xor_node_2)
+        graph.add_puml_edge(start_xor_node_1, event_node_2)
+        graph.add_puml_edge(event_node_2, end_xor_node_1)
+        graph.add_puml_edge(end_xor_node_2, end_xor_node_1)
         block = graph.write_uml_blocks()
         expected_block = [
             "switch (XOR)",
@@ -440,14 +440,14 @@ class TestPUMLGraph:
             start_xor_node_2, end_xor_node_2 = graph.create_operator_node_pair(
                 operator=operator
             )
-            graph.add_edge(start_xor_node_1, start_xor_node_2)
-            graph.add_edge(start_xor_node_2, event_node_1)
-            graph.add_edge(event_node_1, end_xor_node_2)
-            graph.add_edge(start_xor_node_2, event_node_3)
-            graph.add_edge(event_node_3, end_xor_node_2)
-            graph.add_edge(start_xor_node_1, event_node_2)
-            graph.add_edge(event_node_2, end_xor_node_1)
-            graph.add_edge(end_xor_node_2, end_xor_node_1)
+            graph.add_puml_edge(start_xor_node_1, start_xor_node_2)
+            graph.add_puml_edge(start_xor_node_2, event_node_1)
+            graph.add_puml_edge(event_node_1, end_xor_node_2)
+            graph.add_puml_edge(start_xor_node_2, event_node_3)
+            graph.add_puml_edge(event_node_3, end_xor_node_2)
+            graph.add_puml_edge(start_xor_node_1, event_node_2)
+            graph.add_puml_edge(event_node_2, end_xor_node_1)
+            graph.add_puml_edge(end_xor_node_2, end_xor_node_1)
             block = graph.write_uml_blocks()
             expected_block = [
                 OPERATOR_NODE_PUML_MAP[operator.value[0].value][0][0],
@@ -479,18 +479,18 @@ class TestPUMLGraph:
         start_loop_node, end_loop_node = sub_graph.create_operator_node_pair(
             PUMLOperator.LOOP
         )
-        sub_graph.add_edge(start_loop_node, sub_graph_event_node)
-        sub_graph.add_edge(sub_graph_event_node, end_loop_node)
+        sub_graph.add_puml_edge(start_loop_node, sub_graph_event_node)
+        sub_graph.add_puml_edge(sub_graph_event_node, end_loop_node)
         # create event node with subgraph
         event_node_1 = graph.create_event_node("event", sub_graph=sub_graph)
         event_node_2 = graph.create_event_node("event")
         start_xor_node, end_xor_node = graph.create_operator_node_pair(
             PUMLOperator.XOR
         )
-        graph.add_edge(start_xor_node, event_node_1)
-        graph.add_edge(event_node_1, end_xor_node)
-        graph.add_edge(start_xor_node, event_node_2)
-        graph.add_edge(event_node_2, end_xor_node)
+        graph.add_puml_edge(start_xor_node, event_node_1)
+        graph.add_puml_edge(event_node_1, end_xor_node)
+        graph.add_puml_edge(start_xor_node, event_node_2)
+        graph.add_puml_edge(event_node_2, end_xor_node)
         block = graph.write_uml_blocks()
         expected_block = [
             "switch (XOR)",
@@ -519,7 +519,7 @@ class TestPUMLGraph:
         graph = PUMLGraph()
         event_node_1 = graph.create_event_node("event")
         event_node_2 = graph.create_event_node("event")
-        graph.add_edge(event_node_1, event_node_2)
+        graph.add_puml_edge(event_node_1, event_node_2)
         for tab_size in range(5):
             assert graph.write_puml_string(tab_size=tab_size) == (
                 "@startuml\n" +
@@ -538,7 +538,7 @@ class TestPUMLGraph:
     ) -> None:
         """Tests the add_graph_node_to_set_from_reference method."""
         graph, event_nodes = puml_graph
-        node_set = set()
+        node_set: set[PUMLEventNode] = set()
         # test case where node_ref is in event_nodes
         graph.add_graph_node_to_set_from_reference(
             node_set=node_set, node_ref="q0"
@@ -566,8 +566,8 @@ class TestPUMLGraph:
         A = graph.create_event_node("A")
         B = graph.create_event_node("B")
         C = graph.create_event_node("C")
-        graph.add_edge(A, B)
-        graph.add_edge(B, C)
+        graph.add_puml_edge(A, B)
+        graph.add_puml_edge(B, C)
         # test case where start and end nodes are the same
         sub_graph_node = graph.replace_subgraph_node_from_start_and_end_nodes(
             B, B, "sub_graph_node"
@@ -584,6 +584,7 @@ class TestPUMLGraph:
             assert edge in expected_graph_edges
             expected_graph_edges.remove(edge)
         assert len(expected_graph_edges) == 0
+        assert sub_graph_node.sub_graph is not None
         assert len(sub_graph_node.sub_graph.nodes) == 1
         assert B in sub_graph_node.sub_graph.nodes
         assert len(sub_graph_node.sub_graph.edges) == 0
@@ -592,8 +593,8 @@ class TestPUMLGraph:
         A = graph.create_event_node("A")
         B = graph.create_event_node("B")
         C = graph.create_event_node("C")
-        graph.add_edge(A, B)
-        graph.add_edge(B, C)
+        graph.add_puml_edge(A, B)
+        graph.add_puml_edge(B, C)
         sub_graph_node = (
             graph.replace_subgraph_node_from_start_and_end_nodes(
                 A, B, "sub_graph_node"
@@ -611,6 +612,7 @@ class TestPUMLGraph:
             assert edge in expected_graph_edges
             expected_graph_edges.remove(edge)
         assert len(expected_graph_edges) == 0
+        assert sub_graph_node.sub_graph is not None
         assert len(sub_graph_node.sub_graph.nodes) == 2
         assert (
             A in sub_graph_node.sub_graph.nodes
@@ -625,8 +627,8 @@ class TestPUMLGraph:
         A = graph.create_event_node("A")
         B = graph.create_event_node("B")
         C = graph.create_event_node("C")
-        graph.add_edge(A, B)
-        graph.add_edge(B, C)
+        graph.add_puml_edge(A, B)
+        graph.add_puml_edge(B, C)
         sub_graph_node = (
             graph.replace_subgraph_node_from_start_and_end_nodes(
                 B, C, "sub_graph_node"
@@ -644,6 +646,7 @@ class TestPUMLGraph:
             assert edge in expected_graph_edges
             expected_graph_edges.remove(edge)
         assert len(expected_graph_edges) == 0
+        assert sub_graph_node.sub_graph is not None
         assert len(sub_graph_node.sub_graph.nodes) == 2
         assert (
             B in sub_graph_node.sub_graph.nodes
@@ -661,11 +664,11 @@ class TestPUMLGraph:
         D = graph.create_event_node("D")
         E = graph.create_event_node("E")
         F = graph.create_event_node("F")
-        graph.add_edge(A, C)
-        graph.add_edge(B, C)
-        graph.add_edge(C, D)
-        graph.add_edge(D, E)
-        graph.add_edge(D, F)
+        graph.add_puml_edge(A, C)
+        graph.add_puml_edge(B, C)
+        graph.add_puml_edge(C, D)
+        graph.add_puml_edge(D, E)
+        graph.add_puml_edge(D, F)
         # test raises error when there is more than one incoming edge to start
         # node
         with pytest.raises(RuntimeError) as exc_info:
@@ -700,12 +703,12 @@ class TestPUMLGraph:
         C = graph.create_event_node("C")
         D = graph.create_event_node("D")
         E = graph.create_event_node("E")
-        graph.add_edge(A, B)
-        graph.add_edge(B, C)
-        graph.add_edge(C, D)
-        graph.add_edge(D, E)
-        graph.add_edge(A, C)
-        graph.add_edge(C, E)
+        graph.add_puml_edge(A, B)
+        graph.add_puml_edge(B, C)
+        graph.add_puml_edge(C, D)
+        graph.add_puml_edge(D, E)
+        graph.add_puml_edge(A, C)
+        graph.add_puml_edge(C, E)
         with pytest.raises(RuntimeError) as exc_info:
             graph.replace_subgraph_node_from_start_and_end_nodes(
                 B, D, "sub_graph_node"
@@ -724,10 +727,10 @@ class TestPUMLGraph:
         A = graph.create_event_node("A")
         B = graph.create_event_node("B")
         C = graph.create_event_node("C")
-        graph.add_edge(dummy_start, A)
-        graph.add_edge(dummy_start, B)
-        graph.add_edge(A, C)
-        graph.add_edge(B, C)
+        graph.add_puml_edge(dummy_start, A)
+        graph.add_puml_edge(dummy_start, B)
+        graph.add_puml_edge(A, C)
+        graph.add_puml_edge(B, C)
         assert (
             (dummy_start, A) in graph.edges and (dummy_start, B) in graph.edges
         )
@@ -824,7 +827,7 @@ def test_update_graph_for_dummy_break_event_node(
         DUMMY_BREAK_EVENT_TYPE,
         event_types=(PUMLEvent.BREAK,)
     )
-    graph.add_edge(A, DUMMY_BREAK)
+    graph.add_puml_edge(A, DUMMY_BREAK)
     update_graph_for_dummy_break_event_node(DUMMY_BREAK, graph)
     assert DUMMY_BREAK not in graph.nodes
     assert PUMLEvent.BREAK in A.event_types
@@ -836,8 +839,8 @@ def test_update_graph_for_dummy_break_event_node(
         event_types=(PUMLEvent.BREAK,)
     )
     B = graph.create_event_node("B")
-    graph.add_edge(A, DUMMY_BREAK)
-    graph.add_edge(DUMMY_BREAK, B)
+    graph.add_puml_edge(A, DUMMY_BREAK)
+    graph.add_puml_edge(DUMMY_BREAK, B)
     update_graph_for_dummy_break_event_node(DUMMY_BREAK, graph)
     assert DUMMY_BREAK not in graph.nodes
     assert PUMLEvent.BREAK in A.event_types
@@ -857,9 +860,9 @@ def test_update_graph_for_dummy_break_event_node(
             event_types=(PUMLEvent.BREAK,)
         )
         operator_node = PUMLOperatorNode(operator_type, 0)
-        puml_graph.add_node(operator_node)
+        puml_graph.add_puml_node(operator_node)
         puml_graph.increment_occurrence_count(operator_type.value)
-        puml_graph.add_edge(A, operator_node)
-        puml_graph.add_edge(operator_node, DUMMY_BREAK)
+        puml_graph.add_puml_edge(A, operator_node)
+        puml_graph.add_puml_edge(operator_node, DUMMY_BREAK)
         with pytest.raises(NotImplementedError):
             update_graph_for_dummy_break_event_node(DUMMY_BREAK, puml_graph)

@@ -11,6 +11,9 @@ from tel2puml.data_pipelines.data_ingestion import (
     cluster_events_by_job_id,
     update_and_create_events_from_clustered_pvevents
 )
+from tel2puml.data_pipelines.data_creation import (
+    transform_dict_into_pv_event
+)
 from tel2puml.events import (
     create_graph_from_events
 )
@@ -90,6 +93,21 @@ def pv_to_puml_file(
         puml_file.write(puml_string)
 
 
+def pv_event_file_to_event(file_path: str) -> PVEvent:
+    """Reads a PV event json file and returns the event
+
+    :param file_path: The path to the PV event json file
+    :type file_path: `str`
+    :return: The event
+    :rtype: :class:`PVEvent`
+    """
+    with open(file_path, "r", encoding="utf-8") as file:
+        data = json.load(file)
+        if not isinstance(data, dict):
+            raise ValueError("The file does not contain a single event")
+    return transform_dict_into_pv_event(data)
+
+
 def pv_job_file_to_event_sequence(
     file_path: str,
 ) -> list[PVEvent]:
@@ -102,7 +120,31 @@ def pv_job_file_to_event_sequence(
     """
     with open(file_path, "r", encoding="utf-8") as file:
         data = json.load(file)
-    return data
+        if not isinstance(data, list):
+            raise ValueError("The file does not contain a list of events")
+    out_data: list[PVEvent] = []
+    for event in data:
+        if not isinstance(event, dict):
+            raise ValueError("The file does not contain a list of events")
+        out_data.append(transform_dict_into_pv_event(event))
+    return out_data
+
+
+def pv_events_from_folder_to_event_stream(
+    folder_path: str
+) -> Generator[PVEvent, Any, None]:
+    """Reads a folder of PV event json files and yields the events when
+    iterated over
+
+    :param folder_path: The path to the folder containing the PV event json
+    files
+    :type folder_path: `str`
+    :return: A generator of events
+    :rtype: `Generator`[:class:`PVEvent`, Any, None]
+    """
+    for file_name in os.listdir(folder_path):
+        if file_name.endswith(".json"):
+            yield pv_event_file_to_event(os.path.join(folder_path, file_name))
 
 
 def pv_job_files_to_event_sequence_streams(
@@ -195,7 +237,7 @@ def pv_events_from_folder_to_puml_file(
     if not group_by_job:
         return
     # parse events from folder into pv stream
-    pv_stream = pv_jobs_from_folder_to_event_sequence_streams(folder_path)
+    pv_stream = pv_events_from_folder_to_event_stream(folder_path)
     # map job id to pv events
     events_by_job_id = cluster_events_by_job_id(pv_stream)
 

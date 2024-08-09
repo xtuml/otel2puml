@@ -71,7 +71,7 @@ def test_create_augmented_data_from_reduced_event_set() -> None:
     event_set = EventSet(["B", "C"])
     data = list(
         create_augmented_data_from_reduced_event_set(
-            event_set,
+            event_set.to_frozenset(),
         )
     )
     assert len(data) == 6
@@ -227,7 +227,7 @@ def test_infer_or_gate_from_node() -> None:
         labels.remove(child.label)
     assert len(labels) == 0
 
-    def _check_or_and(tree):
+    def _check_or_and(tree: ProcessTree) -> None:
         logic_gate = tree.children[1]
         assert logic_gate.operator.value == Operator.PARALLEL.value
         infer_or_gate_from_node(event_sets, logic_gate)
@@ -246,7 +246,7 @@ def test_infer_or_gate_from_node() -> None:
         assert len(labels_b) == 0
         assert len(labels_cd) == 0
 
-    def _check_or(tree):
+    def _check_or(tree: ProcessTree) -> None:
         logic_gate = tree.children[1]
         assert logic_gate.operator.value == Operator.PARALLEL.value
         infer_or_gate_from_node(event_sets, logic_gate)
@@ -459,7 +459,7 @@ def test_process_or_gates() -> None:
 
 def test_reduce_process_tree_to_preferred_logic_gates() -> None:
     """Tests for method reduce_process_tree_to_preffered_logic_gates"""
-    def _test_logic_gate(process_tree: ProcessTree):
+    def _test_logic_gate(process_tree: ProcessTree) -> None:
         logic_gates_tree = (
             reduce_process_tree_to_preferred_logic_gates(
                 event_sets, process_tree
@@ -549,7 +549,7 @@ def test_update_tree_with_repeat_logic() -> None:
     node_2 = ProcessTree(None, None, None, "B")
     updated_node_2 = update_tree_with_repeat_logic(event_sets, node_2)
 
-    def _check_node_for_repeat_and(node):
+    def _check_node_for_repeat_and(node: ProcessTree) -> None:
         assert node.operator.value == Operator.PARALLEL.value
         assert len(node.children) == 2
         labels = ["B", "B"]

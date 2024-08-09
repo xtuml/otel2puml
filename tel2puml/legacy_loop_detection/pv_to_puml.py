@@ -15,7 +15,7 @@ from tel2puml.legacy_loop_detection.events import (
     remove_detected_loop_data_from_events,
     get_event_reference_from_events
 )
-from tel2puml.walk_puml_graph.node import (
+from tel2puml.legacy_loop_detection.walk_puml_graph.node import (
     merge_markov_without_loops_and_logic_detection_analysis,
 )
 from tel2puml.walk_puml_graph.walk_puml_logic_graph import (

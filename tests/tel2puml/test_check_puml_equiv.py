@@ -1,5 +1,6 @@
 """Tests for the check_puml_equiv module."""
 from copy import deepcopy
+from typing import Hashable, Any
 
 import networkx as nx
 from test_event_generator.io.parse_puml import EventData
@@ -30,7 +31,7 @@ def test_update_collected_attributes() -> None:
             "user": ("B", 0),
         }
     }
-    collected_attributes = {}
+    collected_attributes: dict[Hashable, dict[str, Any]] = {}
     update_collected_attributes(
         collected_attributes=collected_attributes,
         event_data=event_data
@@ -70,7 +71,7 @@ def test_create_networkx_graph_from_parsed_puml_break_and_branch() -> None:
         events[("A", 0)], events[("B", 0)],
     ]
     graph = create_networkx_graph_from_parsed_puml(parsed_puml)
-    expected_edges = [
+    expected_edges: list[tuple[Hashable, Hashable]] = [
         (('A', 0), ('B', 0)),
     ]
     for edge in graph.edges:
@@ -101,7 +102,10 @@ def test_create_networkx_graph_from_parsed_puml() -> None:
     """Test the `create_networkx_graph_from_parsed_puml` function creates the
     correct networkx graph from the parsed puml
     """
-    def check_edges_in_graph(graph, expected_edges) -> None:
+    def check_edges_in_graph(
+        graph: "nx.DiGraph[NXNode]",
+        expected_edges: list[tuple[Hashable, Hashable]]
+    ) -> None:
         for edge in graph.edges:
             edge_tuple = (edge[0].node_id, edge[1].node_id)
             assert edge_tuple in expected_edges
@@ -125,7 +129,7 @@ def test_create_networkx_graph_from_parsed_puml() -> None:
     ]
     # create graph
     graph = create_networkx_graph_from_parsed_puml(parsed_puml)
-    expected_edges = [
+    expected_edges: list[tuple[Hashable, Hashable]] = [
         (('A', 0), ('START', 'LOOP', 1)),
         (('START', 'LOOP', 1), ('B', 0)),
         (('B', 0), ('START', 'XOR', 1)),
@@ -210,7 +214,7 @@ def test_check_networkx_graph_equivalence_graph_break_and_branch_true(
     """Test the `check_networkx_graph_equivalence` function returns True when
     the graphs are the same due to a break and branch attribute being the same
     """
-    graph = nx.DiGraph()
+    graph: "nx.DiGraph[NXNode]" = nx.DiGraph()
     node_A = NXNode(("A", 0), "A")
     node_B = NXNode(("B", 0), "B")
     node_A.extra_info = {
@@ -233,7 +237,7 @@ def test_check_networkx_graph_equivalence_graph_break_and_branch_true(
         }
     )
     nx.set_edge_attributes(
-        graph,
+        graph,  # type: ignore[arg-type]
         {
             (node_A, node_B): {
                 "start_node_attr": graph.nodes[node_A],
@@ -250,7 +254,7 @@ def test_check_networkx_graph_equivalence_graph_break_and_branch_false(
     """Test the `check_networkx_graph_equivalence` function returns False when
     the graphs are different due to a break and branch attribute being
     different"""
-    graph = nx.DiGraph()
+    graph: "nx.DiGraph[NXNode]" = nx.DiGraph()
     node_A = NXNode(("A", 0), "A")
     node_B = NXNode(("B", 0), "B")
     node_A.extra_info = {
@@ -273,7 +277,7 @@ def test_check_networkx_graph_equivalence_graph_break_and_branch_false(
         }
     )
     nx.set_edge_attributes(
-        graph,
+        graph,  # type: ignore[arg-type]
         {
             (node_A, node_B): {
                 "start_node_attr": graph.nodes[node_A],

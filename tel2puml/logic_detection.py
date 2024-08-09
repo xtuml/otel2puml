@@ -382,14 +382,15 @@ def process_missing_and_gates(
         process_tree.operator is not None
         and process_tree.operator.value == Operator.OR.value
     ):
-        universe = set()
+        universe_holder: set[str] = set()
         insoluble = False
         for child in process_tree.children:
             if child.operator is None:
-                universe.add(child.label)
+                universe_holder.add(child.label)
             else:
                 insoluble = True
                 break
+        universe = frozenset(universe_holder)
 
         if not insoluble:
             recursive_event_set = {

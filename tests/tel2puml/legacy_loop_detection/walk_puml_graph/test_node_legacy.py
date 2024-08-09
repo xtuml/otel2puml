@@ -1,12 +1,13 @@
 """Tests for the node module."""
 
 from copy import deepcopy
+from typing import Literal
 
 from pm4py import ProcessTree
 import networkx as nx
 
+from tel2puml.walk_puml_graph.node import Node
 from tel2puml.legacy_loop_detection.walk_puml_graph.node import (
-    Node,
     load_logic_tree_into_nodes,
     load_all_logic_trees_into_nodes,
     create_event_node_ref,
@@ -40,8 +41,10 @@ def test_load_logic_tree_into_nodes_incoming(
     :param process_tree_with_and_logic_gate: The process tree with and logic.
     :type process_tree_with_and_logic_gate: :class:`ProcessTree`
     """
-
-    for direction in ["incoming", "outgoing"]:
+    directions: list[Literal['incoming', 'outgoing']] = [
+        "incoming", "outgoing"
+    ]
+    for direction in directions:
         nodes_list = [deepcopy(node), deepcopy(node)]
         load_logic_tree_into_nodes(
             process_tree_with_and_logic_gate, nodes_list, direction
@@ -71,7 +74,10 @@ def test_load_all_logic_trees_into_nodes(
     :param node_map: The node map to test.
     :type node_map: `dict`[`str`, `list`[:class:`Node`]]
     """
-    for direction in ["incoming", "outgoing"]:
+    directions: list[Literal['incoming', 'outgoing']] = [
+        "incoming", "outgoing"
+    ]
+    for direction in directions:
         load_all_logic_trees_into_nodes(events, node_map, direction)
         for nodes in node_map.values():
             node = nodes[0]
@@ -89,7 +95,7 @@ def test_load_all_logic_trees_into_nodes(
 
 def test_create_event_node_ref() -> None:
     """Test the create_event_node_ref function."""
-    graph = nx.DiGraph()
+    graph: "nx.DiGraph[Node]" = nx.DiGraph()
     node_1 = Node(uid="1", event_type="Event1")
     node_2 = Node(uid="2", event_type="Event2")
     node_3 = Node(uid="3", event_type="Event1")
@@ -159,13 +165,15 @@ def test_merge_markov_without_loops_and_logic_detection_analysis() -> None:
         )
     )
     # test
-    expected_outgoing_event_type_logic = {
+    expected_outgoing_event_type_logic: dict[str, dict[str, list[str]]] = {
         "A": {"XOR": ["B", "D"]},
         "B": {},
         "C": {},
         "D": {},
     }
-    expected_incoming_event_type_logic = {"A": {}, "B": {}, "C": {}, "D": {}}
+    expected_incoming_event_type_logic: dict[str, dict[str, list[str]]] = {
+        "A": {}, "B": {}, "C": {}, "D": {}
+    }
     expected_outgoing_event_type = {
         "A": ["B", "D"],
         "B": ["C"],
@@ -185,7 +193,7 @@ def test_merge_markov_without_loops_and_logic_detection_analysis() -> None:
             assert outgoing_logic_node.operator in (
                 expected_outgoing_event_type_logic[node.event_type]
             )
-            assert sorted(
+            assert sorted(  # type: ignore[type-var]
                 [
                     logic_node.event_type
                     for logic_node in outgoing_logic_node.outgoing_logic
@@ -204,7 +212,7 @@ def test_merge_markov_without_loops_and_logic_detection_analysis() -> None:
             assert incoming_logic_node.operator in (
                 expected_incoming_event_type_logic[node.event_type]
             )
-            assert sorted(
+            assert sorted(  # type: ignore[type-var]
                 [
                     logic_node.event_type
                     for logic_node in incoming_logic_node.incoming_logic
@@ -215,13 +223,13 @@ def test_merge_markov_without_loops_and_logic_detection_analysis() -> None:
                 ]
             )
         assert (
-            sorted(
+            sorted(  # type: ignore[type-var]
                 [direction_node.event_type for direction_node in node.outgoing]
             )
             == expected_outgoing_event_type[node.event_type]
         )
         assert (
-            sorted(
+            sorted(  # type: ignore[type-var]
                 [direction_node.event_type for direction_node in node.incoming]
             )
             == expected_incoming_event_type[node.event_type]

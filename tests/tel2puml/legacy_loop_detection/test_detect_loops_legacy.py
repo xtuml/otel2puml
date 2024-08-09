@@ -507,7 +507,7 @@ def test_update_break_points() -> None:
     loop.exit_points = {"E"}
 
     loops = [loop]
-    loops = update_break_points(graph, loops)
+    loops = update_break_points(graph, loops, sub_loop=False)
     loop, = loops
     assert loop.break_edges == {("B", "C")}
     assert loop.break_points == {"C"}
@@ -529,7 +529,7 @@ def test_update_break_points() -> None:
     loop.exit_points = {"E"}
 
     loops = [loop]
-    loops = update_break_points(graph, loops)
+    loops = update_break_points(graph, loops, sub_loop=False)
     loop, = loops
     assert set(loop.nodes) == {"B", "C", "D"}
     assert loop.break_edges == {("B", "C")}
@@ -829,9 +829,9 @@ def test_detect_loops_from_loop_break_split_exit_puml() -> None:
 class TestBreakPointFunctions:
     """Tests for the break point functions."""
     @staticmethod
-    def break_point_loop_and_graph() -> tuple[Loop, DiGraph]:
+    def break_point_loop_and_graph() -> tuple[Loop, "DiGraph[str]"]:
         """Return a loop and graph with break points."""
-        graph = DiGraph()
+        graph: "DiGraph[str]" = DiGraph()
         graph.add_edge("A", "B")
         graph.add_edge("A", "C")
         graph.add_edge("A", "D")
@@ -879,9 +879,9 @@ class TestBreakPointFunctions:
 
 class TestLoopLonelyMerges:
     """Tests for the lonely merge detection functions."""
-    def lonely_merge_graph(self) -> DiGraph:
+    def lonely_merge_graph(self) -> "DiGraph[str]":
         """Return a graph with lonely merges."""
-        graph = DiGraph()
+        graph: "DiGraph[str]" = DiGraph()
         graph.add_edge("A", "B")
         graph.add_edge("B", "C")
         graph.add_edge("B", "D")
@@ -909,9 +909,9 @@ class TestLoopLonelyMerges:
         loop.add_subloop(sub_loop)
         return loop
 
-    def lonely_merge_negative_test_graph(self) -> DiGraph:
+    def lonely_merge_negative_test_graph(self) -> "DiGraph[str]":
         """Return a graph with no lonely merges."""
-        graph = DiGraph()
+        graph: "DiGraph[str]" = DiGraph()
         graph.add_edge("A", "B")
         graph.add_edge("B", "C")
         graph.add_edge("C", "D")
@@ -922,7 +922,7 @@ class TestLoopLonelyMerges:
 
     @staticmethod
     def get_and_check_lonely_merge_killed_edges(
-        graph: DiGraph,
+        graph: "DiGraph[str]",
         loop_nodes: set[str],
         end_points: set[str],
         expected_lonely_merge_killed_edges: set[tuple[str, str]]
@@ -1002,14 +1002,14 @@ class TestLoopLonelyMerges:
 
 class TestLoopRemoval:
     """Test the loop removal functions."""
-    def create_graph_with_loops(self) -> tuple[DiGraph, Loop]:
+    def create_graph_with_loops(self) -> tuple["DiGraph[str]", Loop]:
         """Create a graph with loops for testing.
 
         :return: A tuple containing the graph and the loop
         :rtype: `tuple`[:class:`MultiDiGraph`, :class:`Loop`]
         """
         # setup the graph
-        graph = DiGraph()
+        graph: "DiGraph[str]" = DiGraph()
         graph.add_edge("A", "B")
         graph.add_edge("B", "B")
         graph.add_edge("B", "C")
@@ -1048,7 +1048,7 @@ class TestLoopRemoval:
         """
         # test simple loop removal with no sub loops
         # setup the graph and loops
-        graph = DiGraph()
+        graph: "DiGraph[str]" = DiGraph()
         graph.add_edge("A", "B")
         graph.add_edge("B", "C")
         graph.add_edge("C", "A")
