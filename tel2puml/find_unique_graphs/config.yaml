@@ -2,18 +2,39 @@ data_sources:
   json:
     # Specify the file path to the JSON data
     dirpath: null
-    filepath: otel.json
+    filepath: data.json
     # Define the field mapping from the application to your JSON structure
     field_mapping:
-      job_name: job_name
-      job_id: job_id
-      event_type: event_type
-      event_id: event_id
-      start_timestamp: start_timestamp
-      end_timestamp: end_timestamp
-      application_name: application_name
-      parent_event_id: parent_event_id
-      child_event_ids: child_event_ids
+      job_name:
+        key_paths: [scope:name]
+        value_type: string
+      job_id:
+        key_paths: [trace_id]
+        value_type: string
+      event_type:
+        key_paths: [attributes::key, attributes::key]
+        key_value: [http.method, http.status_code]
+        value_paths: [value:Value:StringValue, value:Value:IntValue]
+        value_type: string
+      event_id:
+        key_paths: [span_id]
+        value_type: string
+      start_timestamp:
+        key_paths: [start_time_unix_nano]
+        value_type: unix_nano
+      end_timestamp:
+        key_paths: [end_time_unix_nano]
+        value_type: unix_nano
+      application_name:
+        key_paths: [attributes::key, resource:attributes::key]
+        key_value: [coral.service, service.version]
+        value_paths: [value:Value:StringValue, value:Value:StringValue]
+        value_type: string
+      parent_event_id:
+        key_paths: [parent_span_id]
+        value_type: string
+
+
     schema:
       type: object
       properties:

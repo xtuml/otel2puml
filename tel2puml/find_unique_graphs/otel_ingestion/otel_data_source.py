@@ -1,7 +1,8 @@
 """Module containing classes to handle different OTel data sources."""
 
-import yaml
 import os
+import yaml
+import time
 import ijson
 import jsonschema
 from abc import ABC, abstractmethod
@@ -10,6 +11,9 @@ from jsonschema import ValidationError
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     OTelEvent,
+)
+from tel2puml.find_unique_graphs.otel_ingestion.json_data_converter import (
+    flatten_and_map_data,
 )
 
 
@@ -39,6 +43,7 @@ class OTELDataSource(ABC):
 
 
 class JSONDataSourceConfig(TypedDict):
+    """Typed dict for JSONDataSourceConfig."""
     filepath: str
     dirpath: str
     field_mapping: dict[str, str]
@@ -119,8 +124,9 @@ class JSONDataSource(OTELDataSource):
         with open(filepath, "rb") as file:
             for record in ijson.items(file, "item"):
                 try:
-                    jsonschema.validate(record, self.json_schema)
-                    yield self.create_otel_object(record)
+                    processed_json = flatten_and_map_data(self.config, record)
+                    jsonschema.validate(processed_json, self.json_schema)
+                    yield self.create_otel_object(processed_json)
                 except ValidationError as e:
                     print(f"Invalid json record - {e}")
 
@@ -131,25 +137,15 @@ class JSONDataSource(OTELDataSource):
         :rtype: :class:`OTelEvent`
         """
         return OTelEvent(
-            job_name=record[self.config["field_mapping"]["job_name"]],
-            job_id=record[self.config["field_mapping"]["job_id"]],
-            event_type=record[self.config["field_mapping"]["event_type"]],
-            event_id=record[self.config["field_mapping"]["event_id"]],
-            start_timestamp=record[
-                self.config["field_mapping"]["start_timestamp"]
-            ],
-            end_timestamp=record[
-                self.config["field_mapping"]["end_timestamp"]
-            ],
-            application_name=record[
-                self.config["field_mapping"]["application_name"]
-            ],
-            parent_event_id=record[
-                self.config["field_mapping"]["parent_event_id"]
-            ],
-            child_event_ids=record.get(
-                self.config["field_mapping"]["child_event_ids"], None
-            ),
+            job_name=record["job_name"],
+            job_id=record["job_id"],
+            event_type=record["event_type"],
+            event_id=record["event_id"],
+            start_timestamp=record["start_timestamp"],
+            end_timestamp=record["end_timestamp"],
+            application_name=record["application_name"],
+            parent_event_id=["parent_event_id"],
+            child_event_ids=record.get("child_event_ids", None),
         )
 
     def __next__(self) -> OTelEvent:
@@ -173,6 +169,7 @@ class JSONDataSource(OTELDataSource):
 
 
 if __name__ == "__main__":
+    time_start = time.time()
     with open("tel2puml/find_unique_graphs/config.yaml", "r") as f:
         config = yaml.load(f, Loader=yaml.SafeLoader)
 
@@ -180,3 +177,5 @@ if __name__ == "__main__":
 
     for data in json_data_source:
         print(data)
+
+    print(time.time() - time_start)
