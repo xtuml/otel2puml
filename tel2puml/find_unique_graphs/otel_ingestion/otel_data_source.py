@@ -12,9 +12,7 @@ from jsonschema import ValidationError
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     OTelEvent,
 )
-from tel2puml.find_unique_graphs.otel_ingestion.json_data_converter import (
-    flatten_and_map_data,
-)
+from tel2puml.find_unique_graphs.otel_ingestion import json_data_converter
 
 
 class OTELDataSource(ABC):
@@ -44,6 +42,7 @@ class OTELDataSource(ABC):
 
 class JSONDataSourceConfig(TypedDict):
     """Typed dict for JSONDataSourceConfig."""
+
     filepath: str
     dirpath: str
     field_mapping: dict[str, str]
@@ -118,7 +117,10 @@ class JSONDataSource(OTELDataSource):
         raise ValueError("Directory/Filepath not set.")
 
     def parse_json_stream(self, filepath: str) -> Iterator[OTelEvent]:
-        """Parse JSON file. ijson iteratively parses the json file.
+        """Function that parses a json file, maps the json to the application
+        structure through the config specified in the config.yaml file.
+        ijson iteratively parses the json file so that large files can be
+        processed.
 
         :return: An OTelEvent object
         :rtype: `Iterator`[`OTelEvent`]
@@ -126,7 +128,9 @@ class JSONDataSource(OTELDataSource):
         with open(filepath, "rb") as file:
             for record in ijson.items(file, "item"):
                 try:
-                    processed_json = flatten_and_map_data(self.config, record)
+                    processed_json = json_data_converter.flatten_and_map_data(
+                        self.config, record
+                    )
                     jsonschema.validate(processed_json, self.json_schema)
                     yield self.create_otel_object(processed_json)
                 except ValidationError as e:
