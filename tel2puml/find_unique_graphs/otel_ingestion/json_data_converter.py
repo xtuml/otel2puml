@@ -22,7 +22,7 @@ def flatten_json_dict(json_data: dict[str, Any]) -> Any:
 
 
 def map_data_to_json_schema(
-    mapping_config: JSONDataSourceConfig, flattened_data: Any
+    mapping_config: JSONDataSourceConfig, flattened_data: Any, mapping_key: str
 ) -> dict[str, str]:
     """
     Function that maps flattened JSON data to a schema defined in the
@@ -36,7 +36,7 @@ def map_data_to_json_schema(
     :rtype: `dict`[`str`, `str`]
     """
     result: dict[str, str] = {}
-    field_mapping: dict[str, Any] = mapping_config["field_mapping"]
+    field_mapping: dict[str, Any] = mapping_config[mapping_key]
     # Cache results within lists to avoid looping over them again
     field_cache: dict[str, str] = {}
     for field_name, field_config in field_mapping.items():
@@ -127,8 +127,6 @@ def handle_empty_segments(
     key = full_path.split("::")[-1]
 
     # TODO Have a think about this number
-    if field_name == "event_type":
-        pass
     for segment_count in range(MAX_SEGMENT_COUNT):
         try:
             full_path = update_full_path(full_path, segment_count)
@@ -163,10 +161,12 @@ def handle_empty_segments(
                 return
             update_cache(cache_entry, flattened_data, full_path)
 
-        except KeyError:
+        except (KeyError, TypeError):
+            # Keep a record of the count so that we don't have to iterate
+            # through the tried keys again
             cache_entry["count"] += 1
         except Exception as e:
-            raise RuntimeError(f"An error occured - {e}")
+            print(f"An error occured - {e}")
 
     raise RuntimeError(
         f"Could not find data for '{field_name}' within {MAX_SEGMENT_COUNT}"
@@ -189,7 +189,7 @@ def update_full_path(full_path: str, segment_count: int) -> str:
     """
     if segment_count == 0:
         return full_path.replace("::", f":{str(segment_count)}:")
-    return full_path.replace(f":{segment_count -1}:", f":{segment_count}:")
+    return full_path.replace(f":{segment_count - 1}:", f":{segment_count}:")
 
 
 def get_or_create_cache_entry(
@@ -206,16 +206,15 @@ def get_or_create_cache_entry(
     :return: The existing or newly created cache entry for the given key
     :rtype: `dict`[`str`,`Any`]
     """
-    if field_cache_key not in field_cache:
-        field_cache[field_cache_key] = {key: {"count": 0}}
-    else:
-        if key not in field_cache[field_cache_key]:
-            field_cache[field_cache_key] = {key: {"count": 0}}
+    field_cache.setdefault(field_cache_key, {})
+    field_cache[field_cache_key].setdefault(key, {"count": 0})
+
     cache_entry = field_cache[field_cache_key][key]
-    if isinstance(cache_entry, dict):
-        return cache_entry
-    else:
+
+    if not isinstance(cache_entry, dict):
         raise TypeError("Field cache entry should be of type dict.")
+
+    return cache_entry
 
 
 def get_cached_path(
@@ -242,7 +241,8 @@ def get_cached_path(
     segment count
     :rtype: `str`
     """
-
+    # Get the cached path, or replace segment count with cache_entry['count']
+    # as we have already tried (count - 1) iterations through the full path.
     cached_path = cache_entry.get(
         value_to_check,
         full_path.replace(f":{segment_count}:", f":{cache_entry['count']}:"),
@@ -323,10 +323,7 @@ def update_cache(
     :param full_path: The path to update within the cache
     :type full_path: `str`
     """
-    try:
-        cache_entry[flattened_data[full_path]] = full_path
-    except TypeError:
-        pass
+    cache_entry[flattened_data[full_path]] = full_path
     cache_entry["count"] += 1
 
 
@@ -432,4 +429,71 @@ def flatten_and_map_data(
     :rtype: `dict`[`str`, `str`]
     """
     flattened_data = flatten_json_dict(raw_json)
-    return map_data_to_json_schema(json_config, flattened_data)
+    return map_data_to_json_schema(
+        json_config, flattened_data, "field_mapping"
+    )
+
+
+def process_headers_and_spans(
+    json_config: JSONDataSourceConfig, json_data: dict[str, Any]
+) -> tuple[str, list[dict[str, Any]]]:
+    """Function to process json data for headers and spans.
+
+    :param json_config: The json config
+    :type json_config: :class: `JSONDataSourceConfig`
+    :param json_data: The JSON data to flatten.
+    :param json_data: `dict`[`str`,`Any`]
+    :return: The header and spans
+    :rtype: `tuple`[`str`, `list`[`dict`[`str`,`Any`]]]
+    """
+    header = process_header(json_config, json_data)["header"]
+    spans = process_spans(json_config, json_data)
+    return (header, spans)
+
+
+def process_header(
+    json_config: JSONDataSourceConfig, json_data: dict[str, Any]
+) -> str:
+    """Process the header within the json data.
+
+    :param json_config: The json config
+    :type json_config: :class: `JSONDataSourceConfig`
+    :param json_data: The JSON data to flatten.
+    :param json_data: `dict`[`str`,`Any`]
+    return: The header
+    :rtype: `str`
+    """
+    return map_data_to_json_schema(
+        json_config, flatten_json_dict(json_data), "header_mapping"
+    )
+
+
+def process_spans(
+    json_config: JSONDataSourceConfig, json_data: dict[str, Any]
+) -> list[dict[str, Any]]:
+    """Process the spans within the json data.
+
+    :param json_config: The json config
+    :type json_config: :class: `JSONDataSourceConfig`
+    :param json_data: The JSON data to flatten.
+    :param json_data: `dict`[`str`,`Any`]
+    return: A list of spans
+    :rtype: `list`[`dict`[`str`, `Any`]]
+    """
+    path_segments = json_config["span_mapping"]["spans"]["key_paths"][0].split(
+        ":"
+    )
+    data = json_data
+    found_sub_segment = False
+    for segment in path_segments:
+        if segment == "":
+            found_sub_segment = True
+            data = data[0]
+            continue
+        if found_sub_segment:
+            data = data[segment]
+            continue
+
+        data = data[segment]
+
+    return data
