@@ -9,7 +9,7 @@ from typing import Self, Any, Iterator
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     OTelEvent,
-    JSONDataSourceConfig
+    JSONDataSourceConfig,
 )
 from tel2puml.find_unique_graphs.otel_ingestion import json_data_converter
 
@@ -116,14 +116,27 @@ class JSONDataSource(OTELDataSource):
         :rtype: `Iterator`[`OTelEvent`]
         """
         with open(filepath, "rb") as file:
-            for record in ijson.items(file, "item"):
-                if isinstance(record, dict):
-                    processed_json = json_data_converter.flatten_and_map_data(
-                        self.config, record
+            data = ijson.items(file, self.config["data_location"])
+            for records in data:
+                for record_data in records:
+                    header, spans = (
+                        json_data_converter.process_headers_and_spans(
+                            self.config, record_data
+                        )
                     )
-                    yield self.create_otel_object(processed_json)
-                else:
-                    raise TypeError("json is not of type dict.")
+                    for span in spans:
+                        if isinstance(span, dict):
+                            processed_json = (
+                                json_data_converter.flatten_and_map_data(
+                                    self.config, span
+                                )
+                            )
+                            yield self.create_otel_object(
+                                processed_json
+                            ), header
+                        else:
+                            raise TypeError("json is not of type dict.")
+                    print("=" * 50)
 
     def create_otel_object(self, record: dict[str, Any]) -> OTelEvent:
         """Creates an OTelEvent object from a JSON record.
@@ -170,7 +183,8 @@ if __name__ == "__main__":
 
     json_data_source = JSONDataSource(config["data_sources"]["json"])
 
-    for data in json_data_source:
-        print(data)
+    for data, header in json_data_source:
+        print(f"{header}: {data}")
+        print("-" * 50)
 
     print(time.time() - time_start)

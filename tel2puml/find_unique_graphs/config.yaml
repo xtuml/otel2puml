@@ -4,6 +4,16 @@ data_sources:
     dirpath: null
     filepath: data.json
     # Define the field mapping from the application to your JSON structure
+    data_location: resource_spans
+    header_mapping:
+      header:
+        key_paths: [resource:attributes::key, resource:attributes::key]
+        key_value: [service.name, service.version]
+        value_paths: [value:Value:StringValue, value:Value:StringValue]
+        value_type: string
+    span_mapping:
+      spans:
+        key_paths: [scope_spans::spans]
     field_mapping:
       job_name:
         key_paths: [attributes::cloudProvider]

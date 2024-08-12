@@ -110,4 +110,7 @@ class JSONDataSourceConfig(TypedDict):
 
     filepath: str
     dirpath: str
+    data_location: str
+    header_mapping: dict[str, str]
+    span_mapping: dict[str, str]
     field_mapping: dict[str, str]
