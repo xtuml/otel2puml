@@ -119,10 +119,11 @@ class JSONDataSource(OTELDataSource):
             data = ijson.items(file, self.config["data_location"])
             for records in data:
                 for record_data in records:
-                    header, spans = (
-                        json_data_converter.process_headers_and_spans(
-                            self.config, record_data
-                        )
+                    header = json_data_converter.process_header(
+                        self.config, record_data
+                    )
+                    spans = json_data_converter.process_spans(
+                        self.config, record_data
                     )
                     for span in spans:
                         if isinstance(span, dict):
@@ -131,9 +132,10 @@ class JSONDataSource(OTELDataSource):
                                     self.config, span
                                 )
                             )
-                            yield self.create_otel_object(
-                                processed_json
-                            ), header
+                            yield (
+                                self.create_otel_object(processed_json),
+                                header,
+                            )
                         else:
                             raise TypeError("json is not of type dict.")
                     print("=" * 50)
@@ -183,8 +185,9 @@ if __name__ == "__main__":
 
     json_data_source = JSONDataSource(config["data_sources"]["json"])
 
+    grouped_spans = dict()
     for data, header in json_data_source:
-        print(f"{header}: {data}")
-        print("-" * 50)
+        grouped_spans.setdefault(header, [data])
+        grouped_spans[header].append(data)
 
     print(time.time() - time_start)

@@ -1,8 +1,9 @@
 """This module converts JSON OTel data to adhere to the application schema."""
 
 import flatdict
-from typing import Any
+from typing import Any, Literal
 from datetime import datetime
+
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     JSONDataSourceConfig,
 )
@@ -22,21 +23,25 @@ def flatten_json_dict(json_data: dict[str, Any]) -> Any:
 
 
 def map_data_to_json_schema(
-    mapping_config: JSONDataSourceConfig, flattened_data: Any, mapping_key: str
+    json_config: JSONDataSourceConfig,
+    flattened_data: Any,
+    config_key: Literal["header_mapping", "field_mapping"],
 ) -> dict[str, str]:
     """
     Function that maps flattened JSON data to a schema defined in the
-    mapping_config.
+    json_config.
 
-    :param mapping_config: The mapping config pulled from the yaml config file
-    :type mapping_config: :class:`JSONDataSourceConfig`
+    :param json_config: The mapping config pulled from the yaml config file
+    :type json_config: :class:`JSONDataSourceConfig`
     :param flattened_data: JSON data as a flattened dictionary
     :type flattened_data: `Any`
+    :param config_key: The key for the json config fields
+    :type config_key: `Literal`["header_mapping", "field_mapping"]
     :return: The mapped data
     :rtype: `dict`[`str`, `str`]
     """
     result: dict[str, str] = {}
-    field_mapping: dict[str, Any] = mapping_config[mapping_key]
+    field_mapping: dict[str, Any] = json_config[config_key]
     # Cache results within lists to avoid looping over them again
     field_cache: dict[str, str] = {}
     for field_name, field_config in field_mapping.items():
@@ -135,13 +140,20 @@ def handle_empty_segments(
                 field_cache, field_cache_key, key
             )
 
-            # check for case where we have attributes::cloudProvider
+            # check for case where key value is not specifed, indicating 
+            # that the path within key_paths is the full path and the value
+            # at that path is what we want.
             if not field_config.get("key_value") and flattened_data.get(
                 full_path
             ):
                 result[field_name] = flattened_data.get(full_path)
                 return
 
+            # Check the cache to see if the value that we are looking for has 
+            # already been looped over and stored.
+            # If the value is not found within the cache, we start looking at
+            # the value of 'count' that is stored within the cache, as we have
+            # already checked values up until count - 1.
             value_to_check = field_config["key_value"][index]
             full_path = get_cached_path(
                 cache_entry, value_to_check, full_path, segment_count
@@ -163,7 +175,8 @@ def handle_empty_segments(
 
         except (KeyError, TypeError):
             # Keep a record of the count so that we don't have to iterate
-            # through the tried keys again
+            # through the tried keys again. We get KeyError and TypeErrors when
+            # we try accessing a key within the dictionary that doesn't exist.
             cache_entry["count"] += 1
         except Exception as e:
             print(f"An error occured - {e}")
@@ -224,10 +237,11 @@ def get_cached_path(
     segment_count: int,
 ) -> str:
     """
-    Function that retrieves a cached path or generates a new one based on the
-    provided parameters.
+    Function that retrieves a cached path or generates a new one at the 'count'
+    specified within the cache.
 
     :param cache_entry: The cache entry containing paths and a count
+    indicating how many times we have iterated over a given key
     :type cache_entry: `dict`[`str`, `Any`]
     :param value_to_check: The value to look up in the cache entry
     :type value_to_check: `Any`
@@ -434,23 +448,6 @@ def flatten_and_map_data(
     )
 
 
-def process_headers_and_spans(
-    json_config: JSONDataSourceConfig, json_data: dict[str, Any]
-) -> tuple[str, list[dict[str, Any]]]:
-    """Function to process json data for headers and spans.
-
-    :param json_config: The json config
-    :type json_config: :class: `JSONDataSourceConfig`
-    :param json_data: The JSON data to flatten.
-    :param json_data: `dict`[`str`,`Any`]
-    :return: The header and spans
-    :rtype: `tuple`[`str`, `list`[`dict`[`str`,`Any`]]]
-    """
-    header = process_header(json_config, json_data)["header"]
-    spans = process_spans(json_config, json_data)
-    return (header, spans)
-
-
 def process_header(
     json_config: JSONDataSourceConfig, json_data: dict[str, Any]
 ) -> str:
@@ -465,7 +462,7 @@ def process_header(
     """
     return map_data_to_json_schema(
         json_config, flatten_json_dict(json_data), "header_mapping"
-    )
+    )["header"]
 
 
 def process_spans(
@@ -480,15 +477,20 @@ def process_spans(
     return: A list of spans
     :rtype: `list`[`dict`[`str`, `Any`]]
     """
+
     path_segments = json_config["span_mapping"]["spans"]["key_paths"][0].split(
         ":"
     )
+
     data = json_data
     found_sub_segment = False
     for segment in path_segments:
         if segment == "":
             found_sub_segment = True
-            data = data[0]
+            if isinstance(data, list):
+                data = data[0]
+            else:
+                raise TypeError("Sub segment should be a list.")
             continue
         if found_sub_segment:
             data = data[segment]
@@ -496,4 +498,7 @@ def process_spans(
 
         data = data[segment]
 
-    return data
+    if isinstance(data, list):
+        return data
+    else:
+        raise TypeError("Spans should be within a list.")
