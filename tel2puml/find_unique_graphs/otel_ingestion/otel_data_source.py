@@ -199,7 +199,7 @@ if __name__ == "__main__":
 
     grouped_spans = dict()
     for data, header in json_data_source:
-        grouped_spans.setdefault(header, [data])
+        grouped_spans.setdefault(header, [])
         grouped_spans[header].append(data)
 
     print(time.time() - time_start)

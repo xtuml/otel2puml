@@ -366,12 +366,24 @@ def _handle_regular_path(
     :type result: `dict`[`str`, `str`]
     """
     try:
-        if not field_config.get(["keys"][index]):
-            if flattened_data.get(full_path):
-                value_type = _get_value_type(field_config)
-                _add_or_append_value(
-                    field_name, flattened_data[full_path], result, value_type
-                )
+        flattened_data = dict(flattened_data)
+        if flattened_data[full_path]:
+            value_type = _get_value_type(field_config)
+            _add_or_append_value(
+                field_name, flattened_data[full_path], result, value_type
+            )
+    except KeyError:
+        # Check if we are dealing with a list like child_span_ids
+        count = 0
+        full_path = full_path + ":" + str(count)
+        while flattened_data.get(full_path):
+            value_type = _get_value_type(field_config)
+            if field_name not in result:
+                result[field_name] = [flattened_data.get(full_path)]
+            else:
+                result[field_name].append(flattened_data.get(full_path))
+            full_path = full_path.replace(f":{str(count)}", f":{str(count+1)}")
+            count += 1
     except Exception as e:
         print(f"An error occurred - {e}")
 
