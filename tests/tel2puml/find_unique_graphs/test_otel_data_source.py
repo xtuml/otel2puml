@@ -107,12 +107,20 @@ class TestJSONDataSource:
 
     @staticmethod
     @pytest.mark.usefixtures("mock_path_exists", "mock_filepath_in_dir")
-    def test_parse_json_stream(
-        mock_json_data: list[dict[str, Any]],
+    @pytest.mark.parametrize(
+        "mock_data",
+        [
+            "mock_json_data",
+            "mock_json_data_without_list",
+        ],
+    )
+    def test_end_to_end_json_parsing(
+        mock_data: dict[str, Any],
         mock_yaml_config_dict: dict[str, Any],
+        request
     ) -> None:
         """Tests parsing a json file."""
-        mock_file_content = json.dumps(mock_json_data)
+        mock_file_content = json.dumps(request.getfixturevalue(mock_data))
 
         with patch(
             "builtins.open", mock_open(read_data=mock_file_content)
@@ -129,9 +137,13 @@ class TestJSONDataSource:
                 grouped_spans.setdefault(header, [])
                 grouped_spans[header].append(data)
 
-        assert len(grouped_spans) == 2
-        assert grouped_spans["Frontend 1.0"]
-        assert grouped_spans["Backend 1.2"]
+        if mock_data == "mock_json_data":
+            assert len(grouped_spans) == 2
+            assert grouped_spans["Frontend 1.0"]
+            assert grouped_spans["Backend 1.2"]
+        else:
+            assert len(grouped_spans) == 1
+            assert grouped_spans["Frontend 1.0"]
 
         otel_event = grouped_spans["Frontend 1.0"][0]
         assert otel_event.job_name == "Azure"

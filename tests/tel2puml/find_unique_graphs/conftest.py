@@ -65,8 +65,7 @@ def mock_yaml_config_string() -> str:
 
 @pytest.fixture
 def mock_yaml_config_dict(mock_yaml_config_string: str) -> dict[str, Any]:
-    """Returns a dict to mock a dict when reading the yaml config.
-    """
+    """Returns a dict to mock a dict when reading the yaml config."""
     return yaml.safe_load(mock_yaml_config_string)
 
 
@@ -92,7 +91,7 @@ def mock_filepath_in_dir() -> Generator[None, None, None]:
 
 
 @pytest.fixture
-def mock_json_data() -> list[dict[str, Any]]:
+def mock_json_data() -> dict[str, Any]:
     """Mock OTel JSON data."""
     return {
         "resource_spans": [
@@ -497,6 +496,204 @@ def mock_json_data() -> list[dict[str, Any]]:
                 ],
             },
         ]
+    }
+
+
+@pytest.fixture
+def mock_json_data_without_list() -> dict[str, Any]:
+    """Mock OTel JSON data without spans being in a list."""
+    return {
+        "resource_spans": {
+            "resource": {
+                "attributes": [
+                    {
+                        "key": "service.name",
+                        "value": {"Value": {"StringValue": "Frontend"}},
+                    },
+                    {
+                        "key": "service.version",
+                        "value": {"Value": {"StringValue": "1.0"}},
+                    },
+                ]
+            },
+            "scope_spans": [
+                {
+                    "scope": {"name": "TestJob"},
+                    "spans": [
+                        {
+                            "trace_id": "B4MQWcR6iByyOq4EMSs5Nn==",
+                            "span_id": "F1Vp3ypcQfU==",
+                            "parent_span_id": "NzWDkmlAnji==",
+                            "child_span_ids": ["child1", "child2"],
+                            "flags": 339,
+                            "name": "/delete",
+                            "kind": 5,
+                            "start_time_unix_nano": 1723544132228102912,
+                            "end_time_unix_nano": 1723544132228219285,
+                            "attributes": [
+                                {
+                                    "key": "http.method",
+                                    "value": {"Value": {"StringValue": "GET"}},
+                                },
+                                {"cloudProvider": "Azure"},
+                                {
+                                    "key": "http.target",
+                                    "value": {
+                                        "Value": {"StringValue": "/XNJJo"}
+                                    },
+                                },
+                                {
+                                    "key": "http.host",
+                                    "value": {
+                                        "Value": {
+                                            "stringValue": "GqsdsjtJsK.com:7167"
+                                        }
+                                    },
+                                },
+                                {
+                                    "key": "coral.operation",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "jCWhAvRzcMOperation"
+                                        }
+                                    },
+                                },
+                                {
+                                    "key": "coral.service",
+                                    "value": {
+                                        "Value": {"StringValue": "Processor"}
+                                    },
+                                },
+                                {
+                                    "key": "coral.namespace",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "com.T2h.366Yx"
+                                        }
+                                    },
+                                },
+                                {
+                                    "key": "http.status_code",
+                                    "value": {"Value": {"IntValue": 500}},
+                                },
+                            ],
+                            "status": {},
+                            "resource": {
+                                "attributes": [
+                                    {
+                                        "key": "service.name",
+                                        "value": {
+                                            "Value": {
+                                                "StringValue": "OvATmm04-Service"
+                                            }
+                                        },
+                                    },
+                                    {
+                                        "key": "service.version",
+                                        "value": {
+                                            "Value": {"StringValue": "1.2"}
+                                        },
+                                    },
+                                    {
+                                        "key": {"other_key": "test_string"},
+                                        "value": {
+                                            "Value": {"StringValue": "4.8"}
+                                        },
+                                    },
+                                ]
+                            },
+                            "scope": {"name": "cds-T5gHfy"},
+                        },
+                        {
+                            "trace_id": "Js7TGf4OJROjbISB1BvOOb==",
+                            "span_id": "Jv6moYFCoLK==",
+                            "parent_span_id": "0u4wIXKIZ2t==",
+                            "child_span_ids": ["child3"],
+                            "flags": 395,
+                            "name": "/update",
+                            "kind": 4,
+                            "start_time_unix_nano": 1723544132228288000,
+                            "end_time_unix_nano": 1723544132229038947,
+                            "attributes": [
+                                {
+                                    "key": "http.method",
+                                    "value": {
+                                        "Value": {"StringValue": "DELETE"}
+                                    },
+                                },
+                                {"cloudProvider": "AWS"},
+                                {
+                                    "key": "http.target",
+                                    "value": {
+                                        "Value": {"StringValue": "/Ze2bE"}
+                                    },
+                                },
+                                {
+                                    "key": "http.host",
+                                    "value": {
+                                        "Value": {
+                                            "stringValue": "lhD61W2zAC.com:7631"
+                                        }
+                                    },
+                                },
+                                {
+                                    "key": "coral.operation",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "cVh8n0sf6JOperation"
+                                        }
+                                    },
+                                },
+                                {
+                                    "key": "coral.service",
+                                    "value": {
+                                        "Value": {"StringValue": "Handler"}
+                                    },
+                                },
+                                {
+                                    "key": "coral.namespace",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "com.C36.9ETRp"
+                                        }
+                                    },
+                                },
+                                {
+                                    "key": "http.status_code",
+                                    "value": {"Value": {"IntValue": 401}},
+                                },
+                            ],
+                            "status": {},
+                            "resource": {
+                                "attributes": [
+                                    {
+                                        "key": "service.name",
+                                        "value": {
+                                            "Value": {
+                                                "StringValue": "IhjobAPC-Service"
+                                            }
+                                        },
+                                    },
+                                    {
+                                        "key": "service.version",
+                                        "value": {
+                                            "Value": {"StringValue": "2.9"}
+                                        },
+                                    },
+                                    {
+                                        "key": {"other_key": "test_string"},
+                                        "value": {
+                                            "Value": {"StringValue": "2.0"}
+                                        },
+                                    },
+                                ]
+                            },
+                            "scope": {"name": "cds-NgdScW"},
+                        },
+                    ],
+                }
+            ],
+        },
     }
 
 
