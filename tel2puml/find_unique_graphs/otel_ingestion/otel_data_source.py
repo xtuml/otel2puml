@@ -106,39 +106,51 @@ class JSONDataSource(OTELDataSource):
             return [self.filepath]
         raise ValueError("Directory/Filepath not set.")
 
-    def parse_json_stream(self, filepath: str) -> Iterator[OTelEvent]:
-        """Function that parses a json file, maps the json to the application
-        structure through the config specified in the config.yaml file.
-        ijson iteratively parses the json file so that large files can be
-        processed.
+    def process_record(
+        self, record: dict[str, Any]
+    ) -> Iterator[tuple[OTelEvent, str]]:
+        """Process a single record and yield OTelEvent objects with headers.
 
-        :return: An OTelEvent object
-        :rtype: `Iterator`[`OTelEvent`]
+        :param record: The record to process
+        :type record: `dict`[`str`,`Any`]
+        :return: An iterator of tuples containing OTelEvent and header
+        :rtype: Iterator[tuple[OTelEvent, Any]]
+        """
+        header = json_data_converter.process_header(self.config, record)
+        spans = json_data_converter.process_spans(self.config, record)
+        for span in spans:
+            if isinstance(span, dict):
+                processed_json = json_data_converter.flatten_and_map_data(
+                    self.config, span
+                )
+                yield (
+                    self.create_otel_object(processed_json),
+                    header,
+                )
+            else:
+                raise TypeError("json is not of type dict.")
+        print("=" * 50)
+
+    def parse_json_stream(
+        self, filepath: str
+    ) -> Iterator[tuple[OTelEvent, str]]:
+        """Function that parses a json file, maps the json to the application
+            structure through the config specified in the config.yaml file.
+            ijson iteratively parses the json file so that large files can be
+            processed.
+
+        :param filepath: The path to the JSON file to parse
+        :return: An iterator of tuples containing OTelEvent and header
+        :rtype: `Iterator`[`tuple`[`OTelEvent`, `str`]]
         """
         with open(filepath, "rb") as file:
             data = ijson.items(file, self.config["data_location"])
             for records in data:
-                for record_data in records:
-                    header = json_data_converter.process_header(
-                        self.config, record_data
-                    )
-                    spans = json_data_converter.process_spans(
-                        self.config, record_data
-                    )
-                    for span in spans:
-                        if isinstance(span, dict):
-                            processed_json = (
-                                json_data_converter.flatten_and_map_data(
-                                    self.config, span
-                                )
-                            )
-                            yield (
-                                self.create_otel_object(processed_json),
-                                header,
-                            )
-                        else:
-                            raise TypeError("json is not of type dict.")
-                    print("=" * 50)
+                if isinstance(records, dict):
+                    yield from self.process_record(records)
+                elif isinstance(records, list):
+                    for record_data in records:
+                        yield from self.process_record(record_data)
 
     def create_otel_object(self, record: dict[str, Any]) -> OTelEvent:
         """Creates an OTelEvent object from a JSON record.
