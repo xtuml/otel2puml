@@ -11,7 +11,7 @@ from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
 MAX_SEGMENT_COUNT = 50  # TODO have a think about this
 
 
-def flatten_json_dict(json_data: dict[str, Any]) -> Any:
+def _flatten_json_dict(json_data: dict[str, Any]) -> Any:
     """Function to flatten a nested dictionary.
 
     :param json_data: The JSON data to flatten.
@@ -22,7 +22,7 @@ def flatten_json_dict(json_data: dict[str, Any]) -> Any:
     return flatdict.FlatterDict(json_data)
 
 
-def map_data_to_json_schema(
+def _map_data_to_json_schema(
     json_config: JSONDataSourceConfig,
     flattened_data: Any,
     config_key: Literal["header_mapping", "field_mapping"],
@@ -45,13 +45,13 @@ def map_data_to_json_schema(
     # Cache results within lists to avoid looping over them again
     field_cache: dict[str, str] = {}
     for field_name, field_config in field_mapping.items():
-        process_field(
+        _process_field(
             field_name, field_config, flattened_data, result, field_cache
         )
     return result
 
 
-def process_field(
+def _process_field(
     field_name: str,
     field_config: dict[str, Any],
     flattened_data: Any,
@@ -78,7 +78,7 @@ def process_field(
         if "" in path_segments:
             field_cache_key = key_path.split("::")[0]
             # Indicates that we are handling a list within the json data
-            handle_empty_segments(
+            _handle_empty_segments(
                 field_name,
                 field_config,
                 index,
@@ -89,7 +89,7 @@ def process_field(
             )
         else:
             full_path = ":".join(path_segments)
-            handle_regular_path(
+            _handle_regular_path(
                 field_name,
                 field_config,
                 index,
@@ -99,7 +99,7 @@ def process_field(
             )
 
 
-def handle_empty_segments(
+def _handle_empty_segments(
     field_name: str,
     field_config: dict[str, Any],
     index: int,
@@ -134,9 +134,9 @@ def handle_empty_segments(
     # TODO Have a think about this number
     for segment_count in range(MAX_SEGMENT_COUNT):
         try:
-            full_path = update_full_path(full_path, segment_count)
+            full_path = _update_full_path(full_path, segment_count)
 
-            cache_entry = get_or_create_cache_entry(
+            cache_entry = _get_or_create_cache_entry(
                 field_cache, field_cache_key, key
             )
 
@@ -155,13 +155,13 @@ def handle_empty_segments(
             # the value of 'count' that is stored within the cache, as we have
             # already checked values up until count - 1.
             value_to_check = field_config["key_value"][index]
-            full_path = get_cached_path(
+            full_path = _get_cached_path(
                 cache_entry, value_to_check, full_path, segment_count
             )
 
-            if is_matching_data(flattened_data, full_path, value_to_check):
-                update_cache(cache_entry, flattened_data, full_path)
-                process_matching_data(
+            if _is_matching_data(flattened_data, full_path, value_to_check):
+                _update_cache(cache_entry, flattened_data, full_path)
+                _process_matching_data(
                     field_name,
                     field_config,
                     index,
@@ -171,7 +171,7 @@ def handle_empty_segments(
                     result,
                 )
                 return
-            update_cache(cache_entry, flattened_data, full_path)
+            _update_cache(cache_entry, flattened_data, full_path)
 
         except (KeyError, TypeError):
             # Keep a record of the count so that we don't have to iterate
@@ -187,7 +187,7 @@ def handle_empty_segments(
     )
 
 
-def update_full_path(full_path: str, segment_count: int) -> str:
+def _update_full_path(full_path: str, segment_count: int) -> str:
     """
     Function that updates the full path by replacing segment count placeholders
     with actual segment counts.
@@ -205,7 +205,7 @@ def update_full_path(full_path: str, segment_count: int) -> str:
     return full_path.replace(f":{segment_count - 1}:", f":{segment_count}:")
 
 
-def get_or_create_cache_entry(
+def _get_or_create_cache_entry(
     field_cache: dict[str, Any], field_cache_key: str, key: str
 ) -> dict[str, Any]:
     """
@@ -230,7 +230,7 @@ def get_or_create_cache_entry(
     return cache_entry
 
 
-def get_cached_path(
+def _get_cached_path(
     cache_entry: dict[str, Any],
     value_to_check: str,
     full_path: str,
@@ -267,7 +267,7 @@ def get_cached_path(
         raise TypeError("Path should be of type string.")
 
 
-def is_matching_data(
+def _is_matching_data(
     flattened_data: dict[str, str], full_path: str, value_to_check: str
 ) -> bool:
     """
@@ -289,7 +289,7 @@ def is_matching_data(
     )
 
 
-def process_matching_data(
+def _process_matching_data(
     field_name: str,
     field_config: dict[str, Any],
     index: int,
@@ -317,13 +317,13 @@ def process_matching_data(
     :type result: `dict`[`str`, `str`]
     """
     value_path = full_path.replace(key, field_config["value_paths"][index])
-    value_type = get_value_type(field_config)
-    add_or_append_value(
+    value_type = _get_value_type(field_config)
+    _add_or_append_value(
         field_name, flattened_data[value_path], result, value_type
     )
 
 
-def update_cache(
+def _update_cache(
     cache_entry: dict[str, Any],
     flattened_data: dict[str, str],
     full_path: str,
@@ -341,7 +341,7 @@ def update_cache(
     cache_entry["count"] += 1
 
 
-def handle_regular_path(
+def _handle_regular_path(
     field_name: str,
     field_config: dict[str, Any],
     index: int,
@@ -368,29 +368,26 @@ def handle_regular_path(
     try:
         if not field_config.get(["keys"][index]):
             if flattened_data.get(full_path):
-                value_type = get_value_type(field_config)
-                add_or_append_value(
+                value_type = _get_value_type(field_config)
+                _add_or_append_value(
                     field_name, flattened_data[full_path], result, value_type
                 )
     except Exception as e:
         print(f"An error occurred - {e}")
 
 
-def get_value_type(field_config: dict[str, Any]) -> str:
-    """Function that returns the type of the field.
+def _get_value_type(field_config: dict[str, str]) -> str:
+    """Function that returns the type of the field. Eg. "string", "unix_nano"
 
     :param field_config: The config for the field name
     :type field_config: `dict`[`str`,`Any`]
     :return: The field type
     :rtype: `str`
     """
-    if isinstance(field_config["value_type"], str):
-        return field_config["value_type"]
-    else:
-        raise TypeError("Value should be a string")
+    return field_config["value_type"]
 
 
-def add_or_append_value(
+def _add_or_append_value(
     field_name: str, value: str | int, result: dict[str, str], value_type: str
 ) -> None:
     """
@@ -408,7 +405,7 @@ def add_or_append_value(
     """
     if value_type == "unix_nano":
         if isinstance(value, int):
-            value = unix_nano_to_datetime_str(value)
+            value = _unix_nano_to_datetime_str(value)
     if not isinstance(value, str):
         value = str(value)
     if field_name not in result:
@@ -417,7 +414,7 @@ def add_or_append_value(
         result[field_name] += f" {value}"
 
 
-def unix_nano_to_datetime_str(unix_nano: int) -> str:
+def _unix_nano_to_datetime_str(unix_nano: int) -> str:
     """Function to process time from unix nano to datetime string.
 
     :param unix_nano: The time in unix nano format
@@ -442,8 +439,8 @@ def flatten_and_map_data(
     return: The mapped data
     :rtype: `dict`[`str`, `str`]
     """
-    flattened_data = flatten_json_dict(raw_json)
-    return map_data_to_json_schema(
+    flattened_data = _flatten_json_dict(raw_json)
+    return _map_data_to_json_schema(
         json_config, flattened_data, "field_mapping"
     )
 
@@ -460,8 +457,8 @@ def process_header(
     return: The header
     :rtype: `str`
     """
-    return map_data_to_json_schema(
-        json_config, flatten_json_dict(json_data), "header_mapping"
+    return _map_data_to_json_schema(
+        json_config, _flatten_json_dict(json_data), "header_mapping"
     )["header"]
 
 
