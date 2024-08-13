@@ -47,7 +47,7 @@ class JSONDataSource(OTELDataSource):
     def __init__(self, config: JSONDataSourceConfig) -> None:
         """Constructor method."""
         super().__init__()
-        self.config = config
+        self.config = config["data_sources"]["json"]
         self.current_file_index = 0
         self.current_parser: Iterator[OTelEvent] | None = None
         self.dirpath = self.set_dirpath()
@@ -195,7 +195,7 @@ if __name__ == "__main__":
     with open("tel2puml/find_unique_graphs/config.yaml", "r") as f:
         config = yaml.load(f, Loader=yaml.SafeLoader)
 
-    json_data_source = JSONDataSource(config["data_sources"]["json"])
+    json_data_source = JSONDataSource(config)
 
     grouped_spans = dict()
     for data, header in json_data_source:
