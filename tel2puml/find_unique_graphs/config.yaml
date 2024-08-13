@@ -46,7 +46,8 @@ data_sources:
         key_paths: [parent_span_id]
         value_type: string
       child_event_ids:
-        key_paths: []
+        key_paths: [child_span_ids]
+        value_type: string
 
 data_holders:
   sql:

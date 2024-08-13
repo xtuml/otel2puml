@@ -142,7 +142,7 @@ class TestJSONDataSource:
         assert otel_event.start_timestamp == "2024-08-13 10:15:32"
         assert otel_event.end_timestamp == "2024-08-13 10:15:32"
         assert otel_event.parent_event_id == "NzWDkmlAnji=="
-        assert otel_event.child_event_ids == None
+        assert otel_event.child_event_ids == ["child1", "child2"]
 
         otel_event2 = grouped_spans["Frontend 1.0"][1]
         assert otel_event2.job_name == "AWS"
@@ -153,4 +153,4 @@ class TestJSONDataSource:
         assert otel_event2.start_timestamp == "2024-08-13 10:15:32"
         assert otel_event2.end_timestamp == "2024-08-13 10:15:32"
         assert otel_event2.parent_event_id == "0u4wIXKIZ2t=="
-        assert otel_event2.child_event_ids == None
+        assert otel_event2.child_event_ids == ["child3"]
