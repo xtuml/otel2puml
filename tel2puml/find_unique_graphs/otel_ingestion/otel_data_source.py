@@ -30,11 +30,11 @@ class OTELDataSource(ABC):
         return self
 
     @abstractmethod
-    def __next__(self) -> OTelEvent:
+    def __next__(self) -> tuple[OTelEvent, str]:
         """Returns the next item in the sequence.
 
-        :return: The next OTelEvent in the sequence
-        :rtype: :class: `OTelEvent`
+        :return: The next OTelEvent in the sequence, with the header
+        :rtype: `tuple`[:class:`OTelEvent`, `str`]
         """
         pass
 
@@ -47,9 +47,9 @@ class JSONDataSource(OTELDataSource):
     def __init__(self, config: JSONDataSourceConfig) -> None:
         """Constructor method."""
         super().__init__()
-        self.config = config["data_sources"]["json"]
+        self.config = config
         self.current_file_index = 0
-        self.current_parser: Iterator[OTelEvent] | None = None
+        self.current_parser: Iterator[tuple[OTelEvent, str]] | None = None
         self.dirpath = self.set_dirpath()
         self.filepath = self.set_filepath()
         if not self.dirpath and not self.filepath:
@@ -170,11 +170,11 @@ class JSONDataSource(OTELDataSource):
             child_event_ids=record.get("child_event_ids", None),
         )
 
-    def __next__(self) -> OTelEvent:
-        """Returns the next OTelEvent in the sequence.
+    def __next__(self) -> tuple[OTelEvent, str]:
+        """Returns the next OTelEvent in the sequence, with the header.
 
         :return: An OTelEvent object.
-        :rtype: :class: `OTelEvent`
+        :rtype: `tuple`[:class:`OTelEvent`, `str`]
         """
         while self.current_file_index < len(self.file_list):
             if self.current_parser is None:
@@ -195,9 +195,9 @@ if __name__ == "__main__":
     with open("tel2puml/find_unique_graphs/config.yaml", "r") as f:
         config = yaml.load(f, Loader=yaml.SafeLoader)
 
-    json_data_source = JSONDataSource(config)
+    json_data_source = JSONDataSource(config["data_sources"]["json"])
 
-    grouped_spans = dict()
+    grouped_spans: dict[str, list[OTelEvent]] = dict()
     for data, header in json_data_source:
         grouped_spans.setdefault(header, [])
         grouped_spans[header].append(data)

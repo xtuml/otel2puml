@@ -4,11 +4,14 @@ import json
 import yaml
 import pytest
 from typing import Any
-
+from pytest import FixtureRequest
 from unittest.mock import mock_open, patch
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_source import (
     JSONDataSource,
+)
+from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
+    JSONDataSourceConfig,
 )
 
 
@@ -17,7 +20,9 @@ class TestJSONDataSource:
 
     @staticmethod
     @pytest.mark.usefixtures("mock_path_exists")
-    def test_get_yaml_config(mock_yaml_config_dict: dict[str, Any]) -> None:
+    def test_get_yaml_config(
+        mock_yaml_config_dict: JSONDataSourceConfig,
+    ) -> None:
         """Tests parsing yaml config file"""
         json_data_source = JSONDataSource(mock_yaml_config_dict)
         assert isinstance(json_data_source.config, dict)
@@ -33,14 +38,16 @@ class TestJSONDataSource:
 
     @staticmethod
     @pytest.mark.usefixtures("mock_path_exists")
-    def test_set_dirpath_valid(mock_yaml_config_dict: dict[str, Any]) -> None:
+    def test_set_dirpath_valid(
+        mock_yaml_config_dict: JSONDataSourceConfig,
+    ) -> None:
         """Tests set_dirpath method."""
         json_data_source = JSONDataSource(mock_yaml_config_dict)
         assert json_data_source.dirpath == "/path/to/json/directory"
 
     @staticmethod
     def test_set_dirpath_invalid(
-        mock_yaml_config_dict: dict[str, Any],
+        mock_yaml_config_dict: JSONDataSourceConfig,
     ) -> None:
         """Tests the set_dirpath method with a non-existant directory."""
         with patch("os.path.isdir", return_value=False), patch(
@@ -52,7 +59,7 @@ class TestJSONDataSource:
     @staticmethod
     @pytest.mark.usefixtures("mock_path_exists")
     def test_set_filepath_valid(
-        mock_yaml_config_dict: dict[str, Any],
+        mock_yaml_config_dict: JSONDataSourceConfig,
     ) -> None:
         """Tests the set_filepath method."""
         jsond_data_source = JSONDataSource(mock_yaml_config_dict)
@@ -60,7 +67,7 @@ class TestJSONDataSource:
 
     @staticmethod
     def test_set_filepath_invalid(
-        mock_yaml_config_dict: dict[str, Any],
+        mock_yaml_config_dict: JSONDataSourceConfig,
     ) -> None:
         """Tests the set_filepath method with an non-existant file."""
         with patch("os.path.isdir", return_value=True), patch(
@@ -78,7 +85,7 @@ class TestJSONDataSource:
             "dirpath: /path/to/json/directory", 'dirpath: ""'
         ).replace("filepath: /path/to/json/file.json", 'filepath: ""')
 
-        config = yaml.safe_load(invalid_yaml)
+        config = yaml.safe_load(invalid_yaml)["data_sources"]["json"]
 
         with pytest.raises(
             FileNotFoundError, match="No directory or files found"
@@ -88,7 +95,7 @@ class TestJSONDataSource:
     @staticmethod
     @pytest.mark.usefixtures("mock_path_exists")
     def test_init(
-        mock_yaml_config_dict: dict[str, Any],
+        mock_yaml_config_dict: JSONDataSourceConfig,
     ) -> None:
         """Tests the classes init method."""
         json_data_source = JSONDataSource(mock_yaml_config_dict)
@@ -98,7 +105,7 @@ class TestJSONDataSource:
     @staticmethod
     @pytest.mark.usefixtures("mock_path_exists")
     def test_get_file_list_filepath(
-        mock_yaml_config_dict: dict[str, Any],
+        mock_yaml_config_dict: JSONDataSourceConfig,
     ) -> None:
         """Tests getting the json filepath if directory is not specified."""
         json_data_source = JSONDataSource(mock_yaml_config_dict)
@@ -115,9 +122,9 @@ class TestJSONDataSource:
         ],
     )
     def test_end_to_end_json_parsing(
-        mock_data: dict[str, Any],
-        mock_yaml_config_dict: dict[str, Any],
-        request
+        mock_data: str,
+        mock_yaml_config_dict: JSONDataSourceConfig,
+        request: FixtureRequest,
     ) -> None:
         """Tests parsing a json file."""
         mock_file_content = json.dumps(request.getfixturevalue(mock_data))
@@ -132,7 +139,7 @@ class TestJSONDataSource:
             json_data_source = JSONDataSource(mock_yaml_config_dict)
             json_data_source.config["dirpath"] = ""
 
-            grouped_spans = dict()
+            grouped_spans: dict[str, Any] = dict()
             for data, header in json_data_source:
                 grouped_spans.setdefault(header, [])
                 grouped_spans[header].append(data)
