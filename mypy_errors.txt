@@ -193,4 +193,4 @@ tests/tel2puml/legacy_loop_detection/puml_graph/test_graph_loop_insert_legacy.py
 tests/tel2puml/legacy_loop_detection/puml_graph/test_graph_loop_insert_legacy.py:81: error: Item "None" of "PUMLGraph | None" has no attribute "subgraph_nodes"  [union-attr]
 tests/tel2puml/legacy_loop_detection/puml_graph/test_graph_loop_insert_legacy.py:97: error: Argument 1 to "check_networkx_graph_equivalence" has incompatible type "PUMLGraph | None"; expected "DiGraph[Any]"  [arg-type]
 tests/tel2puml/legacy_loop_detection/puml_graph/test_graph_loop_insert_legacy.py:102: error: Argument 1 to "check_networkx_graph_equivalence" has incompatible type "PUMLGraph | None"; expected "DiGraph[Any]"  [arg-type]
-Found 174 errors in 23 files (checked 77 source files)
+Found 174 errors in 23 files (checked 78 source files)

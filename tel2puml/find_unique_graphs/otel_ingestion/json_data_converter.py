@@ -81,8 +81,8 @@ def _process_field(
             _handle_empty_segments(
                 field_name,
                 field_config,
-                index,
                 flattened_data,
+                index,
                 result,
                 field_cache,
                 field_cache_key,
@@ -92,7 +92,6 @@ def _process_field(
             _handle_regular_path(
                 field_name,
                 field_config,
-                index,
                 full_path,
                 flattened_data,
                 result,
@@ -102,8 +101,8 @@ def _process_field(
 def _handle_empty_segments(
     field_name: str,
     field_config: dict[str, Any],
-    index: int,
     flattened_data: Any,
+    index: int,
     result: dict[str, str],
     field_cache: dict[str, str],
     field_cache_key: str,
@@ -344,10 +343,9 @@ def _update_cache(
 def _handle_regular_path(
     field_name: str,
     field_config: dict[str, Any],
-    index: int,
     full_path: str,
     flattened_data: Any,
-    result: dict[str, str],
+    result: dict[str, Any],
 ) -> None:
     """
     Function that handles regular paths without empty segments.
@@ -363,7 +361,7 @@ def _handle_regular_path(
     :param flattened_data: JSON data as a flattened dictionary
     :type flattened_data: `Any`
     :param result: The mapped data
-    :type result: `dict`[`str`, `str`]
+    :type result: `dict`[`str`, `Any`]
     """
     try:
         flattened_data = dict(flattened_data)
@@ -379,9 +377,8 @@ def _handle_regular_path(
         while flattened_data.get(full_path):
             value_type = _get_value_type(field_config)
             if field_name not in result:
-                result[field_name] = [flattened_data.get(full_path)]
-            else:
-                result[field_name].append(flattened_data.get(full_path))
+                result[field_name] = []
+            result[field_name].append(flattened_data.get(full_path))
             full_path = full_path.replace(f":{str(count)}", f":{str(count+1)}")
             count += 1
     except Exception as e:
