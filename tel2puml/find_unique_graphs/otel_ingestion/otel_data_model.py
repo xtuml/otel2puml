@@ -1,6 +1,6 @@
 """Module containing classes to ingest OTel data into a data holder."""
 
-from typing import NamedTuple, Optional, TypedDict
+from typing import NamedTuple, Optional, TypedDict, Union
 
 from sqlalchemy import (
     Column,
@@ -105,12 +105,36 @@ class NodeModel(Base):
         """
 
 
+class HeaderSpec(TypedDict):
+    """Typed dict for HeaderSpec."""
+
+    key_paths: list[str]
+    key_value: Optional[list[Optional[str]]]
+    value_paths: Optional[list[Optional[str]]]
+    value_type: str
+
+
+class SpanSpec(TypedDict):
+    """Typed dict for SpanSpec."""
+
+    key_paths: list[str]
+
+
+class FieldSpec(TypedDict):
+    """Typed dict for FieldSpec."""
+
+    key_paths: list[str]
+    key_value: Optional[list[Optional[str]]]
+    value_paths: Optional[list[Optional[str]]]
+    value_type: Union[str, int]
+
+
 class JSONDataSourceConfig(TypedDict):
     """Typed dict for JSONDataSourceConfig."""
 
     filepath: str
     dirpath: str
     data_location: str
-    header_mapping: dict[str, str]
-    span_mapping: dict[str, str]
-    field_mapping: dict[str, str]
+    header_mapping: dict[str, HeaderSpec]
+    span_mapping: dict[str, SpanSpec]
+    field_mapping: dict[str, FieldSpec]
