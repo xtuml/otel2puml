@@ -95,7 +95,7 @@ jobs:
 
       - name: Run Tests
         run: |
-          pytest tests/end_to_end_tests
+          pytest ${GITHUB_WORKSPACE}/tests/end_to_end_tests
 
   run-tests-check-no-anaconda-mac-os:
     runs-on: macos-latest
@@ -125,4 +125,4 @@ jobs:
 
       - name: Run Tests
         run: |
-          pytest tests/end_to_end_tests
+          pytest ${GITHUB_WORKSPACE}/tests/end_to_end_tests
