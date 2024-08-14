@@ -1,6 +1,7 @@
 """This module converts JSON OTel data to adhere to the application schema."""
 
 import flatdict
+
 from typing import Any, Literal
 from datetime import datetime
 
