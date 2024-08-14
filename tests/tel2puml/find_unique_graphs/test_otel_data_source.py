@@ -194,7 +194,9 @@ class TestJSONDataSource:
         mock_yaml_config_dict: JSONDataSourceConfig,
         request: FixtureRequest,
     ) -> None:
-        """Tests parsing a json file."""
+        """Tests parsing a json file for both json data that has spans
+        within a list and as a dictionary.
+        """
         mock_file_content = json.dumps(request.getfixturevalue(mock_data))
 
         with patch(
