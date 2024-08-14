@@ -258,6 +258,18 @@ class TestBunchedHard:
             "bunched_3_levels_same_XOR.puml",
             version=version,
         )
+    
+    @staticmethod
+    @pytest.mark.parametrize(
+        "version", ["v1", "v2"], ids=["version_1", "version_2"]
+    )
+    def test_bunched_AND_OR_AND(version: Literal['v1', 'v2']) -> None:
+        """Test bunched three levels of XOR."""
+        end_to_end_test(
+            "end-to-end-pumls/constraints/bunched/"
+            "bunched_3_levels_AND_OR_AND.puml",
+            version=version,
+        )
 
     @staticmethod
     @pytest.mark.parametrize(

@@ -32,7 +32,10 @@ from tel2puml.logic_detection import (
     check_is_ok_and_under_branch,
     assure_or_and_operators_are_correct_under_branch,
     flatten_nested_xor_operators,
-    create_branch_tree_from_logic_gate_tree
+    create_branch_tree_from_logic_gate_tree,
+    get_logic_tree_from_relationships,
+    get_logic_tree_from_event_sets,
+    LogicRelationships
 )
 from tel2puml.tel2puml_types import DUMMY_START_EVENT
 
@@ -1314,3 +1317,17 @@ class TestCreateBranchTreeFromLogicGateTree:
             logic_gates_tree, event_sets
         )
         check_process_tree_correct(branch_tree, children, Operator.PARALLEL)
+
+
+def test_get_logic_tree_from_relationships():
+    logic_relationships = LogicRelationships(
+        OR={frozenset(edge) for edge in [["D", "C"], ["D", "E"], ["D", "A"], ["D", "B"], ["A", "B"], ["A", "E"], ["B", "E"]]},
+        PARALLEL=set(),
+        XOR={frozenset(edge) for edge in [["C", "A"], ["C", "B"], ["C", "E"]]},
+    )
+    logic_tree = get_logic_tree_from_relationships(
+        logic_relationships,
+        {"A", "B", "C", "D", "E"},
+        Operator.OR
+    )
+    print("here")

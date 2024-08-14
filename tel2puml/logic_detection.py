@@ -1,7 +1,7 @@
 """Module to detect logic gates from EventSet's held in Event class and create
 a logic gate process tree"""
 
-from typing import Any, Generator, TypeVar, Iterable
+from typing import Any, Generator, TypeVar, Iterable, TypedDict, Literal
 from itertools import permutations
 from datetime import datetime, timedelta
 from uuid import uuid4
@@ -15,6 +15,7 @@ from pm4py import (  # type: ignore[import-untyped]
 )
 import numpy as np
 from numpy.typing import NDArray
+import networkx as nx
 
 import tel2puml.events as ev
 from tel2puml.utils import get_weighted_cover
@@ -45,6 +46,7 @@ class Operator(Enum):
     PARTIALORDER = "PO"
     # branch operator
     BRANCH = "BR"
+    AMBIGUOUS = "AMBIGUOUS"
 
     def __str__(self) -> str:
         """
@@ -92,13 +94,18 @@ def calculate_logic_gates(event_sets: set["ev.EventSet"]) -> ProcessTree:
     if len(event_sets) == 0:
         return None
     process_tree = calculate_process_tree_from_event_sets(event_sets)
+    # process_tree = ProcessTree(
+    #     Operator.SEQUENCE,
+    #     children=[get_logic_tree_from_event_sets(event_sets)],
+    # )
+    # process_tree.children[0].parent = process_tree
     logic_gate_tree = reduce_process_tree_to_preferred_logic_gates(
         event_sets, process_tree
     )
     logic_gate_tree_with_repeats = calculate_repeats_in_tree(
-        event_sets, logic_gate_tree
+        event_sets, logic_gate_tree 
     )
-
+    ensure_or_replaced_with_and(logic_gate_tree_with_repeats, event_sets)
     return logic_gate_tree_with_repeats
 
 
@@ -204,10 +211,10 @@ def reduce_process_tree_to_preferred_logic_gates(
     :rtype: :class:`pm4py.objects.process_tree.obj.ProcessTree`
     """
     # remove first event and get subsequent tree
-    logic_gate_tree: ProcessTree = process_tree.children[1]
+    logic_gate_tree: ProcessTree = process_tree.children.pop()
     # calculate OR gates
     process_or_gates(event_sets, logic_gate_tree)
-    # process missing AND gates
+    # # process missing AND gates
     process_missing_and_gates(event_sets, logic_gate_tree)
     return logic_gate_tree
 
@@ -699,3 +706,216 @@ def remove_defunct_sequence_logic(node: ProcessTree) -> Any | ProcessTree:
         ]
 
     return node
+
+
+
+class LogicRelationships(TypedDict):
+    """Typed dictionary to represent the logic relationships between the
+    event sets."""
+    OR: set[frozenset[T]]
+    PARALLEL: set[frozenset[T]]
+    XOR: set[frozenset[T]]
+    AMBIGUOUS: set[frozenset[T]]
+    
+
+OPERATORS = {
+    "OR": Operator.OR,
+    "PARALLEL": Operator.PARALLEL,
+    "XOR": Operator.XOR,
+    "AMBIGUOUS": Operator.AMBIGUOUS,
+}
+
+
+def calculate_logic_gate_from_relationship_array(
+    relationship_array: NDArray[np.int32],
+) -> Literal["OR", "PARALLEL", "XOR"]:
+    """Method to calculate the logic gate from a relationship array.
+
+    :param relationship_array: The relationship array.
+    :type relationship_array: :class:`numpy.ndarray`
+    :return: The logic gate.
+    :rtype: `Literal`["OR", "PARALLEL", "XOR"]
+    """
+    array_to_check = np.unique(relationship_array[np.sum(
+        relationship_array, axis=1
+    ) > 0], axis=0)
+    if len(array_to_check) == 1:
+        return "PARALLEL"
+    if np.sum(array_to_check) == 2:
+        return "XOR"
+    if np.sum(array_to_check) == 3:
+        return "AMBIGUOUS"
+    return "OR"
+
+
+def get_logic_relationships_from_event_sets(
+    event_sets: set["ev.EventSet"],
+) -> LogicRelationships:
+    reduced_event_set_records = [
+        {event: 1 for event in reduced_event_set}
+        for reduced_event_set in
+        {event_set.to_frozenset() for event_set in event_sets}
+    ]
+    relationship_df = pd.DataFrame.from_records(
+        reduced_event_set_records
+    ).fillna(0)
+    num_cols = relationship_df.shape[1]
+    logic_relationships: LogicRelationships = LogicRelationships(
+        OR=set(),
+        PARALLEL=set(),
+        XOR=set(),
+        AMBIGUOUS=set(),
+    )
+    for col_index_1 in range(num_cols - 1):
+        for col_index_2 in range(col_index_1 + 1, num_cols):
+            col_name_1 = relationship_df.columns[col_index_1]
+            col_name_2 = relationship_df.columns[col_index_2]
+            relationship_array = relationship_df[[col_name_1, col_name_2]].to_numpy()
+            logic_gate = calculate_logic_gate_from_relationship_array(relationship_array)
+            logic_relationships[logic_gate].add(
+                frozenset([col_name_1, col_name_2])
+            )
+    return logic_relationships
+
+
+
+def find_root_logic_operator(
+    logic_relationships: LogicRelationships,
+    all_members: set[T],
+) -> Operator:
+    for logic_gate, logic_sets in logic_relationships.items():
+        case_intersection = all_members.intersection(
+            {member for logic_set in logic_sets for member in logic_set}
+        )
+        if len(case_intersection) == len(all_members):
+            return OPERATORS[logic_gate]
+    to_remove: set[frozenset[T]] = set()
+    for member in logic_relationships["OR"]:
+        if any(member.intersection(logic_set) for logic_set in logic_relationships["AMBIGUOUS"]):
+            logic_relationships["AMBIGUOUS"].add(member)
+            to_remove.add(member)
+    logic_relationships["OR"].difference_update(to_remove)
+    if {member for logic_set in logic_relationships["AMBIGUOUS"] for member in logic_set} == all_members:
+        return Operator.AMBIGUOUS
+    raise RuntimeError("No root logic operator found")
+
+
+def get_logic_tree_from_relationships(
+    logic_relationships: LogicRelationships,
+    all_members: set[T],
+    operator: Operator,
+) -> ProcessTree:
+    """Method to get the logic tree from event sets.
+
+    :param event_sets: The event sets.
+    :type event_sets: `set`[:class:`tel2puml.events.EventSet`]
+    :return: The logic tree.
+    :rtype: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+    """
+    logic_gate_intersections: dict[str, set[T]] = {}
+    for logic_gate, logic_sets in logic_relationships.items():
+        if OPERATORS[logic_gate] != operator:
+            logic_gate_intersections[logic_gate] = all_members.intersection(
+                {member for logic_set in logic_sets for member in logic_set}
+            )
+    parent = ProcessTree(
+        operator=operator,
+    )
+    children: list[ProcessTree] = []
+    for member in all_members.difference(
+        {
+            member
+            for logic_gate_intersection in logic_gate_intersections.values()
+            for member in logic_gate_intersection
+        }
+    ):
+        children.append(ProcessTree(
+            parent=parent,
+            label=member,
+        ))
+    for logic_gate, logic_gate_intersection in logic_gate_intersections.items():
+        # get clustered members of intersection
+        graph = nx.Graph()
+        graph.add_edges_from(
+            [
+                member
+                for member in logic_relationships[logic_gate]
+                if member.intersection(logic_gate_intersection)
+            ]
+        )
+        for member_set in nx.connected_components(graph):
+            input_logic_relationships = LogicRelationships(
+                OR={logic_set for logic_set in logic_relationships["OR"] if logic_set.issubset(member_set)},
+                PARALLEL={logic_set for logic_set in logic_relationships["PARALLEL"] if logic_set.issubset(member_set)},
+                XOR={logic_set for logic_set in logic_relationships["XOR"] if logic_set.issubset(member_set)},
+            )
+            children.append(get_logic_tree_from_relationships(
+                logic_relationships=input_logic_relationships,
+                all_members=set(member_set),
+                operator=OPERATORS[logic_gate],
+            ))
+    for child in children:
+        child.parent = parent
+    parent.children = children
+    return parent
+    
+
+def get_logic_tree_from_event_sets(
+    event_sets: set["ev.EventSet"],
+) -> ProcessTree:
+    """Method to get the logic tree from event sets.
+
+    :param event_sets: The event sets.
+    :type event_sets: `set`[:class:`tel2puml.events.EventSet`]
+    :return: The logic tree.
+    :rtype: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+    """
+    all_members = {member for event_set in event_sets for member in event_set.to_frozenset()}
+    if len(all_members) == 1:
+        return ProcessTree(
+            label=all_members.pop(),
+        )
+    logic_relationships = get_logic_relationships_from_event_sets(event_sets)
+    root_operator = find_root_logic_operator(logic_relationships, all_members)
+    logic_tree = get_logic_tree_from_relationships(
+        logic_relationships=logic_relationships,
+        all_members=all_members,
+        operator=root_operator,
+    )
+    ensure_or_replaced_with_and(logic_tree, event_sets)
+    return logic_tree
+    
+
+def ensure_or_replaced_with_and(
+    process_tree: ProcessTree,
+    event_sets: set["ev.EventSet"],
+) -> None:
+    """Method to ensure that OR operators are replaced with AND operators.
+
+    :param process_tree: The process tree.
+    :type process_tree: :class:`pm4py.objects.process_tree.obj.ProcessTree`
+    """
+    if process_tree.operator is not None:
+        # if process_tree.operator.value == Operator.AMBIGUOUS.value:
+        if process_tree.operator.value == Operator.OR.value:
+            children_leaves = [
+                set(get_non_operator_successor_labels(child))
+                for child in process_tree.children
+            ]
+            all_leaves = set(leaf for leaves in children_leaves for leaf in leaves)
+            event_sets_with_intersection_with_leaves = {
+                event_set
+                for event_set in event_sets
+                if event_set.has_intersection_with_event_types(all_leaves)
+            }
+            has_intersection_all = [False] * len(children_leaves)
+            for i, leaves in enumerate(children_leaves):
+                if not all(leaves.intersection(event_set.to_frozenset()) for event_set in event_sets_with_intersection_with_leaves):
+                    break
+                has_intersection_all[i] = True
+            if all(has_intersection_all):
+                process_tree.operator = Operator.PARALLEL
+            else:
+                process_tree.operator = Operator.OR
+    for child in process_tree.children:
+        ensure_or_replaced_with_and(child, event_sets)
