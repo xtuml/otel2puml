@@ -16,7 +16,7 @@ data_sources:
         key_paths: [scope_spans::spans]
     field_mapping:
       job_name:
-        key_paths: [attributes::cloudProvider]
+        key_paths: [HEADER]
         value_type: string
       job_id:
         key_paths: [trace_id, resource:attributes::key:other_key]

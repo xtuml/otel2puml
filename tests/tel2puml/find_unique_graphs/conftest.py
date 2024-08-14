@@ -33,7 +33,7 @@ def mock_yaml_config_string() -> str:
                             key_paths: [scope_spans::spans]
                     field_mapping:
                         job_name:
-                            key_paths: [attributes::cloudProvider]
+                            key_paths: [HEADER]
                             value_type: string
                         job_id:
                             key_paths: [

@@ -30,7 +30,7 @@ class OTELDataSource(ABC):
         return self
 
     @abstractmethod
-    def __next__(self) -> tuple[OTelEvent, str]:
+    def __next__(self) -> OTelEvent:
         """Returns the next item in the sequence.
 
         :return: The next OTelEvent in the sequence, with the header
@@ -49,7 +49,7 @@ class JSONDataSource(OTELDataSource):
         super().__init__()
         self.config = config
         self.current_file_index = 0
-        self.current_parser: Iterator[tuple[OTelEvent, str]] | None = None
+        self.current_parser: Iterator[OTelEvent] | None = None
         self.dirpath = self.set_dirpath()
         self.filepath = self.set_filepath()
         if not self.dirpath and not self.filepath:
@@ -108,7 +108,7 @@ class JSONDataSource(OTELDataSource):
 
     def process_record(
         self, record: dict[str, Any]
-    ) -> Iterator[tuple[OTelEvent, str]]:
+    ) -> Iterator[OTelEvent]:
         """Process a single record and yield OTelEvent objects with headers.
 
         :param record: The record to process
@@ -121,11 +121,10 @@ class JSONDataSource(OTELDataSource):
         for span in spans:
             if isinstance(span, dict):
                 processed_json = json_data_converter.flatten_and_map_data(
-                    self.config, span
+                    self.config, span, header
                 )
                 yield (
-                    self.create_otel_object(processed_json),
-                    header,
+                    self.create_otel_object(processed_json)
                 )
             else:
                 raise TypeError("json is not of type dict.")
@@ -133,7 +132,7 @@ class JSONDataSource(OTELDataSource):
 
     def parse_json_stream(
         self, filepath: str
-    ) -> Iterator[tuple[OTelEvent, str]]:
+    ) -> Iterator[OTelEvent]:
         """Function that parses a json file, maps the json to the application
             structure through the config specified in the config.yaml file.
             ijson iteratively parses the json file so that large files can be
@@ -170,7 +169,7 @@ class JSONDataSource(OTELDataSource):
             child_event_ids=record.get("child_event_ids", None),
         )
 
-    def __next__(self) -> tuple[OTelEvent, str]:
+    def __next__(self) -> OTelEvent:
         """Returns the next OTelEvent in the sequence, with the header.
 
         :return: An OTelEvent object.
@@ -197,9 +196,8 @@ if __name__ == "__main__":
 
     json_data_source = JSONDataSource(config["data_sources"]["json"])
 
-    grouped_spans: dict[str, list[OTelEvent]] = dict()
-    for data, header in json_data_source:
-        grouped_spans.setdefault(header, [])
-        grouped_spans[header].append(data)
+    otel_events: list[OTelEvent] = []
+    for data in json_data_source:
+        otel_events.append(data)
 
     print(time.time() - time_start)

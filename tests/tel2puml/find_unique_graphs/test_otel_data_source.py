@@ -15,6 +15,7 @@ from tel2puml.find_unique_graphs.otel_ingestion.otel_data_source import (
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     JSONDataSourceConfig,
+    OTelEvent
 )
 
 
@@ -209,21 +210,17 @@ class TestJSONDataSource:
             json_data_source = JSONDataSource(mock_yaml_config_dict)
             json_data_source.config["dirpath"] = ""
 
-            grouped_spans: dict[str, Any] = dict()
-            for data, header in json_data_source:
-                grouped_spans.setdefault(header, [])
-                grouped_spans[header].append(data)
+            otel_events: list[OTelEvent] = []
+            for data in json_data_source:
+                otel_events.append(data)
 
         if mock_data == "mock_json_data":
-            assert len(grouped_spans) == 2
-            assert grouped_spans["Frontend 1.0"]
-            assert grouped_spans["Backend 1.2"]
+            assert len(otel_events) == 4
         else:
-            assert len(grouped_spans) == 1
-            assert grouped_spans["Frontend 1.0"]
+            assert len(otel_events) == 2
 
-        otel_event = grouped_spans["Frontend 1.0"][0]
-        assert otel_event.job_name == "Azure"
+        otel_event = otel_events[0]
+        assert otel_event.job_name == "Frontend 1.0"
         assert otel_event.job_id == "B4MQWcR6iByyOq4EMSs5Nn== 4.8"
         assert otel_event.event_id == "F1Vp3ypcQfU=="
         assert otel_event.event_type == "com.T2h.366Yx 500"
@@ -233,8 +230,8 @@ class TestJSONDataSource:
         assert otel_event.parent_event_id == "NzWDkmlAnji=="
         assert otel_event.child_event_ids == ["child1", "child2"]
 
-        otel_event2 = grouped_spans["Frontend 1.0"][1]
-        assert otel_event2.job_name == "AWS"
+        otel_event2 = otel_events[1]
+        assert otel_event2.job_name == "Frontend 1.0"
         assert otel_event2.job_id == "Js7TGf4OJROjbISB1BvOOb== 2.0"
         assert otel_event2.event_id == "Jv6moYFCoLK=="
         assert otel_event2.event_type == "com.C36.9ETRp 401"

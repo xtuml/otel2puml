@@ -27,6 +27,7 @@ def _map_data_to_json_schema(
     json_config: JSONDataSourceConfig,
     flattened_data: Any,
     config_key: Literal["header_mapping", "field_mapping"],
+    header: str = "",
 ) -> dict[str, str]:
     """
     Function that maps flattened JSON data to a schema defined in the
@@ -38,6 +39,8 @@ def _map_data_to_json_schema(
     :type flattened_data: `Any`
     :param config_key: The key for the json config fields
     :type config_key: `Literal`["header_mapping", "field_mapping"]
+    :param header: The header pulled from the OTel json data
+    :type header: `str`
     :return: The mapped data
     :rtype: `dict`[`str`, `str`]
     """
@@ -47,7 +50,12 @@ def _map_data_to_json_schema(
     field_cache: dict[str, str] = {}
     for field_name, field_config in field_mapping.items():
         _process_field(
-            field_name, field_config, flattened_data, result, field_cache
+            field_name,
+            field_config,
+            flattened_data,
+            result,
+            field_cache,
+            header,
         )
     return result
 
@@ -58,6 +66,7 @@ def _process_field(
     flattened_data: Any,
     result: dict[str, str],
     field_cache: dict[str, str],
+    header: str,
 ) -> None:
     """
     Function that processes a single field according to its configuration.
@@ -73,6 +82,8 @@ def _process_field(
     :param field_cache: Cache for optimising field access and path generation
     in flattened JSON data
     :type field_cache: `dict`[`str`, [`str`]]
+    :param header: The header pulled from the OTel json data
+    :type header: `str`
     """
     for index, key_path in enumerate(field_config["key_paths"]):
         path_segments = key_path.split(":")
@@ -96,6 +107,7 @@ def _process_field(
                 full_path,
                 flattened_data,
                 result,
+                header,
             )
 
 
@@ -106,7 +118,7 @@ def _handle_empty_segments(
     index: int,
     result: dict[str, str],
     field_cache: dict[str, str],
-    field_cache_key: str,
+    field_cache_key: str
 ) -> None:
     """
     Function that handles paths with empty segments, indicating a list within
@@ -347,6 +359,7 @@ def _handle_regular_path(
     full_path: str,
     flattened_data: Any,
     result: dict[str, Any],
+    header: str,
 ) -> None:
     """
     Function that handles regular paths without empty segments.
@@ -363,14 +376,24 @@ def _handle_regular_path(
     :type flattened_data: `Any`
     :param result: The mapped data
     :type result: `dict`[`str`, `Any`]
+    :param header: The header pulled from the OTel json data
+    :type header: `str`
     """
     try:
+        if full_path == "HEADER":
+            value_type = _get_value_type(field_config)
+            _add_or_append_value(
+                field_name, header, result, value_type
+            )
+            return
+
         flattened_data = dict(flattened_data)
         if flattened_data[full_path]:
             value_type = _get_value_type(field_config)
             _add_or_append_value(
                 field_name, flattened_data[full_path], result, value_type
             )
+            return
     except KeyError:
         # Check if we are dealing with a list like child_span_ids
         count = 0
@@ -437,7 +460,7 @@ def _unix_nano_to_datetime_str(unix_nano: int) -> str:
 
 
 def flatten_and_map_data(
-    json_config: JSONDataSourceConfig, raw_json: dict[str, Any]
+    json_config: JSONDataSourceConfig, raw_json: dict[str, Any], header: str
 ) -> dict[str, str]:
     """Function to handle flattening raw json and mapping the data to the
     specified configuration.
@@ -446,12 +469,14 @@ def flatten_and_map_data(
     :type json_config: :class: `JSONDataSourceConfig`
     :param raw_json: The JSON data to flatten.
     :param raw_json: `dict`[`str`,`Any`]
+    :param header: The header pulled from the OTel json data
+    :type header: `str`
     return: The mapped data
     :rtype: `dict`[`str`, `str`]
     """
     flattened_data = _flatten_json_dict(raw_json)
     return _map_data_to_json_schema(
-        json_config, flattened_data, "field_mapping"
+        json_config, flattened_data, "field_mapping", header
     )
 
 
