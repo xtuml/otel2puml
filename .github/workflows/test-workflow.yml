@@ -29,7 +29,7 @@ jobs:
         uses: s-weigand/setup-conda@v1
         with:
           update-conda: true
-          python-version: 3.11.8
+          python-version: 3.11.9
           conda-channels: conda-forge
 
       - name: Install pre-requisites
@@ -48,11 +48,77 @@ jobs:
         run: |
           export PIP_CONSTRAINT='pip_constraint.txt'
           pip install --upgrade pip
-
-          pip install pytest
+          pip install -r requirements.txt
           pytest --version
 
+      - name: Run Tests
+        run: |
+          pytest
+  
+  run-tests-check-no-anaconda-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11.9'
+          cache: 'pip'
+
+      - name: Install pre-requisites
+        run: |
+          sudo apt update
+          sudo apt install -y liblapack-dev libblas-dev
+          sudo apt install -y libsuitesparse-dev
+          sudo apt install -y libsuitesparse-dev
+
+      - name: Install janus and erebus as packages
+        run: |
+          chmod +x ./scripts/install_repositories.sh && ./scripts/install_repositories.sh
+      
+      - name: Add GitHub workspace to PYTHONPATH
+        run: echo "PYTHONPATH=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
+      
+      - name: Install Requirements
+        run: |
+          export PIP_CONSTRAINT='pip_constraint.txt'
+          pip install --upgrade pip
+          export CPPFLAGS="-I/usr/include/suitesparse"
+          export CVXOPT_BUILD_GLPK=1
           pip install -r requirements.txt
+          pytest --version
+
+      - name: Run Tests
+        run: |
+          pytest
+
+  run-tests-check-no-anaconda-mac-os:
+    runs-on: macos-latest
+    steps:
+      - name: Setup Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11.9'
+          cache: 'pip'
+
+      - name: Install janus and erebus as packages
+        run: |
+          chmod +x ./scripts/install_repositories.sh && ./scripts/install_repositories.sh
+      
+      - name: Add GitHub workspace to PYTHONPATH
+        run: echo "PYTHONPATH=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
+      
+      - name: Install Requirements
+        run: |
+          export PIP_CONSTRAINT='pip_constraint.txt'
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pytest --version
 
       - name: Run Tests
         run: |

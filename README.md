@@ -117,12 +117,24 @@ There are two ways to set up this project: manual installation or using a devcon
 
 ### Manual Installation
 
+The project can be installed manually in a few different ways. Make sure you have the following prerequisites for all installation methods:
+* `git`
+* Python version 3.11.9 or lower
+* `bash`
+* `pip` (Python package manager)
+
+(OPTIONAL) If you want to use the following functions:
+* `tel2puml.events.save_vis_logic_gate_tree`
+* `tel2puml.utils.get_graphviz_plot`
+you will also need:
+* Java runtime environment (can be installed via `apt install default-jre` if using debian but will vary depending on your OS)
+* [Graphviz](https://graphviz.org/download/) installed
+
+#### With Anaconda (Recommended)
+
 Before proceeding with the manual installation, ensure you have the following prerequisites:
 
 * [Anaconda](https://conda.io/projects/conda/en/latest/index.html) installed and managing the Python installation
-* Python version 3.11.8 or lower
-* Java runtime environment (can be installed via `apt install default-jre`)
-* [Graphviz](https://graphviz.org/download/) installed
 
 To install the project manually:
 
@@ -133,6 +145,43 @@ To install the project manually:
 ```bash
 conda install -c conda-forge cvxopt
 conda install -c conda-forge pygraphviz
+./scripts/install_repositories.sh
+python3.11 -m pip install -r requirements.txt
+```
+
+#### Without Anaconda
+
+If you don't have Anaconda installed, you can still install the project manually on both linux distributions and MacOS.
+
+##### Linux
+Before proceeding, ensure you have the following prerequisites that are required (since there is no build wheel for cvxopt1.3.2 for linux):
+
+* lapack and blas libraries installed (can be installed via `apt install liblapack-dev libblas-dev` if using debian but will vary depending on your OS)
+* suiteparse library installed (can be installed via `apt install libsuitesparse-dev` if using debian but will vary depending on your OS)
+* glpk library installed (can be installed via `apt install libglpk-dev` if using debian but will vary depending on your OS)
+
+To install the project manually:
+
+1. Set up a Python virtual environment (recommended)
+2. Navigate to the project root directory
+3. Run the following commands:
+
+```bash
+./scripts/install_repositories.sh
+export CPPFLAGS="-I/usr/include/suitesparse"
+export CVXOPT_BUILD_GLPK=1
+python3.11 -m pip install -r requirements.txt
+```
+
+##### MacOS
+
+To install the project manually on MacOS:
+
+1. Set up a Python virtual environment (recommended)
+2. Navigate to the project root directory
+3. Run the following commands:
+
+```bash
 ./scripts/install_repositories.sh
 python3.11 -m pip install -r requirements.txt
 ```
