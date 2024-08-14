@@ -5,7 +5,6 @@ import os
 import yaml
 import pytest
 import shutil
-from typing import Any
 from pytest import FixtureRequest
 from pathlib import Path
 from unittest.mock import mock_open, patch
