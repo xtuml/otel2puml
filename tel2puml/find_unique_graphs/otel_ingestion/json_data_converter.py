@@ -139,7 +139,7 @@ def _handle_empty_segments(
                 field_cache, field_cache_key, key
             )
 
-            # check for case where key value is not specifed, indicating 
+            # check for case where key value is not specifed, indicating
             # that the path within key_paths is the full path and the value
             # at that path is what we want.
             if not field_config.get("key_value") and flattened_data.get(
@@ -148,7 +148,7 @@ def _handle_empty_segments(
                 result[field_name] = flattened_data.get(full_path)
                 return
 
-            # Check the cache to see if the value that we are looking for has 
+            # Check the cache to see if the value that we are looking for has
             # already been looped over and stored.
             # If the value is not found within the cache, we start looking at
             # the value of 'count' that is stored within the cache, as we have

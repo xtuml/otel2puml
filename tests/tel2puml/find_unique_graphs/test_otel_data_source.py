@@ -1,10 +1,13 @@
 """Tests for otel_data_source module."""
 
 import json
+import os
 import yaml
 import pytest
+import shutil
 from typing import Any
 from pytest import FixtureRequest
+from pathlib import Path
 from unittest.mock import mock_open, patch
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_source import (
@@ -23,17 +26,39 @@ class TestJSONDataSource:
     def test_get_yaml_config(
         mock_yaml_config_dict: JSONDataSourceConfig,
     ) -> None:
-        """Tests parsing yaml config file"""
+        """Tests parsing yaml config file and setting config attribute."""
         json_data_source = JSONDataSource(mock_yaml_config_dict)
-        assert isinstance(json_data_source.config, dict)
-        assert json_data_source.config["data_location"] == "resource_spans"
-        assert isinstance(
-            json_data_source.config["header_mapping"]["header"]["key_paths"],
-            list,
-        )
+        config = json_data_source.config
+
+        # Check if config is a dictionary
+        assert isinstance(config, dict)
+
+        # Check main config keys
+        expected_keys = {
+            "dirpath",
+            "filepath",
+            "data_location",
+            "header_mapping",
+            "span_mapping",
+            "field_mapping",
+        }
+        assert set(config.keys()) == expected_keys
+
+        # Check string values
+        assert config["dirpath"] == "/path/to/json/directory"
+        assert config["filepath"] == "/path/to/json/file.json"
+        assert config["data_location"] == "resource_spans"
+
+        # Check expected header keys
+        expected_header_keys = {
+            "key_paths",
+            "key_value",
+            "value_paths",
+            "value_type",
+        }
         assert (
-            json_data_source.config["header_mapping"]["header"]["key_paths"][0]
-            == "resource:attributes::key"
+            set(config["header_mapping"]["header"].keys())
+            == expected_header_keys
         )
 
     @staticmethod
@@ -62,8 +87,8 @@ class TestJSONDataSource:
         mock_yaml_config_dict: JSONDataSourceConfig,
     ) -> None:
         """Tests the set_filepath method."""
-        jsond_data_source = JSONDataSource(mock_yaml_config_dict)
-        assert jsond_data_source.filepath == "/path/to/json/file.json"
+        json_data_source = JSONDataSource(mock_yaml_config_dict)
+        assert json_data_source.filepath == "/path/to/json/file.json"
 
     @staticmethod
     def test_set_filepath_invalid(
@@ -75,6 +100,69 @@ class TestJSONDataSource:
         ):
             with pytest.raises(ValueError, match="does not exist"):
                 JSONDataSource(mock_yaml_config_dict)
+
+    @staticmethod
+    @pytest.mark.usefixtures("mock_path_exists")
+    def test_get_file_list(
+        mock_yaml_config_dict: JSONDataSourceConfig, tmp_path: Path
+    ) -> None:
+        """Tests the get_file_list method."""
+
+        json_data_source = JSONDataSource(mock_yaml_config_dict)
+        # Create temp directory
+        temp_dir = tmp_path / "temp_dir"
+        temp_dir.mkdir()
+        sub_temp_dir = temp_dir / "sub_temp_dir"
+        sub_temp_dir.mkdir()
+
+        # Create files
+        json_file1 = temp_dir / "json_file1.json"
+        json_file2 = sub_temp_dir / "json_file2.json"
+        text_file = temp_dir / "text_file.txt"
+
+        for file in [json_file1, json_file2]:
+            with file.open("w") as f:
+                json.dump({"sample": "json"}, f)
+
+        with text_file.open("w") as f:
+            f.write("Sample text")
+
+        # Test 1: Directory mode
+        json_data_source.config["dirpath"] = str(temp_dir)
+        json_data_source.filepath = None  # Ensure filepath is not set
+        file_list = json_data_source.get_file_list()
+
+        expected_files = {
+            os.path.join(temp_dir, "json_file1.json"),
+            os.path.join(temp_dir, sub_temp_dir, "json_file2.json"),
+        }
+        assert set(file_list) == expected_files
+
+        # Test 2: Single file mode
+        single_file = temp_dir / "single_file.json"
+        with single_file.open("w") as f:
+            json.dump({"single": "file"}, f)
+
+        json_data_source.dirpath = None
+
+        json_data_source.filepath = str(single_file)
+        assert json_data_source.get_file_list() == [str(single_file)]
+
+        # Test 3: Error case (neither dirpath nor filepath set)
+        json_data_source.dirpath = None
+        json_data_source.filepath = None
+        with pytest.raises(ValueError, match="Directory/Filepath not set."):
+            json_data_source.get_file_list()
+
+        # Remove temp directory
+        shutil.rmtree(temp_dir)
+
+        # Test 4: Empty directory
+        empty_dir = tmp_path / "empty_dir"
+        empty_dir.mkdir()
+        json_data_source.dirpath = str(empty_dir)
+        json_data_source.filepath = None
+        assert json_data_source.get_file_list() == []
 
     @staticmethod
     def test_initialisation_no_dirpath_no_filepath(
@@ -91,26 +179,6 @@ class TestJSONDataSource:
             FileNotFoundError, match="No directory or files found"
         ):
             JSONDataSource(config)
-
-    @staticmethod
-    @pytest.mark.usefixtures("mock_path_exists")
-    def test_init(
-        mock_yaml_config_dict: JSONDataSourceConfig,
-    ) -> None:
-        """Tests the classes init method."""
-        json_data_source = JSONDataSource(mock_yaml_config_dict)
-        assert json_data_source.dirpath == "/path/to/json/directory"
-        assert json_data_source.filepath == "/path/to/json/file.json"
-
-    @staticmethod
-    @pytest.mark.usefixtures("mock_path_exists")
-    def test_get_file_list_filepath(
-        mock_yaml_config_dict: JSONDataSourceConfig,
-    ) -> None:
-        """Tests getting the json filepath if directory is not specified."""
-        json_data_source = JSONDataSource(mock_yaml_config_dict)
-        json_data_source.dirpath = ""
-        assert json_data_source.get_file_list() == ["/path/to/json/file.json"]
 
     @staticmethod
     @pytest.mark.usefixtures("mock_path_exists", "mock_filepath_in_dir")
