@@ -2,7 +2,7 @@
 
 import pytest
 import yaml
-from unittest.mock import mock_open, patch
+from unittest.mock import patch
 from typing import Generator, Any
 
 
@@ -19,9 +19,14 @@ def mock_yaml_config_string() -> str:
                     data_location: resource_spans
                     header_mapping:
                         header:
-                            key_paths: [resource:attributes::key, resource:attributes::key]
+                            key_paths: [
+                            resource:attributes::key,
+                            resource:attributes::key
+                            ]
                             key_value: [service.name, service.version]
-                            value_paths: [value:Value:StringValue, value:Value:StringValue]
+                            value_paths: [
+                            value:Value:StringValue,
+                            value:Value:StringValue]
                             value_type: string
                     span_mapping:
                         spans:
@@ -31,14 +36,18 @@ def mock_yaml_config_string() -> str:
                             key_paths: [attributes::cloudProvider]
                             value_type: string
                         job_id:
-                            key_paths: [trace_id, resource:attributes::key:other_key]
+                            key_paths: [
+                            trace_id,
+                            resource:attributes::key:other_key]
                             key_value: [null, test_string]
                             value_paths: [null, value:Value:StringValue]
                             value_type: string
                         event_type:
                             key_paths: [attributes::key, attributes::key]
                             key_value: [coral.namespace, http.status_code]
-                            value_paths: [value:Value:StringValue, value:Value:IntValue]
+                            value_paths: [
+                            value:Value:StringValue,
+                            value:Value:IntValue]
                             value_type: string
                         event_id:
                             key_paths: [span_id]
@@ -50,9 +59,13 @@ def mock_yaml_config_string() -> str:
                             key_paths: [end_time_unix_nano]
                             value_type: unix_nano
                         application_name:
-                            key_paths: [attributes::key, resource:attributes::key]
+                            key_paths: [
+                            attributes::key,
+                            resource:attributes::key]
                             key_value: [coral.service, service.version]
-                            value_paths: [value:Value:StringValue, value:Value:StringValue]
+                            value_paths: [
+                            value:Value:StringValue,
+                            value:Value:StringValue]
                             value_type: string
                         parent_event_id:
                             key_paths: [parent_span_id]
@@ -88,6 +101,12 @@ def mock_filepath_in_dir() -> Generator[None, None, None]:
         return_value=["/mock/dir/file1.json"],
     ):
         yield
+
+
+@pytest.fixture
+def mock_file_list() -> list[str]:
+    """Mocks a list of json"""
+    return ["/mock/dir/file1.json", "/mock/dir/file2.json"]
 
 
 @pytest.fixture
@@ -140,7 +159,7 @@ def mock_json_data() -> dict[str, Any]:
                                         "key": "http.host",
                                         "value": {
                                             "Value": {
-                                                "stringValue": "GqsdsjtJsK.com:7167"
+                                                "stringValue": "GqsdsjtJsK.com"
                                             }
                                         },
                                     },
@@ -148,7 +167,7 @@ def mock_json_data() -> dict[str, Any]:
                                         "key": "coral.operation",
                                         "value": {
                                             "Value": {
-                                                "StringValue": "jCWhAvRzcMOperation"
+                                                "StringValue": "jCWhAvRzcM"
                                             }
                                         },
                                     },
@@ -180,7 +199,7 @@ def mock_json_data() -> dict[str, Any]:
                                             "key": "service.name",
                                             "value": {
                                                 "Value": {
-                                                    "StringValue": "OvATmm04-Service"
+                                                    "StringValue": "OvATmm04"
                                                 }
                                             },
                                         },
@@ -230,7 +249,7 @@ def mock_json_data() -> dict[str, Any]:
                                         "key": "http.host",
                                         "value": {
                                             "Value": {
-                                                "stringValue": "lhD61W2zAC.com:7631"
+                                                "stringValue": "lhD6.com:7631"
                                             }
                                         },
                                     },
@@ -238,7 +257,7 @@ def mock_json_data() -> dict[str, Any]:
                                         "key": "coral.operation",
                                         "value": {
                                             "Value": {
-                                                "StringValue": "cVh8n0sf6JOperation"
+                                                "StringValue": "cVh8nOperation"
                                             }
                                         },
                                     },
@@ -268,7 +287,7 @@ def mock_json_data() -> dict[str, Any]:
                                             "key": "service.name",
                                             "value": {
                                                 "Value": {
-                                                    "StringValue": "IhjobAPC-Service"
+                                                    "StringValue": "Ih-Service"
                                                 }
                                             },
                                         },
@@ -339,7 +358,7 @@ def mock_json_data() -> dict[str, Any]:
                                         "key": "http.host",
                                         "value": {
                                             "Value": {
-                                                "stringValue": "Abmoyw1N2R.com:2667"
+                                                "stringValue": "Abmo.com:2667"
                                             }
                                         },
                                     },
@@ -347,7 +366,7 @@ def mock_json_data() -> dict[str, Any]:
                                         "key": "coral.operation",
                                         "value": {
                                             "Value": {
-                                                "StringValue": "2lAmnidMXzOperation"
+                                                "StringValue": "2lAmnOperation"
                                             }
                                         },
                                     },
@@ -379,7 +398,7 @@ def mock_json_data() -> dict[str, Any]:
                                             "key": "service.name",
                                             "value": {
                                                 "Value": {
-                                                    "StringValue": "DpueAKK0-Service"
+                                                    "StringValue": "D-Service"
                                                 }
                                             },
                                         },
@@ -429,7 +448,7 @@ def mock_json_data() -> dict[str, Any]:
                                         "key": "http.host",
                                         "value": {
                                             "Value": {
-                                                "stringValue": "C1nsCFcDQc.com:6089"
+                                                "stringValue": "C1DQc.com:6089"
                                             }
                                         },
                                     },
@@ -437,7 +456,7 @@ def mock_json_data() -> dict[str, Any]:
                                         "key": "coral.operation",
                                         "value": {
                                             "Value": {
-                                                "StringValue": "81DTBhHRznOperation"
+                                                "StringValue": "81DznOperation"
                                             }
                                         },
                                     },
@@ -469,7 +488,7 @@ def mock_json_data() -> dict[str, Any]:
                                             "key": "service.name",
                                             "value": {
                                                 "Value": {
-                                                    "StringValue": "fxoOxHYJ-Service"
+                                                    "StringValue": "fx-Service"
                                                 }
                                             },
                                         },
@@ -546,7 +565,7 @@ def mock_json_data_without_list() -> dict[str, Any]:
                                     "key": "http.host",
                                     "value": {
                                         "Value": {
-                                            "stringValue": "GqsdsjtJsK.com:7167"
+                                            "stringValue": "GqsdJsK.com:7167"
                                         }
                                     },
                                 },
@@ -554,7 +573,7 @@ def mock_json_data_without_list() -> dict[str, Any]:
                                     "key": "coral.operation",
                                     "value": {
                                         "Value": {
-                                            "StringValue": "jCWhAvRzcMOperation"
+                                            "StringValue": "jCWhcMOperation"
                                         }
                                     },
                                 },
@@ -584,7 +603,7 @@ def mock_json_data_without_list() -> dict[str, Any]:
                                         "key": "service.name",
                                         "value": {
                                             "Value": {
-                                                "StringValue": "OvATmm04-Service"
+                                                "StringValue": "Ovm04-Service"
                                             }
                                         },
                                     },
@@ -632,7 +651,7 @@ def mock_json_data_without_list() -> dict[str, Any]:
                                     "key": "http.host",
                                     "value": {
                                         "Value": {
-                                            "stringValue": "lhD61W2zAC.com:7631"
+                                            "stringValue": "lhD61AC.com:7631"
                                         }
                                     },
                                 },
@@ -640,7 +659,7 @@ def mock_json_data_without_list() -> dict[str, Any]:
                                     "key": "coral.operation",
                                     "value": {
                                         "Value": {
-                                            "StringValue": "cVh8n0sf6JOperation"
+                                            "StringValue": "cVh8f6JOperation"
                                         }
                                     },
                                 },
@@ -670,7 +689,7 @@ def mock_json_data_without_list() -> dict[str, Any]:
                                         "key": "service.name",
                                         "value": {
                                             "Value": {
-                                                "StringValue": "IhjobAPC-Service"
+                                                "StringValue": "Ihj-Service"
                                             }
                                         },
                                     },
@@ -695,9 +714,3 @@ def mock_json_data_without_list() -> dict[str, Any]:
             ],
         },
     }
-
-
-@pytest.fixture
-def mock_file_list() -> list[str]:
-    """Mocks a list of json"""
-    return ["/mock/dir/file1.json", "/mock/dir/file2.json"]
