@@ -38,7 +38,7 @@ class TestJSONDataSource:
             "dirpath",
             "filepath",
             "data_location",
-            "header_mapping",
+            "header",
             "span_mapping",
             "field_mapping",
         }
@@ -49,16 +49,20 @@ class TestJSONDataSource:
         assert config["filepath"] == "/path/to/json/file.json"
         assert config["data_location"] == "resource_spans"
 
-        # Check expected header keys
-        expected_header_keys = {
-            "key_paths",
-            "key_value",
-            "value_paths",
-            "value_type",
+        # Check expected field mapping keys
+        expected_field_mapping_keys = {
+            "job_name",
+            "job_id",
+            "event_type",
+            "event_id",
+            "start_timestamp",
+            "end_timestamp",
+            "application_name",
+            "parent_event_id",
+            "child_event_ids",
         }
         assert (
-            set(config["header_mapping"]["header"].keys())
-            == expected_header_keys
+            set(config["field_mapping"].keys()) == expected_field_mapping_keys
         )
 
     @staticmethod
@@ -219,7 +223,7 @@ class TestJSONDataSource:
             assert len(otel_events) == 2
 
         otel_event = otel_events[0]
-        assert otel_event.job_name == "Frontend 1.0"
+        assert otel_event.job_name == "Frontend TestJob"
         assert otel_event.job_id == "B4MQWcR6iByyOq4EMSs5Nn== 4.8"
         assert otel_event.event_id == "F1Vp3ypcQfU=="
         assert otel_event.event_type == "com.T2h.366Yx 500"
@@ -230,7 +234,7 @@ class TestJSONDataSource:
         assert otel_event.child_event_ids == ["child1", "child2"]
 
         otel_event2 = otel_events[1]
-        assert otel_event2.job_name == "Frontend 1.0"
+        assert otel_event2.job_name == "Frontend TestJob"
         assert otel_event2.job_id == "Js7TGf4OJROjbISB1BvOOb== 2.0"
         assert otel_event2.event_id == "Jv6moYFCoLK=="
         assert otel_event2.event_type == "com.C36.9ETRp 401"

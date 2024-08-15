@@ -108,10 +108,7 @@ class NodeModel(Base):
 class HeaderSpec(TypedDict):
     """Typed dict for HeaderSpec."""
 
-    key_paths: list[str]
-    key_value: Optional[list[Optional[str]]]
-    value_paths: Optional[list[Optional[str]]]
-    value_type: str
+    paths: list[str]
 
 
 class SpanSpec(TypedDict):
@@ -135,6 +132,6 @@ class JSONDataSourceConfig(TypedDict):
     filepath: str
     dirpath: str
     data_location: str
-    header_mapping: dict[str, HeaderSpec]
+    header: dict[str, HeaderSpec]
     span_mapping: dict[str, SpanSpec]
     field_mapping: dict[str, FieldSpec]

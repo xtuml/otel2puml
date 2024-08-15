@@ -17,23 +17,17 @@ def mock_yaml_config_string() -> str:
                     dirpath: /path/to/json/directory
                     filepath: /path/to/json/file.json
                     data_location: resource_spans
-                    header_mapping:
-                        header:
-                            key_paths: [
-                            resource:attributes::key,
-                            resource:attributes::key
-                            ]
-                            key_value: [service.name, service.version]
-                            value_paths: [
-                            value:Value:StringValue,
-                            value:Value:StringValue]
-                            value_type: string
+                    header:
+                        paths: [resource:attributes, scope_spans::scope:name]
                     span_mapping:
                         spans:
                             key_paths: [scope_spans::spans]
                     field_mapping:
                         job_name:
-                            key_paths: [HEADER]
+                            key_paths: [HEADER:resource:attributes::key,
+                            HEADER:scope_spans::scope:name]
+                            key_value: [service.name, null]
+                            value_paths: [value:Value:StringValue, null]
                             value_type: string
                         job_id:
                             key_paths: [

@@ -5,23 +5,19 @@ data_sources:
     filepath: data.json
     # Define the field mapping from the application to your JSON structure
     data_location: resource_spans
-    header_mapping:
-      header:
-        key_paths: [resource:attributes::key, resource:attributes::key]
-        key_value: [service.name, service.version]
-        value_paths: [value:Value:StringValue, value:Value:StringValue]
-        value_type: string
+    header:
+      paths: [resource:attributes, scope_spans::scope:name, testhere] 
     span_mapping:
       spans:
         key_paths: [scope_spans::spans]
     field_mapping:
       job_name:
-        key_paths: [HEADER]
+        key_paths: [HEADER:resource:attributes::key, HEADER:scope_spans::scope:name]
+        key_value: [service.name, null]
+        value_paths: [value:Value:StringValue, null]
         value_type: string
       job_id:
-        key_paths: [trace_id, resource:attributes::key:other_key]
-        key_value: [null, test_string]
-        value_paths: [null, value:Value:StringValue]
+        key_paths: [HEADER:testhere]
         value_type: string
       event_type:
         key_paths: [attributes::key, attributes::key]

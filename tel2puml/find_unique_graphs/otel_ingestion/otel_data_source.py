@@ -106,9 +106,7 @@ class JSONDataSource(OTELDataSource):
             return [self.filepath]
         raise ValueError("Directory/Filepath not set.")
 
-    def process_record(
-        self, record: dict[str, Any]
-    ) -> Iterator[OTelEvent]:
+    def process_record(self, record: dict[str, Any]) -> Iterator[OTelEvent]:
         """Process a single record and yield OTelEvent objects with headers.
 
         :param record: The record to process
@@ -116,23 +114,21 @@ class JSONDataSource(OTELDataSource):
         :return: An iterator of tuples containing OTelEvent and header
         :rtype: Iterator[tuple[OTelEvent, Any]]
         """
-        header = json_data_converter.process_header(self.config, record)
+        header_dict: dict[str, Any] = json_data_converter.process_header(
+            self.config, record
+        )
         spans = json_data_converter.process_spans(self.config, record)
         for span in spans:
             if isinstance(span, dict):
                 processed_json = json_data_converter.flatten_and_map_data(
-                    self.config, span, header
+                    self.config, span, header_dict
                 )
-                yield (
-                    self.create_otel_object(processed_json)
-                )
+                yield (self.create_otel_object(processed_json))
             else:
                 raise TypeError("json is not of type dict.")
         print("=" * 50)
 
-    def parse_json_stream(
-        self, filepath: str
-    ) -> Iterator[OTelEvent]:
+    def parse_json_stream(self, filepath: str) -> Iterator[OTelEvent]:
         """Function that parses a json file, maps the json to the application
             structure through the config specified in the config.yaml file.
             ijson iteratively parses the json file so that large files can be

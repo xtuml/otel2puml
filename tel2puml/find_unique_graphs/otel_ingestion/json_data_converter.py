@@ -26,8 +26,8 @@ def _flatten_json_dict(json_data: dict[str, Any]) -> Any:
 def _map_data_to_json_schema(
     json_config: JSONDataSourceConfig,
     flattened_data: Any,
-    config_key: Literal["header_mapping", "field_mapping"],
-    header: str = "",
+    config_key: Literal["field_mapping"],
+    header_dict: dict[str, Any],
 ) -> dict[str, str]:
     """
     Function that maps flattened JSON data to a schema defined in the
@@ -38,9 +38,10 @@ def _map_data_to_json_schema(
     :param flattened_data: JSON data as a flattened dictionary
     :type flattened_data: `Any`
     :param config_key: The key for the json config fields
-    :type config_key: `Literal`["header_mapping", "field_mapping"]
-    :param header: The header pulled from the OTel json data
-    :type header: `str`
+    :type config_key: `Literal`["field_mapping"]
+    :param header_dict: A dictionary of flattened json data containing header
+    data
+    :type header_dict: `dict`[`str`, `Any`]
     :return: The mapped data
     :rtype: `dict`[`str`, `str`]
     """
@@ -55,7 +56,7 @@ def _map_data_to_json_schema(
             flattened_data,
             result,
             field_cache,
-            header,
+            header_dict,
         )
     return result
 
@@ -66,7 +67,7 @@ def _process_field(
     flattened_data: Any,
     result: dict[str, str],
     field_cache: dict[str, str],
-    header: str,
+    header_dict: dict[str, Any],
 ) -> None:
     """
     Function that processes a single field according to its configuration.
@@ -82,8 +83,9 @@ def _process_field(
     :param field_cache: Cache for optimising field access and path generation
     in flattened JSON data
     :type field_cache: `dict`[`str`, [`str`]]
-    :param header: The header pulled from the OTel json data
-    :type header: `str`
+    :param header_dict: A dictionary of flattened json data containing header
+    data
+    :type header_dict: `dict`[`str`, `Any`]
     """
     for index, key_path in enumerate(field_config["key_paths"]):
         path_segments = key_path.split(":")
@@ -98,6 +100,7 @@ def _process_field(
                 result,
                 field_cache,
                 field_cache_key,
+                header_dict,
             )
         else:
             full_path = ":".join(path_segments)
@@ -107,7 +110,7 @@ def _process_field(
                 full_path,
                 flattened_data,
                 result,
-                header,
+                header_dict,
             )
 
 
@@ -118,7 +121,8 @@ def _handle_empty_segments(
     index: int,
     result: dict[str, str],
     field_cache: dict[str, str],
-    field_cache_key: str
+    field_cache_key: str,
+    header_dict: dict[str, Any],
 ) -> None:
     """
     Function that handles paths with empty segments, indicating a list within
@@ -139,9 +143,24 @@ def _handle_empty_segments(
     :type field_cache: `dict`[`str`, [`str`]]
     :param field_cache_key: The key of the field cache
     :type field_cache_key: `str`
+    :param header_dict: A dictionary of flattened json data containing header
+    data
+    :type header_dict: `dict`[`str`, `Any`]
     """
     full_path = ":".join(field_config["key_paths"][index].split(":"))
     key = full_path.split("::")[-1]
+
+    if full_path.split(":")[0] == "HEADER":
+        handle_data_from_header(
+            field_name,
+            field_config,
+            index,
+            result,
+            header_dict,
+            key,
+            full_path,
+        )
+        return
 
     # TODO Have a think about this number
     for segment_count in range(MAX_SEGMENT_COUNT):
@@ -197,6 +216,54 @@ def _handle_empty_segments(
         f"Could not find data for '{field_name}' within {MAX_SEGMENT_COUNT}"
         " segments"
     )
+
+
+def handle_data_from_header(
+    field_name: str,
+    field_config: dict[str, Any],
+    index: int,
+    result: dict[str, str],
+    header_dict: dict[str, Any],
+    key: str,
+    full_path: str,
+) -> None:
+    """Function that handles instances where HEADER is used within the config,
+    indicating that information stored within the header_dict is to be used.
+
+    :param field_name: The field name within the mapping config
+    :type field_name: `str`
+    :param field_config: The config for the field name
+    :type field_config: `dict`[`str`,`Any`]
+    :param index: The index of the field config
+    :type index: `int`
+    :param result: The mapped data
+    :type result: `dict`[`str`, `str`]
+    :param header_dict: A dictionary of flattened json data containing header
+    data
+    :type header_dict: `dict`[`str`, `Any`]
+    :param key: The key within the header_dict value
+    :type key: `str`
+    :param full_path: The full path given in the 'key_paths' config
+    :type full_path: `str`
+    """
+    full_path = full_path.split("HEADER:")[1]
+
+    path_segments = full_path.split("::")
+
+    key = (
+        key
+        if not field_config["key_value"][index]
+        else field_config["value_paths"][index]
+    )
+
+    header_dict_copy = header_dict
+    for segment in path_segments[:-1]:
+        header_dict_copy = header_dict_copy[segment]
+
+    value_to_add = header_dict_copy[key]
+    value_type = _get_value_type(field_config)
+
+    _add_or_append_value(field_name, value_to_add, result, value_type)
 
 
 def _update_full_path(full_path: str, segment_count: int) -> str:
@@ -359,7 +426,7 @@ def _handle_regular_path(
     full_path: str,
     flattened_data: Any,
     result: dict[str, Any],
-    header: str,
+    header_dict: dict[str, Any],
 ) -> None:
     """
     Function that handles regular paths without empty segments.
@@ -380,11 +447,11 @@ def _handle_regular_path(
     :type header: `str`
     """
     try:
-        if full_path == "HEADER":
+        if full_path.split(":")[0] == "HEADER":
+            header = "".join(full_path.split(":")[1:])
             value_type = _get_value_type(field_config)
-            _add_or_append_value(
-                field_name, header, result, value_type
-            )
+            value = header_dict[header]
+            _add_or_append_value(field_name, value, result, value_type)
             return
 
         flattened_data = dict(flattened_data)
@@ -460,7 +527,9 @@ def _unix_nano_to_datetime_str(unix_nano: int) -> str:
 
 
 def flatten_and_map_data(
-    json_config: JSONDataSourceConfig, raw_json: dict[str, Any], header: str
+    json_config: JSONDataSourceConfig,
+    raw_json: dict[str, Any],
+    header_dict: dict[str, Any],
 ) -> dict[str, str]:
     """Function to handle flattening raw json and mapping the data to the
     specified configuration.
@@ -476,25 +545,128 @@ def flatten_and_map_data(
     """
     flattened_data = _flatten_json_dict(raw_json)
     return _map_data_to_json_schema(
-        json_config, flattened_data, "field_mapping", header
+        json_config, flattened_data, "field_mapping", header_dict
     )
 
 
 def process_header(
     json_config: JSONDataSourceConfig, json_data: dict[str, Any]
-) -> str:
+) -> dict[str, Any]:
     """Process the header within the json data.
 
     :param json_config: The json config
-    :type json_config: :class: `JSONDataSourceConfig`
+    :type json_config: :class:`JSONDataSourceConfig`
     :param json_data: The JSON data to flatten.
-    :param json_data: `dict`[`str`,`Any`]
-    return: The header
-    :rtype: `str`
+    :type json_data: `dict`[`str`, `Any`]
+    :return: The header
+    :rtype: `dict`[`str`, `Any`]
     """
-    return _map_data_to_json_schema(
-        json_config, _flatten_json_dict(json_data), "header_mapping"
-    )["header"]
+    header_dict: dict[str, Any] = {}
+
+    for path in json_config["header"]["paths"]:
+        value = extract_value_from_path(json_data, path)
+        update_header_dict(header_dict, path, value)
+
+    return header_dict
+
+
+def extract_value_from_path(
+    data: dict[str, Any], path: str
+) -> dict[str, Any] | str:
+    """Extract a value from nested JSON data using a path string.
+
+    :param data: The JSON data to traverse
+    :type data: `dict`[`str`, `Any`]
+    :param path: The path string to follow
+    :type path: `str`
+    :return: The extracted value
+    :rtype: `dict`[`str`, `Any`] | `str`
+    """
+    if "::" in path:
+        return extract_nested_value(data, path)
+    else:
+        return extract_simple_value(data, path)
+
+
+def extract_nested_value(
+    data: dict[str, Any] | str, path: str
+) -> dict[str, Any] | str:
+    """Extract a nested value from JSON data using a complex path.
+
+    :param data: The JSON data to traverse
+    :type data: `dict`[`str`, `Any`]
+    :param path: The complex path string
+    :type path: `str`
+    :return: A nested dictionary with the extracted value
+    :rtype: `dict`[`str`, `Any`]
+    """
+    path_segments = path.split("::")
+    for segment in path_segments:
+        data = navigate_segment(data, segment.split(":"))
+
+    result = data
+    for key in reversed(path_segments[1:]):
+        result = {key: result}
+
+    return result
+
+
+def extract_simple_value(
+    data: dict[str, Any] | str, path: str
+) -> dict[str, Any] | str:
+    """Extract a simple value from JSON data using a path.
+
+    :param data: The JSON data to traverse
+    :type data: `dict`[`str`, `Any`]
+    :param path: The simple path string
+    :type path: `str`
+    :return: The extracted value
+    :rtype: `Any`
+    """
+    segments = path.split(":")
+    for segment in segments:
+        data = navigate_segment(data, [segment])
+
+    return data if not isinstance(data, dict) else _flatten_json_dict(data)
+
+
+def navigate_segment(
+    data: dict[str, Any] | str, segments: list[str]
+) -> dict[str, Any] | str:
+    """Navigate through a segment of the JSON data.
+
+    :param data: The current data object
+    :type data: `dict`[`str`, `Any`]
+    :param segments: The segments to navigate
+    :type segments: `list`[`str`]
+    :return: The value at the end of the navigation
+    :rtype: `Any`
+    """
+    for segment in segments:
+        if isinstance(data, dict):
+            data = data[segment]
+        if isinstance(data, list):
+            data = data[0]
+    return data
+
+
+def update_header_dict(
+    header_dict: dict[str, Any], path: str, value: dict[str, Any] | str
+) -> None:
+    """Update the header dictionary with the extracted value.
+
+    :param header_dict: The header dictionary to update
+    :type header_dict: `dict`[`str`, `Any`]
+    :param path: The original path string
+    :type path: `str`
+    :param value: The extracted value to add
+    :type value: `Any`
+    """
+    key = path.split("::")[0]
+    if isinstance(value, dict):
+        header_dict[key] = _flatten_json_dict(value)
+    else:
+        header_dict[key] = value
 
 
 def process_spans(
@@ -515,17 +687,12 @@ def process_spans(
     )
 
     data = json_data
-    found_sub_segment = False
     for segment in path_segments:
         if segment == "":
-            found_sub_segment = True
             if isinstance(data, list):
                 data = data[0]
             else:
                 raise TypeError("Sub segment should be a list.")
-            continue
-        if found_sub_segment:
-            data = data[segment]
             continue
 
         data = data[segment]
