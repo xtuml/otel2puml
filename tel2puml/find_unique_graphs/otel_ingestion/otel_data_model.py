@@ -32,7 +32,7 @@ class OTelEvent(NamedTuple):
     :param application_name: The application name.
     :type application_name: `str`
     :param parent_event_id: The ID of the parent event.
-    :type parent_event_id: `str`
+    :type parent_event_id: `Optional`[`str`]
     :param child_event_ids: A list of IDs of child events. Defaults to `None`
     :type child_event_ids: Optional[`list`[`str`]]
     """
@@ -44,7 +44,7 @@ class OTelEvent(NamedTuple):
     start_timestamp: str
     end_timestamp: str
     application_name: str
-    parent_event_id: str
+    parent_event_id: Optional[str]
     child_event_ids: Optional[list[str]] = None
 
 

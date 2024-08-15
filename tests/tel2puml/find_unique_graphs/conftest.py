@@ -126,9 +126,9 @@ def mock_json_data() -> dict[str, Any]:
                         "scope": {"name": "TestJob"},
                         "spans": [
                             {
-                                "trace_id": "B4MQWcR6iByyOq4EMSs5Nn==",
-                                "span_id": "F1Vp3ypcQfU==",
-                                "parent_span_id": "NzWDkmlAnji==",
+                                "trace_id": "trace001",
+                                "span_id": "span001",
+                                "parent_span_id": None,
                                 "child_span_ids": ["child1", "child2"],
                                 "flags": 339,
                                 "name": "/delete",
@@ -216,9 +216,9 @@ def mock_json_data() -> dict[str, Any]:
                                 "scope": {"name": "cds-T5gHfy"},
                             },
                             {
-                                "trace_id": "Js7TGf4OJROjbISB1BvOOb==",
-                                "span_id": "Jv6moYFCoLK==",
-                                "parent_span_id": "0u4wIXKIZ2t==",
+                                "trace_id": "trace002",
+                                "span_id": "span002",
+                                "parent_span_id": "span001",
                                 "child_span_ids": ["child3"],
                                 "flags": 395,
                                 "name": "/update",
@@ -325,9 +325,9 @@ def mock_json_data() -> dict[str, Any]:
                         "scope": {"name": "TestJob"},
                         "spans": [
                             {
-                                "trace_id": "ig0YZJI4VfTAXKDZl7Rxf0==",
-                                "span_id": "Z6EwUDfGeiG==",
-                                "parent_span_id": "JH12Q4s/0C6==",
+                                "trace_id": "trace003",
+                                "span_id": "span003",
+                                "parent_span_id": None,
                                 "child_span_ids": [],
                                 "flags": 647,
                                 "name": "/delete",
@@ -415,9 +415,9 @@ def mock_json_data() -> dict[str, Any]:
                                 "scope": {"name": "cds-o1MFqb"},
                             },
                             {
-                                "trace_id": "U2xB3xqOvelpIHiS6wDlAb==",
-                                "span_id": "SkZoa3pRvr9==",
-                                "parent_span_id": "Rm3JfwVgeMq==",
+                                "trace_id": "trace004",
+                                "span_id": "span004",
+                                "parent_span_id": "span003",
                                 "child_span_ids": ["child5"],
                                 "flags": 517,
                                 "name": "/read",
@@ -534,9 +534,9 @@ def mock_json_data_without_list() -> dict[str, Any]:
                     "scope": {"name": "TestJob"},
                     "spans": [
                         {
-                            "trace_id": "B4MQWcR6iByyOq4EMSs5Nn==",
-                            "span_id": "F1Vp3ypcQfU==",
-                            "parent_span_id": "NzWDkmlAnji==",
+                            "trace_id": "trace001",
+                            "span_id": "span001",
+                            "parent_span_id": None,
                             "child_span_ids": ["child1", "child2"],
                             "flags": 339,
                             "name": "/delete",
@@ -618,9 +618,9 @@ def mock_json_data_without_list() -> dict[str, Any]:
                             "scope": {"name": "cds-T5gHfy"},
                         },
                         {
-                            "trace_id": "Js7TGf4OJROjbISB1BvOOb==",
-                            "span_id": "Jv6moYFCoLK==",
-                            "parent_span_id": "0u4wIXKIZ2t==",
+                            "trace_id": "trace002",
+                            "span_id": "span002",
+                            "parent_span_id": "span001",
                             "child_span_ids": ["child3"],
                             "flags": 395,
                             "name": "/update",

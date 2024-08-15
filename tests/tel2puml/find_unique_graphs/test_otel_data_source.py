@@ -14,7 +14,7 @@ from tel2puml.find_unique_graphs.otel_ingestion.otel_data_source import (
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     JSONDataSourceConfig,
-    OTelEvent
+    OTelEvent,
 )
 
 
@@ -217,29 +217,51 @@ class TestJSONDataSource:
             for data in json_data_source:
                 otel_events.append(data)
 
-        if mock_data == "mock_json_data":
-            assert len(otel_events) == 4
-        else:
-            assert len(otel_events) == 2
-
         otel_event = otel_events[0]
         assert otel_event.job_name == "Frontend TestJob"
-        assert otel_event.job_id == "B4MQWcR6iByyOq4EMSs5Nn== 4.8"
-        assert otel_event.event_id == "F1Vp3ypcQfU=="
+        assert otel_event.job_id == "trace001 4.8"
+        assert otel_event.event_id == "span001"
         assert otel_event.event_type == "com.T2h.366Yx 500"
         assert otel_event.application_name == "Processor 1.2"
         assert otel_event.start_timestamp == "2024-08-13 10:15:32"
         assert otel_event.end_timestamp == "2024-08-13 10:15:32"
-        assert otel_event.parent_event_id == "NzWDkmlAnji=="
+        assert otel_event.parent_event_id == None
         assert otel_event.child_event_ids == ["child1", "child2"]
 
         otel_event2 = otel_events[1]
         assert otel_event2.job_name == "Frontend TestJob"
-        assert otel_event2.job_id == "Js7TGf4OJROjbISB1BvOOb== 2.0"
-        assert otel_event2.event_id == "Jv6moYFCoLK=="
+        assert otel_event2.job_id == "trace002 2.0"
+        assert otel_event2.event_id == "span002"
         assert otel_event2.event_type == "com.C36.9ETRp 401"
         assert otel_event2.application_name == "Handler 2.9"
         assert otel_event2.start_timestamp == "2024-08-13 10:15:32"
         assert otel_event2.end_timestamp == "2024-08-13 10:15:32"
-        assert otel_event2.parent_event_id == "0u4wIXKIZ2t=="
+        assert otel_event2.parent_event_id == "span001"
         assert otel_event2.child_event_ids == ["child3"]
+
+        if mock_data == "mock_json_data_without_list":
+            assert len(otel_events) == 2
+        else:
+            assert len(otel_events) == 4
+
+            otel_event3 = otel_events[2]
+            assert otel_event3.job_name == "Backend TestJob"
+            assert otel_event3.job_id == "trace003 2.7"
+            assert otel_event3.event_id == "span003"
+            assert otel_event3.event_type == "com.a58.GFkzZ 201"
+            assert otel_event3.application_name == "Processor 2.1"
+            assert otel_event3.start_timestamp == "2024-08-13 10:15:54"
+            assert otel_event3.end_timestamp == "2024-08-13 10:15:54"
+            assert otel_event3.parent_event_id == None
+            assert otel_event3.child_event_ids == None
+
+            otel_event4 = otel_events[3]
+            assert otel_event4.job_name == "Backend TestJob"
+            assert otel_event4.job_id == "trace004 1.3"
+            assert otel_event4.event_id == "span004"
+            assert otel_event4.event_type == "com.67Q.AS8pJ 201"
+            assert otel_event4.application_name == "Processor 2.8"
+            assert otel_event4.start_timestamp == "2024-08-13 10:15:54"
+            assert otel_event4.end_timestamp == "2024-08-13 10:15:54"
+            assert otel_event4.parent_event_id == "span003"
+            assert otel_event4.child_event_ids == ["child5"]
