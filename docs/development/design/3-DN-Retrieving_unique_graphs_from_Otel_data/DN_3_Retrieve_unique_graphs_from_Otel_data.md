@@ -51,12 +51,6 @@ class OTelEvent(NamedTuple):
 
 class OTELDataSource(ABC):
     """Abstract class for returning a OTelEvent object from a data source."""
-
-    def __init__(self) -> None:
-        """Constructor method."""
-        self.yaml_config: dict[str, Any]
-        self.valid_data_sources: list[str]
-        self.data_source: str
     
     def __iter__(self) -> Self:
         """Returns the iterator object.
@@ -73,22 +67,6 @@ class OTELDataSource(ABC):
         :return: The next OTelEvent in the sequence
         :rtype: :class: `OTelEvent`
         """
-
-    def get_yaml_config(self) -> Any:
-        """Returns the yaml config as a dictionary.
-
-        :return: Config file represented as a dictionary,
-        :rtype: `Dict`[`str`,`Any`]
-        """
-        pass
-
-    def set_data_source(self) -> str:
-        """Set the data source.
-
-        :return: type of file used.
-        :rtype: `str`
-        """
-        pass
 
 class JSONDataSource(OTELDataSource):
     """A class to handle OTel Data in JSON format"""
@@ -110,10 +88,14 @@ class JSONDataSource(OTELDataSource):
         """
     
     def parse_json_stream(self, filepath: str) -> Iterator[OTelEvent]:
-        """Parse JSON file. ijson iteratively parses the json file.
+        """Function that parses a json file, maps the json to the application
+        structure through the config specified in the config.yaml file.
+        ijson iteratively parses the json file so that large files can be
+        processed.
 
-        :return: An OTelEvent object
-        :rtype: `Iterator`[`OTelEvent`]
+        :param filepath: The path to the JSON file to parse
+        :return: An iterator of tuples containing OTelEvent and header
+        :rtype: `Iterator`[:class:`OTelEvent`]
         """
         pass
 
@@ -148,6 +130,15 @@ class JSONDataSource(OTELDataSource):
         :rtype: `list`[`str`]
         """
         pass
+
+    def process_record(self, record: dict[str, Any]) -> Iterator[OTelEvent]:
+        """Process a single record and yield OTelEvent objects.
+
+        :param record: The record to process
+        :type record: `dict`[`str`,`Any`]
+        :return: An iterator of tuples containing OTelEvent and header
+        :rtype: `Iterator`[:class: `OTelEvent`]
+        """
 
 class DataHolder(ABC):
     """An abstract class to handle saving processed OTel data."""

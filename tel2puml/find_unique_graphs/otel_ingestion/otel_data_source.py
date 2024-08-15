@@ -17,10 +17,6 @@ from tel2puml.find_unique_graphs.otel_ingestion import json_data_converter
 class OTELDataSource(ABC):
     """Abstract class for returning a OTelEvent object from a data source."""
 
-    def __init__(self) -> None:
-        """Constructor method."""
-        self.valid_data_sources = ["json"]
-
     def __iter__(self) -> Self:
         """Returns the iterator object.
 
@@ -107,7 +103,7 @@ class JSONDataSource(OTELDataSource):
         raise ValueError("Directory/Filepath not set.")
 
     def process_record(self, record: dict[str, Any]) -> Iterator[OTelEvent]:
-        """Process a single record and yield OTelEvent objects with headers.
+        """Process a single record and yield OTelEvent objects.
 
         :param record: The record to process
         :type record: `dict`[`str`,`Any`]
@@ -130,9 +126,9 @@ class JSONDataSource(OTELDataSource):
 
     def parse_json_stream(self, filepath: str) -> Iterator[OTelEvent]:
         """Function that parses a json file, maps the json to the application
-            structure through the config specified in the config.yaml file.
-            ijson iteratively parses the json file so that large files can be
-            processed.
+        structure through the config specified in the config.yaml file.
+        ijson iteratively parses the json file so that large files can be
+        processed.
 
         :param filepath: The path to the JSON file to parse
         :return: An iterator of tuples containing OTelEvent and header
