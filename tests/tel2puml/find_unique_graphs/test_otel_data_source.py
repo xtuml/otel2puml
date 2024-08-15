@@ -225,7 +225,7 @@ class TestJSONDataSource:
         assert otel_event.application_name == "Processor 1.2"
         assert otel_event.start_timestamp == "2024-08-13 10:15:32"
         assert otel_event.end_timestamp == "2024-08-13 10:15:32"
-        assert otel_event.parent_event_id == None
+        assert otel_event.parent_event_id is None
         assert otel_event.child_event_ids == ["child1", "child2"]
 
         otel_event2 = otel_events[1]
@@ -252,8 +252,8 @@ class TestJSONDataSource:
             assert otel_event3.application_name == "Processor 2.1"
             assert otel_event3.start_timestamp == "2024-08-13 10:15:54"
             assert otel_event3.end_timestamp == "2024-08-13 10:15:54"
-            assert otel_event3.parent_event_id == None
-            assert otel_event3.child_event_ids == None
+            assert otel_event3.parent_event_id is None
+            assert otel_event3.child_event_ids is None
 
             otel_event4 = otel_events[3]
             assert otel_event4.job_name == "Backend TestJob"
