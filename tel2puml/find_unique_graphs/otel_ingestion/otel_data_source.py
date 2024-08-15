@@ -34,7 +34,7 @@ class OTELDataSource(ABC):
         """Returns the next item in the sequence.
 
         :return: The next OTelEvent in the sequence, with the header
-        :rtype: `tuple`[:class:`OTelEvent`, `str`]
+        :rtype: :class:`OTelEvent`
         """
         pass
 
@@ -112,7 +112,7 @@ class JSONDataSource(OTELDataSource):
         :param record: The record to process
         :type record: `dict`[`str`,`Any`]
         :return: An iterator of tuples containing OTelEvent and header
-        :rtype: Iterator[tuple[OTelEvent, Any]]
+        :rtype: `Iterator`[:class: `OTelEvent`]
         """
         header_dict: dict[str, Any] = json_data_converter.process_header(
             self.config, record
@@ -136,7 +136,7 @@ class JSONDataSource(OTELDataSource):
 
         :param filepath: The path to the JSON file to parse
         :return: An iterator of tuples containing OTelEvent and header
-        :rtype: `Iterator`[`tuple`[`OTelEvent`, `str`]]
+        :rtype: `Iterator`[:class:`OTelEvent`]
         """
         with open(filepath, "rb") as file:
             data = ijson.items(file, self.config["data_location"])
@@ -166,10 +166,10 @@ class JSONDataSource(OTELDataSource):
         )
 
     def __next__(self) -> OTelEvent:
-        """Returns the next OTelEvent in the sequence, with the header.
+        """Returns the next OTelEvent in the sequence
 
         :return: An OTelEvent object.
-        :rtype: `tuple`[:class:`OTelEvent`, `str`]
+        :rtype: :class:`OTelEvent`
         """
         while self.current_file_index < len(self.file_list):
             if self.current_parser is None:

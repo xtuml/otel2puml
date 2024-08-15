@@ -449,9 +449,10 @@ def _handle_regular_path(
     """
     try:
         if full_path.split(":")[0] == "HEADER":
-            header = "".join(full_path.split(":")[1:])
+            # Remove 'HEADER:' from full_path
+            full_path = "".join(full_path.split(":")[1:])
             value_type = _get_value_type(field_config)
-            value = header_dict[header]
+            value = header_dict[full_path]
             _add_or_append_value(field_name, value, result, value_type)
             return
 
@@ -599,7 +600,7 @@ def _extract_nested_value(
     """Extract a nested value from JSON data using a complex path.
 
     :param data: The JSON data to traverse
-    :type data: `dict`[`str`, `Any`]
+    :type data: `dict`[`str`, `Any`] | `str`
     :param path: The complex path string
     :type path: `str`
     :return: A nested dictionary with the extracted value
@@ -667,7 +668,7 @@ def _update_header_dict(
     :type header_dict: `dict`[`str`, `Any`]
     :param path: The original path string
     :type path: `str`
-    :param value: The extracted value to add
+    :param value: The value to add to header_dict
     :type value: `dict`[`str`, `Any`] | `str`
     """
     key = path.split("::")[0]
@@ -684,7 +685,7 @@ def process_spans(
 
     :param json_config: The json config
     :type json_config: :class: `JSONDataSourceConfig`
-    :param json_data: The JSON data to flatten.
+    :param json_data: The JSON data containing the spans
     :param json_data: `dict`[`str`,`Any`]
     return: A list of spans
     :rtype: `list`[`dict`[`str`, `Any`]]
