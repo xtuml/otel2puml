@@ -132,10 +132,10 @@ def _handle_empty_segments(
     :type field_name: `str`
     :param field_config: The config for the field name
     :type field_config: `dict`[`str`,`Any`]
-    :param index: The index of the field config
-    :type index: `int`
     :param flattened_data: JSON data as a flattened dictionary
     :type flattened_data: `Any`
+    :param index: The index of the field config
+    :type index: `int`
     :param result: The mapped data
     :type result: `dict`[`str`, `str`]
     :param field_cache: Cache for optimising field access and path generation
@@ -295,6 +295,8 @@ def _get_or_create_cache_entry(
     :type field_cache: `dict`[`str`, `Any`]
     :param field_cache_key: The key to look up or create in the field cache
     :type field_cache_key: `str`
+    :param key: The key within the field cache
+    :type key: `str`
     :return: The existing or newly created cache entry for the given key
     :rtype: `dict`[`str`,`Any`]
     """
@@ -435,16 +437,15 @@ def _handle_regular_path(
     :type field_name: `str`
     :param field_config: The config for the field name
     :type field_config: `dict`[`str`,`Any`]
-    :param index: The index of the field config
-    :type index: `int`
     :param full_path: The key of the flattened data
     :type full_path: `str`
     :param flattened_data: JSON data as a flattened dictionary
     :type flattened_data: `Any`
     :param result: The mapped data
     :type result: `dict`[`str`, `Any`]
-    :param header: The header pulled from the OTel json data
-    :type header: `str`
+    :param header_dict: A dictionary of flattened json data containing header
+    data
+    :type header_dict: `dict`[`str`, `Any`]
     """
     try:
         if full_path.split(":")[0] == "HEADER":
@@ -480,7 +481,7 @@ def _get_value_type(field_config: dict[str, str]) -> str:
     """Function that returns the type of the field. Eg. "string", "unix_nano"
 
     :param field_config: The config for the field name
-    :type field_config: `dict`[`str`,`Any`]
+    :type field_config: `dict`[`str`,`str`]
     :return: The field type
     :rtype: `str`
     """
@@ -538,9 +539,9 @@ def flatten_and_map_data(
     :type json_config: :class: `JSONDataSourceConfig`
     :param raw_json: The JSON data to flatten.
     :param raw_json: `dict`[`str`,`Any`]
-    :param header: The header pulled from the OTel json data
-    :type header: `str`
-    return: The mapped data
+    :param header_dict: Dictionary containing information about header values
+    :type header_dict: `dict`[`str`, `Any`]
+    :return: The mapped data
     :rtype: `dict`[`str`, `str`]
     """
     flattened_data = _flatten_json_dict(raw_json)
@@ -558,19 +559,19 @@ def process_header(
     :type json_config: :class:`JSONDataSourceConfig`
     :param json_data: The JSON data to flatten.
     :type json_data: `dict`[`str`, `Any`]
-    :return: The header
+    :return: The header as a dictionary
     :rtype: `dict`[`str`, `Any`]
     """
     header_dict: dict[str, Any] = {}
 
     for path in json_config["header"]["paths"]:
-        value = extract_value_from_path(json_data, path)
-        update_header_dict(header_dict, path, value)
+        value = _extract_value_from_path(json_data, path)
+        _update_header_dict(header_dict, path, value)
 
     return header_dict
 
 
-def extract_value_from_path(
+def _extract_value_from_path(
     data: dict[str, Any], path: str
 ) -> dict[str, Any] | str:
     """Extract a value from nested JSON data using a path string.
@@ -583,12 +584,12 @@ def extract_value_from_path(
     :rtype: `dict`[`str`, `Any`] | `str`
     """
     if "::" in path:
-        return extract_nested_value(data, path)
+        return _extract_nested_value(data, path)
     else:
-        return extract_simple_value(data, path)
+        return _extract_simple_value(data, path)
 
 
-def extract_nested_value(
+def _extract_nested_value(
     data: dict[str, Any] | str, path: str
 ) -> dict[str, Any] | str:
     """Extract a nested value from JSON data using a complex path.
@@ -598,11 +599,11 @@ def extract_nested_value(
     :param path: The complex path string
     :type path: `str`
     :return: A nested dictionary with the extracted value
-    :rtype: `dict`[`str`, `Any`]
+    :rtype: `dict`[`str`, `Any`] | `str`
     """
     path_segments = path.split("::")
     for segment in path_segments:
-        data = navigate_segment(data, segment.split(":"))
+        data = _navigate_segment(data, segment.split(":"))
 
     result = data
     for key in reversed(path_segments[1:]):
@@ -611,7 +612,7 @@ def extract_nested_value(
     return result
 
 
-def extract_simple_value(
+def _extract_simple_value(
     data: dict[str, Any] | str, path: str
 ) -> dict[str, Any] | str:
     """Extract a simple value from JSON data using a path.
@@ -621,16 +622,16 @@ def extract_simple_value(
     :param path: The simple path string
     :type path: `str`
     :return: The extracted value
-    :rtype: `Any`
+    :rtype: `dict`[`str`, `Any`] | `str`
     """
     segments = path.split(":")
     for segment in segments:
-        data = navigate_segment(data, [segment])
+        data = _navigate_segment(data, [segment])
 
     return data if not isinstance(data, dict) else _flatten_json_dict(data)
 
 
-def navigate_segment(
+def _navigate_segment(
     data: dict[str, Any] | str, segments: list[str]
 ) -> dict[str, Any] | str:
     """Navigate through a segment of the JSON data.
@@ -640,7 +641,7 @@ def navigate_segment(
     :param segments: The segments to navigate
     :type segments: `list`[`str`]
     :return: The value at the end of the navigation
-    :rtype: `Any`
+    :rtype: `dict`[`str`, `Any`] | `str`
     """
     for segment in segments:
         if isinstance(data, dict):
@@ -650,7 +651,7 @@ def navigate_segment(
     return data
 
 
-def update_header_dict(
+def _update_header_dict(
     header_dict: dict[str, Any], path: str, value: dict[str, Any] | str
 ) -> None:
     """Update the header dictionary with the extracted value.
@@ -660,7 +661,7 @@ def update_header_dict(
     :param path: The original path string
     :type path: `str`
     :param value: The extracted value to add
-    :type value: `Any`
+    :type value: `dict`[`str`, `Any`] | `str`
     """
     key = path.split("::")[0]
     if isinstance(value, dict):
