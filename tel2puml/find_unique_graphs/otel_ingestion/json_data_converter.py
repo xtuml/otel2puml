@@ -463,14 +463,17 @@ def _handle_regular_path(
             )
             return
     except KeyError:
-        # Check if we are dealing with a list like child_span_ids
+        # Check if we are dealing with a list like child_span_ids. 
         count = 0
         full_path = full_path + ":" + str(count)
+        # Continue whilst valid keys are found within flattened_data
         while flattened_data.get(full_path):
             value_type = _get_value_type(field_config)
+            # Create a list to append values to
             if field_name not in result:
                 result[field_name] = []
             result[field_name].append(flattened_data.get(full_path))
+            # Increment the index within full path
             full_path = full_path.replace(f":{str(count)}", f":{str(count+1)}")
             count += 1
     except Exception as e:
@@ -559,7 +562,8 @@ def process_header(
     :type json_config: :class:`JSONDataSourceConfig`
     :param json_data: The JSON data to flatten.
     :type json_data: `dict`[`str`, `Any`]
-    :return: The header as a dictionary
+    :return: A dictionary mapping header paths to a value of a flattened dict
+    or a string
     :rtype: `dict`[`str`, `Any`]
     """
     header_dict: dict[str, Any] = {}
@@ -606,6 +610,8 @@ def _extract_nested_value(
         data = _navigate_segment(data, segment.split(":"))
 
     result = data
+    # Create a nested dictionary by building it from the inside out. This is
+    # bypassed if data is a string
     for key in reversed(path_segments[1:]):
         result = {key: result}
 
@@ -654,7 +660,8 @@ def _navigate_segment(
 def _update_header_dict(
     header_dict: dict[str, Any], path: str, value: dict[str, Any] | str
 ) -> None:
-    """Update the header dictionary with the extracted value.
+    """Updates the header dictionary with the extracted value. If the value is
+    a dictionary, flatten it first.
 
     :param header_dict: The header dictionary to update
     :type header_dict: `dict`[`str`, `Any`]
