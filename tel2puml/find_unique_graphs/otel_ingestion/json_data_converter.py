@@ -463,7 +463,7 @@ def _handle_regular_path(
             )
             return
     except KeyError:
-        # Check if we are dealing with a list like child_span_ids. 
+        # Check if we are dealing with a list like child_span_ids.
         count = 0
         full_path = full_path + ":" + str(count)
         # Continue whilst valid keys are found within flattened_data
