@@ -51,6 +51,8 @@ def pv_to_puml_string(
     :type pv_stream: `Iterable`[`Iterable`[:class:`PVEvent`]]
     :param puml_name: The name of the PlantUML group to create
     :type puml_name: `str`
+    :param keep_dummy_events: Boolean to keep dummy events in the PlantUML
+    :type keep_dummy_events: `bool`
     :return: The PlantUML string
     :rtype: `str`
     """
@@ -90,6 +92,8 @@ def pv_to_puml_file(
     :type puml_file_path: `str`
     :param puml_name: The name of the PlantUML group to create
     :type puml_name: `str`
+    :param keep_dummy_events: Boolean to keep dummy events in the PlantUML
+    :type keep_dummy_events: `bool`
     """
     puml_string = pv_to_puml_string(pv_stream, puml_name, keep_dummy_events)
     with open(puml_file_path, "w") as puml_file:
@@ -198,6 +202,8 @@ def pv_jobs_from_folder_to_puml_file(
     :type puml_file_path: `str`
     :param puml_name: The name of the PlantUML group to create
     :type puml_name: `str`
+    :param keep_dummy_events: Boolean to keep dummy events in the PlantUML
+    :type keep_dummy_events: `bool`
     """
     pv_stream = pv_jobs_from_folder_to_event_sequence_streams(folder_path)
     pv_to_puml_file(pv_stream, puml_file_path, puml_name, keep_dummy_events)
