@@ -160,9 +160,9 @@ class SQLDataHolder(DataHolder):
         :param db_uri: The database uri
         :type db_uri: `str`
         """
-        self.data_to_save: list[OTelEvent] = []
-        self.batch_size: int = 100 # Example batch size
-        self.engine = create_engine(db_uri, echo=False)
+        self.data_to_save: list[OTelEvent]
+        self.batch_size: int
+        self.engine: Engine
 
 
     def create_db_tables(self) -> None:
