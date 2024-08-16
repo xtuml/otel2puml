@@ -32,59 +32,59 @@ folder_names_and_paths = {}
 cyto_graph_elements: list[list[dict]] = []
 
 args = sys.argv[1:]
-if len(args) > 0:
-    input_data_folder_path = args[0]
+if len(args) < 2:
+    print(
+        "Usage: python app.py <path_to_folder_of_jobs> <path_to_plantuml_jar>"
+    )
+    sys.exit(1)
+input_data_folder_path = args[0]
+plantuml_jar_path = args[1]
 for folder_name in os.listdir(input_data_folder_path):
     folder_path = os.path.join(input_data_folder_path, folder_name)
     if os.path.isdir(folder_path):
         folder_names_and_paths[folder_name] = folder_path
 
 
-
 # the style arguments for the sidebar. We use position:fixed and a fixed width
 SIDEBAR_STYLE = {
-    "position": "fixed",
-    "top": 0,
-    "left": 0,
-    "bottom": 0,
-    "width": "16rem",
+    # "position": "fixed",
+    # "top": 0,
+    # "left": 0,
+    # "bottom": 0,
+    # "width": "16rem",
     "padding": "2rem 1rem",
     # "background-color": "#f8f9fa",
 }
 
 # the styles for the main content position it to the right of the sidebar and
 # add some padding.
-CONTENT_STYLE = {
-    # "margin-left": "18rem",
-    "margin-right": "2rem",
-    "padding": "2rem 1rem",
-}
 
 sidebar = html.Div(
     [
-        html.H2("OTEL2PUML", className="display-4"),
+        html.H2("OTEL 2 PUML", className="navbar-brand text-light-emphasis"),
         html.Hr(),
         html.P(
-            "An OpenTelemetry Discovery App", className="lead"
+            "An OpenTelemetry Discovery App",
+            className="lead text-body-tertiary",
         ),
         dbc.Nav(
             [
-                dbc.NavLink("Home", href="/", active="exact"),
+                dbc.NavLink(
+                    "Home",
+                    href="/",
+                    active="exact",
+                ),
                 dbc.NavLink("Visualisations", href="/page-1", active="exact"),
             ],
             vertical=True,
-            # pills=True,
         ),
     ],
     style=SIDEBAR_STYLE,
-    className="bg-body-tertiary"
+    className="bg-body-tertiary",
 )
 
-content = html.Div(id="page-content", style=CONTENT_STYLE)
 
-
-
-app.layout = html.Div(
+content = html.Div(
     children=[
         html.Div(
             [
@@ -98,7 +98,7 @@ app.layout = html.Div(
                                             [
                                                 html.H3(
                                                     "Options",
-                                                    className="text-center bg-secondary text-white",
+                                                    className="text-center bg-body-tertiary text-body-tertiary",
                                                 )
                                             ],
                                             style={
@@ -106,12 +106,17 @@ app.layout = html.Div(
                                                 "height": "100%",
                                                 "padding": "5px",
                                             },
-                                            className="bg-secondary card",
+                                            className="bg-body-tertiary card",
                                         )
-                                    ], style={
-                                        "width": "35%", "height": "100%", "display": "flex", "flexDirection": "column",
-                                        "padding-right": "5px", "padding-left": "0px"
-                                    }
+                                    ],
+                                    style={
+                                        "width": "35%",
+                                        "height": "100%",
+                                        "display": "flex",
+                                        "flexDirection": "column",
+                                        "padding-right": "5px",
+                                        "padding-left": "0px",
+                                    },
                                 ),
                                 html.Div(
                                     [
@@ -119,7 +124,7 @@ app.layout = html.Div(
                                             [
                                                 html.H3(
                                                     "Run from folder",
-                                                    className="text-center bg-secondary text-white",
+                                                    className="text-center bg-body-tertiary text-body-tertiary",
                                                     style={
                                                         "width": "100%",
                                                         "height": "30%",
@@ -164,7 +169,7 @@ app.layout = html.Div(
                                                 "height": "100%",
                                                 "padding": "5px",
                                             },
-                                            className="bg-secondary card",
+                                            className="bg-body-tertiary card",
                                         )
                                     ],
                                     style={
@@ -189,7 +194,7 @@ app.layout = html.Div(
                             [
                                 html.H3(
                                     "Unique Graph Viewer",
-                                    className="text-center bg-secondary text-white",
+                                    className="text-center bg-body-tertiary text-body-tertiary",
                                     style={
                                         "width": "100%",
                                         "height": "10%",
@@ -274,7 +279,7 @@ app.layout = html.Div(
                                 "height": "75%",
                                 "padding": "5px",
                             },
-                            className="bg-secondary card",
+                            className="bg-body-tertiary card",
                         ),
                     ],
                     style={
@@ -291,7 +296,7 @@ app.layout = html.Div(
                 "flexDirection": "column",
                 "width": "50%",
                 "padding": "10px",
-                "padding-right": "2.5px"
+                "padding-right": "2.5px",
             },
         ),
         html.Div(
@@ -300,7 +305,7 @@ app.layout = html.Div(
                     [
                         html.H3(
                             "PlantUML Output",
-                            className="text-center bg-secondary text-white",
+                            className="text-center bg-body-tertiary text-body-tertiary",
                             style={
                                 "width": "90%",
                                 "margin-left": "auto",
@@ -344,7 +349,7 @@ app.layout = html.Div(
                                         "margin-top": "auto",
                                         "margin-bottom": "auto",
                                     },
-                                    className="bg-secondary",
+                                    className="bg-body-tertiary",
                                 )
                             ],
                             style={"width": "100%", "height": "90%"},
@@ -357,7 +362,7 @@ app.layout = html.Div(
                         "height": "100%",
                         "padding": "5px",
                     },
-                    className="bg-secondary card",
+                    className="bg-body-tertiary card",
                 )
             ],
             style={
@@ -369,8 +374,44 @@ app.layout = html.Div(
             },
         ),
     ],
-    style={"display": "flex", "flexDirection": "row", "height": "100vh"},
+    style={
+        "display": "flex",
+        "flexDirection": "row",
+        "height": "100vh",
+        "width": "100%",
+    },
     className="bg-dark",
+)
+
+
+app.layout = html.Div(
+    [
+        html.Div(
+            [sidebar],
+            style={
+                "display": "flex",
+                "flexDirection": "row",
+                "height": "100%",
+                "width": "200px",
+                "flex-shrink": "0",
+            },
+        ),
+        html.Div(
+            [content],
+            style={
+                "display": "flex",
+                "flexDirection": "row",
+                "height": "100%",
+                "flex": "1",
+            },
+        ),
+    ],
+    style={
+        "display": "flex",
+        "flexDirection": "row",
+        "height": "100vh",
+        "width": "100%",
+    },
 )
 
 
@@ -416,7 +457,7 @@ def update_output(n_clicks, value):
         folder_names_and_paths[value], puml_path, keep_dummy_events=True
     )
     return_code = os.system(
-        f"java -jar plantuml-mit-1.2024.6.jar {puml_path} -tsvg"
+        f"java -jar {plantuml_jar_path} {puml_path} -tsvg"
     )
     if return_code != 0:
         raise dash.exceptions.PreventUpdate
@@ -500,6 +541,7 @@ def reset_axes(n_clicks, value) -> list[dict]:
             raise dash.exceptions.PreventUpdate
         value = 0
     return cyto_graph_elements[value]
+
 
 if __name__ == "__main__":
     app.run_server(debug=True)
