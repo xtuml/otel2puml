@@ -1,6 +1,6 @@
 @startuml
 
-struct OTelEvent {
+struct otel_ingestion.otel_data_model.OTelEvent {
     job_name: str
     job_id: str
     event_type: str
@@ -8,78 +8,111 @@ struct OTelEvent {
     start_timestamp: str
     end_timestamp: str
     application_name: str
-    parent_event_id: str
+    parent_event_id: Optional[str]
     child_event_ids: Optional[list[str], None]
 }
 
-abstract class OTELDataSource {
-    #yaml_config: dict[str, Any]
-    #valid_data_sources: list[str]
-    #data_source: str
-    +__init__(): None
+abstract class otel_ingestion.otel_data_source.OTELDataSource {
     +__iter__(): Self
     +__next__(): OTelEvent
-    +get_yaml_config(): Any
-    +set_file_ext(): str
 }
 
-class JSONDataSource {
+class otel_ingestion.otel_data_source.JSONDataSource {
+    #config: JSONDataSourceConfig
     #current_file_index: int
     #current_parser: Iterator[OTelEvent] | None
     #dirpath : str
     #filepath: str
     #file_list: list[str]
     +__init__(): None
-    +__iter__(): Self
     +__next__(): OTelEvent
     +parse_json_stream(filepath: str): Iterator[OTelEvent]
     +create_otel_object(record: dict[str, Any]): OTelEvent
     +set_dirpath(): str | None
     +set_filepath(): str | None
     +get_file_list(): list[str]
+    +process_record(record: dict[str, Any]): Iterator[OTelEvent]
 }
 
-class SQLDataHolder {
+class otel_ingestion.otel_data_holder.SQLDataHolder {
     #data_to_save: list<OTelEvent>
     #batch_size: int
     #engine: str
     +create_db_tables(): None
 }
 
-class NodeModel {
+class otel_ingestion.otel_data_model.NodeModel {
+    id: int
     job_name: str
     job_id: str
     event_type: str
     event_id: str
-    start_timestamp: str
-    end_timestamp: str
+    start_timestamp: datetime
+    end_timestamp: datetime
     application_name: str
     parent_event_id: str
     child_event_ids: Optional[list[str], None]
 }
 
-class Base {
+class otel_ingestion.otel_data_model.Base {
     ""SQLAlchemy declarative base class""
 }
 
-abstract class DataHolder {
+abstract class otel_ingestion.otel_data_holder.DataHolder {
     +save_data(OTelEvent): None
 }
 
-class IngestData {
+class otel_ingestion.ingest_data.IngestData {
     #otel_data_source : OTELDataSource
     #data_holder : DataHolder
     +load_to_data_holder(): None
 }
 
-IngestData ..> OTELDataSource
-IngestData ..> DataHolder
-OTELDataSource ..> OTelEvent
-JSONDataSource --> OTELDataSource
-SQLDataHolder --> DataHolder
-SQLDataHolder ..> NodeModel
-NodeModel --> Base
-DataHolder ..> OTelEvent
+class otel_ingestion.otel_data_model.JSONDataSourceConfig {
+    filepath: str
+    dirpath: str
+    data_location: str
+    header: dict[str, HeaderSpec]
+    span_mapping: dict[str, SpanSpec]
+    field_mapping: dict[str, FieldSpec]
+}
 
+class otel_ingestion.otel_data_model.HeaderSpec {
+    paths: list[str]
+}
 
+class otel_ingestion.otel_data_model.SpanSpec {
+    key_paths: list[str]
+}
+
+class otel_ingestion.otel_data_model.FieldSpec {
+    key_paths: list[str]
+    key_value: Optional[list[Optional[str]]]
+    value_paths: Optional[list[Optional[str]]]
+    value_type: Union[str, int]
+}
+
+otel_ingestion.ingest_data.IngestData ..> otel_ingestion.otel_data_source.OTELDataSource
+
+otel_ingestion.ingest_data.IngestData ..> otel_ingestion.otel_data_holder.DataHolder
+
+otel_ingestion.otel_data_source.OTELDataSource ..> otel_ingestion.otel_data_model.OTelEvent
+
+otel_ingestion.otel_data_source.JSONDataSource --> otel_ingestion.otel_data_source.OTELDataSource
+
+otel_ingestion.otel_data_holder.SQLDataHolder --> otel_ingestion.otel_data_holder.DataHolder
+
+otel_ingestion.otel_data_holder.SQLDataHolder ..> otel_ingestion.otel_data_model.NodeModel
+
+otel_ingestion.otel_data_model.NodeModel --> otel_ingestion.otel_data_model.Base
+
+otel_ingestion.otel_data_holder.DataHolder ..> otel_ingestion.otel_data_model.OTelEvent
+
+otel_ingestion.otel_data_source.JSONDataSource ..> otel_ingestion.otel_data_model.JSONDataSourceConfig
+
+otel_ingestion.otel_data_model.JSONDataSourceConfig ..> otel_ingestion.otel_data_model.HeaderSpec
+
+otel_ingestion.otel_data_model.JSONDataSourceConfig ..> otel_ingestion.otel_data_model.SpanSpec
+
+otel_ingestion.otel_data_model.JSONDataSourceConfig ..> otel_ingestion.otel_data_model.FieldSpec
 @enduml
