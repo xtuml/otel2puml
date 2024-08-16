@@ -46,7 +46,7 @@ class OTelEvent(NamedTuple):
     start_timestamp: str
     end_timestamp: str
     application_name: str
-    parent_event_id: str
+    parent_event_id: Optional[str, None]
     child_event_ids: Optional[list[str], None]
 
 class OTELDataSource(ABC):
