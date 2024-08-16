@@ -135,3 +135,11 @@ class JSONDataSourceConfig(TypedDict):
     header: dict[str, HeaderSpec]
     span_mapping: dict[str, SpanSpec]
     field_mapping: dict[str, FieldSpec]
+
+
+class SQLDataHolderConfig(TypedDict):
+    """Typed dict for SQLDataHolderConfig."""
+
+    db_uri: str
+    batch_size: int
+    time_buffer: int
