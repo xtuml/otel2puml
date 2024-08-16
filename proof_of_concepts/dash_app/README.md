@@ -16,9 +16,9 @@ pip install -r requirements_app.txt
 
 ## Usage
 
-To run the Dash app, run the following command in the terminal:
+To run the Dash app, run the following command in the terminal from the root of the repository:
 ```bash
-python app.py <path_to_folder_of_jobs> <path_to_plantuml_jar>
+python proof_of_concepts/dash_app/app.py <path_to_folder_of_jobs> <path_to_plantuml_jar>
 ```
 
 * You will need to point to a folder that contains folders holding linked sequences of PV events in separate json files.
