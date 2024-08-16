@@ -52,7 +52,7 @@ class OTelEvent(NamedTuple):
 class OTELDataSource(ABC):
     """Abstract class for returning a OTelEvent object from a data source."""
     
-    def __iter__(self) -> self:
+    def __iter__(self) -> Self:
         """Returns the iterator object.
 
         :return: The iterator object
@@ -68,15 +68,76 @@ class OTELDataSource(ABC):
         :rtype: :class: `OTelEvent`
         """
 
-
 class JSONDataSource(OTELDataSource):
     """A class to handle OTel Data in JSON format"""
+
+    def __init__(self) -> None:
+        """Constructor method."""
+        super().__init__()
+        self.current_file_index: int
+        self.current_parser: Iterator[OTelEvent] | None
+        self.dirpath : str
+        self.filepath: str
+        self.file_list: list[str]
 
     def __next__(self) -> OTelEvent:
         """Returns the next item in the sequence.
         
         :return: The next OTelEvent in the sequence
         :rtype: :class: `OTelEvent`
+        """
+    
+    def parse_json_stream(self, filepath: str) -> Iterator[OTelEvent]:
+        """Function that parses a json file, maps the json to the application
+        structure through the config specified in the config.yaml file.
+        ijson iteratively parses the json file so that large files can be
+        processed.
+
+        :param filepath: The path to the JSON file to parse
+        :return: An iterator of tuples containing OTelEvent and header
+        :rtype: `Iterator`[:class:`OTelEvent`]
+        """
+        pass
+
+    def create_otel_object(self, record: dict[str, Any]) -> OTelEvent:
+        """Creates an OTelEvent object from a JSON record.
+
+        :return: OTelEvent object
+        :rtype: :class:`OTelEvent`
+        """
+        pass
+
+    def set_dirpath(self) -> str | None:
+        """Set the directory path.
+
+        :return: The directory path
+        :rtype: `str`
+        """
+        pass
+
+    def set_filepath(self) -> str | None:
+        """Set the filepath.
+
+        :return: The filepath
+        :rtype: `str`
+        """
+        pass
+
+    def get_file_list(self) -> list[str]:
+        """Get a list of filepaths to process.
+
+        :return: A list of filepaths.
+        :rtype: `list`[`str`]
+        """
+        pass
+
+    def process_record(self, record: dict[str, Any]) -> Iterator[OTelEvent]:
+        """Process a single record and yield OTelEvent objects.
+
+        :param record: The record to process
+        :type record: `dict`[`str`,`Any`]
+        :return: An iterator of tuples containing OTelEvent and header
+        :rtype: `Iterator`[:class: `OTelEvent`]
         """
 
 class DataHolder(ABC):

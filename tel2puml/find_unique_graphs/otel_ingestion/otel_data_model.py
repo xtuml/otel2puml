@@ -1,6 +1,6 @@
 """Module containing classes to ingest OTel data into a data holder."""
 
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, TypedDict, Union
 
 from sqlalchemy import (
     Column,
@@ -32,7 +32,7 @@ class OTelEvent(NamedTuple):
     :param application_name: The application name.
     :type application_name: `str`
     :param parent_event_id: The ID of the parent event.
-    :type parent_event_id: `str`
+    :type parent_event_id: `Optional`[`str`]
     :param child_event_ids: A list of IDs of child events. Defaults to `None`
     :type child_event_ids: Optional[`list`[`str`]]
     """
@@ -44,12 +44,13 @@ class OTelEvent(NamedTuple):
     start_timestamp: str
     end_timestamp: str
     application_name: str
-    parent_event_id: str
+    parent_event_id: Optional[str]
     child_event_ids: Optional[list[str]] = None
 
 
 class Base(DeclarativeBase):
     """Base class for SQLAlchemy models"""
+
     pass
 
 
@@ -102,3 +103,35 @@ class NodeModel(Base):
         child_event_ids='{[child.event_id for child in self.children]}'
         )>
         """
+
+
+class HeaderSpec(TypedDict):
+    """Typed dict for HeaderSpec."""
+
+    paths: list[str]
+
+
+class SpanSpec(TypedDict):
+    """Typed dict for SpanSpec."""
+
+    key_paths: list[str]
+
+
+class FieldSpec(TypedDict):
+    """Typed dict for FieldSpec."""
+
+    key_paths: list[str]
+    key_value: Optional[list[Optional[str]]]
+    value_paths: Optional[list[Optional[str]]]
+    value_type: Union[str, int]
+
+
+class JSONDataSourceConfig(TypedDict):
+    """Typed dict for JSONDataSourceConfig."""
+
+    filepath: str
+    dirpath: str
+    data_location: str
+    header: dict[str, HeaderSpec]
+    span_mapping: dict[str, SpanSpec]
+    field_mapping: dict[str, FieldSpec]
