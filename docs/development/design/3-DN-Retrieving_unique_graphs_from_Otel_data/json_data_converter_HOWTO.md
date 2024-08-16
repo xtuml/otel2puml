@@ -1,27 +1,40 @@
 # Configuring tel2puml/find_unique_graphs
 
 ## Table of Contents
-1. Introduction
-2. Configuration File Structure
-3. Understanding Configuration Settings
-   3.1 Path Structure Explanation 
-   3.2 data_location
-   3.3 header
-   3.4 span_mapping
-   3.5 field_mapping
-   3.6 value_type attribute
-4. Detailed Examples
-   4.1 Simple span attribute
-   4.2 Referencing a header attribute
-   4.3 Complex field mapping
-6. Troubleshooting
-7. Conclusion and Next Steps
+<!-- TABLE OF CONTENTS -->
+<details>
+  <summary>Table of Contents</summary>
+  <ol>
+    <li><a href="#1-introduction">1. Introduction</a></li>
+    <li><a href="#2-configuration-file-structure">2. Configuration File Structure</a></li>
+    <li><a href="#3-understanding-configuration-settings">3. Understanding Configuration Settings</a>
+      <ol>
+        <li><a href="#31-understanding-the-path-structure">3.1 Understanding the path structure</a></li>
+        <li><a href="#32-data_location">3.2 data_location</a></li>
+        <li><a href="#33-header">3.3 header</a></li>
+        <li><a href="#34-span_mapping">3.4 span_mapping</a></li>
+        <li><a href="#35-field_mapping">3.5 field_mapping</a></li>
+        <li><a href="#36-value_type-attribute">3.6 value_type attribute</a></li>
+      </ol>
+    </li>
+    <li><a href="#4-examples">4. Examples</a>
+      <ol>
+        <li><a href="#example-1-simple-span-attribute">Example 1: Simple span attribute</a></li>
+        <li><a href="#example-2-referencing-a-header-attribute">Example 2: Referencing a header attribute</a></li>
+        <li><a href="#example-3-complex-field-mapping">Example 3: Complex field mapping</a></li>
+      </ol>
+    </li>
+    <li><a href="#5-troubleshooting">5.0 Troubleshooting</a></li>
+  </ol>
+</details>
 
-# 1.0 Introduction
+
+
+## 1. Introduction
 This guide will walk you through the process of configuring json_data_converter to correctly parse your JSON telemetry data and map it to the required output format.
 
 
-## 2.0 Configuration File Structure
+## 2. Configuration File Structure
 
 The configuration for tel2puml/find_unique_graphs is defined in a YAML file named `config.yaml`. This file specifies how to locate and interpret your telemetry data. Here's the basic structure:
 
@@ -52,7 +65,7 @@ data_sources:
             child_event_ids:
 ```
 
-## 3.0 Understanding Configuration Settings
+## 3. Understanding Configuration Settings
 
 The following JSON data will be used within the examples below:
 
@@ -229,7 +242,7 @@ Currently the following two value types are supported
 * string
 * unix_nano (represents date in unix nano format eg. 1723544132228102912)
 
-## 4.0 Examples
+## 4. Examples
 
 ### Example 1: Simple span attribute
 
@@ -300,7 +313,7 @@ event_type:
     value_type: string
 ```
 
-## 5.0 Troubleshooting
+## 5. Troubleshooting
 
 Common issues and solutions:
 
