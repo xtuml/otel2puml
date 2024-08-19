@@ -84,8 +84,8 @@ class NodeModel(Base):
     children = relationship(
         "NodeModel",
         secondary=NODE_ASSOCIATION,
-        primaryjoin=(id == NODE_ASSOCIATION.c.parent_id),
-        secondaryjoin=(id == NODE_ASSOCIATION.c.child_id),
+        primaryjoin=(event_id == NODE_ASSOCIATION.c.parent_id),
+        secondaryjoin=(event_id == NODE_ASSOCIATION.c.child_id),
         backref="parents",
     )
 
