@@ -1,0 +1,14 @@
+@startuml
+partition "multiple same event AND with extra branch" {
+    group "multiple same event AND with extra branch"
+        #green:A,BCNT,user=A,name=BC1;
+        fork
+            :B;
+            :C;
+        fork again
+            :E;
+        end fork
+        #red:D;
+    end group
+}
+@enduml

@@ -584,6 +584,7 @@ def test_update_tree_with_repeat_logic() -> None:
 
 def test_calculate_repeats_in_tree() -> None:
     """Tests for method find_branches_in_process_tree"""
+    # test case with fixed repeat of same event
     event_sets = {
         EventSet(["B", "B"]),
         EventSet(["C", "D"]),
@@ -597,21 +598,27 @@ def test_calculate_repeats_in_tree() -> None:
     )
 
     assert (
-        logic_gate_tree_with_branches.operator.value
+        logic_gate_tree_with_branches.operator.value == Operator.BRANCH.value
+    )
+    (logic_gate_tree_with_branches_child,) = (
+        logic_gate_tree_with_branches.children
+    )
+    assert (
+        logic_gate_tree_with_branches_child.operator.value
         == Operator.XOR.value
     )
-    labels_b = ["B", "B"]
+    labels_b = ["B"]
     labels_cd = ["D", "C"]
-    for child_and in logic_gate_tree_with_branches.children:
-        assert child_and.operator.value == Operator.PARALLEL.value
-        for child in child_and.children:
-            if child.label == "B":
-                labels_b.remove(child.label)
-            else:
+    for child_and in logic_gate_tree_with_branches_child.children:
+        if child_and.label == "B":
+            labels_b.remove(child_and.label)
+        else:
+            assert child_and.operator.value == Operator.PARALLEL.value
+            for child in child_and.children:
                 labels_cd.remove(child.label)
     assert len(labels_b) == 0
     assert len(labels_cd) == 0
-
+    # test a simple branch case with data that has a repeat
     event_sets = {
         EventSet(["B", "B"]),
         EventSet(["B"]),
@@ -631,7 +638,7 @@ def test_calculate_repeats_in_tree() -> None:
     )
     child, = logic_gate_tree_with_branches.children
     assert child.label == "B"
-
+    # test a case with a branch and multiple repeating event sets
     event_sets = {
         EventSet(["B", "B", "B"]),
         EventSet(["B", "B"]),
@@ -652,7 +659,7 @@ def test_calculate_repeats_in_tree() -> None:
     )
     child, = logic_gate_tree_with_branches.children
     assert child.label == "B"
-
+    # test case with branch of B but also XOR's to AND of C and D
     event_sets = {
         EventSet(["C", "D"]),
         EventSet(["B", "B"]),
@@ -938,9 +945,9 @@ def test_get_logic_from_repeated_event_puml_file() -> None:
     # check B logic trees
     assert (
         events_forward_logic["B"].logic_gate_tree.operator.value
-        == Operator.PARALLEL.value
+        == Operator.BRANCH.value
     )
-    following_b_events = ["D", "D", "D"]
+    following_b_events = ["D"]
     for child in events_forward_logic["B"].logic_gate_tree.children:
         assert child.label in following_b_events
         following_b_events.remove(child.label)
@@ -956,17 +963,18 @@ def test_get_logic_from_repeated_event_puml_file() -> None:
     assert events_forward_logic["E"].logic_gate_tree is None
     assert (
         events_backward_logic["E"].logic_gate_tree.operator.value
-        == Operator.XOR.value
+        == Operator.BRANCH.value
     )
-    preceding_e_events = ["C", "D", "D", "D"]
-    for child in events_backward_logic["E"].logic_gate_tree.children:
+    backwards_e_xor = events_backward_logic["E"].logic_gate_tree.children[0]
+    assert (
+        backwards_e_xor.operator.value == Operator.XOR.value
+    )
+    preceding_e_events = ["C", "D"]
+    for child in backwards_e_xor.children:
         if child.label == "C":
             preceding_e_events.remove(child.label)
-        else:
-            assert child.operator.value == Operator.PARALLEL.value
-            for grandchild in child.children:
-                assert grandchild.label in preceding_e_events
-                preceding_e_events.remove(grandchild.label)
+        if child.label == "D":
+            preceding_e_events.remove(child.label)
     assert len(preceding_e_events) == 0
 
 

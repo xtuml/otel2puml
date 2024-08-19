@@ -7,13 +7,21 @@ Tests a basic AND constraint
 
 ![](/end-to-end-pumls/constraints/simple/AND/simple_AND.svg)
 ### Multiple same events
-Tests multiple of the same event coming from the same source
+Tests multiple of the same event coming from the same source (should provide a branch count)
 
 #### Simple
 ![](/end-to-end-pumls/constraints/simple/AND/multiple_same_event_AND.svg)
 
+equivalent to
+
+![](/end-to-end-pumls/constraints/simple/AND/multiple_same_event_AND_equiv.svg)
+
 #### Extra branch merging in
 ![](/end-to-end-pumls/constraints/simple/AND/multiple_same_event_AND_with_extra_branch.svg)
+
+equivalent to
+
+![](/end-to-end-pumls/constraints/simple/AND/multiple_same_event_AND_with_extra_branch_equiv.svg)
 
 ### Merge at correct event
 Tests that the merge event is the correct event
