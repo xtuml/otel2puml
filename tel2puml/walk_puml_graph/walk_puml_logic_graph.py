@@ -349,7 +349,9 @@ def create_puml_graph_from_node_class_graph(
             " PUMLGraph"
         )
     previous_puml_node: PUMLNode = puml_graph.create_event_node(
-        head_node.event_type
+        head_node.event_type,
+        head_node.get_puml_event_types(),
+        parent_graph_node=head_node.uid,
     )
     previous_node_class: Node = head_node
     logic_list: list[LogicBlockHolder] = []

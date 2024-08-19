@@ -286,14 +286,6 @@ class Event:
 
         self.in_event_sets.add(EventSet(events))
 
-    def get_reduced_in_event_set(self) -> set[frozenset[str]]:
-        """This method reduces the event set to a list of unique events.
-
-        :return: The reduced event set.
-        :rtype: `list`[`str`]
-        """
-        return {event_set.to_frozenset() for event_set in self.in_event_sets}
-
     def get_event_set_counts(self) -> dict[str, set[int]]:
         """Method to get the event set counts.
 
