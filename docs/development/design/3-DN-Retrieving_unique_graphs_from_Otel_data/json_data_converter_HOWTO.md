@@ -35,27 +35,6 @@ This document is a guide to configure json_data_converter to correctly parse JSO
 
 ```python
 class OTelEvent(NamedTuple):
-    """Named tuple for OTel event.
-
-    :param job_name: The name of the job.
-    :type job_name: `str`
-    :param job_id: The ID of the job.
-    :type job_id: `str`
-    :param event_type: The type of the event.
-    :type event_type: `str`
-    :param event_id: The ID of the event.
-    :type event_id: `str`
-    :param start_timestamp: The start timestamp of the event.
-    :type start_timestamp: `str`
-    :param end_timestamp: The end timestamp of the event.
-    :type end_timestamp: `str`
-    :param application_name: The application name.
-    :type application_name: `str`
-    :param parent_event_id: The ID of the parent event.
-    :type parent_event_id: `Optional`[`str`]
-    :param child_event_ids: A list of IDs of child events. Defaults to `None`
-    :type child_event_ids: Optional[`list`[`str`]]
-    """
 
     job_name: str
     job_id: str
@@ -187,7 +166,7 @@ Conversely with `scope_spans::scope:name`, `scope_spans` is an array, so `::` is
 ### 3.2 data_location
 The `data_location` field specifies where the main data array/object is located in the JSON structure. This is typically at the root of the telemetry data.
 
-For the [JSON example](#json-example), the main data array is located within `scope_spans`:
+For the [JSON example](#json-example), the main data array is located within `resource_spans`:
 ```yaml
 data_location: resource_spans
 ```
@@ -342,9 +321,13 @@ Currently the following two value types are supported:
 To extract `trace_id` from the [JSON example](#json-example) and map it to `job_id`:
 
 ```yaml
-job_id:
-    key_paths: [trace_id]
-    value_type: string
+span_mapping:
+  spans:
+    key_paths: [scope_spans::spans]
+field_mapping:
+    job_id:
+        key_paths: [trace_id]
+        value_type: string
 ```
 
 Note the fields `key_value` and `value_paths` are not required as trace_id is a singular key-value pair.
@@ -387,11 +370,17 @@ The following json can now be referenced within field_mapping:
 To map `Test App` within the [JSON example](#json-example) to `application_name`:
 
 ```yaml
-application_name:
-    key_paths: [HEADER:resource:attributes::key]
-    key_value: [service.name]
-    value_paths: [value:Value:StringValue]
-    value_type: string
+header:
+    paths: [resource:attributes] 
+span_mapping:
+  spans:
+    key_paths: [scope_spans::spans]
+field_mapping:
+    application_name:
+        key_paths: [HEADER:resource:attributes::key]
+        key_value: [service.name]
+        value_paths: [value:Value:StringValue]
+        value_type: string
 ```
 
 ### Example 3: Complex field mapping
@@ -399,6 +388,9 @@ application_name:
 For more complex scenarios, such as concatenating multiple values, paths and values are added to a list:
 
 ```yaml
+span_mapping:
+  spans:
+    key_paths: [scope_spans::spans]
 event_type:
     key_paths: [attributes::key, attributes::key]
     key_value: [http.method, http.response]
