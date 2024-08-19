@@ -5,23 +5,23 @@
 <details>
   <summary>Table of Contents</summary>
   <ol>
-    <li><a href="#1-introduction">1. Introduction</a></li>
-    <li><a href="#2-configuration-file-structure">2. Configuration File Structure</a></li>
-    <li><a href="#3-understanding-configuration-settings">3. Understanding Configuration Settings</a>
+    <li><a href="#1-introduction">Introduction</a></li>
+    <li><a href="#2-configuration-file-structure">Configuration File Structure</a></li>
+    <li><a href="#3-understanding-configuration-settings">Understanding Configuration Settings</a>
       <ol>
-        <li><a href="#31-understanding-the-path-structure">3.1 Understanding the path structure</a></li>
-        <li><a href="#32-data_location">3.2 data_location</a></li>
-        <li><a href="#33-header">3.3 header</a></li>
-        <li><a href="#34-span_mapping">3.4 span_mapping</a></li>
-        <li><a href="#35-field_mapping">3.5 field_mapping</a></li>
-        <li><a href="#36-value_type-attribute">3.6 value_type attribute</a></li>
+        <li><a href="#31-understanding-the-path-structure">Understanding the path structure</a></li>
+        <li><a href="#32-data_location">data_location</a></li>
+        <li><a href="#33-header">header</a></li>
+        <li><a href="#34-span_mapping">span_mapping</a></li>
+        <li><a href="#35-field_mapping">field_mapping</a></li>
+        <li><a href="#36-value_type-attribute">value_type attribute</a></li>
       </ol>
     </li>
-    <li><a href="#4-examples">4. Examples</a>
+    <li><a href="#4-examples">Examples</a>
       <ol>
-        <li><a href="#example-1-simple-span-attribute">Example 1: Simple span attribute</a></li>
-        <li><a href="#example-2-referencing-a-header-attribute">Example 2: Referencing a header attribute</a></li>
-        <li><a href="#example-3-complex-field-mapping">Example 3: Complex field mapping</a></li>
+        <li><a href="#example-1-simple-field-mapping">Simple field mapping</a></li>
+        <li><a href="#example-2-referencing-a-header-attribute">Referencing a header attribute</a></li>
+        <li><a href="#example-3-complex-field-mapping">Complex field mapping</a></li>
       </ol>
     </li>
     <li><a href="#5-troubleshooting">5.0 Troubleshooting</a></li>
