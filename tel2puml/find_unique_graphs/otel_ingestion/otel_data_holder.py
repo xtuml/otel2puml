@@ -1,7 +1,5 @@
 """Module containing classes to save processed OTel data into a data holder."""
 
-import yaml
-
 from datetime import datetime
 from abc import ABC, abstractmethod
 
