@@ -126,7 +126,7 @@ def check_eventsets_indicate_branch_for_set_of_event_types(
         unique_nums = list(df[start_event_type].dropna().unique())
         if 0 in unique_nums:
             unique_nums.remove(0)
-        if len(unique_nums) > 1:
+        if max(unique_nums) > 1:
             return True
     return False
 
