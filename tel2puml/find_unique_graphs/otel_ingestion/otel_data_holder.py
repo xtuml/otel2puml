@@ -22,11 +22,17 @@ class DataHolder(ABC):
 
     @abstractmethod
     def save_data(self, otel_event: OTelEvent) -> None:
-        """Method for batching and saving OTel data.
+        """Abstract method for batching and saving OTel data.
 
         :param otel_event: An OTelEvent object
         :type otel_event: :class: `OTelEvent`
         """
+        pass
+
+    @abstractmethod
+    def clean_up(self) -> None:
+        """Abstract method for any clean up tasks."""
+
         pass
 
 
@@ -62,9 +68,6 @@ class SQLDataHolder(DataHolder):
 
         if len(self.node_models_to_save) >= self.batch_size:
             self.commit_batched_data_to_database()
-            # Reset batch
-            self.node_models_to_save = []
-            self.node_relationships_to_save = []
 
     def commit_batched_data_to_database(self) -> None:
         """Method to commit batched node models, and their relationships to
@@ -74,15 +77,18 @@ class SQLDataHolder(DataHolder):
         try:
             self.batch_insert_node_models()
             self.batch_insert_node_associations()
+            # Reset batch
+            self.node_models_to_save = []
+            self.node_relationships_to_save = []
         except OperationalError as e:
-            print(f"Database operational error: {e}")
             self.session.rollback()
+            raise OperationalError(f"Database operational error: {e}")
         except IntegrityError as e:
-            print(f"Data integrity error: {e}")
             self.session.rollback()
+            raise IntegrityError(f"Data integrity error: {e}")
         except Exception as e:
-            print(f"Unexpected error during data saving: {e}")
             self.session.rollback()
+            raise Exception(f"Unexpected error during data saving: {e}")
 
     def batch_insert_node_models(self) -> None:
         """Method to batch insert NodeModel objects into database."""
@@ -94,7 +100,7 @@ class SQLDataHolder(DataHolder):
     def batch_insert_node_associations(self) -> None:
         """Method to batch insert node associations into database."""
 
-        if self.node_relationships_to_save:
+        if len(self.node_relationships_to_save) > 0:
             with self.session as session:
                 stmt = insert(NODE_ASSOCIATION)
                 session.execute(stmt, self.node_relationships_to_save)
@@ -140,3 +146,10 @@ class SQLDataHolder(DataHolder):
             application_name=otel_event.application_name,
             parent_event_id=otel_event.parent_event_id or None,
         )
+
+    def clean_up(self) -> None:
+        """Method to save commit remaining items within the batch to the
+        database.
+        """
+
+        self.commit_batched_data_to_database()
