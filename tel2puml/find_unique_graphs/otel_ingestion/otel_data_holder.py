@@ -39,14 +39,18 @@ class SQLDataHolder(DataHolder):
     """A class to handle saving data in SQL databases using SQLAlchemy."""
 
     def __init__(self, config: SQLDataHolderConfig) -> None:
-        """Constructor method."""
+        """Constructor method.
+
+        :param config: Configuration parameters.
+        :type config: :class: `SQLDataHolderConfig`
+        """
 
         self.node_models_to_save: list[NodeModel] = []
         self.node_relationships_to_save: list[dict[str, str]] = []
         self.batch_size: int = config["batch_size"]
         self.engine: Engine = create_engine(config["db_uri"], echo=False)
         self.session: Session = Session(bind=self.engine)
-        self.base = Base()
+        self.base: Base = Base()
         self.create_db_tables()
 
     def create_db_tables(self) -> None:

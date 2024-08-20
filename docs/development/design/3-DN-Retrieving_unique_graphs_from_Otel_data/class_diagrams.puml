@@ -35,10 +35,20 @@ class otel_ingestion.otel_data_source.JSONDataSource {
 }
 
 class otel_ingestion.otel_data_holder.SQLDataHolder {
-    #data_to_save: list<OTelEvent>
+    #node_models_to_save: list<NodeModel>
+    #node_relationships_to_save: list[dict[str, str]]
     #batch_size: int
     #engine: str
+    #session: Session
+    #base: Base
     +create_db_tables(): None
+    +save_data(OTelEvent): None
+    +commit_batched_data_to_database(): None
+    +batch_insert_node_models(): None
+    +batch_insert_node_associations(): None
+    +add_node_relations(OTelEvent): None
+    +convert_otel_event_to_node_model(OTelEvent): NodeModel
+    +clean_up(): None
 }
 
 class otel_ingestion.otel_data_model.NodeModel {
@@ -50,7 +60,7 @@ class otel_ingestion.otel_data_model.NodeModel {
     start_timestamp: datetime
     end_timestamp: datetime
     application_name: str
-    parent_event_id: str
+    parent_event_id: Optional[str]
     child_event_ids: Optional[list[str], None]
 }
 
@@ -60,6 +70,7 @@ class otel_ingestion.otel_data_model.Base {
 
 abstract class otel_ingestion.otel_data_holder.DataHolder {
     +save_data(OTelEvent): None
+    +clean_up(): None
 }
 
 class otel_ingestion.ingest_data.IngestData {
