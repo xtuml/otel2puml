@@ -1,14 +1,11 @@
 """Module containing classes to ingest OTel data into a data holder."""
 
 from typing import NamedTuple, Optional, TypedDict, Union
-from datetime import datetime
 
 from sqlalchemy import (
     Column,
     String,
     ForeignKey,
-    DateTime,
-    func,
     Table,
     Integer,
 )
@@ -26,10 +23,10 @@ class OTelEvent(NamedTuple):
     :type event_type: `str`
     :param event_id: The ID of the event.
     :type event_id: `str`
-    :param start_timestamp: The start timestamp of the event.
-    :type start_timestamp: :class: `datetime`
-    :param end_timestamp: The end timestamp of the event.
-    :type end_timestamp: :class: `datetime`
+    :param start_timestamp: The start timestamp of the event in unix nano.
+    :type start_timestamp: `int`
+    :param end_timestamp: The end timestamp of the event in unix nano.
+    :type end_timestamp: :class: `int`
     :param application_name: The application name.
     :type application_name: `str`
     :param parent_event_id: The ID of the parent event.
@@ -42,8 +39,8 @@ class OTelEvent(NamedTuple):
     job_id: str
     event_type: str
     event_id: str
-    start_timestamp: datetime
-    end_timestamp: datetime
+    start_timestamp: int
+    end_timestamp: int
     application_name: str
     parent_event_id: Optional[str]
     child_event_ids: Optional[list[str]] = None
@@ -75,12 +72,8 @@ class NodeModel(Base):
     job_id = Column(String, nullable=False)
     event_type = Column(String, nullable=False)
     event_id = Column(String, unique=True, nullable=False)
-    start_timestamp = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    end_timestamp = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    start_timestamp = Column(Integer, nullable=False)
+    end_timestamp = Column(Integer, nullable=False)
     application_name = Column(String, nullable=False)
     parent_event_id = Column(String, ForeignKey("nodes.event_id"))
 

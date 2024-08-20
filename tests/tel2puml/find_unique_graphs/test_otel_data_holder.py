@@ -90,7 +90,9 @@ class TestSQLDataHolder:
             holder, "commit_batched_data_to_database"
         ) as mock_commit:
             for _ in range(10):
-                holder.save_data(mock_otel_event)
+                holder.save_data(
+                    mock_otel_event, 1023544154817793024, 2723544154817793024
+                )
             assert len(holder.node_models_to_save) == 10
             mock_commit.assert_called_once()
 
@@ -149,19 +151,19 @@ class TestSQLDataHolder:
             job_id="123",
             event_type="test_event_B",
             event_id="101",
-            start_timestamp=datetime(
-                2024, 8, 13, 10, 15, 32, 218219, tzinfo=timezone.utc
-            ),
-            end_timestamp=datetime(
-                2024, 8, 13, 10, 15, 32, 228219, tzinfo=timezone.utc
-            ),
+            start_timestamp=1723544154817893024,
+            end_timestamp=1723544154817798024,
             application_name="test_app",
             parent_event_id="456",
         )
 
         holder = SQLDataHolder(mock_sql_config)
-        holder.save_data(mock_otel_event)
-        holder.save_data(child_otel_event)
+        holder.save_data(
+            mock_otel_event, 1723544144817993024, 1723544164817993024
+        )
+        holder.save_data(
+            child_otel_event, 1723544144817993024, 1723544164817993024
+        )
         holder.clean_up()
 
         # Retrieve the data and check if it's correct
@@ -172,12 +174,8 @@ class TestSQLDataHolder:
             assert node.job_id == "123"
             assert node.event_type == "test_event"
             assert node.event_id == "456"
-            assert node.start_timestamp == datetime(
-                2024, 8, 13, 10, 15, 32, 228102
-            )
-            assert node.end_timestamp == datetime(
-                2024, 8, 13, 10, 15, 32, 228219
-            )
+            assert node.start_timestamp == 1723544154817793024
+            assert node.end_timestamp == 1723544154817993024
             assert node.application_name == "test_app"
 
             child_node = (

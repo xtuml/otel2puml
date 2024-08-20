@@ -3,7 +3,6 @@
 import flatdict
 
 from typing import Any, Literal
-from datetime import datetime, timezone
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     JSONDataSourceConfig,
@@ -506,77 +505,21 @@ def _add_or_append_value(
     :param result: The mapped data
     :type result: `dict`[`str`, `Any`]
     :param value_type: The field type
-    :return value_type: `str`
+    :type value_type: `str`
     """
-    if value_type == "unix_nano" and isinstance(value, int):
-        _add_datetime_object_to_result(field_name, result, value)
+    if value_type == "unix_nano":
+        if not isinstance(value, int):
+            raise TypeError(
+                f"Datetime should be of type 'int', got '{type(value)}'."
+            )
     else:
         if not isinstance(value, str):
             value = str(value)
-        _add_string_to_result(
-            field_name,
-            result,
-            value,
-        )
-
-
-def _add_string_to_result(
-    field_name: str, result: dict[str, Any], value: str
-) -> None:
-    """Function to add a string to the result dict.
-
-    :param field_name: The field name within the mapping config
-    :type field_name: `str`
-    :param result: The mapped data
-    :type result: `dict`[`str`, `Any`]
-    :param value: The value pulled from the JSON data
-    :type value: `str`
-    """
 
     if field_name not in result:
         result[field_name] = value
     else:
         result[field_name] += f" {value}"
-
-
-def _add_datetime_object_to_result(
-    field_name: str, result: dict[str, Any], value: int
-) -> None:
-    """Function to add a datetime object to the result dict.
-
-    :param field_name: The field name within the mapping config
-    :type field_name: `str`
-    :param result: The mapped data
-    :type result: `dict`[`str`, `Any`]
-    :param value: The value pulled from the JSON data
-    :type value: `str`
-    """
-
-    datetime_object: datetime | str = _unix_nano_to_datetime_str(value)
-
-    if field_name not in result:
-        result[field_name] = datetime_object
-    else:
-        raise ValueError(
-            "Cannot append datetime object to string. "
-            "Dates must be used by themselves wtihin the config."
-        )
-
-
-def _unix_nano_to_datetime_str(unix_nano: int) -> datetime:
-    """Function to process time from unix nano to datetime string.
-
-    :param unix_nano: The time in unix nano format
-    :type unix_nano: `int`
-    :return: The time as a datetime object to microsecond precision
-    :rtype: :class: :class: `datetime`
-    """
-    seconds = unix_nano // 1000000000
-    nanoseconds = unix_nano % 1000000000
-
-    return datetime.fromtimestamp(seconds, tz=timezone.utc).replace(
-        microsecond=nanoseconds // 1000
-    )
 
 
 def flatten_and_map_data(

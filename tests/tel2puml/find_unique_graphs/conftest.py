@@ -726,12 +726,8 @@ def mock_otel_event() -> OTelEvent:
         job_id="123",
         event_type="test_event",
         event_id="456",
-        start_timestamp=datetime.strptime(
-            "2024-08-13 10:15:32.228102+00:00", "%Y-%m-%d %H:%M:%S.%f%z"
-        ),
-        end_timestamp=datetime.strptime(
-            "2024-08-13 10:15:32.228219+00:00", "%Y-%m-%d %H:%M:%S.%f%z"
-        ),
+        start_timestamp=1723544154817793024,
+        end_timestamp=1723544154817993024,
         application_name="test_app",
         parent_event_id="789",
         child_event_ids=["101", "102"],
