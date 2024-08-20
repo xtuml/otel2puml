@@ -12,21 +12,21 @@ Tests multiple of the same event coming from the same source (should provide a b
 #### Simple
 ![](/end-to-end-pumls/constraints/simple/AND/multiple_same_event_AND.svg)
 
-prdocues this result
+prodcues this result using the tool
 
 ![](/end-to-end-pumls/constraints/simple/AND/multiple_same_event_AND_equiv.svg)
 
 #### Extra branch merging in
 ![](/end-to-end-pumls/constraints/simple/AND/multiple_same_event_AND_with_extra_branch.svg)
 
-produces this result
+produces this result using the tool
 
 ![](/end-to-end-pumls/constraints/simple/AND/multiple_same_event_AND_with_extra_branch_equiv.svg)
 
 #### Loop following branch event
 ![](/end-to-end-pumls/constraints/simple/AND/multiple_same_event_AND_with_self_loop.svg)
 
-produces this result
+produces this result using the tool
 
 ![](/end-to-end-pumls/constraints/simple/AND/multiple_same_event_AND_with_self_loop_equiv.svg)
 
