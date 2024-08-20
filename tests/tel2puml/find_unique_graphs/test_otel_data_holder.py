@@ -31,8 +31,8 @@ class TestSQLDataHolder:
         """Tests the init method."""
 
         holder = SQLDataHolder(mock_sql_config)
-        assert holder.min_timestamp == 0
-        assert holder.max_timestamp == math.inf
+        assert holder.min_timestamp == math.inf
+        assert holder.max_timestamp == 0
         assert holder.batch_size == 10
         assert holder.node_models_to_save == []
         assert holder.node_relationships_to_save == []
@@ -116,6 +116,9 @@ class TestSQLDataHolder:
         for otel_event in mock_otel_events:
             holder.save_data(otel_event)
 
+        assert holder.min_timestamp == 1695639486119918080
+        assert holder.max_timestamp == 1695639486119918093
+
         with holder.session as session:
             nodes = session.query(NodeModel).all()
             assert len(nodes) == 10
@@ -125,7 +128,7 @@ class TestSQLDataHolder:
             assert node_0.job_id == "test_id"
             assert node_0.event_id == "0"
             assert node_0.start_timestamp == 1695639486119918080
-            assert node_0.end_timestamp == 1695639486119918080
+            assert node_0.end_timestamp == 1695639486119918084
             assert node_0.application_name == "test_application_name"
             assert node_0.parent_event_id == "None"
 
@@ -262,7 +265,7 @@ class TestSQLDataHolder:
             event_type="test_event_B",
             event_id="101",
             start_timestamp=1723544154817893024,
-            end_timestamp=1723544154817798024,
+            end_timestamp=1823544154817798024,
             application_name="test_app",
             parent_event_id="456",
         )
@@ -273,7 +276,7 @@ class TestSQLDataHolder:
         holder.clean_up()
 
         assert holder.min_timestamp == 1723544154817793024
-        assert holder.max_timestamp == 1723544154817893024
+        assert holder.max_timestamp == 1823544154817798024
 
         # Retrieve the data and check if it's correct
         with holder.session as session:

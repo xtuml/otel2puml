@@ -748,6 +748,8 @@ def mock_otel_events() -> list[OTelEvent]:
 
     otel_events = []
     prev_parent_event_id = None
+    start_timestamp = 1695639486119918080
+    end_timestamp = 1695639486119918084
     for index in range(10):
         event_id = index
         next_event_id = index + 1
@@ -757,8 +759,8 @@ def mock_otel_events() -> list[OTelEvent]:
                 job_id="test_id",
                 event_type=f"event_type_{index}",
                 event_id=str(event_id),
-                start_timestamp=1695639486119918080,
-                end_timestamp=1695639486119918080,
+                start_timestamp=start_timestamp + index,
+                end_timestamp=end_timestamp + index,
                 application_name="test_application_name",
                 parent_event_id=str(prev_parent_event_id),
                 child_event_ids=[str(next_event_id)],
