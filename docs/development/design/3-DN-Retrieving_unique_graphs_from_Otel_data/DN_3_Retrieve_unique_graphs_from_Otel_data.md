@@ -143,22 +143,28 @@ class JSONDataSource(OTELDataSource):
 
 class DataHolder(ABC):
     """An abstract class to handle saving processed OTel data."""
+
+    def __init__(self) -> None:
+        """Constructor method."""
+
+        self.min_timestamp: int = 0
+        self.max_timestamp: int = math.inf
     
+    def save_data(self, otel_event: OTelEvent) -> None:
+        """Method to save an OTelEvent, and keep track of the min and max
+        timestamps.
+
+        :param otel_event: An OTelEvent object
+        :type otel_event: :class: `OTelEvent`
+        """
+        pass
+
     @abstractmethod
-    def save_data(
-        self,
-        otel_event: OTelEvent,
-        min_datetime_unix_nano: int,
-        max_datetime_unix_nano: int,
-    ) -> None:
+    def _save_data(self, otel_event: OTelEvent) -> None:
         """Abstract method for batching and saving OTel data.
 
         :param otel_event: An OTelEvent object
         :type otel_event: :class: `OTelEvent`
-        :param min_datetime_unix_nano: Min datetime cutoff to save OTelEvent
-        :type min_datetime_unix_nano: `int`
-        :param max_datetime_unix_nano: Max datetime cutoff to save OTelEvent
-        :type max_datetime_unix_nano: `int`
         """
         pass
 

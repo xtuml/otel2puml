@@ -740,3 +740,30 @@ def mock_sql_config() -> SQLDataHolderConfig:
     return SQLDataHolderConfig(
         db_uri="sqlite:///:memory:", batch_size=10, time_buffer=30
     )
+
+
+@pytest.fixture
+def mock_otel_events() -> list[OTelEvent]:
+    """Mocks a list of 10 OTelEvents"""
+
+    otel_events = []
+    prev_parent_event_id = None
+    for index in range(10):
+        event_id = index
+        next_event_id = index + 1
+        otel_events.append(
+            OTelEvent(
+                job_name="test_name",
+                job_id="test_id",
+                event_type=f"event_type_{index}",
+                event_id=str(event_id),
+                start_timestamp=1695639486119918080,
+                end_timestamp=1695639486119918080,
+                application_name="test_application_name",
+                parent_event_id=str(prev_parent_event_id),
+                child_event_ids=[str(next_event_id)],
+            )
+        )
+        prev_parent_event_id = event_id
+
+    return otel_events

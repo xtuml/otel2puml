@@ -1,5 +1,7 @@
 """Module containing classes to save processed OTel data into a data holder."""
 
+import math
+
 from abc import ABC, abstractmethod
 
 from sqlalchemy import create_engine, insert
@@ -21,8 +23,8 @@ class DataHolder(ABC):
     def __init__(self) -> None:
         """Constructor method."""
 
-        self.min_timestamp: int | None = None
-        self.max_timestamp: int | None = None
+        self.min_timestamp: int = 0
+        self.max_timestamp: int = math.inf
 
     def save_data(self, otel_event: OTelEvent) -> None:
         """Method to save an OTelEvent, and keep track of the min and max
@@ -31,16 +33,10 @@ class DataHolder(ABC):
         :param otel_event: An OTelEvent object
         :type otel_event: :class: `OTelEvent`
         """
-        self.min_timestamp = (
-            min(self.min_timestamp, otel_event.start_timestamp)
-            if self.min_timestamp
-            else otel_event.start_timestamp
+        self.min_timestamp = min(
+            self.min_timestamp, otel_event.start_timestamp
         )
-        self.max_timestamp = (
-            max(self.max_timestamp, otel_event.end_timestamp)
-            if self.max_timestamp
-            else otel_event.end_timestamp
-        )
+        self.max_timestamp = max(self.max_timestamp, otel_event.end_timestamp)
         self._save_data(otel_event)
 
     @abstractmethod
