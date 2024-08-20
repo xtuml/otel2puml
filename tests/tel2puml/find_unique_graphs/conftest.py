@@ -3,7 +3,6 @@
 import pytest
 import yaml
 
-from datetime import datetime
 from unittest.mock import patch
 from typing import Generator, Any
 

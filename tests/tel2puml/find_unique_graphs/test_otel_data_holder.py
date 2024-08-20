@@ -2,7 +2,6 @@
 
 import pytest
 
-from datetime import datetime, timezone
 from unittest.mock import patch
 from sqlalchemy import text
 
@@ -57,12 +56,8 @@ class TestSQLDataHolder:
         assert node_model.job_id == "123"
         assert node_model.event_type == "test_event"
         assert node_model.event_id == "456"
-        assert node_model.start_timestamp == datetime(
-            2024, 8, 13, 10, 15, 32, 228102, tzinfo=timezone.utc
-        )
-        assert node_model.end_timestamp == datetime(
-            2024, 8, 13, 10, 15, 32, 228219, tzinfo=timezone.utc
-        )
+        assert node_model.start_timestamp == 1723544154817793024
+        assert node_model.end_timestamp == 1723544154817993024
         assert node_model.application_name == "test_app"
 
     @staticmethod

@@ -6,7 +6,6 @@ import yaml
 import pytest
 import shutil
 
-from datetime import datetime
 from pytest import FixtureRequest
 from pathlib import Path
 from unittest.mock import mock_open, patch
