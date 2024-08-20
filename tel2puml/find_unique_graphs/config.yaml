@@ -6,7 +6,7 @@ data_sources:
     # Define the field mapping from the application to your JSON structure
     data_location: resource_spans
     header:
-      paths: [resource:attributes, scope_spans::scope:name, testhere] 
+      paths: [resource:attributes, scope_spans::scope:name] 
     span_mapping:
       spans:
         key_paths: [scope_spans::spans]
@@ -17,12 +17,12 @@ data_sources:
         value_paths: [value:Value:StringValue, null]
         value_type: string
       job_id:
-        key_paths: [HEADER:testhere]
+        key_paths: [trace_id]
         value_type: string
       event_type:
-        key_paths: [attributes::key, attributes::key]
-        key_value: [coral.namespace, http.status_code]
-        value_paths: [value:Value:StringValue, value:Value:IntValue]
+        key_paths: [attributes::key]
+        key_value: [http.method]
+        value_paths: [value:Value:StringValue]
         value_type: string
       event_id:
         key_paths: [span_id]
@@ -34,9 +34,9 @@ data_sources:
         key_paths: [end_time_unix_nano]
         value_type: unix_nano
       application_name:
-        key_paths: [attributes::key, resource:attributes::key]
-        key_value: [coral.service, service.version]
-        value_paths: [value:Value:StringValue, value:Value:StringValue]
+        key_paths: [attributes::key]
+        key_value: [http.host]
+        value_paths: [value:Value:StringValue]
         value_type: string
       parent_event_id:
         key_paths: [parent_span_id]

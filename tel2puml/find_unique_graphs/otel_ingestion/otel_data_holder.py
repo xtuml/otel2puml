@@ -48,16 +48,11 @@ class SQLDataHolder(DataHolder):
 
         self.base.metadata.create_all(self.engine)
 
-    def save_data(
-        self, otel_event: OTelEvent, last_event: bool = False
-    ) -> None:
+    def save_data(self, otel_event: OTelEvent) -> None:
         """Method for batching and saving OTel data to SQL database.
 
         :param otel_event: An OTelEvent object.
         :type otel_event: :class: `OTelEvent`
-        :param last_event: Flag to indicate that the OTelEvent object is the
-        last to be processed.
-        :type last_event: `bool`, defaults to False
         """
 
         node_model = self.convert_otel_event_to_node_model(otel_event)
@@ -65,7 +60,7 @@ class SQLDataHolder(DataHolder):
         self.node_models_to_save.append(node_model)
         self.add_node_relations(otel_event)
 
-        if len(self.node_models_to_save) >= self.batch_size or last_event:
+        if len(self.node_models_to_save) >= self.batch_size:
             self.commit_batched_data_to_database()
             # Reset batch
             self.node_models_to_save = []
