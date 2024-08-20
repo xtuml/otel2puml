@@ -61,6 +61,24 @@ class TestSQLDataHolder:
         assert node_model.application_name == "test_app"
 
     @staticmethod
+    def test_check_otel_event_within_timeframe(
+        mock_sql_config: SQLDataHolderConfig, mock_otel_event: OTelEvent
+    ) -> None:
+        """Tests check_otel_event_within_timeframe method."""
+
+        holder = SQLDataHolder(mock_sql_config)
+        assert holder.check_otel_event_within_timeframe(
+            mock_otel_event,
+            min_datetime_unix_nano=1723544154817791024,
+            max_datetime_unix_nano=1723544154817795024,
+        )
+        assert not holder.check_otel_event_within_timeframe(
+            mock_otel_event,
+            min_datetime_unix_nano=1723544154817791024,
+            max_datetime_unix_nano=1723544154817792024,
+        )
+
+    @staticmethod
     def test_add_node_relations(
         mock_sql_config: SQLDataHolderConfig, mock_otel_event: OTelEvent
     ) -> None:
