@@ -148,7 +148,7 @@ class DataHolder(ABC):
         """Constructor method."""
 
         self.min_timestamp: int = 0
-        self.max_timestamp: int = math.inf
+        self.max_timestamp: int = 999999999999999999999999999999999999999
     
     def save_data(self, otel_event: OTelEvent) -> None:
         """Method to save an OTelEvent, and keep track of the min and max

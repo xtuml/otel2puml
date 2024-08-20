@@ -1,7 +1,5 @@
 """Module containing classes to save processed OTel data into a data holder."""
 
-import math
-
 from abc import ABC, abstractmethod
 
 from sqlalchemy import create_engine, insert
@@ -24,7 +22,7 @@ class DataHolder(ABC):
     def __init__(self) -> None:
         """Constructor method."""
 
-        self.min_timestamp: int = math.inf
+        self.min_timestamp: int = 999999999999999999999999999999999999999
         self.max_timestamp: int = 0
 
     def save_data(self, otel_event: OTelEvent) -> None:

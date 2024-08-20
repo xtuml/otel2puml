@@ -1,7 +1,6 @@
 """Tests for OTel data holder classes."""
 
 import pytest
-import math
 
 from unittest.mock import patch
 from sqlalchemy import text, inspect
@@ -31,7 +30,7 @@ class TestSQLDataHolder:
         """Tests the init method."""
 
         holder = SQLDataHolder(mock_sql_config)
-        assert holder.min_timestamp == math.inf
+        assert holder.min_timestamp == 999999999999999999999999999999999999999
         assert holder.max_timestamp == 0
         assert holder.batch_size == 10
         assert holder.node_models_to_save == []
@@ -124,17 +123,25 @@ class TestSQLDataHolder:
             assert len(nodes) == 10
 
             node_0 = session.query(NodeModel).filter_by(event_id="0").first()
-            assert node_0.job_name == "test_name"
-            assert node_0.job_id == "test_id"
-            assert node_0.event_id == "0"
-            assert node_0.start_timestamp == 1695639486119918080
-            assert node_0.end_timestamp == 1695639486119918084
-            assert node_0.application_name == "test_application_name"
-            assert node_0.parent_event_id == "None"
+            if isinstance(node_0, NodeModel):
+                assert node_0.job_name == "test_name"
+                assert node_0.job_id == "test_id"
+                assert node_0.event_id == "0"
+                assert node_0.start_timestamp == 1695639486119918080
+                assert node_0.end_timestamp == 1695639486119918084
+                assert node_0.application_name == "test_application_name"
+                assert node_0.parent_event_id == "None"
 
-            # Test parent-child relationship
-            node_1 = session.query(NodeModel).filter_by(event_id="1").first()
-            assert node_0.children == [node_1]
+                # Test parent-child relationship
+                node_1 = (
+                    session.query(NodeModel).filter_by(event_id="1").first()
+                )
+                assert node_0.children == [node_1]
+            else:
+                raise TypeError(
+                    "node_0 should be of type 'NodeModel',"
+                    f" got '{type(node_0)}' instead."
+                )
 
     @staticmethod
     def test_commit_batched_data_success(
@@ -184,9 +191,22 @@ class TestSQLDataHolder:
             node_0 = session.query(NodeModel).filter_by(event_id="100").first()
             node_1 = session.query(NodeModel).filter_by(event_id="101").first()
 
-            assert node_1 in node_0.children
-            assert node_0.job_name == "test_job_name"
-            assert node_1.application_name == "test_app"
+            if isinstance(node_0, NodeModel):
+                assert node_0.job_name == "test_job_name"
+            else:
+                raise TypeError(
+                    "node_0 should be of type 'NodeModel',"
+                    f" got '{type(node_0)}' instead."
+                )
+
+            if isinstance(node_1, NodeModel):
+                assert node_1 in node_0.children
+                assert node_1.application_name == "test_app"
+            else:
+                raise TypeError(
+                    "node_0 should be of type 'NodeModel',"
+                    f" got '{type(node_0)}' instead."
+                )
 
             # Test node relationships are correctly stored in the database
             node_relationship = session.query(NODE_ASSOCIATION).all()
@@ -207,7 +227,9 @@ class TestSQLDataHolder:
         with patch.object(
             holder,
             "batch_insert_node_models",
-            side_effect=IntegrityError("IntegrityError", None, None),
+            side_effect=IntegrityError(
+                "IntegrityError", None, Exception("IntegrityError")
+            ),
         ), patch.object(holder.session, "rollback") as mock_rollback:
             with pytest.raises(Exception) as context:
                 holder.commit_batched_data_to_database()
@@ -218,7 +240,9 @@ class TestSQLDataHolder:
         with patch.object(
             holder,
             "batch_insert_node_models",
-            side_effect=OperationalError("OperationalError", None, None),
+            side_effect=OperationalError(
+                "OperationalError", None, Exception("OperationalError")
+            ),
         ), patch.object(holder.session, "rollback") as mock_rollback:
             with pytest.raises(Exception) as context:
                 holder.commit_batched_data_to_database()
@@ -250,7 +274,13 @@ class TestSQLDataHolder:
             assert len(session.query(NodeModel).all()) == 1
 
             node = session.query(NodeModel).filter_by(event_id="456").first()
-            assert node.job_name == "test_job"
+            if isinstance(node, NodeModel):
+                assert node.job_name == "test_job"
+            else:
+                raise TypeError(
+                    "node should be of type 'NodeModel',"
+                    f" got '{type(node)}' instead."
+                )
 
     @staticmethod
     def test_integration_save_and_retrieve(
