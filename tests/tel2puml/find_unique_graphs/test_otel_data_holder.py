@@ -86,7 +86,9 @@ class TestSQLDataHolder:
         ) as mock_commit:
             for _ in range(10):
                 holder.save_data(
-                    mock_otel_event, 1023544154817793024, 2723544154817793024
+                    mock_otel_event,
+                    min_datetime_unix_nano=1023544154817793024,
+                    max_datetime_unix_nano=2723544154817793024,
                 )
             assert len(holder.node_models_to_save) == 10
             mock_commit.assert_called_once()
@@ -154,10 +156,14 @@ class TestSQLDataHolder:
 
         holder = SQLDataHolder(mock_sql_config)
         holder.save_data(
-            mock_otel_event, 1723544144817993024, 1723544164817993024
+            mock_otel_event,
+            min_datetime_unix_nano=1723544144817993024,
+            max_datetime_unix_nano=1723544164817993024,
         )
         holder.save_data(
-            child_otel_event, 1723544144817993024, 1723544164817993024
+            child_otel_event,
+            min_datetime_unix_nano=1723544144817993024,
+            max_datetime_unix_nano=1723544164817993024,
         )
         holder.clean_up()
 

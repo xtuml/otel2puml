@@ -30,9 +30,9 @@ class DataHolder(ABC):
         :param otel_event: An OTelEvent object
         :type otel_event: :class: `OTelEvent`
         :param min_datetime_unix_nano: Min datetime cutoff to save OTelEvent
-        type min_datetime_unix_nano: `int`
+        :type min_datetime_unix_nano: `int`
         :param max_datetime_unix_nano: Max datetime cutoff to save OTelEvent
-        type max_datetime_unix_nano: `int`
+        :type max_datetime_unix_nano: `int`
         """
         pass
 
@@ -77,9 +77,9 @@ class SQLDataHolder(DataHolder):
         :param otel_event: An OTelEvent object.
         :type otel_event: :class: `OTelEvent`
         :param min_datetime_unix_nano: Min datetime cutoff to save OTelEvent
-        type min_datetime_unix_nano: `int`
+        :type min_datetime_unix_nano: `int`
         :param max_datetime_unix_nano: Max datetime cutoff to save OTelEvent
-        type max_datetime_unix_nano: `int`
+        :type max_datetime_unix_nano: `int`
         """
         if self.check_otel_event_within_timeframe(
             otel_event, min_datetime_unix_nano, max_datetime_unix_nano
@@ -104,9 +104,9 @@ class SQLDataHolder(DataHolder):
         :param otel_event: An OTelEvent object.
         :type otel_event: :class: `OTelEvent`
         :param min_datetime_unix_nano: Min datetime cutoff to save OTelEvent
-        type min_datetime_unix_nano: `int`
+        :type min_datetime_unix_nano: `int`
         :param max_datetime_unix_nano: Max datetime cutoff to save OTelEvent
-        type max_datetime_unix_nano: `int`
+        :type max_datetime_unix_nano: `int`
         :return: Boolean whether or not otel_event is within time frame.
         :rtype: `bool`
         """
