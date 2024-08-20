@@ -7,13 +7,14 @@ from unittest.mock import patch
 from sqlalchemy import text, inspect
 from sqlalchemy.orm import Session
 from sqlalchemy.engine.base import Engine
+from sqlalchemy.exc import IntegrityError, OperationalError
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     OTelEvent,
     NodeModel,
     SQLDataHolderConfig,
     Base,
-    NODE_ASSOCIATION
+    NODE_ASSOCIATION,
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder import (
     SQLDataHolder,
@@ -62,9 +63,9 @@ class TestSQLDataHolder:
             "application_name",
             "parent_event_id",
         ]
-
         for column in column_names:
             assert column in expected_column_names
+
         # Test column names in node association table
         columns = inspector.get_columns("NODE_ASSOCIATION")
         column_names = [column["name"] for column in columns]
@@ -80,6 +81,7 @@ class TestSQLDataHolder:
 
         holder = SQLDataHolder(mock_sql_config)
         node_model = holder.convert_otel_event_to_node_model(mock_otel_event)
+
         assert isinstance(node_model, NodeModel)
         assert node_model.job_name == "test_job"
         assert node_model.job_id == "123"
@@ -97,6 +99,7 @@ class TestSQLDataHolder:
 
         holder = SQLDataHolder(mock_sql_config)
         holder.add_node_relations(mock_otel_event)
+
         assert len(holder.node_relationships_to_save) == 2
         assert holder.node_relationships_to_save[0]["parent_id"] == "456"
         assert holder.node_relationships_to_save[0]["child_id"] == "101"
@@ -116,6 +119,7 @@ class TestSQLDataHolder:
         with holder.session as session:
             nodes = session.query(NodeModel).all()
             assert len(nodes) == 10
+
             node_0 = session.query(NodeModel).filter_by(event_id="0").first()
             assert node_0.job_name == "test_name"
             assert node_0.job_id == "test_id"
@@ -124,6 +128,7 @@ class TestSQLDataHolder:
             assert node_0.end_timestamp == 1695639486119918080
             assert node_0.application_name == "test_application_name"
             assert node_0.parent_event_id == "None"
+
             # Test parent-child relationship
             node_1 = session.query(NodeModel).filter_by(event_id="1").first()
             assert node_0.children == [node_1]
@@ -165,7 +170,9 @@ class TestSQLDataHolder:
         # Test reset batch
         assert len(holder.node_models_to_save) == 2
         assert len(holder.node_relationships_to_save) == 1
+
         holder.commit_batched_data_to_database()
+
         assert len(holder.node_models_to_save) == 0
         assert len(holder.node_relationships_to_save) == 0
 
@@ -192,17 +199,44 @@ class TestSQLDataHolder:
         """Tests commit_batched_data_to_database method, with failure."""
 
         holder = SQLDataHolder(mock_sql_config)
+
+        # Test the IntegrityError case
         with patch.object(
             holder,
             "batch_insert_node_models",
-            side_effect=Exception,
+            side_effect=IntegrityError("IntegrityError", None, None),
         ), patch.object(holder.session, "rollback") as mock_rollback:
-            with pytest.raises(Exception):
+            with pytest.raises(Exception) as context:
                 holder.commit_batched_data_to_database()
             mock_rollback.assert_called_once()
+            assert "IntegrityError" in str(context.value)
+
+        # Test the OperationalError case
+        with patch.object(
+            holder,
+            "batch_insert_node_models",
+            side_effect=OperationalError("OperationalError", None, None),
+        ), patch.object(holder.session, "rollback") as mock_rollback:
+            with pytest.raises(Exception) as context:
+                holder.commit_batched_data_to_database()
+            mock_rollback.assert_called_once()
+            assert "OperationalError" in str(context.value)
+
+        # Test the unexpected error case
+        with patch.object(
+            holder,
+            "batch_insert_node_models",
+            side_effect=Exception("Unexpected Error"),
+        ), patch.object(holder.session, "rollback") as mock_rollback:
+            with pytest.raises(Exception) as context:
+                holder.commit_batched_data_to_database()
+            mock_rollback.assert_called_once()
+            assert "Unexpected Error" in str(context.value)
 
     @staticmethod
-    def test_clean_up(mock_sql_config: SQLDataHolderConfig, mock_otel_event: OTelEvent) -> None:
+    def test_clean_up(
+        mock_sql_config: SQLDataHolderConfig, mock_otel_event: OTelEvent
+    ) -> None:
         """Tests clean_up method."""
 
         holder = SQLDataHolder(mock_sql_config)

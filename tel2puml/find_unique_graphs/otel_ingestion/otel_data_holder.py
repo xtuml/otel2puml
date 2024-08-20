@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 
 from sqlalchemy import create_engine, insert
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import OperationalError, IntegrityError
 from sqlalchemy.engine.base import Engine
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
@@ -103,6 +104,12 @@ class SQLDataHolder(DataHolder):
             # Reset batch
             self.node_models_to_save = []
             self.node_relationships_to_save = []
+        except IntegrityError as e:
+            self.session.rollback()
+            raise Exception(f"IntegrityError during data saving: {e}")
+        except OperationalError as e:
+            self.session.rollback()
+            raise Exception(f"OperationalError during data saving: {e}")
         except Exception as e:
             self.session.rollback()
             raise Exception(f"Unexpected error during data saving: {e}")
