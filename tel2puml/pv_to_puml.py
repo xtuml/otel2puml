@@ -41,6 +41,7 @@ from tel2puml.puml_graph.graph import (
 def pv_to_puml_string(
     pv_stream: Iterable[Iterable[PVEvent]],
     puml_name: str = "default_name",
+    keep_dummy_events: bool = False,
 ) -> str:
     """Converts a stream of PV event sequences to a PlantUML sequence diagram,
     inferring the logic from the PV event sequences and the structure from the
@@ -50,6 +51,8 @@ def pv_to_puml_string(
     :type pv_stream: `Iterable`[`Iterable`[:class:`PVEvent`]]
     :param puml_name: The name of the PlantUML group to create
     :type puml_name: `str`
+    :param keep_dummy_events: Boolean to keep dummy events in the PlantUML
+    :type keep_dummy_events: `bool`
     :return: The PlantUML string
     :rtype: `str`
     """
@@ -67,7 +70,8 @@ def pv_to_puml_string(
     # walk the nested graph and create the PlantUML graph
     puml_graph = walk_nested_graph(node_graph)
     # remove dummy start and end events
-    update_nested_sub_graphs_for_dummy_break_event_nodes(puml_graph)
+    if not keep_dummy_events:
+        update_nested_sub_graphs_for_dummy_break_event_nodes(puml_graph)
     remove_dummy_start_and_end_events_from_nested_graphs(puml_graph)
     return puml_graph.write_puml_string(puml_name)
 
@@ -76,6 +80,7 @@ def pv_to_puml_file(
     pv_stream: Iterable[Iterable[PVEvent]],
     puml_file_path: str = "default.puml",
     puml_name: str = "default_name",
+    keep_dummy_events: bool = False,
 ) -> None:
     """Converts a stream of PV event sequences to a PlantUML sequence diagram,
     inferring the logic from the PV event sequences and the structure from the
@@ -87,8 +92,10 @@ def pv_to_puml_file(
     :type puml_file_path: `str`
     :param puml_name: The name of the PlantUML group to create
     :type puml_name: `str`
+    :param keep_dummy_events: Boolean to keep dummy events in the PlantUML
+    :type keep_dummy_events: `bool`
     """
-    puml_string = pv_to_puml_string(pv_stream, puml_name)
+    puml_string = pv_to_puml_string(pv_stream, puml_name, keep_dummy_events)
     with open(puml_file_path, "w") as puml_file:
         puml_file.write(puml_string)
 
@@ -184,6 +191,7 @@ def pv_jobs_from_folder_to_puml_file(
     folder_path: str,
     puml_file_path: str = "default.puml",
     puml_name: str = "default_name",
+    keep_dummy_events: bool = False,
 ) -> None:
     """Reads a folder of PV job json array files and writes the PlantUML
     sequence diagram to a file
@@ -194,9 +202,11 @@ def pv_jobs_from_folder_to_puml_file(
     :type puml_file_path: `str`
     :param puml_name: The name of the PlantUML group to create
     :type puml_name: `str`
+    :param keep_dummy_events: Boolean to keep dummy events in the PlantUML
+    :type keep_dummy_events: `bool`
     """
     pv_stream = pv_jobs_from_folder_to_event_sequence_streams(folder_path)
-    pv_to_puml_file(pv_stream, puml_file_path, puml_name)
+    pv_to_puml_file(pv_stream, puml_file_path, puml_name, keep_dummy_events)
 
 
 def pv_jobs_from_files_to_puml_file(
