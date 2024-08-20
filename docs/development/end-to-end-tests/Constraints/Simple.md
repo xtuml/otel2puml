@@ -12,7 +12,7 @@ Tests multiple of the same event coming from the same source (should provide a b
 #### Simple
 ![](/end-to-end-pumls/constraints/simple/AND/multiple_same_event_AND.svg)
 
-prodcues this result using the tool
+produces this result using the tool
 
 ![](/end-to-end-pumls/constraints/simple/AND/multiple_same_event_AND_equiv.svg)
 
