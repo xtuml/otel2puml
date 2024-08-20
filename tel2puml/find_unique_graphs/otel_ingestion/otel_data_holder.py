@@ -135,12 +135,8 @@ class SQLDataHolder(DataHolder):
             job_id=otel_event.job_id,
             event_type=otel_event.event_type,
             event_id=otel_event.event_id,
-            start_timestamp=datetime.strptime(
-                otel_event.start_timestamp, "%Y-%m-%d %H:%M:%S"
-            ),
-            end_timestamp=datetime.strptime(
-                otel_event.end_timestamp, "%Y-%m-%d %H:%M:%S"
-            ),
+            start_timestamp=otel_event.start_timestamp,
+            end_timestamp=otel_event.end_timestamp,
             application_name=otel_event.application_name,
             parent_event_id=otel_event.parent_event_id or None,
         )

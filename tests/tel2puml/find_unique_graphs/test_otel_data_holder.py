@@ -2,7 +2,7 @@
 
 import pytest
 
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import patch
 from sqlalchemy import text
 
@@ -57,8 +57,12 @@ class TestSQLDataHolder:
         assert node_model.job_id == "123"
         assert node_model.event_type == "test_event"
         assert node_model.event_id == "456"
-        assert node_model.start_timestamp == datetime(2023, 1, 1, 0, 0)
-        assert node_model.end_timestamp == datetime(2023, 2, 3, 0, 1)
+        assert node_model.start_timestamp == datetime(
+            2024, 8, 13, 10, 15, 32, 228102, tzinfo=timezone.utc
+        )
+        assert node_model.end_timestamp == datetime(
+            2024, 8, 13, 10, 15, 32, 228219, tzinfo=timezone.utc
+        )
         assert node_model.application_name == "test_app"
 
     @staticmethod
@@ -145,8 +149,12 @@ class TestSQLDataHolder:
             job_id="123",
             event_type="test_event_B",
             event_id="101",
-            start_timestamp="2023-01-01 00:00:00",
-            end_timestamp="2023-02-03 00:01:00",
+            start_timestamp=datetime(
+                2024, 8, 13, 10, 15, 32, 218219, tzinfo=timezone.utc
+            ),
+            end_timestamp=datetime(
+                2024, 8, 13, 10, 15, 32, 228219, tzinfo=timezone.utc
+            ),
             application_name="test_app",
             parent_event_id="456",
         )
@@ -164,8 +172,12 @@ class TestSQLDataHolder:
             assert node.job_id == "123"
             assert node.event_type == "test_event"
             assert node.event_id == "456"
-            assert node.start_timestamp == datetime(2023, 1, 1, 0, 0)
-            assert node.end_timestamp == datetime(2023, 2, 3, 0, 1)
+            assert node.start_timestamp == datetime(
+                2024, 8, 13, 10, 15, 32, 228102
+            )
+            assert node.end_timestamp == datetime(
+                2024, 8, 13, 10, 15, 32, 228219
+            )
             assert node.application_name == "test_app"
 
             child_node = (

@@ -1,6 +1,7 @@
 """Module containing classes to ingest OTel data into a data holder."""
 
 from typing import NamedTuple, Optional, TypedDict, Union
+from datetime import datetime
 
 from sqlalchemy import (
     Column,
@@ -26,9 +27,9 @@ class OTelEvent(NamedTuple):
     :param event_id: The ID of the event.
     :type event_id: `str`
     :param start_timestamp: The start timestamp of the event.
-    :type start_timestamp: `str`
+    :type start_timestamp: :class: `datetime`
     :param end_timestamp: The end timestamp of the event.
-    :type end_timestamp: `str`
+    :type end_timestamp: :class: `datetime`
     :param application_name: The application name.
     :type application_name: `str`
     :param parent_event_id: The ID of the parent event.
@@ -41,8 +42,8 @@ class OTelEvent(NamedTuple):
     job_id: str
     event_type: str
     event_id: str
-    start_timestamp: str
-    end_timestamp: str
+    start_timestamp: datetime
+    end_timestamp: datetime
     application_name: str
     parent_event_id: Optional[str]
     child_event_ids: Optional[list[str]] = None

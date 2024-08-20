@@ -3,7 +3,7 @@
 import flatdict
 
 from typing import Any, Literal
-from datetime import datetime
+from datetime import datetime, timezone
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     JSONDataSourceConfig,
@@ -28,7 +28,7 @@ def _map_data_to_json_schema(
     flattened_data: Any,
     config_key: Literal["field_mapping"],
     header_dict: dict[str, Any],
-) -> dict[str, str]:
+) -> dict[str, Any]:
     """
     Function that maps flattened JSON data to a schema defined in the
     json_config.
@@ -43,9 +43,9 @@ def _map_data_to_json_schema(
     data
     :type header_dict: `dict`[`str`, `Any`]
     :return: The mapped data
-    :rtype: `dict`[`str`, `str`]
+    :rtype: `dict`[`str`, `Any`]
     """
-    result: dict[str, str] = {}
+    result: dict[str, Any] = {}
     field_mapping: dict[str, Any] = json_config[config_key]
     # Cache results within lists to avoid looping over them again
     field_cache: dict[str, str] = {}
@@ -65,7 +65,7 @@ def _process_field(
     field_name: str,
     field_config: dict[str, Any],
     flattened_data: Any,
-    result: dict[str, str],
+    result: dict[str, Any],
     field_cache: dict[str, str],
     header_dict: dict[str, Any],
 ) -> None:
@@ -79,7 +79,7 @@ def _process_field(
     :param flattened_data: JSON data as a flattened dictionary
     :type flattened_data: `Any`
     :param result: The mapped data
-    :type result: `dict`[`str`, `str`]
+    :type result: `dict`[`str`, `Any`]
     :param field_cache: Cache for optimising field access and path generation
     in flattened JSON data
     :type field_cache: `dict`[`str`, [`str`]]
@@ -119,7 +119,7 @@ def _handle_empty_segments(
     field_config: dict[str, Any],
     flattened_data: Any,
     index: int,
-    result: dict[str, str],
+    result: dict[str, Any],
     field_cache: dict[str, str],
     field_cache_key: str,
     header_dict: dict[str, Any],
@@ -137,7 +137,7 @@ def _handle_empty_segments(
     :param index: The index of the field config
     :type index: `int`
     :param result: The mapped data
-    :type result: `dict`[`str`, `str`]
+    :type result: `dict`[`str`, `Any`]
     :param field_cache: Cache for optimising field access and path generation
     in flattened JSON data
     :type field_cache: `dict`[`str`, [`str`]]
@@ -222,7 +222,7 @@ def handle_data_from_header(
     field_name: str,
     field_config: dict[str, Any],
     index: int,
-    result: dict[str, str],
+    result: dict[str, Any],
     header_dict: dict[str, Any],
     key: str,
     full_path: str,
@@ -237,7 +237,7 @@ def handle_data_from_header(
     :param index: The index of the field config
     :type index: `int`
     :param result: The mapped data
-    :type result: `dict`[`str`, `str`]
+    :type result: `dict`[`str`, `Any`]
     :param header_dict: A dictionary of flattened json data containing header
     data
     :type header_dict: `dict`[`str`, `Any`]
@@ -377,7 +377,7 @@ def _process_matching_data(
     flattened_data: dict[str, Any],
     full_path: str,
     key: str,
-    result: dict[str, str],
+    result: dict[str, Any],
 ) -> None:
     """Function to process data that matches the search requirements. The
     result is either added as a new value or appended to an existing one.
@@ -395,7 +395,7 @@ def _process_matching_data(
     :param key: The key within the full path to replace
     :type key: `str`
     :param result: The mapped data
-    :type result: `dict`[`str`, `str`]
+    :type result: `dict`[`str`, `Any`]
     """
     value_path = full_path.replace(key, field_config["value_paths"][index])
     value_type = _get_value_type(field_config)
@@ -493,7 +493,7 @@ def _get_value_type(field_config: dict[str, str]) -> str:
 
 
 def _add_or_append_value(
-    field_name: str, value: str | int, result: dict[str, str], value_type: str
+    field_name: str, value: str | int, result: dict[str, Any], value_type: str
 ) -> None:
     """
     Function that adds a new value or appends to an existing one in the result
@@ -504,31 +504,79 @@ def _add_or_append_value(
     :param value: The value pulled from the JSON data
     :type value: `str` | `int`
     :param result: The mapped data
-    :type result: `dict`[`str`, `str`]
+    :type result: `dict`[`str`, `Any`]
     :param value_type: The field type
     :return value_type: `str`
     """
-    if value_type == "unix_nano":
-        if isinstance(value, int):
-            value = _unix_nano_to_datetime_str(value)
-    if not isinstance(value, str):
-        value = str(value)
+    if value_type == "unix_nano" and isinstance(value, int):
+        _add_datetime_object_to_result(field_name, result, value)
+    else:
+        if not isinstance(value, str):
+            value = str(value)
+        _add_string_to_result(
+            field_name,
+            result,
+            value,
+        )
+
+
+def _add_string_to_result(
+    field_name: str, result: dict[str, Any], value: str
+) -> None:
+    """Function to add a string to the result dict.
+
+    :param field_name: The field name within the mapping config
+    :type field_name: `str`
+    :param result: The mapped data
+    :type result: `dict`[`str`, `Any`]
+    :param value: The value pulled from the JSON data
+    :type value: `str`
+    """
+
     if field_name not in result:
         result[field_name] = value
     else:
         result[field_name] += f" {value}"
 
 
-def _unix_nano_to_datetime_str(unix_nano: int) -> str:
+def _add_datetime_object_to_result(
+    field_name: str, result: dict[str, Any], value: int
+) -> None:
+    """Function to add a datetime object to the result dict.
+
+    :param field_name: The field name within the mapping config
+    :type field_name: `str`
+    :param result: The mapped data
+    :type result: `dict`[`str`, `Any`]
+    :param value: The value pulled from the JSON data
+    :type value: `str`
+    """
+
+    datetime_object: datetime | str = _unix_nano_to_datetime_str(value)
+
+    if field_name not in result:
+        result[field_name] = datetime_object
+    else:
+        raise ValueError(
+            "Cannot append datetime object to string. "
+            "Dates must be used by themselves wtihin the config."
+        )
+
+
+def _unix_nano_to_datetime_str(unix_nano: int) -> datetime:
     """Function to process time from unix nano to datetime string.
 
     :param unix_nano: The time in unix nano format
     :type unix_nano: `int`
-    :return: The time in datetime string format
-    :rtype: `str`
+    :return: The time as a datetime object to microsecond precision
+    :rtype: :class: :class: `datetime`
     """
-    dt = datetime.fromtimestamp(unix_nano // 1000000000)
-    return dt.strftime("%Y-%m-%d %H:%M:%S")
+    seconds = unix_nano // 1000000000
+    nanoseconds = unix_nano % 1000000000
+
+    return datetime.fromtimestamp(seconds, tz=timezone.utc).replace(
+        microsecond=nanoseconds // 1000
+    )
 
 
 def flatten_and_map_data(

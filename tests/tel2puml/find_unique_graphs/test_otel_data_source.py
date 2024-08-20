@@ -5,6 +5,8 @@ import os
 import yaml
 import pytest
 import shutil
+
+from datetime import datetime
 from pytest import FixtureRequest
 from pathlib import Path
 from unittest.mock import mock_open, patch
@@ -223,8 +225,12 @@ class TestJSONDataSource:
         assert otel_event.event_id == "span001"
         assert otel_event.event_type == "com.T2h.366Yx 500"
         assert otel_event.application_name == "Processor 1.2"
-        assert otel_event.start_timestamp == "2024-08-13 10:15:32"
-        assert otel_event.end_timestamp == "2024-08-13 10:15:32"
+        assert otel_event.start_timestamp == datetime.strptime(
+            "2024-08-13 10:15:32.228102+00:00", "%Y-%m-%d %H:%M:%S.%f%z"
+        )
+        assert otel_event.end_timestamp == datetime.strptime(
+            "2024-08-13 10:15:32.228219+00:00", "%Y-%m-%d %H:%M:%S.%f%z"
+        )
         assert otel_event.parent_event_id is None
         assert otel_event.child_event_ids == ["child1", "child2"]
 
@@ -234,8 +240,12 @@ class TestJSONDataSource:
         assert otel_event2.event_id == "span002"
         assert otel_event2.event_type == "com.C36.9ETRp 401"
         assert otel_event2.application_name == "Handler 2.9"
-        assert otel_event2.start_timestamp == "2024-08-13 10:15:32"
-        assert otel_event2.end_timestamp == "2024-08-13 10:15:32"
+        assert otel_event2.start_timestamp == datetime.strptime(
+            "2024-08-13 10:15:32.228288+00:00", "%Y-%m-%d %H:%M:%S.%f%z"
+        )
+        assert otel_event2.end_timestamp == datetime.strptime(
+            "2024-08-13 10:15:32.229038+00:00", "%Y-%m-%d %H:%M:%S.%f%z"
+        )
         assert otel_event2.parent_event_id == "span001"
         assert otel_event2.child_event_ids == ["child3"]
 
@@ -250,8 +260,12 @@ class TestJSONDataSource:
             assert otel_event3.event_id == "span003"
             assert otel_event3.event_type == "com.a58.GFkzZ 201"
             assert otel_event3.application_name == "Processor 2.1"
-            assert otel_event3.start_timestamp == "2024-08-13 10:15:54"
-            assert otel_event3.end_timestamp == "2024-08-13 10:15:54"
+            assert otel_event3.start_timestamp == datetime.strptime(
+                "2024-08-13 10:15:54.817766+00:00", "%Y-%m-%d %H:%M:%S.%f%z"
+            )
+            assert otel_event3.end_timestamp == datetime.strptime(
+                "2024-08-13 10:15:54.818599+00:00", "%Y-%m-%d %H:%M:%S.%f%z"
+            )
             assert otel_event3.parent_event_id is None
             assert otel_event3.child_event_ids is None
 
@@ -261,7 +275,11 @@ class TestJSONDataSource:
             assert otel_event4.event_id == "span004"
             assert otel_event4.event_type == "com.67Q.AS8pJ 201"
             assert otel_event4.application_name == "Processor 2.8"
-            assert otel_event4.start_timestamp == "2024-08-13 10:15:54"
-            assert otel_event4.end_timestamp == "2024-08-13 10:15:54"
+            assert otel_event4.start_timestamp == datetime.strptime(
+                "2024-08-13 10:15:54.817793+00:00", "%Y-%m-%d %H:%M:%S.%f%z"
+            )
+            assert otel_event4.end_timestamp == datetime.strptime(
+                "2024-08-13 10:15:54.818380+00:00", "%Y-%m-%d %H:%M:%S.%f%z"
+            )
             assert otel_event4.parent_event_id == "span003"
             assert otel_event4.child_event_ids == ["child5"]
