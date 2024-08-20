@@ -646,15 +646,12 @@ def calculate_repeats_in_tree(
     """
     counts = ev.get_event_set_counts(event_sets)
     for count in counts.values():
-        if len(count) > 1:
+        if max(count) > 1:
             logic_gate_tree = create_branch_tree_from_logic_gate_tree(
                 logic_gate_tree, event_sets
             )
             break
 
-    logic_gate_tree = update_tree_with_repeat_logic(
-        event_sets, logic_gate_tree
-    )
     logic_gate_tree = remove_defunct_sequence_logic(logic_gate_tree)
 
     return logic_gate_tree

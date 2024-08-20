@@ -57,7 +57,9 @@ def pv_to_puml_string(
     :rtype: `str`
     """
     # ingest events and create graph
-    events = update_and_create_events_from_clustered_pvevents(pv_stream)
+    events = update_and_create_events_from_clustered_pvevents(
+        pv_stream, add_dummy_start=True
+    )
     initial_events_graph = create_graph_from_events(events.values())
     # detect loops
     nested_loop_event_graph = detect_loops(initial_events_graph)

@@ -31,12 +31,13 @@ class TestConstraintAND:
             "end-to-end-pumls/constraints/simple/AND/"
             "multiple_same_event_AND.puml",
             version=version,
+            equivalent_pumls=[
+                "end-to-end-pumls/constraints/simple/AND/"
+                "multiple_same_event_AND_equiv.puml"
+            ]
         )
 
     @staticmethod
-    @pytest.mark.xfail(
-        reason="This is a known issue. The test should fail.", strict=True
-    )
     @pytest.mark.parametrize(
         "version", ["v1", "v2"], ids=["version_1", "version_2"]
     )
@@ -48,6 +49,28 @@ class TestConstraintAND:
             "end-to-end-pumls/constraints/simple/AND/"
             "multiple_same_event_AND_with_extra_branch.puml",
             version=version,
+            equivalent_pumls=[
+                "end-to-end-pumls/constraints/simple/AND/"
+                "multiple_same_event_AND_with_extra_branch_equiv.puml"
+            ]
+        )
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "version", ["v1", "v2"], ids=["version_1", "version_2"]
+    )
+    def test_multiple_same_event_AND_with_self_loop(
+        version: Literal["v1", "v2"],
+    ) -> None:
+        """Test multiple same event AND with self loop"""
+        end_to_end_test(
+            "end-to-end-pumls/constraints/simple/AND/"
+            "multiple_same_event_AND_with_self_loop.puml",
+            version=version,
+            equivalent_pumls=[
+                "end-to-end-pumls/constraints/simple/AND/"
+                "multiple_same_event_AND_with_self_loop_equiv.puml"
+            ]
         )
 
     @staticmethod
