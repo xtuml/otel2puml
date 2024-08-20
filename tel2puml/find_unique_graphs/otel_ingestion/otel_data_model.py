@@ -57,8 +57,10 @@ class Base(DeclarativeBase):
 NODE_ASSOCIATION = Table(
     "NODE_ASSOCIATION",
     Base.metadata,
-    Column("parent_id", Integer, ForeignKey("nodes.id"), primary_key=True),
-    Column("child_id", Integer, ForeignKey("nodes.id"), primary_key=True),
+    Column(
+        "parent_id", String, ForeignKey("nodes.event_id"), primary_key=True
+    ),
+    Column("child_id", String, ForeignKey("nodes.event_id"), primary_key=True),
 )
 
 

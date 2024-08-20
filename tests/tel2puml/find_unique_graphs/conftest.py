@@ -2,8 +2,14 @@
 
 import pytest
 import yaml
+
 from unittest.mock import patch
 from typing import Generator, Any
+
+from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
+    OTelEvent,
+    SQLDataHolderConfig,
+)
 
 
 @pytest.fixture
@@ -708,3 +714,29 @@ def mock_json_data_without_list() -> dict[str, Any]:
             ],
         },
     }
+
+
+@pytest.fixture
+def mock_otel_event() -> OTelEvent:
+    """Mocks an OTelEvent object."""
+
+    return OTelEvent(
+        job_name="test_job",
+        job_id="123",
+        event_type="test_event",
+        event_id="456",
+        start_timestamp="2023-01-01 00:00:00",
+        end_timestamp="2023-02-03 00:01:00",
+        application_name="test_app",
+        parent_event_id="789",
+        child_event_ids=["101", "102"],
+    )
+
+
+@pytest.fixture
+def mock_sql_config() -> SQLDataHolderConfig:
+    """Mocks config for SQLDataHolder."""
+    
+    return SQLDataHolderConfig(
+        db_uri="sqlite:///:memory:", batch_size=10, time_buffer=30
+    )
