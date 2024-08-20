@@ -18,21 +18,37 @@ from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
 class DataHolder(ABC):
     """An abstract class to handle saving processed OTel data."""
 
+    def __init__(self) -> None:
+        """Constructor method."""
+
+        self.min_timestamp: int = None
+        self.max_timestamp: int = None
+
+    def save_data(self, otel_event: OTelEvent) -> None:
+        """Method to save an OTelEvent, and keep track of the min and max
+        timestamps.
+
+        :param otel_event: An OTelEvent object
+        :type otel_event: :class: `OTelEvent`
+        """
+        self.min_timestamp = (
+            min(self.min_timestamp, otel_event.start_timestamp)
+            if self.min_timestamp
+            else otel_event.start_timestamp
+        )
+        self.max_timestamp = (
+            max(self.max_timestamp, otel_event.end_timestamp)
+            if self.max_timestamp
+            else otel_event.end_timestamp
+        )
+        self._save_data(otel_event)
+
     @abstractmethod
-    def save_data(
-        self,
-        otel_event: OTelEvent,
-        min_datetime_unix_nano: int,
-        max_datetime_unix_nano: int,
-    ) -> None:
+    def _save_data(self, otel_event: OTelEvent) -> None:
         """Abstract method for batching and saving OTel data.
 
         :param otel_event: An OTelEvent object
         :type otel_event: :class: `OTelEvent`
-        :param min_datetime_unix_nano: Min datetime cutoff to save OTelEvent
-        :type min_datetime_unix_nano: `int`
-        :param max_datetime_unix_nano: Max datetime cutoff to save OTelEvent
-        :type max_datetime_unix_nano: `int`
         """
         pass
 
@@ -52,7 +68,7 @@ class SQLDataHolder(DataHolder):
         :param config: Configuration parameters.
         :type config: :class: `SQLDataHolderConfig`
         """
-
+        super().__init__()
         self.node_models_to_save: list[NodeModel] = []
         self.node_relationships_to_save: list[dict[str, str]] = []
         self.batch_size: int = config["batch_size"]
@@ -66,56 +82,19 @@ class SQLDataHolder(DataHolder):
 
         self.base.metadata.create_all(self.engine)
 
-    def save_data(
-        self,
-        otel_event: OTelEvent,
-        min_datetime_unix_nano: int,
-        max_datetime_unix_nano: int,
-    ) -> None:
+    def _save_data(self, otel_event: OTelEvent) -> None:
         """Method for batching and saving OTel data to SQL database.
 
         :param otel_event: An OTelEvent object.
         :type otel_event: :class: `OTelEvent`
-        :param min_datetime_unix_nano: Min datetime cutoff to save OTelEvent
-        :type min_datetime_unix_nano: `int`
-        :param max_datetime_unix_nano: Max datetime cutoff to save OTelEvent
-        :type max_datetime_unix_nano: `int`
         """
-        if self.check_otel_event_within_timeframe(
-            otel_event, min_datetime_unix_nano, max_datetime_unix_nano
-        ):
-            node_model = self.convert_otel_event_to_node_model(otel_event)
+        node_model = self.convert_otel_event_to_node_model(otel_event)
 
-            self.node_models_to_save.append(node_model)
-            self.add_node_relations(otel_event)
+        self.node_models_to_save.append(node_model)
+        self.add_node_relations(otel_event)
 
-            if len(self.node_models_to_save) >= self.batch_size:
-                self.commit_batched_data_to_database()
-
-    def check_otel_event_within_timeframe(
-        self,
-        otel_event: OTelEvent,
-        min_datetime_unix_nano: int,
-        max_datetime_unix_nano: int,
-    ) -> bool:
-        """Method to check whether an OTelEvent's start time occured within
-        the timeframe.
-
-        :param otel_event: An OTelEvent object.
-        :type otel_event: :class: `OTelEvent`
-        :param min_datetime_unix_nano: Min datetime cutoff to save OTelEvent
-        :type min_datetime_unix_nano: `int`
-        :param max_datetime_unix_nano: Max datetime cutoff to save OTelEvent
-        :type max_datetime_unix_nano: `int`
-        :return: Boolean whether or not otel_event is within time frame.
-        :rtype: `bool`
-        """
-
-        return (
-            min_datetime_unix_nano
-            < otel_event.start_timestamp
-            < max_datetime_unix_nano
-        )
+        if len(self.node_models_to_save) >= self.batch_size:
+            self.commit_batched_data_to_database()
 
     def commit_batched_data_to_database(self) -> None:
         """Method to commit batched node models, and their relationships to
