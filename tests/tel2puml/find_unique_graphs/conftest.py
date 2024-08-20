@@ -736,7 +736,7 @@ def mock_otel_event() -> OTelEvent:
 @pytest.fixture
 def mock_sql_config() -> SQLDataHolderConfig:
     """Mocks config for SQLDataHolder."""
-    
+
     return SQLDataHolderConfig(
         db_uri="sqlite:///:memory:", batch_size=10, time_buffer=30
     )

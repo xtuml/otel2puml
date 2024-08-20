@@ -137,7 +137,8 @@ class TestSQLDataHolder:
     def test_integration_save_and_retrieve(
         mock_sql_config: SQLDataHolderConfig, mock_otel_event: OTelEvent
     ) -> None:
-        """Integration test for converting OTelEvent to NodeModel, saving and retrieving it from the database."""
+        """Integration test for converting OTelEvent to NodeModel, saving
+        and retrieving it from the database."""
 
         child_otel_event = OTelEvent(
             job_name="test_job",
