@@ -68,6 +68,7 @@ class OTELDataSource(ABC):
         :rtype: :class: `OTelEvent`
         """
 
+
 class JSONDataSource(OTELDataSource):
     """A class to handle OTel Data in JSON format"""
 
@@ -142,40 +143,134 @@ class JSONDataSource(OTELDataSource):
 
 class DataHolder(ABC):
     """An abstract class to handle saving processed OTel data."""
+
+    def __init__(self) -> None:
+        """Constructor method."""
+
+        self.min_timestamp: int = 0
+        self.max_timestamp: int = 999999999999999999999999999999999999999
     
-    @abstractmethod
     def save_data(self, otel_event: OTelEvent) -> None:
-        """Method for batching and saving OTel data.
-        
+        """Method to save an OTelEvent, and keep track of the min and max
+        timestamps.
+
         :param otel_event: An OTelEvent object
         :type otel_event: :class: `OTelEvent`
         """
+        pass
+
+    @abstractmethod
+    def _save_data(self, otel_event: OTelEvent) -> None:
+        """Abstract method for batching and saving OTel data.
+
+        :param otel_event: An OTelEvent object
+        :type otel_event: :class: `OTelEvent`
+        """
+        pass
+
+    @abstractmethod
+    def clean_up(self) -> None:
+        """Abstract method for any clean up tasks."""
+
         pass
     
 class SQLDataHolder(DataHolder):
     """A class to handle saving data in SQL databases using SQLAlchemy."""
-    def __init__(self, db_uri: str) -> None:
-        """Initialise class.
-        
-        :param db_uri: The database uri
-        :type db_uri: `str`
+
+    def __init__(self, config: SQLDataHolderConfig) -> None:
+        """Constructor method.
+
+        :param config: Configuration parameters.
+        :type config: :class: `SQLDataHolderConfig`
         """
-        self.data_to_save: list[OTelEvent]
+        self.node_models_to_save: list[NodeModel]
+        self.node_relationships_to_save: list[dict[str, str]]
         self.batch_size: int
         self.engine: Engine
+        self.session: Session
+        self.base: Base
+        self.create_db_tables()
 
 
     def create_db_tables(self) -> None:
-        """Create the database tables based on the defined models."""
+        """Method to create the database tables based on the defined models."""
         pass
     
-    def save_data(self, otel_event: OTelEvent) -> None:
+    def save_data(
+        self,
+        otel_event: OTelEvent,
+        min_datetime_unix_nano: int,
+        max_datetime_unix_nano: int,
+    ) -> None:
         """Method for batching and saving OTel data to SQL database.
-        
+
+        :param otel_event: An OTelEvent object.
+        :type otel_event: :class: `OTelEvent`
+        :param min_datetime_unix_nano: Min datetime cutoff to save OTelEvent
+        :type min_datetime_unix_nano: `int`
+        :param max_datetime_unix_nano: Max datetime cutoff to save OTelEvent
+        :type max_datetime_unix_nano: `int`
+        """
+        pass
+
+    def check_otel_event_within_timeframe(
+        self,
+        otel_event: OTelEvent,
+        min_datetime_unix_nano: int,
+        max_datetime_unix_nano: int,
+    ) -> bool:
+        """Method to check whether an OTelEvent's start time occured within
+        the timeframe.
+
+        :param otel_event: An OTelEvent object.
+        :type otel_event: :class: `OTelEvent`
+        :param min_datetime_unix_nano: Min datetime cutoff to save OTelEvent
+        :type min_datetime_unix_nano: `int`
+        :param max_datetime_unix_nano: Max datetime cutoff to save OTelEvent
+        :type max_datetime_unix_nano: `int`
+        :return: Boolean whether or not otel_event is within time frame.
+        :rtype: `bool`
+        """
+        pass
+
+    def commit_batched_data_to_database(self) -> None:
+        """Method to commit batched node models, and their relationships to
+        a SQL database.
+        """
+        pass
+
+    def batch_insert_node_models(self) -> None:
+        """Method to batch insert NodeModel objects into database."""
+        pass
+
+    def batch_insert_node_associations(self) -> None:
+        """Method to batch insert node associations into database."""
+        pass
+
+    def add_node_relations(self, otel_event: OTelEvent) -> None:
+        """Method to add parent-child node relations.
+
         :param otel_event: An OTelEvent object
         :type otel_event: :class: `OTelEvent`
         """
         pass
+
+    def convert_otel_event_to_node_model(
+        self, otel_event: OTelEvent
+    ) -> NodeModel:
+        """Method to convert an OTelEvent object to a NodeModel object.
+
+        :param otel_event: An OTelEvent object
+        :type otel_event: :class: `OTelEvent`
+        :return: A NodeModel object
+        :rtype: :class:`NodeModel`
+        """
+        pass
+
+    def clean_up(self) -> None:
+        """Method to save commit remaining items within the batch to the
+        database.
+        """
 
 class NodeModel(Base):
     """SQLAlchemy model to represent a node in the database."""

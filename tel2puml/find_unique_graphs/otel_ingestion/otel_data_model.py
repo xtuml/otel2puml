@@ -6,8 +6,6 @@ from sqlalchemy import (
     Column,
     String,
     ForeignKey,
-    DateTime,
-    func,
     Table,
     Integer,
 )
@@ -25,10 +23,10 @@ class OTelEvent(NamedTuple):
     :type event_type: `str`
     :param event_id: The ID of the event.
     :type event_id: `str`
-    :param start_timestamp: The start timestamp of the event.
-    :type start_timestamp: `str`
-    :param end_timestamp: The end timestamp of the event.
-    :type end_timestamp: `str`
+    :param start_timestamp: The start timestamp of the event in unix nano.
+    :type start_timestamp: `int`
+    :param end_timestamp: The end timestamp of the event in unix nano.
+    :type end_timestamp: :class: `int`
     :param application_name: The application name.
     :type application_name: `str`
     :param parent_event_id: The ID of the parent event.
@@ -41,8 +39,8 @@ class OTelEvent(NamedTuple):
     job_id: str
     event_type: str
     event_id: str
-    start_timestamp: str
-    end_timestamp: str
+    start_timestamp: int
+    end_timestamp: int
     application_name: str
     parent_event_id: Optional[str]
     child_event_ids: Optional[list[str]] = None
@@ -57,8 +55,10 @@ class Base(DeclarativeBase):
 NODE_ASSOCIATION = Table(
     "NODE_ASSOCIATION",
     Base.metadata,
-    Column("parent_id", Integer, ForeignKey("nodes.id"), primary_key=True),
-    Column("child_id", Integer, ForeignKey("nodes.id"), primary_key=True),
+    Column(
+        "parent_id", String, ForeignKey("nodes.event_id"), primary_key=True
+    ),
+    Column("child_id", String, ForeignKey("nodes.event_id"), primary_key=True),
 )
 
 
@@ -72,20 +72,16 @@ class NodeModel(Base):
     job_id = Column(String, nullable=False)
     event_type = Column(String, nullable=False)
     event_id = Column(String, unique=True, nullable=False)
-    start_timestamp = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    end_timestamp = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    start_timestamp = Column(Integer, nullable=False)
+    end_timestamp = Column(Integer, nullable=False)
     application_name = Column(String, nullable=False)
     parent_event_id = Column(String, ForeignKey("nodes.event_id"))
 
     children = relationship(
         "NodeModel",
         secondary=NODE_ASSOCIATION,
-        primaryjoin=(id == NODE_ASSOCIATION.c.parent_id),
-        secondaryjoin=(id == NODE_ASSOCIATION.c.child_id),
+        primaryjoin=(event_id == NODE_ASSOCIATION.c.parent_id),
+        secondaryjoin=(event_id == NODE_ASSOCIATION.c.child_id),
         backref="parents",
     )
 
@@ -135,3 +131,11 @@ class JSONDataSourceConfig(TypedDict):
     header: dict[str, HeaderSpec]
     span_mapping: dict[str, SpanSpec]
     field_mapping: dict[str, FieldSpec]
+
+
+class SQLDataHolderConfig(TypedDict):
+    """Typed dict for SQLDataHolderConfig."""
+
+    db_uri: str
+    batch_size: int
+    time_buffer: int

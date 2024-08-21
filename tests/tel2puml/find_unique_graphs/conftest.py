@@ -2,8 +2,14 @@
 
 import pytest
 import yaml
+
 from unittest.mock import patch
 from typing import Generator, Any
+
+from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
+    OTelEvent,
+    SQLDataHolderConfig,
+)
 
 
 @pytest.fixture
@@ -708,3 +714,58 @@ def mock_json_data_without_list() -> dict[str, Any]:
             ],
         },
     }
+
+
+@pytest.fixture
+def mock_otel_event() -> OTelEvent:
+    """Mocks an OTelEvent object."""
+
+    return OTelEvent(
+        job_name="test_job",
+        job_id="123",
+        event_type="test_event",
+        event_id="456",
+        start_timestamp=1723544154817793024,
+        end_timestamp=1723544154817993024,
+        application_name="test_app",
+        parent_event_id="789",
+        child_event_ids=["101", "102"],
+    )
+
+
+@pytest.fixture
+def mock_sql_config() -> SQLDataHolderConfig:
+    """Mocks config for SQLDataHolder."""
+
+    return SQLDataHolderConfig(
+        db_uri="sqlite:///:memory:", batch_size=10, time_buffer=30
+    )
+
+
+@pytest.fixture
+def mock_otel_events() -> list[OTelEvent]:
+    """Mocks a list of 10 OTelEvents"""
+
+    otel_events = []
+    prev_parent_event_id = None
+    start_timestamp = 1695639486119918080
+    end_timestamp = 1695639486119918084
+    for index in range(10):
+        event_id = index
+        next_event_id = index + 1
+        otel_events.append(
+            OTelEvent(
+                job_name="test_name",
+                job_id="test_id",
+                event_type=f"event_type_{index}",
+                event_id=str(event_id),
+                start_timestamp=start_timestamp + index,
+                end_timestamp=end_timestamp + index,
+                application_name="test_application_name",
+                parent_event_id=str(prev_parent_event_id),
+                child_event_ids=[str(next_event_id)],
+            )
+        )
+        prev_parent_event_id = event_id
+
+    return otel_events
