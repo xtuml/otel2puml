@@ -33,7 +33,7 @@ class TestSQLDataHolder:
             SQLDataHolder, "create_db_tables"
         ) as mock_create_db_tables:
             holder = SQLDataHolder(mock_sql_config)
-            # Test super init method
+            # Test the super().__init__() method
             assert (
                 holder.min_timestamp == 999999999999999999999999999999999999999
             )
@@ -47,7 +47,6 @@ class TestSQLDataHolder:
             assert holder.engine.url.database == ":memory:"
             assert isinstance(holder.session, Session)
             assert isinstance(holder.base, Base)
-            # Test create_db_tables method is called
             mock_create_db_tables.assert_called_once()
 
     @staticmethod
@@ -55,7 +54,6 @@ class TestSQLDataHolder:
         """Tests the create_db_tables method."""
 
         holder = SQLDataHolder(mock_sql_config)
-        holder.create_db_tables()
         inspector = inspect(holder.engine)
         # Test column names in nodes table
         columns = inspector.get_columns("nodes")
@@ -125,23 +123,26 @@ class TestSQLDataHolder:
         assert holder.min_timestamp == 1695639486119918080
         assert holder.max_timestamp == 1695639486119918093
 
-        with holder.session as session:
-            nodes = session.query(NodeModel).all()
-            assert len(nodes) == len(mock_otel_events)
+        nodes = holder.session.query(NodeModel).all()
+        assert len(nodes) == len(mock_otel_events)
 
-            node_0 = session.query(NodeModel).filter_by(event_id="0").first()
-            assert isinstance(node_0, NodeModel)
-            assert node_0.job_name == "test_name"
-            assert node_0.job_id == "test_id"
-            assert node_0.event_id == "0"
-            assert node_0.start_timestamp == 1695639486119918080
-            assert node_0.end_timestamp == 1695639486119918084
-            assert node_0.application_name == "test_application_name"
-            assert node_0.parent_event_id == "None"
+        node_0 = (
+            holder.session.query(NodeModel).filter_by(event_id="0").first()
+        )
+        assert isinstance(node_0, NodeModel)
+        assert node_0.job_name == "test_name"
+        assert node_0.job_id == "test_id"
+        assert node_0.event_id == "0"
+        assert node_0.start_timestamp == 1695639486119918080
+        assert node_0.end_timestamp == 1695639486119918084
+        assert node_0.application_name == "test_application_name"
+        assert node_0.parent_event_id == "None"
 
-            # Test parent-child relationship
-            node_1 = session.query(NodeModel).filter_by(event_id="1").first()
-            assert node_0.children == [node_1]
+        # Test parent-child relationship
+        node_1 = (
+            holder.session.query(NodeModel).filter_by(event_id="1").first()
+        )
+        assert node_0.children == [node_1]
 
     @staticmethod
     def test_commit_batched_data_success(
@@ -186,35 +187,38 @@ class TestSQLDataHolder:
         assert len(holder.node_models_to_save) == 0
         assert len(holder.node_relationships_to_save) == 0
 
-        with holder.session as session:
-            # Test NodeModels are correctly stored in the database
-            node_0 = session.query(NodeModel).filter_by(event_id="100").first()
-            node_1 = session.query(NodeModel).filter_by(event_id="101").first()
+        # Test NodeModels are correctly stored in the database
+        node_0 = (
+            holder.session.query(NodeModel).filter_by(event_id="100").first()
+        )
+        node_1 = (
+            holder.session.query(NodeModel).filter_by(event_id="101").first()
+        )
 
-            assert isinstance(node_0, NodeModel)
-            assert not node_0.parent_event_id
+        assert isinstance(node_0, NodeModel)
+        assert not node_0.parent_event_id
 
-            assert isinstance(node_1, NodeModel)
-            assert node_1 in node_0.children
-            assert node_1.parent_event_id == "100"
+        assert isinstance(node_1, NodeModel)
+        assert node_1 in node_0.children
+        assert node_1.parent_event_id == "100"
 
-            # Test attributes between parent and child are the same
-            for attr in [
-                "job_name",
-                "job_id",
-                "application_name",
-                "event_type",
-                "start_timestamp",
-                "end_timestamp",
-            ]:
-                assert getattr(node_0, attr) == getattr(node_1, attr)
+        # Test attributes between parent and child are the same
+        for attr in [
+            "job_name",
+            "job_id",
+            "application_name",
+            "event_type",
+            "start_timestamp",
+            "end_timestamp",
+        ]:
+            assert getattr(node_0, attr) == getattr(node_1, attr)
 
-            # Test node relationships are correctly stored in the database
-            node_relationship = session.query(NODE_ASSOCIATION).all()
+        # Test node relationships are correctly stored in the database
+        node_relationship = holder.session.query(NODE_ASSOCIATION).all()
 
-            assert len(node_relationship) == 1
-            assert node_relationship[0].parent_id == "100"
-            assert node_relationship[0].child_id == "101"
+        assert len(node_relationship) == 1
+        assert node_relationship[0].parent_id == "100"
+        assert node_relationship[0].child_id == "101"
 
     @staticmethod
     def test_commit_batched_data_failure(
@@ -262,21 +266,23 @@ class TestSQLDataHolder:
             assert "Unexpected Error" in str(context.value)
 
     @staticmethod
-    def test_clean_up(
+    def test_sql_data_holder_exit_method(
         mock_sql_config: SQLDataHolderConfig, mock_otel_event: OTelEvent
     ) -> None:
-        """Tests clean_up method."""
+        """Tests the __exit__ method using a context manager."""
 
-        holder = SQLDataHolder(mock_sql_config)
-        with holder.session as session:
+        with SQLDataHolder(mock_sql_config) as holder:
             holder.save_data(mock_otel_event)
-            assert len(session.query(NodeModel).all()) == 0
-            holder.clean_up()
-            assert len(session.query(NodeModel).all()) == 1
+            assert len(holder.session.query(NodeModel).all()) == 0
 
-            node = session.query(NodeModel).filter_by(event_id="456").first()
-            assert isinstance(node, NodeModel)
-            assert node.job_name == "test_job"
+        # Rest of the batch is commited on __exit__
+        assert len(holder.session.query(NodeModel).all()) == 1
+
+        node = (
+            holder.session.query(NodeModel).filter_by(event_id="456").first()
+        )
+        assert isinstance(node, NodeModel)
+        assert node.job_name == "test_job"
 
     @staticmethod
     def test_integration_save_and_retrieve(
@@ -296,35 +302,34 @@ class TestSQLDataHolder:
             parent_event_id="456",
         )
 
-        holder = SQLDataHolder(mock_sql_config)
-        holder.save_data(mock_otel_event)
-        holder.save_data(child_otel_event)
-        holder.clean_up()
+        with SQLDataHolder(mock_sql_config) as holder:
+            holder.save_data(mock_otel_event)
+            holder.save_data(child_otel_event)
 
         assert holder.min_timestamp == 1723544154817793024
         assert holder.max_timestamp == 1823544154817798024
 
         # Retrieve the data and check if it's correct
-        with holder.session as session:
-            node = session.query(NodeModel).filter_by(event_id="456").first()
-            assert node is not None
-            assert isinstance(node, NodeModel)
-            assert node.job_name == "test_job"
-            assert node.job_id == "123"
-            assert node.event_type == "test_event"
-            assert node.event_id == "456"
-            assert node.start_timestamp == 1723544154817793024
-            assert node.end_timestamp == 1723544154817993024
-            assert node.application_name == "test_app"
+        node = (
+            holder.session.query(NodeModel).filter_by(event_id="456").first()
+        )
+        assert node is not None
+        assert isinstance(node, NodeModel)
+        assert node.job_name == "test_job"
+        assert node.job_id == "123"
+        assert node.event_type == "test_event"
+        assert node.event_id == "456"
+        assert node.start_timestamp == 1723544154817793024
+        assert node.end_timestamp == 1723544154817993024
+        assert node.application_name == "test_app"
 
-            child_node = (
-                session.query(NodeModel).filter_by(event_id="101").first()
-            )
-            assert node.children == [child_node]
+        child_node = (
+            holder.session.query(NodeModel).filter_by(event_id="101").first()
+        )
+        assert node.children == [child_node]
 
         # Check if relationships were saved
-        with holder.session as session:
-            relationships = session.query(NODE_ASSOCIATION).all()
-            assert len(relationships) == 2
-            assert relationships[0].parent_id == "456"
-            assert relationships[0].child_id in ["101", "102"]
+        relationships = holder.session.query(NODE_ASSOCIATION).all()
+        assert len(relationships) == 2
+        assert relationships[0].parent_id == "456"
+        assert relationships[0].child_id in ["101", "102"]

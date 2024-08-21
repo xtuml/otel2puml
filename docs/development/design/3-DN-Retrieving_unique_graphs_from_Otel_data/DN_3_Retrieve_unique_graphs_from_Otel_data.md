@@ -150,6 +150,35 @@ class DataHolder(ABC):
         self.min_timestamp: int = 0
         self.max_timestamp: int = 999999999999999999999999999999999999999
     
+    def __enter__(self) -> Self:
+        """Method for configuring the setup tasks within the context manager.
+
+        :return: The object itself
+        :rtype: :class:`Self`
+        """
+
+        pass
+
+        def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        """
+        Method for configuring the tear down tasks within the context
+        manager.
+
+        :param exc_type: The exception type
+        :type exc_type: `Optional`[`type`[:class:`BaseException`]]
+        :param exc_val: The exception value
+        :type exc_val: `Optional`[:class:`BaseException`]
+        :param exc_tb: The exception traceback
+        :type exc_tb: `Optional`[:class:`TracebackType`]
+        """
+
+        pass
+
     def save_data(self, otel_event: OTelEvent) -> None:
         """Method to save an OTelEvent, and keep track of the min and max
         timestamps.
@@ -166,12 +195,6 @@ class DataHolder(ABC):
         :param otel_event: An OTelEvent object
         :type otel_event: :class: `OTelEvent`
         """
-        pass
-
-    @abstractmethod
-    def clean_up(self) -> None:
-        """Abstract method for any clean up tasks."""
-
         pass
     
 class SQLDataHolder(DataHolder):
@@ -191,6 +214,32 @@ class SQLDataHolder(DataHolder):
         self.base: Base
         self.create_db_tables()
 
+    def __enter__(self) -> Self:
+        """Configure the database engine, session and create database tables.
+
+        :return: The object itself
+        :rtype: :class:`Self`
+        """
+        pass
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        """
+        Method to handle tear down tasks within the context manager.
+
+        :param exc_type: The exception type
+        :type exc_type: `Optional`[`type`[:class:`BaseException`]]
+        :param exc_val: The exception value
+        :type exc_val: `Optional`[:class:`BaseException`]
+        :param exc_tb: The exception traceback
+        :type exc_tb: `Optional`[:class:`TracebackType`]
+        """
+
+        pass
 
     def create_db_tables(self) -> None:
         """Method to create the database tables based on the defined models."""
@@ -266,11 +315,6 @@ class SQLDataHolder(DataHolder):
         :rtype: :class:`NodeModel`
         """
         pass
-
-    def clean_up(self) -> None:
-        """Method to save commit remaining items within the batch to the
-        database.
-        """
 
 class NodeModel(Base):
     """SQLAlchemy model to represent a node in the database."""
