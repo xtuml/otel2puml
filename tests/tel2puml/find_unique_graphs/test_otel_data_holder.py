@@ -189,14 +189,10 @@ class TestSQLDataHolder:
 
         # Test NodeModels are correctly stored in the database
         node_0 = (
-            holder.session.query(NodeModel)
-            .filter_by(event_id="100")
-            .first()
+            holder.session.query(NodeModel).filter_by(event_id="100").first()
         )
         node_1 = (
-            holder.session.query(NodeModel)
-            .filter_by(event_id="101")
-            .first()
+            holder.session.query(NodeModel).filter_by(event_id="101").first()
         )
 
         assert isinstance(node_0, NodeModel)

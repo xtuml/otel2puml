@@ -67,7 +67,7 @@ class DataHolder(ABC):
         """
 
         if exc_type:
-            raise exc_val
+            raise
 
     @abstractmethod
     def _save_data(self, otel_event: OTelEvent) -> None:
