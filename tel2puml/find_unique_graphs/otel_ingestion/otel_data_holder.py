@@ -67,7 +67,7 @@ class DataHolder(ABC):
         """
 
         if exc_type:
-            raise exc_type(exc_val)
+            raise exc_val
 
     @abstractmethod
     def _save_data(self, otel_event: OTelEvent) -> None:
@@ -92,20 +92,10 @@ class SQLDataHolder(DataHolder):
         self.node_models_to_save: list[NodeModel] = []
         self.node_relationships_to_save: list[dict[str, str]] = []
         self.batch_size: int = config["batch_size"]
-        self.config = config
-
-    def __enter__(self) -> Self:
-        """Configure the database engine, session and create database tables.
-
-        :return: The object itself
-        :rtype: :class:`Self`
-        """
-
-        self.engine: Engine = create_engine(self.config["db_uri"], echo=False)
-        self.session: Session = Session(bind=self.engine)
+        self.engine: Engine = create_engine(config["db_uri"], echo=False)
         self.base: Base = Base()
+        self.session: Session = Session(bind=self.engine)
         self.create_db_tables()
-        return self
 
     def __exit__(
         self,

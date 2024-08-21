@@ -29,62 +29,53 @@ class TestSQLDataHolder:
     ) -> None:
         """Tests the init method."""
 
-        holder = SQLDataHolder(mock_sql_config)
-
-        # Test the super().__init__() method
-        assert holder.min_timestamp == 999999999999999999999999999999999999999
-        assert holder.max_timestamp == 0
-        # Test attributes set correctly
-        assert holder.batch_size == 10
-        assert holder.node_models_to_save == []
-        assert holder.node_relationships_to_save == []
-
-    @staticmethod
-    def test_sql_data_holder_enter_method(
-        mock_sql_config: SQLDataHolderConfig,
-    ) -> None:
-        """Tests the __enter__ method using a context manager."""
-
         with patch.object(
             SQLDataHolder, "create_db_tables"
         ) as mock_create_db_tables:
-            with SQLDataHolder(mock_sql_config) as holder:
-                assert isinstance(holder.engine, Engine)
-                assert holder.engine.url.drivername == "sqlite"
-                assert holder.engine.url.database == ":memory:"
-                assert isinstance(holder.session, Session)
-                assert isinstance(holder.base, Base)
-                # Test create_db_tables method is called
-                mock_create_db_tables.assert_called_once()
+            holder = SQLDataHolder(mock_sql_config)
+            # Test the super().__init__() method
+            assert (
+                holder.min_timestamp == 999999999999999999999999999999999999999
+            )
+            assert holder.max_timestamp == 0
+            # Test attributes set correctly
+            assert holder.batch_size == 10
+            assert holder.node_models_to_save == []
+            assert holder.node_relationships_to_save == []
+            assert isinstance(holder.engine, Engine)
+            assert holder.engine.url.drivername == "sqlite"
+            assert holder.engine.url.database == ":memory:"
+            assert isinstance(holder.session, Session)
+            assert isinstance(holder.base, Base)
+            mock_create_db_tables.assert_called_once()
 
     @staticmethod
     def test_create_db_tables(mock_sql_config: SQLDataHolderConfig) -> None:
         """Tests the create_db_tables method."""
 
-        with SQLDataHolder(mock_sql_config) as holder:
-            holder.create_db_tables()
-            inspector = inspect(holder.engine)
-            # Test column names in nodes table
-            columns = inspector.get_columns("nodes")
-            column_names = [column["name"] for column in columns]
-            expected_column_names = [
-                "id",
-                "job_name",
-                "job_id",
-                "event_type",
-                "event_id",
-                "start_timestamp",
-                "end_timestamp",
-                "application_name",
-                "parent_event_id",
-            ]
-            assert column_names == expected_column_names
+        holder = SQLDataHolder(mock_sql_config)
+        inspector = inspect(holder.engine)
+        # Test column names in nodes table
+        columns = inspector.get_columns("nodes")
+        column_names = [column["name"] for column in columns]
+        expected_column_names = [
+            "id",
+            "job_name",
+            "job_id",
+            "event_type",
+            "event_id",
+            "start_timestamp",
+            "end_timestamp",
+            "application_name",
+            "parent_event_id",
+        ]
+        assert column_names == expected_column_names
 
-            # Test column names in node association table
-            columns = inspector.get_columns("NODE_ASSOCIATION")
-            column_names = [column["name"] for column in columns]
+        # Test column names in node association table
+        columns = inspector.get_columns("NODE_ASSOCIATION")
+        column_names = [column["name"] for column in columns]
 
-            assert column_names == ["parent_id", "child_id"]
+        assert column_names == ["parent_id", "child_id"]
 
     @staticmethod
     def test_convert_otel_event_to_node_model(
@@ -125,34 +116,33 @@ class TestSQLDataHolder:
     ) -> None:
         """Tests save_data method"""
 
-        with SQLDataHolder(mock_sql_config) as holder:
-            for otel_event in mock_otel_events:
-                holder.save_data(otel_event)
+        holder = SQLDataHolder(mock_sql_config)
+        for otel_event in mock_otel_events:
+            holder.save_data(otel_event)
 
-            assert holder.min_timestamp == 1695639486119918080
-            assert holder.max_timestamp == 1695639486119918093
+        assert holder.min_timestamp == 1695639486119918080
+        assert holder.max_timestamp == 1695639486119918093
 
-            with holder.session as session:
-                nodes = session.query(NodeModel).all()
-                assert len(nodes) == len(mock_otel_events)
+        nodes = holder.session.query(NodeModel).all()
+        assert len(nodes) == len(mock_otel_events)
 
-                node_0 = (
-                    session.query(NodeModel).filter_by(event_id="0").first()
-                )
-                assert isinstance(node_0, NodeModel)
-                assert node_0.job_name == "test_name"
-                assert node_0.job_id == "test_id"
-                assert node_0.event_id == "0"
-                assert node_0.start_timestamp == 1695639486119918080
-                assert node_0.end_timestamp == 1695639486119918084
-                assert node_0.application_name == "test_application_name"
-                assert node_0.parent_event_id == "None"
+        node_0 = (
+            holder.session.query(NodeModel).filter_by(event_id="0").first()
+        )
+        assert isinstance(node_0, NodeModel)
+        assert node_0.job_name == "test_name"
+        assert node_0.job_id == "test_id"
+        assert node_0.event_id == "0"
+        assert node_0.start_timestamp == 1695639486119918080
+        assert node_0.end_timestamp == 1695639486119918084
+        assert node_0.application_name == "test_application_name"
+        assert node_0.parent_event_id == "None"
 
-                # Test parent-child relationship
-                node_1 = (
-                    session.query(NodeModel).filter_by(event_id="1").first()
-                )
-                assert node_0.children == [node_1]
+        # Test parent-child relationship
+        node_1 = (
+            holder.session.query(NodeModel).filter_by(event_id="1").first()
+        )
+        assert node_0.children == [node_1]
 
     @staticmethod
     def test_commit_batched_data_success(
@@ -160,79 +150,79 @@ class TestSQLDataHolder:
     ) -> None:
         """Tests commit_batched_data_to_database method, with success."""
 
-        with SQLDataHolder(mock_sql_config) as holder:
-            parent_node_model = NodeModel(
-                job_name="test_job_name",
-                job_id="test_job_id",
-                event_type="test_event",
-                event_id="100",
-                start_timestamp=1723544154817893024,
-                end_timestamp=1723544154817798024,
-                application_name="test_app",
-                parent_event_id=None,
-            )
-            child_node_model = NodeModel(
-                job_name="test_job_name",
-                job_id="test_job_id",
-                event_type="test_event",
-                event_id="101",
-                start_timestamp=1723544154817893024,
-                end_timestamp=1723544154817798024,
-                application_name="test_app",
-                parent_event_id="100",
-            )
+        holder = SQLDataHolder(mock_sql_config)
+        parent_node_model = NodeModel(
+            job_name="test_job_name",
+            job_id="test_job_id",
+            event_type="test_event",
+            event_id="100",
+            start_timestamp=1723544154817893024,
+            end_timestamp=1723544154817798024,
+            application_name="test_app",
+            parent_event_id=None,
+        )
+        child_node_model = NodeModel(
+            job_name="test_job_name",
+            job_id="test_job_id",
+            event_type="test_event",
+            event_id="101",
+            start_timestamp=1723544154817893024,
+            end_timestamp=1723544154817798024,
+            application_name="test_app",
+            parent_event_id="100",
+        )
 
-            holder.node_relationships_to_save.append(
-                {"parent_id": "100", "child_id": "101"}
-            )
-            holder.node_models_to_save.append(parent_node_model)
-            holder.node_models_to_save.append(child_node_model)
+        holder.node_relationships_to_save.append(
+            {"parent_id": "100", "child_id": "101"}
+        )
+        holder.node_models_to_save.append(parent_node_model)
+        holder.node_models_to_save.append(child_node_model)
 
-            # Test reset batch
-            assert len(holder.node_models_to_save) == 2
-            assert len(holder.node_relationships_to_save) == 1
+        # Test reset batch
+        assert len(holder.node_models_to_save) == 2
+        assert len(holder.node_relationships_to_save) == 1
 
-            holder.commit_batched_data_to_database()
+        holder.commit_batched_data_to_database()
 
-            assert len(holder.node_models_to_save) == 0
-            assert len(holder.node_relationships_to_save) == 0
+        assert len(holder.node_models_to_save) == 0
+        assert len(holder.node_relationships_to_save) == 0
 
-            # Test NodeModels are correctly stored in the database
-            node_0 = (
-                holder.session.query(NodeModel)
-                .filter_by(event_id="100")
-                .first()
-            )
-            node_1 = (
-                holder.session.query(NodeModel)
-                .filter_by(event_id="101")
-                .first()
-            )
+        # Test NodeModels are correctly stored in the database
+        node_0 = (
+            holder.session.query(NodeModel)
+            .filter_by(event_id="100")
+            .first()
+        )
+        node_1 = (
+            holder.session.query(NodeModel)
+            .filter_by(event_id="101")
+            .first()
+        )
 
-            assert isinstance(node_0, NodeModel)
-            assert not node_0.parent_event_id
+        assert isinstance(node_0, NodeModel)
+        assert not node_0.parent_event_id
 
-            assert isinstance(node_1, NodeModel)
-            assert node_1 in node_0.children
-            assert node_1.parent_event_id == "100"
+        assert isinstance(node_1, NodeModel)
+        assert node_1 in node_0.children
+        assert node_1.parent_event_id == "100"
 
-            # Test attributes between parent and child are the same
-            for attr in [
-                "job_name",
-                "job_id",
-                "application_name",
-                "event_type",
-                "start_timestamp",
-                "end_timestamp",
-            ]:
-                assert getattr(node_0, attr) == getattr(node_1, attr)
+        # Test attributes between parent and child are the same
+        for attr in [
+            "job_name",
+            "job_id",
+            "application_name",
+            "event_type",
+            "start_timestamp",
+            "end_timestamp",
+        ]:
+            assert getattr(node_0, attr) == getattr(node_1, attr)
 
-            # Test node relationships are correctly stored in the database
-            node_relationship = holder.session.query(NODE_ASSOCIATION).all()
+        # Test node relationships are correctly stored in the database
+        node_relationship = holder.session.query(NODE_ASSOCIATION).all()
 
-            assert len(node_relationship) == 1
-            assert node_relationship[0].parent_id == "100"
-            assert node_relationship[0].child_id == "101"
+        assert len(node_relationship) == 1
+        assert node_relationship[0].parent_id == "100"
+        assert node_relationship[0].child_id == "101"
 
     @staticmethod
     def test_commit_batched_data_failure(
@@ -240,44 +230,44 @@ class TestSQLDataHolder:
     ) -> None:
         """Tests commit_batched_data_to_database method, with failure."""
 
-        with SQLDataHolder(mock_sql_config) as holder:
+        holder = SQLDataHolder(mock_sql_config)
 
-            # Test the IntegrityError case
-            with patch.object(
-                holder,
-                "batch_insert_node_models",
-                side_effect=IntegrityError(
-                    "IntegrityError", None, Exception("IntegrityError")
-                ),
-            ), patch.object(holder.session, "rollback") as mock_rollback:
-                with pytest.raises(Exception) as context:
-                    holder.commit_batched_data_to_database()
-                mock_rollback.assert_called_once()
-                assert "IntegrityError" in str(context.value)
+        # Test the IntegrityError case
+        with patch.object(
+            holder,
+            "batch_insert_node_models",
+            side_effect=IntegrityError(
+                "IntegrityError", None, Exception("IntegrityError")
+            ),
+        ), patch.object(holder.session, "rollback") as mock_rollback:
+            with pytest.raises(Exception) as context:
+                holder.commit_batched_data_to_database()
+            mock_rollback.assert_called_once()
+            assert "IntegrityError" in str(context.value)
 
-            # Test the OperationalError case
-            with patch.object(
-                holder,
-                "batch_insert_node_models",
-                side_effect=OperationalError(
-                    "OperationalError", None, Exception("OperationalError")
-                ),
-            ), patch.object(holder.session, "rollback") as mock_rollback:
-                with pytest.raises(Exception) as context:
-                    holder.commit_batched_data_to_database()
-                mock_rollback.assert_called_once()
-                assert "OperationalError" in str(context.value)
+        # Test the OperationalError case
+        with patch.object(
+            holder,
+            "batch_insert_node_models",
+            side_effect=OperationalError(
+                "OperationalError", None, Exception("OperationalError")
+            ),
+        ), patch.object(holder.session, "rollback") as mock_rollback:
+            with pytest.raises(Exception) as context:
+                holder.commit_batched_data_to_database()
+            mock_rollback.assert_called_once()
+            assert "OperationalError" in str(context.value)
 
-            # Test the unexpected error case
-            with patch.object(
-                holder,
-                "batch_insert_node_models",
-                side_effect=Exception("Unexpected Error"),
-            ), patch.object(holder.session, "rollback") as mock_rollback:
-                with pytest.raises(Exception) as context:
-                    holder.commit_batched_data_to_database()
-                mock_rollback.assert_called_once()
-                assert "Unexpected Error" in str(context.value)
+        # Test the unexpected error case
+        with patch.object(
+            holder,
+            "batch_insert_node_models",
+            side_effect=Exception("Unexpected Error"),
+        ), patch.object(holder.session, "rollback") as mock_rollback:
+            with pytest.raises(Exception) as context:
+                holder.commit_batched_data_to_database()
+            mock_rollback.assert_called_once()
+            assert "Unexpected Error" in str(context.value)
 
     @staticmethod
     def test_sql_data_holder_exit_method(
