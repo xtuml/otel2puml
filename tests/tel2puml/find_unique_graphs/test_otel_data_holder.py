@@ -29,21 +29,26 @@ class TestSQLDataHolder:
     ) -> None:
         """Tests the init method."""
 
+        holder = SQLDataHolder(mock_sql_config)
+
+        # Test the super().__init__() method
+        assert holder.min_timestamp == 999999999999999999999999999999999999999
+        assert holder.max_timestamp == 0
+        # Test attributes set correctly
+        assert holder.batch_size == 10
+        assert holder.node_models_to_save == []
+        assert holder.node_relationships_to_save == []
+
+    @staticmethod
+    def test_sql_data_holder_enter_method(
+        mock_sql_config: SQLDataHolderConfig,
+    ) -> None:
+        """Tests the __enter__ method using a context manager."""
+
         with patch.object(
             SQLDataHolder, "create_db_tables"
         ) as mock_create_db_tables:
             with SQLDataHolder(mock_sql_config) as holder:
-                # holder = SQLDataHolder(mock_sql_config)
-                # Test super init method
-                assert (
-                    holder.min_timestamp
-                    == 999999999999999999999999999999999999999
-                )
-                assert holder.max_timestamp == 0
-                # Test attributes set correctly
-                assert holder.batch_size == 10
-                assert holder.node_models_to_save == []
-                assert holder.node_relationships_to_save == []
                 assert isinstance(holder.engine, Engine)
                 assert holder.engine.url.drivername == "sqlite"
                 assert holder.engine.url.database == ":memory:"
@@ -275,24 +280,33 @@ class TestSQLDataHolder:
                 assert "Unexpected Error" in str(context.value)
 
     @staticmethod
-    def test_clean_up(
+    def test_sql_data_holder_exit_method(
         mock_sql_config: SQLDataHolderConfig, mock_otel_event: OTelEvent
     ) -> None:
-        """Tests clean_up method."""
+        """Tests the __exit__ method using a context manager."""
 
         with SQLDataHolder(mock_sql_config) as holder:
             holder.save_data(mock_otel_event)
             assert len(holder.session.query(NodeModel).all()) == 0
-            holder.clean_up()
-            assert len(holder.session.query(NodeModel).all()) == 1
 
-            node = (
-                holder.session.query(NodeModel)
-                .filter_by(event_id="456")
-                .first()
-            )
-            assert isinstance(node, NodeModel)
-            assert node.job_name == "test_job"
+        # Rest of the batch is commited on __exit__
+        assert len(holder.session.query(NodeModel).all()) == 1
+
+        node = (
+            holder.session.query(NodeModel).filter_by(event_id="456").first()
+        )
+        assert isinstance(node, NodeModel)
+        assert node.job_name == "test_job"
+
+    @staticmethod
+    def test_sql_data_holder_exit_raised_exception(
+        mock_sql_config: SQLDataHolderConfig,
+    ) -> None:
+        """Tests raising an exception through the context manager."""
+
+        with SQLDataHolder(mock_sql_config):
+            with pytest.raises(ValueError):
+                raise ValueError("Value error occured.")
 
     @staticmethod
     def test_integration_save_and_retrieve(
@@ -315,36 +329,31 @@ class TestSQLDataHolder:
         with SQLDataHolder(mock_sql_config) as holder:
             holder.save_data(mock_otel_event)
             holder.save_data(child_otel_event)
-            holder.clean_up()
 
-            assert holder.min_timestamp == 1723544154817793024
-            assert holder.max_timestamp == 1823544154817798024
+        assert holder.min_timestamp == 1723544154817793024
+        assert holder.max_timestamp == 1823544154817798024
 
-            # Retrieve the data and check if it's correct
-            node = (
-                holder.session.query(NodeModel)
-                .filter_by(event_id="456")
-                .first()
-            )
-            assert node is not None
-            assert isinstance(node, NodeModel)
-            assert node.job_name == "test_job"
-            assert node.job_id == "123"
-            assert node.event_type == "test_event"
-            assert node.event_id == "456"
-            assert node.start_timestamp == 1723544154817793024
-            assert node.end_timestamp == 1723544154817993024
-            assert node.application_name == "test_app"
+        # Retrieve the data and check if it's correct
+        node = (
+            holder.session.query(NodeModel).filter_by(event_id="456").first()
+        )
+        assert node is not None
+        assert isinstance(node, NodeModel)
+        assert node.job_name == "test_job"
+        assert node.job_id == "123"
+        assert node.event_type == "test_event"
+        assert node.event_id == "456"
+        assert node.start_timestamp == 1723544154817793024
+        assert node.end_timestamp == 1723544154817993024
+        assert node.application_name == "test_app"
 
-            child_node = (
-                holder.session.query(NodeModel)
-                .filter_by(event_id="101")
-                .first()
-            )
-            assert node.children == [child_node]
+        child_node = (
+            holder.session.query(NodeModel).filter_by(event_id="101").first()
+        )
+        assert node.children == [child_node]
 
-            # Check if relationships were saved
-            relationships = holder.session.query(NODE_ASSOCIATION).all()
-            assert len(relationships) == 2
-            assert relationships[0].parent_id == "456"
-            assert relationships[0].child_id in ["101", "102"]
+        # Check if relationships were saved
+        relationships = holder.session.query(NODE_ASSOCIATION).all()
+        assert len(relationships) == 2
+        assert relationships[0].parent_id == "456"
+        assert relationships[0].child_id in ["101", "102"]

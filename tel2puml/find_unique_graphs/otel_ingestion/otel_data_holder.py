@@ -66,7 +66,8 @@ class DataHolder(ABC):
         :type exc_tb: `Optional`[:class:`TracebackType`]
         """
 
-        pass
+        if exc_type:
+            raise exc_type(exc_val)
 
     @abstractmethod
     def _save_data(self, otel_event: OTelEvent) -> None:
@@ -122,7 +123,8 @@ class SQLDataHolder(DataHolder):
         :param exc_tb: The exception traceback
         :type exc_tb: `Optional`[:class:`TracebackType`]
         """
-        self.clean_up()
+        super().__exit__(exc_type, exc_val, exc_tb)
+        self.commit_batched_data_to_database()
         self.session.close()
 
     def create_db_tables(self) -> None:
@@ -217,10 +219,3 @@ class SQLDataHolder(DataHolder):
             application_name=otel_event.application_name,
             parent_event_id=otel_event.parent_event_id or None,
         )
-
-    def clean_up(self) -> None:
-        """Method to save commit remaining items within the batch to the
-        database.
-        """
-
-        self.commit_batched_data_to_database()
