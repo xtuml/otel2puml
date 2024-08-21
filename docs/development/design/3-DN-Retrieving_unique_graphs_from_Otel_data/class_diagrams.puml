@@ -41,6 +41,9 @@ class otel_ingestion.otel_data_holder.SQLDataHolder {
     #engine: str
     #session: Session
     #base: Base
+    +__init__(): None
+    +__enter__(): Self
+    +__exit__(Optional[type[BaseException]], Optional[BaseException]Optional[TracebackType]): None
     +save_data(OTelEvent, min_datetime_unix_nano, max_datetime_unix_nano): None
     +create_db_tables(): None
     +check_otel_event_within_timeframe(OTelEvent, min_datetime_unix_nano, max_datetime_unix_nano): None
@@ -49,7 +52,6 @@ class otel_ingestion.otel_data_holder.SQLDataHolder {
     +batch_insert_node_associations(): None
     +add_node_relations(OTelEvent): None
     +convert_otel_event_to_node_model(OTelEvent): NodeModel
-    +clean_up(): None
 }
 
 class otel_ingestion.otel_data_model.NodeModel {
@@ -70,8 +72,10 @@ class otel_ingestion.otel_data_model.Base {
 }
 
 abstract class otel_ingestion.otel_data_holder.DataHolder {
+    +__init__(): None
+    +__enter__(): Self
+    +__exit__(Optional[type[BaseException]], Optional[BaseException]Optional[TracebackType]): None
     +save_data(OTelEvent, min_datetime_unix_nano, max_datetime_unix_nano): None
-    +clean_up(): None
 }
 
 class otel_ingestion.ingest_data.IngestData {
