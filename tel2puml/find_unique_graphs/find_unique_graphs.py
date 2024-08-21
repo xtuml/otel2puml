@@ -6,7 +6,9 @@ from tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder import (
 )
 
 
-def get_time_window(time_buffer: int, data_holder: DataHolder) -> int:
+def get_time_window(
+    time_buffer: int, data_holder: DataHolder
+) -> tuple[int, int]:
     """Get the time window for the unique graphs.
 
     :param time_buffer: The time buffer to add to the time window in minutes
@@ -14,7 +16,7 @@ def get_time_window(time_buffer: int, data_holder: DataHolder) -> int:
     :param data_holder: The data holder object containing the ingested data
     :type data_holder: :class:`DataHolder`
     :return: The time window for the unique graphs
-    :rtype: `int`
+    :rtype: `tuple[int, int]`
     :raises ValueError: If the time buffer is too large for the ingested data
     """
     time_buffer_in_nanoseconds = time_buffer * 60 * 1000000000
