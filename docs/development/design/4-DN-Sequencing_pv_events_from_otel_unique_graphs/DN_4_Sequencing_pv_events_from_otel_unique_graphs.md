@@ -88,11 +88,17 @@ def sequence_otel_event_job(
     """
 
 
-def sequence_otel_jobs(jobs: Iterable[dict[str, OTelEvent]]) -> Iterable[Iterable[PVEvent]]:
+def sequence_otel_jobs(
+    jobs: Iterable[dict[str, OTelEvent]],
+    async_flag: bool = False,
+    event_type_to_async_events_map: dict[str, list[list[str]]] | None = None,
+) -> Iterable[Iterable[PVEvent]]:
     """Sequences the pv events from the otel unique graphs
 
     :param jobs: the otel unique graphs as an iterable of dictionaries
     of event ids to otel events
+    :param async_flag: a flag to indicate if the sequencing should be done asynchronously
+    :param event_type_to_async_events_map: a map of event types to lists of lists of event types that should be sequenced in parallel
     :return: an iterable of iterables of pv events for each of the jobs
     """
     pass
