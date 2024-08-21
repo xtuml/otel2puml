@@ -1,18 +1,28 @@
 @startuml
     start
-    :Input ->\nmap of event id to OTelEvent\nasync flag,\nmap of event type to list of sets of async following event types;
-    partition "sequence_otel_event_job" {
-        :find root OTelEvent;
-        :Input ->\nroot OTelEvent,\nmap of event_id to OTelEvent,\nasync flag,\nmap of event type to list of sets of async following event types;
-        :Call "sequence_otel_event_and_ancestors";
+    :Input ->\nIterable of map of event_id to OTelEvent\nasync flag,\nmap of event type to list of sets of async following event types;
+    partition "sequence_otel_jobs" {
         repeat
-            :get OTelEvent from map of event id to OTelEvent;
-            :create PVEvent from OTelEvent using previous event ids;
-            :yield PVEvent;
-        repeat while (for each event id and previous event ids\nin map of event id to previous event ids)
+            :Input ->\nmap of event id to OTelEvent,\nasync flag,\nmap of event type to list of sets of async following event types;
+            :Call "sequence_otel_event_job"|
+            :yield the iterable of PVEvents;
+        repeat while (for each map of event id to OTelEvent)
     }
     end
     partition "sub algorithms" {
+        start
+        :Input ->\nmap of event id to OTelEvent\nasync flag,\nmap of event type to list of sets of async following event types;
+        group "sequence_otel_event_job"
+            :find root OTelEvent;
+            :Input ->\nroot OTelEvent,\nmap of event_id to OTelEvent,\nasync flag,\nmap of event type to list of sets of async following event types;
+            :Call "sequence_otel_event_and_ancestors";
+            repeat
+                :get OTelEvent from map of event id to OTelEvent;
+                :create PVEvent from OTelEvent using previous event ids;
+                :yield PVEvent;
+            repeat while (for each event id and previous event ids\nin map of event id to previous event ids)
+        end group
+        end
         start
         :Input ->\nOTelEvent,map of event id to OTelEvent,\nprevious event ids list,\nasync flag,\nmap of event type to list of sets of async following event types;
         group "sequence_otel_event_and_ancestors"
