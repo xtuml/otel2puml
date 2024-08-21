@@ -12,7 +12,7 @@ from tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder import (
 def test_get_time_window(monkeypatch: MonkeyPatch) -> None:
     """Test the get_time_window function."""
     monkeypatch.setattr(DataHolder, "__abstractmethods__", set())
-    data_holder = DataHolder()
+    data_holder = DataHolder()  # type: ignore[abstract]
     data_holder.min_timestamp = 10**12
     data_holder.max_timestamp = 2*10**12
     time_buffer = 1
