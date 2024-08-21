@@ -1,0 +1,20 @@
+@startuml
+digraph G {
+'   rankdir=LR;
+  node [style=rounded];
+  sequence_otel_jobs [label="sequence_otel_jobs"];
+    sequence_otel_event_job [label="sequence_otel_event_job"];
+    sequence_otel_jobs -> sequence_otel_event_job;
+        sequence_otel_event_and_ancestors [label="sequence_otel_event_and_ancestors"];
+        sequence_otel_event_job -> sequence_otel_event_and_ancestors;
+            order_groups_by_start_timestamp [label="order_groups_by_start_timestamp"];
+            sequence_otel_event_and_ancestors -> order_groups_by_start_timestamp;
+            sequence_otel_event_and_ancestors -> sequence_otel_event_and_ancestors [label="recursion"];
+            sequence_events_by_async_event_types [label="sequence_events_by_async_event_types"];
+            sequence_otel_event_and_ancestors -> sequence_events_by_async_event_types;
+                sequence_events_by_async_event_types -> order_groups_by_start_timestamp;
+            sequence_list_of_otel_events_asynchronously [label="sequence_list_of_otel_events_asynchronously"];
+            sequence_otel_event_and_ancestors -> sequence_list_of_otel_events_asynchronously;
+                sequence_list_of_otel_events_asynchronously -> order_groups_by_start_timestamp;
+}
+@enduml
