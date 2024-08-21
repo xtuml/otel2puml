@@ -3,7 +3,7 @@
 import pytest
 
 from unittest.mock import patch
-from sqlalchemy import text, inspect
+from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.exc import IntegrityError, OperationalError
