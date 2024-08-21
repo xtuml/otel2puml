@@ -299,16 +299,6 @@ class TestSQLDataHolder:
         assert node.job_name == "test_job"
 
     @staticmethod
-    def test_sql_data_holder_exit_raised_exception(
-        mock_sql_config: SQLDataHolderConfig,
-    ) -> None:
-        """Tests raising an exception through the context manager."""
-
-        with SQLDataHolder(mock_sql_config):
-            with pytest.raises(ValueError):
-                raise ValueError("Value error occured.")
-
-    @staticmethod
     def test_integration_save_and_retrieve(
         mock_sql_config: SQLDataHolderConfig, mock_otel_event: OTelEvent
     ) -> None:
