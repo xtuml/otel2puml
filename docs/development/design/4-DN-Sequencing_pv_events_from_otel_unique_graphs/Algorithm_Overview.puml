@@ -1,0 +1,85 @@
+@startuml
+    start
+    :Input ->\nmap of event id to OTelEvent\nasync flag,\nmap of event type to list of sets of async following event types;
+    partition "sequence_otel_event_job" {
+        :find root OTelEvent;
+        :Input ->\nroot OTelEvent,\nmap of event_id to OTelEvent,\nasync flag,\nmap of event type to list of sets of async following event types;
+        :Call "sequence_otel_event_and_ancestors";
+        repeat
+            :get OTelEvent from map of event id to OTelEvent;
+            :create PVEvent from OTelEvent using previous event ids;
+            :yield PVEvent;
+        repeat while (for each event id and previous event ids\nin map of event id to previous event ids)
+    }
+    end
+    partition "sub algorithms" {
+        start
+        :Input ->\nOTelEvent,map of event id to OTelEvent,\nprevious event ids list,\nasync flag,\nmap of event type to list of sets of async following event types;
+        group "sequence_otel_event_and_ancestors"
+            :create empty map of event id to previous event ids;
+            :get list of child OTelEvents from event_id to OTelEvent map;
+            if (OTelEvent event type is in map of event type\nto list of sets of async following event types\nand async flag set) then (true)
+                :get list of sets of async following event types\nfrom map of event type to list of sets of async\nfollowing event types;
+                :Input ->\nlist of child OTelEvents,\nlist of sets of async following event types;
+                :call "sequence_events_by_async_event_types"|
+            else (false)
+                :put each event in a group of its own;
+                :Input ->\nlist of groups;
+                :call "order_groups_by_start_timestamp"|
+                if (check if async flag is set) then (true)
+                    :Input ->\nordered list of groups of OTelEvents;
+                    :Call "sequence_list_of_otel_events_asynchronously"|
+                    :replace list of groups with output;
+                endif
+            endif
+            repeat
+                repeat
+                    :Input ->\ncurrent OTelEvent,\nmap of event_id to OTelEvent,\nprevious event ids list,\nasync flag,\nmap of event type to list of sets of async following event types;
+                    :Recursive call "sequence_otel_event_and_ancestors"|
+                    :update map of event id to previous event ids;
+                repeat while (for each OTelEvent of group)
+                :set previous event ids list to previous event ids list of all events in group;
+            repeat while (for each group)
+            :update map of event id to previous event ids with previous\nevent ids list mapped to event id of input OTelEvent;
+            :output map of event id to previous event ids;
+        end group
+        end
+        start
+        :Input ->\nordered list of list of OTelEvents;
+        group "sequence_list_of_otel_events_asynchronously"
+            :create empty list of groups and add first group;
+            repeat
+                :get last entry of new list of groups;
+                :check if start timestamp of group is\nless than end timestamp of last group;
+                if (true) then (true)
+                    :add group to last group;
+                else (false)
+                    :add group to new list of groups;
+                endif
+            repeat while (for each group after first group)
+            :output new list of groups;
+        end group
+        end
+        start
+        :Input ->\nlist of groups of OTelEvents;
+        group "order_groups_by_start_timestamp"
+            :sort groups by start timestamp of first event in group;
+            :output sorted groups;
+        end group
+        end
+        start
+        :Input ->\nlist of OTelEvents,\nlist of sets of async event types;
+        group "sequence_events_by_async_event_types"
+            :create empty list of groups;
+            repeat
+                :find and group child events by set of async following event types;
+                :order OTelEvents in group by start timestamp;
+                :add group to list of groups;
+            repeat while (for each set of async following event types)
+            :Input ->\nlist of groups;
+            :call "order_groups_by_start_timestamp"|
+            :output sorted list of groups;
+        end group
+        end
+    }
+@enduml

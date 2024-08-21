@@ -18,5 +18,8 @@ We will combine the following two approaches to sequence the pv events from the 
 2. We will then recursively sequence the descendant nodes of the root node in parallel if they either overlap in time or the user has input extra information to indicate that they should be sequenced in parallel (as well as the resulting sequence of their ancestors), otherwise, we will sequence them synchronously.
 3. We will continue this process until all the nodes in the graph have been sequenced with the root node being the last node to be sequenced.
 
+### Algorithm
+The basic algorithms for sequencing the pv events from the otel unique graphs are presented below as activity diagram
 
+![](/docs/development/design/4-DN-Sequencing_pv_events_from_otel_unique_graphs/Algorithm_Overview.svg)
 
