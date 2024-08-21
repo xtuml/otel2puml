@@ -192,11 +192,22 @@ class TestSQLDataHolder:
             node_1 = session.query(NodeModel).filter_by(event_id="101").first()
 
             assert isinstance(node_0, NodeModel)
-            assert node_0.job_name == "test_job_name"
+            assert not node_0.parent_event_id
 
             assert isinstance(node_1, NodeModel)
             assert node_1 in node_0.children
-            assert node_1.application_name == "test_app"
+            assert node_1.parent_event_id == "100"
+
+            # Test attributes between parent and child are the same
+            for attr in [
+                "job_name",
+                "job_id",
+                "application_name",
+                "event_type",
+                "start_timestamp",
+                "end_timestamp",
+            ]:
+                assert getattr(node_0, attr) == getattr(node_1, attr)
 
             # Test node relationships are correctly stored in the database
             node_relationship = session.query(NODE_ASSOCIATION).all()
