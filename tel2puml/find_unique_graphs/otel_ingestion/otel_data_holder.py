@@ -1,6 +1,8 @@
 """Module containing classes to save processed OTel data into a data holder."""
 
 from abc import ABC, abstractmethod
+from types import TracebackType
+from typing import Self, Optional
 
 from sqlalchemy import create_engine, insert
 from sqlalchemy.orm import Session
@@ -38,6 +40,34 @@ class DataHolder(ABC):
         self.max_timestamp = max(self.max_timestamp, otel_event.end_timestamp)
         self._save_data(otel_event)
 
+    def __enter__(self) -> Self:
+        """Method for configuring the setup tasks within the context manager.
+
+        :return: The object itself
+        :rtype: :class:`Self`
+        """
+
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
+        """Method for configuring the tear down tasks within the context
+        manager.
+
+        :param exc_type: The exception type
+        :type exc_type: `Optional`[`type`[:class:`BaseException`]]
+        :param exc_val: The exception value
+        :type exc_val: `Optional`[:class:`BaseException`]
+        :param exc_tb: The exception traceback
+        :type exc_tb: `Optional`[:class:`TracebackType`]
+        """
+
+        pass
+
     @abstractmethod
     def _save_data(self, otel_event: OTelEvent) -> None:
         """Abstract method for batching and saving OTel data.
@@ -45,12 +75,6 @@ class DataHolder(ABC):
         :param otel_event: An OTelEvent object
         :type otel_event: :class: `OTelEvent`
         """
-        pass
-
-    @abstractmethod
-    def clean_up(self) -> None:
-        """Abstract method for any clean up tasks."""
-
         pass
 
 
@@ -67,10 +91,39 @@ class SQLDataHolder(DataHolder):
         self.node_models_to_save: list[NodeModel] = []
         self.node_relationships_to_save: list[dict[str, str]] = []
         self.batch_size: int = config["batch_size"]
-        self.engine: Engine = create_engine(config["db_uri"], echo=False)
+        self.config = config
+
+    def __enter__(self) -> Self:
+        """Configure the database engine, session and create database tables.
+
+        :return: The object itself
+        :rtype: :class:`Self`
+        """
+
+        self.engine: Engine = create_engine(self.config["db_uri"], echo=False)
         self.session: Session = Session(bind=self.engine)
         self.base: Base = Base()
         self.create_db_tables()
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        """
+        Method to handle tear down tasks within the context manager.
+
+        :param exc_type: The exception type
+        :type exc_type: `Optional`[`type`[:class:`BaseException`]]
+        :param exc_val: The exception value
+        :type exc_val: `Optional`[:class:`BaseException`]
+        :param exc_tb: The exception traceback
+        :type exc_tb: `Optional`[:class:`TracebackType`]
+        """
+        self.clean_up()
+        self.session.close()
 
     def create_db_tables(self) -> None:
         """Method to create the database tables based on the defined models."""
