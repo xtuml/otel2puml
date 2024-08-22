@@ -150,7 +150,7 @@ def _handle_empty_segments(
     key = full_path.split("::")[-1]
 
     if full_path.split(":")[0] == "HEADER":
-        handle_data_from_header(
+        _handle_data_from_header(
             field_name,
             field_config,
             index,
@@ -217,7 +217,7 @@ def _handle_empty_segments(
     )
 
 
-def handle_data_from_header(
+def _handle_data_from_header(
     target_field_name: str,
     field_config: dict[str, Any],
     config_index: int,
