@@ -15,6 +15,7 @@ from tel2puml.find_unique_graphs.otel_ingestion.otel_data_source import (
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     SQLDataHolderConfig,
     JSONDataSourceConfig,
+    IngestDataConfig,
 )
 
 
@@ -43,16 +44,16 @@ class IngestData:
                 self.data_holder.save_data(data)
 
 
-def fetch_data_source(config: Any, data_source_type: str) -> OTELDataSource:
+def fetch_data_source(config: IngestDataConfig) -> OTELDataSource:
     """Returns the subclass of OTelDataSource based on the config.
 
     :param config: The config
     :type config: `Any`
-    :param data_source_type: The data source specified in the config
-    :type data_source_type: `str`
     :return: The subclass of OTelDataSource
     :rtype: :class: `OTelDataSource`
     """
+    data_source_type = config["ingest_data"]["data_source"]
+
     if data_source_type == "json":
         source_dict = config["data_sources"]["json"]
         json_config = JSONDataSourceConfig(
@@ -68,16 +69,16 @@ def fetch_data_source(config: Any, data_source_type: str) -> OTELDataSource:
     raise ValueError(f"{data_source_type} is not a valid data source type.")
 
 
-def fetch_data_holder(config: Any, data_holder_type: str) -> DataHolder:
+def fetch_data_holder(config: IngestDataConfig) -> DataHolder:
     """Returns the subclass of DataHolder based on the config.
 
     :param config: The config
     :type config: `Any`
-    :param data_holder_type: The data source specified in the config
-    :type data_holder_type: `str`
     :return: The subclass of DataHolder
     :rtype: :class: `DataHolder`
     """
+    data_holder_type = config["ingest_data"]["data_holder"]
+
     if data_holder_type == "sql":
         holder_dict = config["data_holders"]["sql"]
         sql_config = SQLDataHolderConfig(
@@ -92,13 +93,10 @@ def fetch_data_holder(config: Any, data_holder_type: str) -> DataHolder:
 
 if __name__ == "__main__":
     with open("tel2puml/find_unique_graphs/config.yaml", "r") as f:
-        config = yaml.load(f, Loader=yaml.SafeLoader)
+        config: IngestDataConfig = yaml.load(f, Loader=yaml.SafeLoader)
 
-    data_source_type = config["ingest_data"]["data_source"]
-    data_holder_type = config["ingest_data"]["data_holder"]
-
-    data_source = fetch_data_source(config, data_source_type)
-    data_holder = fetch_data_holder(config, data_holder_type)
+    data_source = fetch_data_source(config)
+    data_holder = fetch_data_holder(config)
 
     ingest_data = IngestData(data_source, data_holder)
     ingest_data.load_to_data_holder()

@@ -139,3 +139,9 @@ class SQLDataHolderConfig(TypedDict):
     db_uri: str
     batch_size: int
     time_buffer: int
+
+class IngestDataConfig(TypedDict):
+    """Typed dict for IngestData config."""
+    data_sources: dict[str, JSONDataSourceConfig]
+    data_holders: dict[str, SQLDataHolderConfig]
+    ingest_data: dict[str, str]
