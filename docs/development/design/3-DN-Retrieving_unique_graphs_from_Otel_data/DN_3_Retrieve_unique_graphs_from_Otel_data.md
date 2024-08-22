@@ -339,15 +339,15 @@ class IngestData():
 The following functions are required in the find_unique_graphs module:
 
 ```python
-def get_time_window(time_buffer: int, sql_data_holder: SQLDataHolder) -> tuple[datetime.datetime, datetime.datetime]:
-    """Queries the database for min and max datetime, returns a min and max datetime with time buffer added.
+def get_time_window(time_buffer: int, data_holder: DataHolder) -> tuple[int, int]:
+    """Gets the time window based on the min and max time save on the data holder.
     
     :param time_buffer: The time buffer in minutes
     :type time_buffer: `int`
-    :param sql_data_holder: The SQLDataHolder object
-    :type sql_data_holder: :class:`SQLDataHolder`
-    :return: A tuple consisting of the min and max datetime adjusted by time_buffer minutes
-    :rtype: `tuple`[`datetime.datetime`,`datetime.datetime`]
+    :param data_holder: The DataHolder object
+    :type data_holder: :class:`DataHolder`
+    :return: A tuple consisting of the min and max time in nanosecond timestamp adjusted by time_buffer minutes
+    :rtype: `tuple`[`int`,`int`]
     """
     pass
 
