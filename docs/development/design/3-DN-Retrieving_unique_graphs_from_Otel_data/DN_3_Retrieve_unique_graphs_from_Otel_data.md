@@ -351,13 +351,15 @@ def get_time_window(time_buffer: int, data_holder: DataHolder) -> tuple[int, int
     """
     pass
 
-def create_db_view_root_nodes_in_time_window(time_window: tuple[int, int], sql_data_holder: SQLDataHolder) -> None:
+def create_temp_table_of_root_nodes_in_time_window(time_window: tuple[int, int], sql_data_holder: SQLDataHolder) -> sa.Table:
     """Creates a view within the database that holds root nodes that are part of a job that has any event with timestamp within the time window.
     
     ":param time_window: The time window in which to create the view for root nodes
     :type time_window: `tuple`[`int`, `int``]
     :param sql_data_holder: The SQLDataHolder object
     :type sql_data_holder: :class:`SQLDataHolder`
+    :return: The temporary table that holds the root nodes
+    :rtype: :class:`sa.Table`
     """
     pass
 
