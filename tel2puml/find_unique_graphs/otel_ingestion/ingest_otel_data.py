@@ -2,7 +2,6 @@
 data holder."""
 
 import yaml
-from typing import Any
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder import (
     SQLDataHolder,
