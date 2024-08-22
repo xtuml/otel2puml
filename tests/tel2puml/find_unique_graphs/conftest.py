@@ -61,7 +61,7 @@ def mock_yaml_config_string() -> str:
                         application_name:
                             key_paths: [
                             attributes::key,
-                            resource:attributes::key]
+                            HEADER:resource:attributes::key]
                             key_value: [coral.service, service.version]
                             value_paths: [
                             value:Value:StringValue,
