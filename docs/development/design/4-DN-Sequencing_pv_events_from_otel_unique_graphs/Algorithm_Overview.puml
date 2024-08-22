@@ -28,7 +28,7 @@
         group "sequence_otel_event_and_ancestors"
             :create empty map of event id to previous event ids;
             :get list of child OTelEvents from event_id to OTelEvent map;
-            if (OTelEvent event type is in map of event type\nto list of sets of async following event types\nand async flag set) then (true)
+            if (OTelEvent event type is in map of event type\nto list of lists of async following event types\nand async flag set) then (true)
                 :get list of sets of async following event types\nfrom map of event type to list of lists of async\nfollowing event types;
                 :Input ->\nlist of child OTelEvents,\nlist of lists of async following event types;
                 :call "sequence_events_by_async_event_types"|
