@@ -218,63 +218,111 @@ def _handle_empty_segments(
 
 
 def handle_data_from_header(
-    field_name: str,
+    target_field_name: str,
     field_config: dict[str, Any],
-    index: int,
-    result: dict[str, Any],
-    header_dict: dict[str, Any],
-    header_dict_key: str,
-    full_path: str,
+    config_index: int,
+    result_dict: dict[str, Any],
+    header_data: dict[str, Any],
+    initial_header_key: str,
+    full_header_path: str,
 ) -> None:
     """Function that handles instances where HEADER is used within the config,
     indicating that information stored within the header_dict is to be used.
 
-    :param field_name: The field name within the mapping config
-    :type field_name: `str`
+    :param target_field_name: The field name within the mapping config
+    :type target_field_name: `str`
     :param field_config: The config for the field name
     :type field_config: `dict`[`str`,`Any`]
-    :param index: The index of the field config
-    :type index: `int`
-    :param result: The mapped data
-    :type result: `dict`[`str`, `Any`]
-    :param header_dict: A dictionary of flattened json data containing header
+    :param config_index: The index of the field config
+    :type config_index: `int`
+    :param result_dict: The mapped data
+    :type result_dict: `dict`[`str`, `Any`]
+    :param header_data: A dictionary of flattened json data containing header
     data
-    :type header_dict: `dict`[`str`, `Any`]
-    :param header_dict_key: The key within the header_dict value
-    :type header_dict_key: `str`
-    :param full_path: The full path given in the 'key_paths' config
-    :type full_path: `str`
+    :type header_data: `dict`[`str`, `Any`]
+    :param initial_header_key: The key within the header_dict value
+    :type initial_header_key: `str`
+    :param full_header_path: The full path given in the 'key_paths' config
+    :type full_header_path: `str`
     """
-    full_path = full_path.split("HEADER:")[1]
+    # Remove the 'HEADER:' prefix from the full path
+    clean_header_path = full_header_path.split("HEADER:", 1)[1]
 
-    path_segments = full_path.split("::")
+    # Split the remaining path into segments
+    path_segments = clean_header_path.split("::")
 
-    key_to_search = path_segments[-1]
+    # The last segment is the key we're searching for in the header_data
+    target_key = path_segments[-1]
 
-    if field_config.get("key_value"):
-        if field_config["key_value"][index]:
-            header_dict_key = field_config["value_paths"][index]
-
-    header_dict_copy = header_dict
-    for segment in path_segments[:-1]:
-        header_dict_copy = header_dict_copy[segment]
-
-    if header_dict_key == key_to_search:
-        value_to_add = header_dict_copy[header_dict_key]
+    # Update the header key if a specific value needs to be matched
+    if (
+        field_config.get("key_value")
+        and field_config["key_value"][config_index]
+    ):
+        header_key = field_config["value_paths"][config_index]
     else:
-        for key, value in header_dict_copy.items():
-            if (
-                key.split(":")[-1] == key_to_search
-                and value == field_config["key_value"][index]
-            ):
-                key_index = key.split(":")[0]
-                header_dict_key = key_index + ":" + header_dict_key
-                value_to_add = header_dict_copy[header_dict_key]
-                break
+        header_key = initial_header_key
 
+    # Navigate through the nested structure of header_data
+    current_header_level = header_data
+    for segment in path_segments[:-1]:
+        current_header_level = current_header_level[segment]
+
+    # Extract the value from header_data
+    if header_key == target_key:
+        extracted_value = current_header_level[header_key]
+    else:
+        extracted_value = _find_matching_header_value(
+            current_header_level,
+            target_key,
+            field_config,
+            config_index,
+            header_key,
+        )
+
+    # Get the value type from the field config
     value_type = _get_value_type(field_config)
 
-    _add_or_append_value(field_name, value_to_add, result, value_type)
+    # Add or append the value to the result dictionary
+    _add_or_append_value(
+        target_field_name, extracted_value, result_dict, value_type
+    )
+
+
+def _find_matching_header_value(
+    header_level: dict[str, Any],
+    target_key: str,
+    field_config: dict[str, Any],
+    config_index: int,
+    header_key: str,
+) -> Any:
+    """
+    Find the matching header value based on the target key and configuration.
+
+    :param header_level: The current level of the header dictionary"
+    :type header_level: `dict`[`str`, `Any`]
+    :param target_key: The key to search for in the header
+    :type target_key: `str`
+    :param field_config: The configuration for the field
+    :type field_config: `dict`[`str`, `Any`]
+    :param config_index: The index of the current field in the configuration
+    :type config_index: `int`
+    :param header_key: The key to use for extracting the final value
+    :type header_key: `int`
+    :return: The extracted value from the header
+    :rtype: `Any`
+    """
+    for key, value in header_level.items():
+        key_suffix = key.split(":", 1)[-1]
+        if (
+            key_suffix == target_key
+            and value == field_config["key_value"][config_index]
+        ):
+            key_prefix = key.split(":", 1)[0]
+            full_header_key = f"{key_prefix}:{header_key}"
+            return header_level[full_header_key]
+
+    raise KeyError(f"No matching value found for key: {target_key}")
 
 
 def _update_full_path(full_path: str, segment_count: int) -> str:
@@ -461,7 +509,7 @@ def _handle_regular_path(
     try:
         if full_path.split(":")[0] == "HEADER":
             # Remove 'HEADER:' from full_path
-            full_path = "".join(full_path.split(":")[1:])
+            full_path = "".join(full_path.split("HEADER:")[1:])
             value_type = _get_value_type(field_config)
             value = header_dict[full_path]
             _add_or_append_value(field_name, value, result, value_type)
