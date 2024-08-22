@@ -11,13 +11,13 @@ from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
 MAX_SEGMENT_COUNT = 50  # TODO have a think about this
 
 
-def _flatten_json_dict(json_data: dict[str, Any]) -> Any:
+def _flatten_json_dict(json_data: dict[str, Any]) -> flatdict.FlatterDict:
     """Function to flatten a nested dictionary.
 
     :param json_data: The JSON data to flatten.
     :param json_data: `dict`[`str`,`Any`]
     :return: The flattened json as a dictionary
-    :rtype: `Any`
+    :rtype: :class: `flatdict.FlatterDict`
     """
     return flatdict.FlatterDict(json_data)
 
@@ -231,16 +231,15 @@ def handle_data_from_header(
 
     :param target_field_name: The field name within the mapping config
     :type target_field_name: `str`
-    :param field_config: The config for the field name
+    :param field_config: The configuration for the target field
     :type field_config: `dict`[`str`,`Any`]
-    :param config_index: The index of the field config
+    :param config_index: The index of the current field in the configuration
     :type config_index: `int`
-    :param result_dict: The mapped data
+    :param result_dict: The dictionary to store the mapped data
     :type result_dict: `dict`[`str`, `Any`]
-    :param header_data: A dictionary of flattened json data containing header
-    data
+    :param header_data: A dictionary containing flattened JSON header data
     :type header_data: `dict`[`str`, `Any`]
-    :param initial_header_key: The key within the header_dict value
+    :param initial_header_key: The initial key to look up in the header_data
     :type initial_header_key: `str`
     :param full_header_path: The full path given in the 'key_paths' config
     :type full_header_path: `str`
@@ -290,17 +289,17 @@ def handle_data_from_header(
 
 
 def _find_matching_header_value(
-    header_level: dict[str, Any],
+    header_level: dict[str, str],
     target_key: str,
     field_config: dict[str, Any],
     config_index: int,
     header_key: str,
-) -> Any:
+) -> str:
     """
     Find the matching header value based on the target key and configuration.
 
-    :param header_level: The current level of the header dictionary"
-    :type header_level: `dict`[`str`, `Any`]
+    :param header_level: The current level of the header dictionary
+    :type header_level: `dict`[`str`, `str`]
     :param target_key: The key to search for in the header
     :type target_key: `str`
     :param field_config: The configuration for the field
@@ -310,7 +309,7 @@ def _find_matching_header_value(
     :param header_key: The key to use for extracting the final value
     :type header_key: `int`
     :return: The extracted value from the header
-    :rtype: `Any`
+    :rtype: `str`
     """
     for key, value in header_level.items():
         key_suffix = key.split(":", 1)[-1]
@@ -320,6 +319,7 @@ def _find_matching_header_value(
         ):
             key_prefix = key.split(":", 1)[0]
             full_header_key = f"{key_prefix}:{header_key}"
+
             return header_level[full_header_key]
 
     raise KeyError(f"No matching value found for key: {target_key}")
@@ -673,7 +673,7 @@ def _extract_nested_value(
 
 def _extract_simple_value(
     data: dict[str, Any] | str, path: str
-) -> dict[str, Any] | str:
+) -> flatdict.FlatterDict | str:
     """Extract a simple value from JSON data using a path.
 
     :param data: The JSON data to traverse
@@ -681,7 +681,7 @@ def _extract_simple_value(
     :param path: The simple path string
     :type path: `str`
     :return: The extracted value
-    :rtype: `dict`[`str`, `Any`] | `str`
+    :rtype: :class: `flatdict.FlatterDict` | `str`
     """
     segments = path.split(":")
     for segment in segments:
