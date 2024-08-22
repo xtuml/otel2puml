@@ -83,9 +83,9 @@ def create_temp_table_of_root_nodes_in_time_window(
             .subquery()
         )
         stmt = (
-            sa.select(NodeModel.event_id)
+            session.query(NodeModel.event_id)
             .join(stmt, NodeModel.job_id == stmt.c.job_id)
-            .where(NodeModel.parent_event_id.is_(None))
+            .where(NodeModel.parent_event_id.is_(None)).subquery()
         )
         session.execute(sa.schema.CreateTable(temp_table))
         session.execute(temp_table.insert().from_select(["event_id"], stmt))

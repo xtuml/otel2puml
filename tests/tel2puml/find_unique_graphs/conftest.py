@@ -824,6 +824,7 @@ def sql_data_holder_with_otel_jobs(
     otel_jobs: dict[str, list[OTelEvent]],
     mock_sql_config: SQLDataHolderConfig
 ) -> SQLDataHolder:
+    """Creates a SQLDataHolder object with 5 jobs, each with 2 events."""
     mock_sql_config["time_buffer"] = 1
     sql_data_holder = SQLDataHolder(
         config=mock_sql_config,

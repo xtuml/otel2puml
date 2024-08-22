@@ -47,4 +47,7 @@ def test_create_temp_table_of_root_nodes_in_time_window(
     assert table.primary_key.columns.keys() == ['event_id']
     with sql_data_holder_with_otel_jobs.engine.connect() as connection:
         result = connection.execute(table.select())
-        assert result.fetchall() == [(f'{i}_0',) for i in range(1, 4)]
+        assert [
+            (row[0],)
+            for row in result.fetchall()
+        ] == [(f'{i}_0',) for i in range(1, 4)]
