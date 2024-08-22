@@ -8,7 +8,7 @@
     }
     :Input time_window, sql_data_holder;
     partition "create_db_view_root_nodes_in_time_window" {
-        :create view of root nodes with start_timestamp within time window;
+        :create view of root nodes with any ancestor in time window;
     }
         :<color:Blue>get number of root nodes;
         repeat
