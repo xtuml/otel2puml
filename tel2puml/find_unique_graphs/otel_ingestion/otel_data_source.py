@@ -1,8 +1,6 @@
 """Module containing classes to handle different OTel data sources."""
 
 import os
-import yaml
-import time
 import ijson
 from abc import ABC, abstractmethod
 from typing import Self, Any, Iterator
@@ -122,7 +120,6 @@ class JSONDataSource(OTELDataSource):
                 yield (self.create_otel_object(processed_json))
             else:
                 raise TypeError("json is not of type dict.")
-        print("=" * 50)
 
     def parse_json_stream(self, filepath: str) -> Iterator[OTelEvent]:
         """Function that parses a json file, maps the json to the application
@@ -179,17 +176,3 @@ class JSONDataSource(OTELDataSource):
                 self.current_parser = None
 
         raise StopIteration
-
-
-if __name__ == "__main__":
-    time_start = time.time()
-    with open("tel2puml/find_unique_graphs/config.yaml", "r") as f:
-        config = yaml.load(f, Loader=yaml.SafeLoader)
-
-    json_data_source = JSONDataSource(config["data_sources"]["json"])
-
-    otel_events: list[OTelEvent] = []
-    for data in json_data_source:
-        otel_events.append(data)
-
-    print(time.time() - time_start)
