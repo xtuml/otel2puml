@@ -135,7 +135,7 @@ def calculate_updated_graph_with_loop_event(loop: Loop,loop_event: LoopEvent, gr
     pass
 ```
 
-##### Call Graph
+#### Call Graph
 The call graph for the functions is presented below:
 
 ![](/docs/development/design/1-DN-SCC_loop_detection/call_graph.svg)
