@@ -223,7 +223,7 @@ def handle_data_from_header(
     index: int,
     result: dict[str, Any],
     header_dict: dict[str, Any],
-    key: str,
+    header_dict_key: str,
     full_path: str,
 ) -> None:
     """Function that handles instances where HEADER is used within the config,
@@ -240,8 +240,8 @@ def handle_data_from_header(
     :param header_dict: A dictionary of flattened json data containing header
     data
     :type header_dict: `dict`[`str`, `Any`]
-    :param key: The key within the header_dict value
-    :type key: `str`
+    :param header_dict_key: The key within the header_dict value
+    :type header_dict_key: `str`
     :param full_path: The full path given in the 'key_paths' config
     :type full_path: `str`
     """
@@ -249,17 +249,29 @@ def handle_data_from_header(
 
     path_segments = full_path.split("::")
 
-    key = (
-        key
-        if not field_config["key_value"][index]
-        else field_config["value_paths"][index]
-    )
+    key_to_search = path_segments[-1]
+
+    if field_config.get("key_value"):
+        if field_config["key_value"][index]:
+            header_dict_key = field_config["value_paths"][index]
 
     header_dict_copy = header_dict
     for segment in path_segments[:-1]:
         header_dict_copy = header_dict_copy[segment]
 
-    value_to_add = header_dict_copy[key]
+    if header_dict_key == key_to_search:
+        value_to_add = header_dict_copy[header_dict_key]
+    else:
+        for key, value in header_dict_copy.items():
+            if (
+                key.split(":")[-1] == key_to_search
+                and value == field_config["key_value"][index]
+            ):
+                key_index = key.split(":")[0]
+                header_dict_key = key_index + ":" + header_dict_key
+                value_to_add = header_dict_copy[header_dict_key]
+                break
+
     value_type = _get_value_type(field_config)
 
     _add_or_append_value(field_name, value_to_add, result, value_type)
@@ -597,11 +609,12 @@ def _extract_nested_value(
     :return: A nested dictionary with the extracted value
     :rtype: `dict`[`str`, `Any`] | `str`
     """
-    path_segments = path.split("::")
+    path_segments = path.split(":")
     for segment in path_segments:
-        data = _navigate_segment(data, segment.split(":"))
+        data = _navigate_segment(data, segment)
 
     result = data
+    path_segments = ":".join(path_segments).split("::")
     # Create a nested dictionary by building it from the inside out. This is
     # bypassed if data is a string
     for key in reversed(path_segments[1:]):
@@ -624,28 +637,30 @@ def _extract_simple_value(
     """
     segments = path.split(":")
     for segment in segments:
-        data = _navigate_segment(data, [segment])
+        data = _navigate_segment(data, segment)
 
-    return data if not isinstance(data, dict) else _flatten_json_dict(data)
+    if isinstance(data, dict) or isinstance(data, list):
+        return _flatten_json_dict(data)
+    return data
 
 
 def _navigate_segment(
-    data: dict[str, Any] | str, segments: list[str]
+    data: dict[str, Any] | str, segment: str
 ) -> dict[str, Any] | str:
     """Navigate through a segment of the JSON data.
 
     :param data: The current data object
     :type data: `dict`[`str`, `Any`]
-    :param segments: The segments to navigate
-    :type segments: `list`[`str`]
+    :param segment: The segment to navigate
+    :type segment: `str`
     :return: The value at the end of the navigation
     :rtype: `dict`[`str`, `Any`] | `str`
     """
-    for segment in segments:
-        if isinstance(data, dict):
-            data = data[segment]
-        if isinstance(data, list):
-            data = data[0]
+    if isinstance(data, dict):
+        data = data[segment]
+    elif isinstance(data, list):
+        data = data[0]
+
     return data
 
 
