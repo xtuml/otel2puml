@@ -2,14 +2,16 @@
 
 import pytest
 import yaml
+import json
 
+from pathlib import Path
 from unittest.mock import patch
 from typing import Generator, Any
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     OTelEvent,
     SQLDataHolderConfig,
-    NodeModel
+    NodeModel,
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder import (
     SQLDataHolder,
@@ -22,6 +24,12 @@ def mock_yaml_config_string() -> str:
     return """
             ingest_data:
                 data_source: json
+                data_holder: sql
+            data_holders:
+                sql:
+                    db_uri: 'sqlite:///:memory:'
+                    batch_size: 5
+                    time_buffer: 30
             data_sources:
                 json:
                     dirpath: /path/to/json/directory
@@ -82,8 +90,8 @@ def mock_yaml_config_string() -> str:
 
 @pytest.fixture
 def mock_yaml_config_dict(mock_yaml_config_string: str) -> Any:
-    """Returns a dict to mock a dict when reading the yaml config."""
-    return yaml.safe_load(mock_yaml_config_string)["data_sources"]["json"]
+    """Mocks a dict when reading the yaml config."""
+    return yaml.safe_load(mock_yaml_config_string)
 
 
 @pytest.fixture
@@ -776,14 +784,204 @@ def mock_otel_events() -> list[OTelEvent]:
 
 
 @pytest.fixture
+def mock_temp_dir_with_json_files(tmp_path: Path) -> Path:
+    """
+    Mock a temporary directory with 2 json files.
+
+    :param tmp_path: Pytest fixture providing a temporary directory path
+    :type tmp_path: :class:`pathlib.Path`
+    :return: Path to the created temporary directory containing JSON files
+    :rtype: `Path`
+    """
+
+    # Create temp directory
+    temp_dir = tmp_path / "temp_dir"
+    temp_dir.mkdir()
+
+    no_files = 2
+    no_resouce_spans = 2
+    no_spans = 2
+
+    # Create 2 json files in the temp directory
+    for file_no in range(no_files):
+        json_file = temp_dir / f"json_file_{file_no}.json"
+
+        with json_file.open("w") as f:
+            json.dump(
+                _generate_resource_spans(file_no, no_resouce_spans, no_spans),
+                f,
+            )
+
+    return temp_dir
+
+
+def _create_span(
+    file_no: int, i: int, j: int, no_spans: int
+) -> dict[str, Any]:
+    """
+    Create a single span dictionary with various attributes.
+
+    :param file_no: The file number
+    :type file_no: `int`
+    :param i: The resource span index
+    :type i: `int`
+    :param j: The span index within the resource span
+    :type j: `int`
+    :param no_spans: The total number of spans in the resource span
+    :type no_spans: `int`
+    :return: A dictionary representing a span
+    :rtype: `dict`[`str`, `Any`]
+    """
+    return {
+        "trace_id": f"{file_no}_trace_id_{i}",
+        "span_id": f"{file_no}_span_{i}_{j}",
+        "parent_span_id": f"{file_no}_span_{i}_{j-1}" if j > 0 else None,
+        "child_span_ids": (
+            [f"{file_no}_span_{i}_{j+1}"] if j < no_spans - 1 else []
+        ),
+        "name": "/update",
+        "start_time_unix_nano": 1723544132228288000,
+        "end_time_unix_nano": 1723544132229038947,
+        "attributes": [
+            {
+                "key": "http.method",
+                "value": {"Value": {"StringValue": f"method_{i}_{j}"}},
+            },
+            {
+                "key": "http.target",
+                "value": {"Value": {"StringValue": f"target_{i}_{j}"}},
+            },
+            {
+                "key": "http.host",
+                "value": {"Value": {"StringValue": f"host_{i}_{j}"}},
+            },
+            {
+                "key": "coral.operation",
+                "value": {"Value": {"StringValue": f"operation_{i}_{j}"}},
+            },
+            {
+                "key": "coral.service",
+                "value": {"Value": {"StringValue": f"service_{i}_{j}"}},
+            },
+            {
+                "key": "coral.namespace",
+                "value": {"Value": {"StringValue": f"namespace_{i}_{j}"}},
+            },
+            {"key": "http.status_code", "value": {"Value": {"IntValue": 200}}},
+        ],
+        "status": {},
+        "resource": {
+            "attributes": [
+                {
+                    "key": "service.name",
+                    "value": {"Value": {"StringValue": f"name_{i}_{j}"}},
+                },
+                {
+                    "key": "service.version",
+                    "value": {"Value": {"StringValue": f"version_{i}_{j}"}},
+                },
+                {
+                    "key": {"other_key": "test_string"},
+                    "value": {"Value": {"StringValue": "4.8"}},
+                },
+            ]
+        },
+        "scope": {"name": f"{file_no}_name_{j}"},
+    }
+
+
+def _create_header(
+    service_name: str, service_version: str
+) -> list[dict[str, Any]]:
+    """
+    Create a header list containing service name and version.
+
+    :param service_name: The name of the service
+    :type service_name: `str`
+    :param service_version: The version of the service
+    :type service_version: `str`
+    :return: A list of dictionaries representing the header
+    :rtype: `list`[`dict`[`str`, `Any`]]
+    """
+    return [
+        {
+            "key": "service.name",
+            "value": {"Value": {"StringValue": service_name}},
+        },
+        {
+            "key": "service.version",
+            "value": {"Value": {"StringValue": service_version}},
+        },
+    ]
+
+
+def _create_resource_span(
+    header: list[dict[str, Any]], spans: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """
+    Combine a header and a list of spans into a resource span dictionary.
+
+    :param header: The header information for the resource span
+    :type header: `list`[`dict`[`str`, `Any`]]
+    :param spans: A list of span dictionaries
+    :type spans: `list`[`dict`[`str`, `Any`]]
+    :return: A dictionary representing a resource span
+    :rtype: `dict`[`str`, `Any`]
+    """
+    return {
+        "resource": {"attributes": header},
+        "scope_spans": [
+            {
+                "scope": {"name": "TestJob"},
+                "spans": spans,
+            }
+        ],
+    }
+
+
+def _generate_resource_spans(
+    file_no: int, no_resource_spans: int, no_spans: int
+) -> dict[str, Any]:
+    """
+    Combine a header and a list of spans into a resource span dictionary.
+
+    :param header: The header information for the resource span
+    :type header: `list`[`dict`[`str`, `Any`]]
+    :param spans: A list of span dictionaries
+    :type spans: `list`[`dict`[`str`, `Any`]]
+    :return: A dictionary representing a resource span
+    :rtype: `dict`[`str`, `Any`]
+    """
+    headers = {
+        "service_name": ["Frontend", "Backend", "Cloud", "Docker", "DB"],
+        "service_version": ["1.0", "2.0", "3.0", "4.0", "5.0"],
+    }
+    resource_spans: dict[str, Any] = {"resource_spans": []}
+
+    for i in range(no_resource_spans):
+        header = _create_header(
+            headers["service_name"][i], headers["service_version"][i]
+        )
+        spans = []
+        for j in range(no_spans):
+            span = _create_span(file_no, i, j, no_spans)
+            spans.append(span)
+        resource_spans["resource_spans"].append(
+            _create_resource_span(header, spans)
+        )
+
+    return resource_spans
+
+
+@pytest.fixture
 def otel_jobs() -> dict[str, list[OTelEvent]]:
     """Dict of 5 OTelEvents lists."""
     timestamp_choices = [
         tuple(10**12 + boundary for boundary in addition)
         for addition in [
-            (0, 3 * 10 ** 10),
-            (10 ** 11, 2 * 10 ** 11),
-            (57 * 10 ** 10, 60 * 10 ** 10)
+            (0, 3 * 10**10),
+            (10**11, 2 * 10**11),
+            (57 * 10**10, 60 * 10**10),
         ]
     ]
     cases = [
@@ -791,7 +989,7 @@ def otel_jobs() -> dict[str, list[OTelEvent]]:
         (timestamp_choices[0], timestamp_choices[1]),
         (timestamp_choices[1], timestamp_choices[1]),
         (timestamp_choices[1], timestamp_choices[2]),
-        (timestamp_choices[2], timestamp_choices[2])
+        (timestamp_choices[2], timestamp_choices[2]),
     ]
 
     otel_jobs: dict[str, list[OTelEvent]] = {}
@@ -821,7 +1019,7 @@ def otel_jobs() -> dict[str, list[OTelEvent]]:
 
 @pytest.fixture
 def otel_nodes_from_otel_jobs(
-    otel_jobs: dict[str, list[OTelEvent]]
+    otel_jobs: dict[str, list[OTelEvent]],
 ) -> dict[str, NodeModel]:
     """Creates a dict of event id mapped to NodeModel from the otel_jobs
     fixture.
