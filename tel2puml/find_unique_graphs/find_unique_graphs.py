@@ -7,8 +7,7 @@ from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     NodeModel,
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder import (
-    DataHolder,
-    SQLDataHolder,
+    DataHolder, SQLDataHolder
 )
 
 
@@ -92,3 +91,25 @@ def create_temp_table_of_root_nodes_in_time_window(
         session.commit()
 
     return temp_table
+
+
+def get_sql_batch_nodes(
+    job_ids: set[str], data_holder: SQLDataHolder
+) -> list[NodeModel]:
+    """Get the nodes for each job ID in the batch.
+
+    :param job_ids: The set of job IDs to get the nodes for
+    :type job_ids: `set[str]`
+    :param data_holder: The SQL data holder object containing the ingested
+    data
+    :type data_holder: :class:`SQLDataHolder`
+    :return: The nodes for each job ID in the batch
+    :rtype: `list[NodeModel]`
+    """
+    with data_holder.session:
+        nodes = (
+            data_holder.session.query(NodeModel)
+            .filter(NodeModel.job_id.in_(job_ids))
+            .all()
+        )
+    return nodes
