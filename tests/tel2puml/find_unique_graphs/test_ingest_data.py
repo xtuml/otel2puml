@@ -49,6 +49,8 @@ class TestIngestData:
             ingest_data.load_to_data_holder()
 
             # Check expected event ids for nodes in the database
+            # Event IDs set in conftest, with 2x2x2 structure for file_no,
+            # no_resource_spans and no_spans
             nodes = session.query(NodeModel).all()
             assert len(nodes) == 8
             expected_event_ids = [
