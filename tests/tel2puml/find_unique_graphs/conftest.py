@@ -11,7 +11,7 @@ from typing import Generator, Any
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     OTelEvent,
     SQLDataHolderConfig,
-    NodeModel
+    NodeModel,
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder import (
     SQLDataHolder,
@@ -808,7 +808,8 @@ def mock_temp_dir_with_json_files(tmp_path: Path) -> Path:
 
         with json_file.open("w") as f:
             json.dump(
-                _generate_resource_spans(file_no, no_resouce_spans, no_spans), f
+                _generate_resource_spans(file_no, no_resouce_spans, no_spans),
+                f,
             )
 
     return temp_dir
@@ -970,15 +971,16 @@ def _generate_resource_spans(
         )
 
     return resource_spans
- 
+
+@pytest.fixture
 def otel_jobs() -> dict[str, list[OTelEvent]]:
     """Dict of 5 OTelEvents lists."""
     timestamp_choices = [
         tuple(10**12 + boundary for boundary in addition)
         for addition in [
-            (0, 3 * 10 ** 10),
-            (10 ** 11, 2 * 10 ** 11),
-            (57 * 10 ** 10, 60 * 10 ** 10)
+            (0, 3 * 10**10),
+            (10**11, 2 * 10**11),
+            (57 * 10**10, 60 * 10**10),
         ]
     ]
     cases = [
@@ -986,7 +988,7 @@ def otel_jobs() -> dict[str, list[OTelEvent]]:
         (timestamp_choices[0], timestamp_choices[1]),
         (timestamp_choices[1], timestamp_choices[1]),
         (timestamp_choices[1], timestamp_choices[2]),
-        (timestamp_choices[2], timestamp_choices[2])
+        (timestamp_choices[2], timestamp_choices[2]),
     ]
 
     otel_jobs: dict[str, list[OTelEvent]] = {}
@@ -1016,8 +1018,7 @@ def otel_jobs() -> dict[str, list[OTelEvent]]:
 
 @pytest.fixture
 def sql_data_holder_with_otel_jobs(
-    otel_jobs: dict[str, list[OTelEvent]],
-    mock_sql_config: SQLDataHolderConfig
+    otel_jobs: dict[str, list[OTelEvent]], mock_sql_config: SQLDataHolderConfig
 ) -> SQLDataHolder:
     """Creates a SQLDataHolder object with 5 jobs, each with 2 events."""
     mock_sql_config["time_buffer"] = 1

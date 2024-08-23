@@ -38,6 +38,7 @@ class TestIngestData:
 
         data_holder = SQLDataHolder(config["data_holders"]["sql"])
         data_source = JSONDataSource(config["data_sources"]["json"])
+
         with data_holder.session as session:
             # Check no nodes in the database
             assert not session.query(NodeModel).all()
