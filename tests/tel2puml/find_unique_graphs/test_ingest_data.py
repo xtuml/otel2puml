@@ -50,6 +50,7 @@ class TestIngestData:
 
             # Check expected event ids for nodes in the database
             nodes = session.query(NodeModel).all()
+            assert len(nodes) == 8
             expected_event_ids = [
                 f"{i}_span_{j}_{k}"
                 for i in range(2)
@@ -61,3 +62,17 @@ class TestIngestData:
                 assert node.event_id in expected_event_ids
                 expected_event_ids.remove(str(node.event_id))
             assert not expected_event_ids
+
+            # Check relationships
+            node_0 = (
+                session.query(NodeModel)
+                .filter_by(event_id="0_span_0_0")
+                .first()
+            )
+            node_1 = (
+                session.query(NodeModel)
+                .filter_by(event_id="0_span_0_1")
+                .first()
+            )
+
+            assert node_0.children == [node_1]
