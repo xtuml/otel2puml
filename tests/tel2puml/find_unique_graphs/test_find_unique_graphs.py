@@ -8,6 +8,7 @@ import sqlalchemy as sa
 from tel2puml.find_unique_graphs.find_unique_graphs import (
     get_time_window,
     create_temp_table_of_root_nodes_in_time_window,
+    get_sql_batch_nodes
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder import (
     DataHolder, SQLDataHolder
@@ -51,3 +52,23 @@ def test_create_temp_table_of_root_nodes_in_time_window(
             (row[0],)
             for row in result.fetchall()
         ] == [(f'{i}_0',) for i in range(1, 4)]
+
+
+def test_get_sql_batch_nodes(
+    sql_data_holder_with_otel_jobs: SQLDataHolder,
+) -> None:
+    """Test the get_sql_batch_nodes function."""
+    node_models = get_sql_batch_nodes(
+        {f"test_id_{i}" for i in range(3)},
+        sql_data_holder_with_otel_jobs
+    )
+    assert len(node_models) == 6
+    expected_job_ids = [f"test_id_{i}" for i in range(3)] * 2
+    expected_event_ids = [f"{i}_{j}" for i in range(3) for j in range(2)]
+    for node in node_models:
+        assert node.job_id in expected_job_ids
+        assert node.event_id in expected_event_ids
+        expected_job_ids.remove(node.job_id)
+        expected_event_ids.remove(node.event_id)
+    assert not expected_job_ids
+    assert not expected_event_ids
