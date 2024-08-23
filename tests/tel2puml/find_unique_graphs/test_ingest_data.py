@@ -74,5 +74,6 @@ class TestIngestData:
                 .filter_by(event_id="0_span_0_1")
                 .first()
             )
-
+            assert node_0
+            assert node_1
             assert node_0.children == [node_1]
