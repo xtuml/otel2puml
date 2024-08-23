@@ -70,7 +70,8 @@ class TestIngestData:
                     "event_id": f"{i}_span_{j}_{k}",
                     "start_timestamp": 1723544132228288000,
                     "end_timestamp": 1723544132229038947,
-                    "application_name": f"service_{j}_{k} {headers['versions'][j]}",
+                    "application_name": f"service_{j}_{k}"
+                    f" {headers['versions'][j]}",
                     "parent_event_id": (
                         f"{i}_span_{j}_{k-1}" if k > 0 else None
                     ),
