@@ -1,5 +1,6 @@
 """Module for finding unique graphs in a list of graphs from ingested
 OpenTelemetry data."""
+from typing import Iterable
 
 import sqlalchemy as sa
 
@@ -21,7 +22,7 @@ def get_time_window(
     :param data_holder: The data holder object containing the ingested data
     :type data_holder: :class:`DataHolder`
     :return: The time window for the unique graphs
-    :rtype: `tuple[int, int]`
+    :rtype: `tuple`[`int`, `int`]
     :raises ValueError: If the time buffer is too large for the ingested data
     """
     time_buffer_in_nanoseconds = time_buffer * 60 * 1000000000
@@ -48,12 +49,12 @@ def create_temp_table_of_root_nodes_in_time_window(
     """Create a temporary table with the root nodes in the time window.
 
     :param time_window: The time window for the unique graphs
-    :type time_window: `tuple[int, int]`
+    :type time_window: `tuple`[`int`, `int`]`
     :param sql_data_holder: The SQL data holder object containing the ingested
         data
     :type sql_data_holder: :class:`SQLDataHolder`
     :return: The temporary table with the root nodes in the time window
-    :rtype: :class:`sa.Table`
+    :rtype: :class:`sa`.`Table`
     """
     temp_table = sa.Table(
         "temp_root_nodes",
@@ -113,3 +114,26 @@ def get_sql_batch_nodes(
             .all()
         )
     return nodes
+
+
+def create_event_id_to_child_nodes_map(
+    nodes: Iterable[NodeModel]
+) -> dict[str, list[NodeModel]]:
+    """Create a map of event IDs to their child nodes.
+
+    :param nodes: The list of nodes
+    :type nodes: `Iterable`[`NodeModel`]
+    :return: The map of event IDs to their child nodes
+    :rtype: `dict`[`str`, `list`[`NodeModel`]]
+    """
+    event_id_to_child_nodes_map: dict[str, list[NodeModel]] = {}
+    for node in nodes:
+        event_id = str(node.event_id)
+        if event_id not in event_id_to_child_nodes_map:
+            event_id_to_child_nodes_map[event_id] = []
+        if node.parent_event_id is not None:
+            parent_event_id = str(node.parent_event_id)
+            if parent_event_id not in event_id_to_child_nodes_map:
+                event_id_to_child_nodes_map[parent_event_id] = []
+            event_id_to_child_nodes_map[parent_event_id].append(node)
+    return event_id_to_child_nodes_map
