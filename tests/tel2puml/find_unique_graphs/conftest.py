@@ -1019,7 +1019,7 @@ def otel_jobs() -> dict[str, list[OTelEvent]]:
 
 @pytest.fixture
 def otel_nodes_from_otel_jobs(
-    otel_jobs: dict[str, list[OTelEvent]]
+    otel_jobs: dict[str, list[OTelEvent]],
 ) -> dict[str, NodeModel]:
     """Creates a dict of event id mapped to NodeModel from the otel_jobs
     fixture.

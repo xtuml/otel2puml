@@ -56,17 +56,62 @@ class TestIngestData:
             # no_resource_spans and no_spans
             nodes = session.query(NodeModel).all()
             assert len(nodes) == 8
-            expected_event_ids = [
-                f"{i}_span_{j}_{k}"
+
+            headers = {
+                "names": ["Frontend", "Backend"],
+                "versions": ["1.0", "2.0"],
+            }
+
+            expected_nodes = {
+                f"{i}_span_{j}_{k}": {
+                    "job_name": f"{headers['names'][j]} TestJob",
+                    "job_id": f"{i}_trace_id_{j} 4.8",
+                    "event_type": f"namespace_{j}_{k} 200",
+                    "event_id": f"{i}_span_{j}_{k}",
+                    "start_timestamp": 1723544132228288000,
+                    "end_timestamp": 1723544132229038947,
+                    "application_name": f"service_{j}_{k} {headers['versions'][j]}",
+                    "parent_event_id": (
+                        f"{i}_span_{j}_{k-1}" if k > 0 else None
+                    ),
+                }
                 for i in range(2)
                 for j in range(2)
                 for k in range(2)
-            ]
+            }
 
             for node in nodes:
-                assert node.event_id in expected_event_ids
-                expected_event_ids.remove(str(node.event_id))
-            assert not expected_event_ids
+                assert (
+                    node.job_name
+                    == expected_nodes[str(node.event_id)]["job_name"]
+                )
+                assert (
+                    node.job_id == expected_nodes[str(node.event_id)]["job_id"]
+                )
+                assert (
+                    node.event_type
+                    == expected_nodes[str(node.event_id)]["event_type"]
+                )
+                assert (
+                    node.event_id
+                    == expected_nodes[str(node.event_id)]["event_id"]
+                )
+                assert (
+                    node.start_timestamp
+                    == expected_nodes[str(node.event_id)]["start_timestamp"]
+                )
+                assert (
+                    node.end_timestamp
+                    == expected_nodes[str(node.event_id)]["end_timestamp"]
+                )
+                assert (
+                    node.application_name
+                    == expected_nodes[str(node.event_id)]["application_name"]
+                )
+                assert (
+                    node.parent_event_id
+                    == expected_nodes[str(node.event_id)]["parent_event_id"]
+                )
 
             # Check relationships
             event_id_to_nodes = {node.event_id: node for node in nodes}
