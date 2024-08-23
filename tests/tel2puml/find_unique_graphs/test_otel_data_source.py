@@ -28,7 +28,9 @@ class TestJSONDataSource:
         mock_yaml_config_dict: IngestDataConfig,
     ) -> None:
         """Tests parsing yaml config file and setting config attribute."""
-        json_data_source = JSONDataSource(mock_yaml_config_dict["data_sources"]["json"])
+        json_data_source = JSONDataSource(
+            mock_yaml_config_dict["data_sources"]["json"]
+        )
         config = json_data_source.config
 
         # Check if config is a dictionary
