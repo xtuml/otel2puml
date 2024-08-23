@@ -9,7 +9,6 @@ from tel2puml.find_unique_graphs.otel_ingestion.ingest_otel_data import (
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     IngestDataConfig,
     NodeModel,
-    NODE_ASSOCIATION,
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder import (
     SQLDataHolder,

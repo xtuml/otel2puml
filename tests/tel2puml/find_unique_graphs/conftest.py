@@ -972,6 +972,7 @@ def _generate_resource_spans(
 
     return resource_spans
 
+
 @pytest.fixture
 def otel_jobs() -> dict[str, list[OTelEvent]]:
     """Dict of 5 OTelEvents lists."""
