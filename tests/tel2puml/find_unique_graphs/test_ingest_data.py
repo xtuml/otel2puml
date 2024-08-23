@@ -66,16 +66,9 @@ class TestIngestData:
             assert not expected_event_ids
 
             # Check relationships
-            node_0 = (
-                session.query(NodeModel)
-                .filter_by(event_id="0_span_0_0")
-                .first()
-            )
-            node_1 = (
-                session.query(NodeModel)
-                .filter_by(event_id="0_span_0_1")
-                .first()
-            )
-            assert node_0
-            assert node_1
-            assert node_0.children == [node_1]
+            event_id_to_nodes = {node.event_id: node for node in nodes}
+            for node in nodes:
+                if node.parent_event_id:
+                    # Check child relations
+                    parent_node = event_id_to_nodes[node.parent_event_id]
+                    assert parent_node.children == [node]
