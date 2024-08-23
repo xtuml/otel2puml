@@ -14,7 +14,7 @@ from tel2puml.find_unique_graphs.otel_ingestion.otel_data_source import (
     JSONDataSource,
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
-    JSONDataSourceConfig,
+    IngestDataConfig,
     OTelEvent,
 )
 
@@ -25,10 +25,10 @@ class TestJSONDataSource:
     @staticmethod
     @pytest.mark.usefixtures("mock_path_exists")
     def test_get_yaml_config(
-        mock_yaml_config_dict: JSONDataSourceConfig,
+        mock_yaml_config_dict: IngestDataConfig,
     ) -> None:
         """Tests parsing yaml config file and setting config attribute."""
-        json_data_source = JSONDataSource(mock_yaml_config_dict)
+        json_data_source = JSONDataSource(mock_yaml_config_dict["data_sources"]["json"])
         config = json_data_source.config
 
         # Check if config is a dictionary
@@ -69,51 +69,57 @@ class TestJSONDataSource:
     @staticmethod
     @pytest.mark.usefixtures("mock_path_exists")
     def test_set_dirpath_valid(
-        mock_yaml_config_dict: JSONDataSourceConfig,
+        mock_yaml_config_dict: IngestDataConfig,
     ) -> None:
         """Tests set_dirpath method."""
-        json_data_source = JSONDataSource(mock_yaml_config_dict)
+        json_data_source = JSONDataSource(
+            mock_yaml_config_dict["data_sources"]["json"]
+        )
         assert json_data_source.dirpath == "/path/to/json/directory"
 
     @staticmethod
     def test_set_dirpath_invalid(
-        mock_yaml_config_dict: JSONDataSourceConfig,
+        mock_yaml_config_dict: IngestDataConfig,
     ) -> None:
         """Tests the set_dirpath method with a non-existant directory."""
         with patch("os.path.isdir", return_value=False), patch(
             "os.path.isfile", return_value=True
         ):
             with pytest.raises(ValueError, match="directory does not exist"):
-                JSONDataSource(mock_yaml_config_dict)
+                JSONDataSource(mock_yaml_config_dict["data_sources"]["json"])
 
     @staticmethod
     @pytest.mark.usefixtures("mock_path_exists")
     def test_set_filepath_valid(
-        mock_yaml_config_dict: JSONDataSourceConfig,
+        mock_yaml_config_dict: IngestDataConfig,
     ) -> None:
         """Tests the set_filepath method."""
-        json_data_source = JSONDataSource(mock_yaml_config_dict)
+        json_data_source = JSONDataSource(
+            mock_yaml_config_dict["data_sources"]["json"]
+        )
         assert json_data_source.filepath == "/path/to/json/file.json"
 
     @staticmethod
     def test_set_filepath_invalid(
-        mock_yaml_config_dict: JSONDataSourceConfig,
+        mock_yaml_config_dict: IngestDataConfig,
     ) -> None:
         """Tests the set_filepath method with an non-existant file."""
         with patch("os.path.isdir", return_value=True), patch(
             "os.path.isfile", return_value=False
         ):
             with pytest.raises(ValueError, match="does not exist"):
-                JSONDataSource(mock_yaml_config_dict)
+                JSONDataSource(mock_yaml_config_dict["data_sources"]["json"])
 
     @staticmethod
     @pytest.mark.usefixtures("mock_path_exists")
     def test_get_file_list(
-        mock_yaml_config_dict: JSONDataSourceConfig, tmp_path: Path
+        mock_yaml_config_dict: IngestDataConfig, tmp_path: Path
     ) -> None:
         """Tests the get_file_list method."""
 
-        json_data_source = JSONDataSource(mock_yaml_config_dict)
+        json_data_source = JSONDataSource(
+            mock_yaml_config_dict["data_sources"]["json"]
+        )
         # Create temp directory
         temp_dir = tmp_path / "temp_dir"
         temp_dir.mkdir()
@@ -196,7 +202,7 @@ class TestJSONDataSource:
     )
     def test_end_to_end_json_parsing(
         mock_data: str,
-        mock_yaml_config_dict: JSONDataSourceConfig,
+        mock_yaml_config_dict: IngestDataConfig,
         request: FixtureRequest,
     ) -> None:
         """Tests parsing a json file for both json data that has spans
@@ -211,7 +217,9 @@ class TestJSONDataSource:
             "get_file_list",
             return_value=["/mock/dir/file1.json"],
         ):
-            json_data_source = JSONDataSource(mock_yaml_config_dict)
+            json_data_source = JSONDataSource(
+                mock_yaml_config_dict["data_sources"]["json"]
+            )
             json_data_source.config["dirpath"] = ""
 
             otel_events: list[OTelEvent] = []
