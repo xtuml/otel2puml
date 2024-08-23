@@ -18,6 +18,12 @@ def mock_yaml_config_string() -> str:
     return """
             ingest_data:
                 data_source: json
+                data_holder: sql
+            data_holders:
+                sql:
+                    db_uri: 'sqlite:///:memory:'
+                    batch_size: 5
+                    time_buffer: 30
             data_sources:
                 json:
                     dirpath: /path/to/json/directory
