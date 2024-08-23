@@ -27,6 +27,9 @@ class TestIngestData:
         mock_yaml_config_string: str,
         mock_temp_dir_with_json_files: Path,
     ) -> None:
+        """Integration test for IngestData class using SQLDataHolder and
+        JSONDataSource classes.
+        """
 
         # Update config to point to temp directory
         config_yaml = mock_yaml_config_string.replace(
