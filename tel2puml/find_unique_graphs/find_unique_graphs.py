@@ -98,12 +98,13 @@ def get_sql_batch_nodes(
 ) -> list[NodeModel]:
     """Get the nodes for each job ID in the batch.
 
-    :param job_ids: The job IDs in the batch
-    :type job_ids: `Iterable[str]`
-    :param data_holder: The data holder object containing the ingested data
-    :type data_holder: :class:`DataHolder`
+    :param job_ids: The set of job IDs to get the nodes for
+    :type job_ids: `set[str]`
+    :param data_holder: The SQL data holder object containing the ingested
+    data
+    :type data_holder: :class:`SQLDataHolder`
     :return: The nodes for each job ID in the batch
-    :rtype: `dict`
+    :rtype: `list[NodeModel]`
     """
     with data_holder.session:
         nodes = (
