@@ -68,7 +68,7 @@ def test_get_sql_batch_nodes(
     for node in node_models:
         assert node.job_id in expected_job_ids
         assert node.event_id in expected_event_ids
-        expected_job_ids.remove(node.job_id)
-        expected_event_ids.remove(node.event_id)
+        expected_job_ids.remove(str(node.job_id))
+        expected_event_ids.remove(str(node.event_id))
     assert not expected_job_ids
     assert not expected_event_ids
