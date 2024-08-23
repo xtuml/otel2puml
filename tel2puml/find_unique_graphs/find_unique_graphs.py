@@ -3,6 +3,7 @@ OpenTelemetry data."""
 from typing import Iterable
 
 import sqlalchemy as sa
+import numba as nb
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     NodeModel,
@@ -137,3 +138,29 @@ def create_event_id_to_child_nodes_map(
                 event_id_to_child_nodes_map[parent_event_id] = []
             event_id_to_child_nodes_map[parent_event_id].append(node)
     return event_id_to_child_nodes_map
+
+
+@nb.njit
+def compute_graph_hash_from_event_ids(
+    event_id: str,
+    event_to_child_events_map: dict[str, list[str]],
+    event_id_to_event_type_map: dict[str, str]
+) -> int:
+    """Compute the hash of a graph from the event IDs.
+
+    :param event_ids: The event IDs of the graph
+    :type event_ids: `list[str]`
+    :param event_id_to_index: The mapping of event IDs to indices
+    :type event_id_to_index: `dict[str, int]`
+    :return: The hash of the graph
+    :rtype: `int`
+    """
+    string_to_hash = event_id_to_event_type_map[event_id]
+    if event_id in event_to_child_events_map:
+        for child_event_id in event_to_child_events_map[event_id]:
+            string_to_hash += hex(compute_graph_hash_from_event_ids(
+                child_event_id,
+                event_to_child_events_map,
+                event_id_to_event_type_map,
+            ))
+    return hash(string_to_hash)
