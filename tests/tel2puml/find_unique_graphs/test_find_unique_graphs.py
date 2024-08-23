@@ -8,10 +8,14 @@ import sqlalchemy as sa
 from tel2puml.find_unique_graphs.find_unique_graphs import (
     get_time_window,
     create_temp_table_of_root_nodes_in_time_window,
-    get_sql_batch_nodes
+    get_sql_batch_nodes,
+    create_event_id_to_child_nodes_map
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder import (
     DataHolder, SQLDataHolder
+)
+from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
+    NodeModel
 )
 
 
@@ -72,3 +76,21 @@ def test_get_sql_batch_nodes(
         expected_event_ids.remove(str(node.event_id))
     assert not expected_job_ids
     assert not expected_event_ids
+
+
+def test_create_event_id_to_child_nodes_map(
+    otel_nodes_from_otel_jobs: dict[str, NodeModel]
+) -> None:
+    """Test the create_event_id_to_child_nodes_map function."""
+    event_id_to_child_nodes_map = create_event_id_to_child_nodes_map(
+        otel_nodes_from_otel_jobs.values()
+    )
+    assert event_id_to_child_nodes_map == {
+        f"{i}_{j}": (
+            [otel_nodes_from_otel_jobs[f"{i}_{j + 1}"]]
+            if j < 1
+            else []
+        )
+        for i in range(5)
+        for j in range(2)
+    }

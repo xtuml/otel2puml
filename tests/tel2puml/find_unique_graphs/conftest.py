@@ -820,29 +820,41 @@ def otel_jobs() -> dict[str, list[OTelEvent]]:
 
 
 @pytest.fixture
+def otel_nodes_from_otel_jobs(
+    otel_jobs: dict[str, list[OTelEvent]]
+) -> dict[str, NodeModel]:
+    """Creates a dict of event id mapped to NodeModel from the otel_jobs
+    fixture.
+    """
+    otel_nodes: dict[str, NodeModel] = {}
+    for otel_job in otel_jobs.values():
+        for otel_event in otel_job:
+            otel_nodes[otel_event.event_id] = NodeModel(
+                job_name=otel_event.job_name,
+                job_id=otel_event.job_id,
+                event_type=otel_event.event_type,
+                event_id=otel_event.event_id,
+                start_timestamp=otel_event.start_timestamp,
+                end_timestamp=otel_event.end_timestamp,
+                application_name=otel_event.application_name,
+                parent_event_id=otel_event.parent_event_id,
+            )
+    return otel_nodes
+
+
+@pytest.fixture
 def sql_data_holder_with_otel_jobs(
-    otel_jobs: dict[str, list[OTelEvent]],
-    mock_sql_config: SQLDataHolderConfig
+    otel_nodes_from_otel_jobs: dict[str, NodeModel],
+    mock_sql_config: SQLDataHolderConfig,
 ) -> SQLDataHolder:
     """Creates a SQLDataHolder object with 5 jobs, each with 2 events."""
     mock_sql_config["time_buffer"] = 1
     sql_data_holder = SQLDataHolder(
         config=mock_sql_config,
     )
-    for otel_job in otel_jobs.values():
-        with sql_data_holder.session as session:
-            session.add_all(
-                NodeModel(
-                    job_name=otel_event.job_name,
-                    job_id=otel_event.job_id,
-                    event_type=otel_event.event_type,
-                    event_id=otel_event.event_id,
-                    start_timestamp=otel_event.start_timestamp,
-                    end_timestamp=otel_event.end_timestamp,
-                    application_name=otel_event.application_name,
-                    parent_event_id=otel_event.parent_event_id,
-                )
-                for otel_event in otel_job
-            )
-            session.commit()
+    with sql_data_holder.session as session:
+        session.add_all(
+            otel_node for otel_node in otel_nodes_from_otel_jobs.values()
+        )
+        session.commit()
     return sql_data_holder
