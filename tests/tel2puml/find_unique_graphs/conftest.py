@@ -9,6 +9,10 @@ from typing import Generator, Any
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     OTelEvent,
     SQLDataHolderConfig,
+    NodeModel
+)
+from tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder import (
+    SQLDataHolder,
 )
 
 
@@ -769,3 +773,76 @@ def mock_otel_events() -> list[OTelEvent]:
         prev_parent_event_id = event_id
 
     return otel_events
+
+
+@pytest.fixture
+def otel_jobs() -> dict[str, list[OTelEvent]]:
+    """Dict of 5 OTelEvents lists."""
+    timestamp_choices = [
+        tuple(10**12 + boundary for boundary in addition)
+        for addition in [
+            (0, 3 * 10 ** 10),
+            (10 ** 11, 2 * 10 ** 11),
+            (57 * 10 ** 10, 60 * 10 ** 10)
+        ]
+    ]
+    cases = [
+        (timestamp_choices[0], timestamp_choices[0]),
+        (timestamp_choices[0], timestamp_choices[1]),
+        (timestamp_choices[1], timestamp_choices[1]),
+        (timestamp_choices[1], timestamp_choices[2]),
+        (timestamp_choices[2], timestamp_choices[2])
+    ]
+
+    otel_jobs: dict[str, list[OTelEvent]] = {}
+    for i, case in enumerate(cases):
+        prev_parent_event_id = None
+        otel_jobs[f"{i}"] = []
+        for j, timestamps in enumerate(reversed(case)):
+            event_id = f"{i}_{j}"
+            next_event_id = [f"{i}_{j+1}"] if j < 1 else []
+            otel_jobs[f"{i}"].append(
+                OTelEvent(
+                    job_name="test_name",
+                    job_id=f"test_id_{i}",
+                    event_type=f"event_type_{j}",
+                    event_id=event_id,
+                    start_timestamp=timestamps[0],
+                    end_timestamp=timestamps[1],
+                    application_name="test_application_name",
+                    parent_event_id=prev_parent_event_id,
+                    child_event_ids=next_event_id,
+                )
+            )
+            prev_parent_event_id = event_id
+        otel_jobs[f"{i}"] = list(reversed(otel_jobs[f"{i}"]))
+    return otel_jobs
+
+
+@pytest.fixture
+def sql_data_holder_with_otel_jobs(
+    otel_jobs: dict[str, list[OTelEvent]],
+    mock_sql_config: SQLDataHolderConfig
+) -> SQLDataHolder:
+    """Creates a SQLDataHolder object with 5 jobs, each with 2 events."""
+    mock_sql_config["time_buffer"] = 1
+    sql_data_holder = SQLDataHolder(
+        config=mock_sql_config,
+    )
+    for otel_job in otel_jobs.values():
+        with sql_data_holder.session as session:
+            session.add_all(
+                NodeModel(
+                    job_name=otel_event.job_name,
+                    job_id=otel_event.job_id,
+                    event_type=otel_event.event_type,
+                    event_id=otel_event.event_id,
+                    start_timestamp=otel_event.start_timestamp,
+                    end_timestamp=otel_event.end_timestamp,
+                    application_name=otel_event.application_name,
+                    parent_event_id=otel_event.parent_event_id,
+                )
+                for otel_event in otel_job
+            )
+            session.commit()
+    return sql_data_holder
