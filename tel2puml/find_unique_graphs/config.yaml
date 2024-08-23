@@ -12,9 +12,9 @@ data_sources:
         key_paths: [scope_spans::spans]
     field_mapping:
       job_name:
-        key_paths: [HEADER:resource:attributes::key, HEADER:scope_spans::scope:name]
-        key_value: [service.name, null]
-        value_paths: [value:Value:StringValue, null]
+        key_paths: [HEADER:scope_spans::scope:name, HEADER:resource:attributes::key]
+        key_value: [null, service.version]
+        value_paths: [null, value:Value:StringValue]
         value_type: string
       job_id:
         key_paths: [trace_id]

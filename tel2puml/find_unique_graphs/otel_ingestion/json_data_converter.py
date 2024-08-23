@@ -11,13 +11,13 @@ from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
 MAX_SEGMENT_COUNT = 50  # TODO have a think about this
 
 
-def _flatten_json_dict(json_data: dict[str, Any]) -> Any:
+def _flatten_json_dict(json_data: dict[str, Any]) -> flatdict.FlatterDict:
     """Function to flatten a nested dictionary.
 
     :param json_data: The JSON data to flatten.
     :param json_data: `dict`[`str`,`Any`]
     :return: The flattened json as a dictionary
-    :rtype: `Any`
+    :rtype: :class: `flatdict.FlatterDict`
     """
     return flatdict.FlatterDict(json_data)
 
@@ -150,7 +150,7 @@ def _handle_empty_segments(
     key = full_path.split("::")[-1]
 
     if full_path.split(":")[0] == "HEADER":
-        handle_data_from_header(
+        _handle_data_from_header(
             field_name,
             field_config,
             index,
@@ -217,52 +217,112 @@ def _handle_empty_segments(
     )
 
 
-def handle_data_from_header(
-    field_name: str,
+def _handle_data_from_header(
+    target_field_name: str,
     field_config: dict[str, Any],
-    index: int,
-    result: dict[str, Any],
-    header_dict: dict[str, Any],
-    key: str,
-    full_path: str,
+    config_index: int,
+    result_dict: dict[str, Any],
+    header_data: dict[str, Any],
+    initial_header_key: str,
+    full_header_path: str,
 ) -> None:
     """Function that handles instances where HEADER is used within the config,
     indicating that information stored within the header_dict is to be used.
 
-    :param field_name: The field name within the mapping config
-    :type field_name: `str`
-    :param field_config: The config for the field name
+    :param target_field_name: The field name within the mapping config
+    :type target_field_name: `str`
+    :param field_config: The configuration for the target field
     :type field_config: `dict`[`str`,`Any`]
-    :param index: The index of the field config
-    :type index: `int`
-    :param result: The mapped data
-    :type result: `dict`[`str`, `Any`]
-    :param header_dict: A dictionary of flattened json data containing header
-    data
-    :type header_dict: `dict`[`str`, `Any`]
-    :param key: The key within the header_dict value
-    :type key: `str`
-    :param full_path: The full path given in the 'key_paths' config
-    :type full_path: `str`
+    :param config_index: The index of the current field in the configuration
+    :type config_index: `int`
+    :param result_dict: The dictionary to store the mapped data
+    :type result_dict: `dict`[`str`, `Any`]
+    :param header_data: A dictionary containing flattened JSON header data
+    :type header_data: `dict`[`str`, `Any`]
+    :param initial_header_key: The initial key to look up in the header_data
+    :type initial_header_key: `str`
+    :param full_header_path: The full path given in the 'key_paths' config
+    :type full_header_path: `str`
     """
-    full_path = full_path.split("HEADER:")[1]
+    # Remove the 'HEADER:' prefix from the full path
+    clean_header_path = full_header_path.split("HEADER:", 1)[1]
 
-    path_segments = full_path.split("::")
+    # Split the remaining path into segments
+    path_segments = clean_header_path.split("::")
 
-    key = (
-        key
-        if not field_config["key_value"][index]
-        else field_config["value_paths"][index]
-    )
+    # The last segment is the key we're searching for in the header_data
+    target_key = path_segments[-1]
 
-    header_dict_copy = header_dict
+    # Update the header key if a specific value needs to be matched
+    if (
+        field_config.get("key_value")
+        and field_config["key_value"][config_index]
+    ):
+        header_key = field_config["value_paths"][config_index]
+    else:
+        header_key = initial_header_key
+
+    # Navigate through the nested structure of header_data
+    current_header_level = header_data
     for segment in path_segments[:-1]:
-        header_dict_copy = header_dict_copy[segment]
+        current_header_level = current_header_level[segment]
 
-    value_to_add = header_dict_copy[key]
+    # Extract the value from header_data
+    if header_key == target_key:
+        extracted_value = current_header_level[header_key]
+    else:
+        extracted_value = _find_matching_header_value(
+            current_header_level,
+            target_key,
+            field_config,
+            config_index,
+            header_key,
+        )
+
+    # Get the value type from the field config
     value_type = _get_value_type(field_config)
 
-    _add_or_append_value(field_name, value_to_add, result, value_type)
+    # Add or append the value to the result dictionary
+    _add_or_append_value(
+        target_field_name, extracted_value, result_dict, value_type
+    )
+
+
+def _find_matching_header_value(
+    header_level: dict[str, str],
+    target_key: str,
+    field_config: dict[str, Any],
+    config_index: int,
+    header_key: str,
+) -> str:
+    """
+    Find the matching header value based on the target key and configuration.
+
+    :param header_level: The current level of the header dictionary
+    :type header_level: `dict`[`str`, `str`]
+    :param target_key: The key to search for in the header
+    :type target_key: `str`
+    :param field_config: The configuration for the field
+    :type field_config: `dict`[`str`, `Any`]
+    :param config_index: The index of the current field in the configuration
+    :type config_index: `int`
+    :param header_key: The key to use for extracting the final value
+    :type header_key: `int`
+    :return: The extracted value from the header
+    :rtype: `str`
+    """
+    for key, value in header_level.items():
+        key_suffix = key.split(":", 1)[-1]
+        if (
+            key_suffix == target_key
+            and value == field_config["key_value"][config_index]
+        ):
+            key_prefix = key.split(":", 1)[0]
+            full_header_key = f"{key_prefix}:{header_key}"
+
+            return header_level[full_header_key]
+
+    raise KeyError(f"No matching value found for key: {target_key}")
 
 
 def _update_full_path(full_path: str, segment_count: int) -> str:
@@ -449,7 +509,7 @@ def _handle_regular_path(
     try:
         if full_path.split(":")[0] == "HEADER":
             # Remove 'HEADER:' from full_path
-            full_path = "".join(full_path.split(":")[1:])
+            full_path = "".join(full_path.split("HEADER:")[1:])
             value_type = _get_value_type(field_config)
             value = header_dict[full_path]
             _add_or_append_value(field_name, value, result, value_type)
@@ -597,11 +657,12 @@ def _extract_nested_value(
     :return: A nested dictionary with the extracted value
     :rtype: `dict`[`str`, `Any`] | `str`
     """
-    path_segments = path.split("::")
+    path_segments = path.split(":")
     for segment in path_segments:
-        data = _navigate_segment(data, segment.split(":"))
+        data = _navigate_segment(data, segment)
 
     result = data
+    path_segments = ":".join(path_segments).split("::")
     # Create a nested dictionary by building it from the inside out. This is
     # bypassed if data is a string
     for key in reversed(path_segments[1:]):
@@ -612,7 +673,7 @@ def _extract_nested_value(
 
 def _extract_simple_value(
     data: dict[str, Any] | str, path: str
-) -> dict[str, Any] | str:
+) -> flatdict.FlatterDict | str:
     """Extract a simple value from JSON data using a path.
 
     :param data: The JSON data to traverse
@@ -620,32 +681,34 @@ def _extract_simple_value(
     :param path: The simple path string
     :type path: `str`
     :return: The extracted value
-    :rtype: `dict`[`str`, `Any`] | `str`
+    :rtype: :class: `flatdict.FlatterDict` | `str`
     """
     segments = path.split(":")
     for segment in segments:
-        data = _navigate_segment(data, [segment])
+        data = _navigate_segment(data, segment)
 
-    return data if not isinstance(data, dict) else _flatten_json_dict(data)
+    if isinstance(data, dict) or isinstance(data, list):
+        return _flatten_json_dict(data)
+    return data
 
 
 def _navigate_segment(
-    data: dict[str, Any] | str, segments: list[str]
+    data: dict[str, Any] | str, segment: str
 ) -> dict[str, Any] | str:
     """Navigate through a segment of the JSON data.
 
     :param data: The current data object
     :type data: `dict`[`str`, `Any`]
-    :param segments: The segments to navigate
-    :type segments: `list`[`str`]
+    :param segment: The segment to navigate
+    :type segment: `str`
     :return: The value at the end of the navigation
     :rtype: `dict`[`str`, `Any`] | `str`
     """
-    for segment in segments:
-        if isinstance(data, dict):
-            data = data[segment]
-        if isinstance(data, list):
-            data = data[0]
+    if isinstance(data, dict):
+        data = data[segment]
+    elif isinstance(data, list):
+        data = data[0]
+
     return data
 
 

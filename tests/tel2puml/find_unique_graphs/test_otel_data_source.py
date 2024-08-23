@@ -223,7 +223,7 @@ class TestJSONDataSource:
         assert otel_event.job_id == "trace001 4.8"
         assert otel_event.event_id == "span001"
         assert otel_event.event_type == "com.T2h.366Yx 500"
-        assert otel_event.application_name == "Processor 1.2"
+        assert otel_event.application_name == "Processor 1.0"
         assert otel_event.start_timestamp == 1723544132228102912
         assert otel_event.end_timestamp == 1723544132228219285
         assert otel_event.parent_event_id is None
@@ -234,7 +234,7 @@ class TestJSONDataSource:
         assert otel_event2.job_id == "trace002 2.0"
         assert otel_event2.event_id == "span002"
         assert otel_event2.event_type == "com.C36.9ETRp 401"
-        assert otel_event2.application_name == "Handler 2.9"
+        assert otel_event2.application_name == "Handler 1.0"
         assert otel_event2.start_timestamp == 1723544132228288000
         assert otel_event2.end_timestamp == 1723544132229038947
         assert otel_event2.parent_event_id == "span001"
@@ -250,7 +250,7 @@ class TestJSONDataSource:
             assert otel_event3.job_id == "trace003 2.7"
             assert otel_event3.event_id == "span003"
             assert otel_event3.event_type == "com.a58.GFkzZ 201"
-            assert otel_event3.application_name == "Processor 2.1"
+            assert otel_event3.application_name == "Processor 1.2"
             assert otel_event3.start_timestamp == 1723544154817766912
             assert otel_event3.end_timestamp == 1723544154818599863
             assert otel_event3.parent_event_id is None
@@ -261,7 +261,7 @@ class TestJSONDataSource:
             assert otel_event4.job_id == "trace004 1.3"
             assert otel_event4.event_id == "span004"
             assert otel_event4.event_type == "com.67Q.AS8pJ 201"
-            assert otel_event4.application_name == "Processor 2.8"
+            assert otel_event4.application_name == "Processor 1.2"
             assert otel_event4.start_timestamp == 1723544154817793024
             assert otel_event4.end_timestamp == 1723544154818380443
             assert otel_event4.parent_event_id == "span003"
