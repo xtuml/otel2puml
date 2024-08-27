@@ -1056,3 +1056,28 @@ def sql_data_holder_with_otel_jobs(
         )
         session.commit()
     return sql_data_holder
+
+
+@pytest.fixture
+def otel_linked_nodes_and_nodes() -> (
+    tuple[dict[str, list[NodeModel]], dict[int, NodeModel]]
+):
+    """Dict of 5 OTelEvents lists."""
+    nodes = {
+        i: NodeModel(
+            job_name="test_name",
+            job_id=f"{i}",
+            event_type=f"{i}",
+            event_id=f"{i}",
+            start_timestamp=10**12 + 10**10 * i,
+            end_timestamp=10**12 + 10**10 * i + 10**10,
+            application_name="test_application_name",
+            parent_event_id=None,
+        )
+        for i in range(6)
+    }
+    linked_nodes = {
+        "0": [nodes[1], nodes[5]],
+        "1": [nodes[2], nodes[3], nodes[4]],
+    }
+    return linked_nodes, nodes
