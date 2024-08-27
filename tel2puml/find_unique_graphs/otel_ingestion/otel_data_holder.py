@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from types import TracebackType
-from typing import Self, Optional
+from typing import Self, Optional, TypeVar
 
 from sqlalchemy import create_engine, insert
 from sqlalchemy.orm import Session
@@ -16,6 +16,9 @@ from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     Base,
     NODE_ASSOCIATION,
 )
+
+
+T = TypeVar("T")
 
 
 class DataHolder(ABC):
@@ -151,11 +154,11 @@ class SQLDataHolder(DataHolder):
             self.session.rollback()
             raise e
 
-    def batch_insert_objects(self, objects: list[Base]) -> None:
+    def batch_insert_objects(self, objects: list[T]) -> None:
         """Method to batch insert objects into database.
 
         :param objects: A list of SQLAlchemy objects
-        :type objects: `list`[:class:`Base`]
+        :type objects: `list`[:class:`T`]
         """
 
         with self.session as session:

@@ -133,7 +133,7 @@ def test_compute_graph_hash_from_event_ids(
 
 def test_compute_graph_hash_from_root_nodes(
     otel_simple_linked_nodes_and_nodes: tuple[
-        list[NodeModel], dict[str, list[NodeModel]]
+        dict[str, list[NodeModel]], dict[str, NodeModel]
     ],
 ) -> None:
     """Test the compute_graph_hashes_from_root_nodes function."""

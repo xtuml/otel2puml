@@ -1085,7 +1085,7 @@ def otel_linked_nodes_and_nodes() -> (
 
 @pytest.fixture
 def otel_simple_linked_nodes_and_nodes() -> (
-    tuple[dict[str, list[NodeModel]], dict[int, NodeModel]]
+    tuple[dict[str, list[NodeModel]], dict[str, NodeModel]]
 ):
     """Dict of 4 nodes, 2 nodes per job"""
     nodes = {
