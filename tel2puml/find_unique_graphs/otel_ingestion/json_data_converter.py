@@ -649,7 +649,7 @@ def _extract_value_from_path(
 
 def _extract_nested_value(
     data: dict[str, Any], path: str
-) -> dict[str, Any] | str:
+) -> dict[str, Any]:
     """Extract a nested value from JSON data using a complex path.
 
     :param data: The JSON data to traverse
@@ -668,12 +668,32 @@ def _extract_nested_value(
             parsed_data = _navigate_list(parsed_data)
 
     path_segments = ":".join(path_segments).split("::")
-    # Create a nested dictionary by building it from the inside out. This is
-    # bypassed if data is a string
-    for key in reversed(path_segments[1:]):
-        result = {key: parsed_data}
 
-    return result
+    return _build_nested_dict(path_segments, parsed_data)
+
+
+def _build_nested_dict(
+    path_segments: list[str],
+    parsed_data: dict[str, Any] | str | list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Generates a nested dictionary by building it from the inside out.
+
+    :param path_segments: The segments within the path, split by ::
+    :type path_segments: `list`[`str`]
+    :param parsed_data: The parsed data within the json
+    :type parsed_data: `dict`[`str`, `Any`] | `str` |
+    `list`[`dict`[`str`, `Any`]]
+    :return: The nested dictionary
+    :rtype: `dict`[`str`, `Any`]
+    """
+    result = parsed_data
+    for key in reversed(path_segments[1:]):
+        result = {key: result}
+
+    if isinstance(result, dict):
+        return result
+    else:
+        raise TypeError(f"Expected type dict, got {type(result)} instead.")
 
 
 def _extract_simple_value(

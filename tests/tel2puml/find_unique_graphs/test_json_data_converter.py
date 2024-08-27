@@ -12,7 +12,7 @@ from tel2puml.find_unique_graphs.otel_ingestion.json_data_converter import (
     _extract_value_from_path,
     _extract_simple_value,
     _update_header_dict,
-    _extract_nested_value,
+    _build_nested_dict,
 )
 
 
@@ -150,3 +150,13 @@ class TestProcessHeaders:
         value6 = "value"
         _update_header_dict(header_dict, path6, value6)
         assert header_dict["key1"] == "value"
+
+    @staticmethod
+    def test_build_nested_dict() -> None:
+        """Tests the function _build_nested_dict"""
+
+        path_segments = ["segment1", "segment2", "segment3"]
+        parsed_data = "data"
+        assert _build_nested_dict(path_segments, parsed_data) == {
+            "segment2": {"segment3": "data"}
+        }
