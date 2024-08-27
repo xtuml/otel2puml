@@ -143,7 +143,7 @@ class TestProcessHeaders:
         path1 = "key1:key2"
         value1 = {"key3": "value"}
         _update_header_dict(header_dict, path1, value1)
-        assert header_dict[path1]
+        assert len(header_dict) == 1
         assert header_dict[path1] == flatdict.FlatterDict(value1)
 
         # Test updating with a dict complex path
@@ -151,6 +151,7 @@ class TestProcessHeaders:
         path2 = "key1::key2"
         value2 = {"key3": "value"}
         _update_header_dict(header_dict, path2, value2)
+        assert len(header_dict) == 1
         assert header_dict["key1"] == flatdict.FlatterDict(value2)
 
         # Test updating with a list simple path
@@ -158,7 +159,7 @@ class TestProcessHeaders:
         path3 = "key1:key2"
         value3 = [{"key3": "value"}]
         _update_header_dict(header_dict, path3, value3)
-        assert header_dict[path3]
+        assert len(header_dict) == 1
         assert header_dict[path3] == flatdict.FlatterDict(value3)
 
         # Test updating with a list complex path
@@ -166,6 +167,7 @@ class TestProcessHeaders:
         path4 = "key1::key2"
         value4 = [{"key3": "value"}]
         _update_header_dict(header_dict, path4, value4)
+        assert len(header_dict) == 1
         assert header_dict["key1"] == flatdict.FlatterDict(value4)
 
         # Test updating with a string simple path
@@ -173,6 +175,7 @@ class TestProcessHeaders:
         path5 = "key1:key2"
         value5 = "value"
         _update_header_dict(header_dict, path5, value5)
+        assert len(header_dict) == 1
         assert header_dict[path5] == "value"
 
         # Test updating with a string complex path
@@ -180,6 +183,7 @@ class TestProcessHeaders:
         path6 = "key1::key2"
         value6 = "value"
         _update_header_dict(header_dict, path6, value6)
+        assert len(header_dict) == 1
         assert header_dict["key1"] == "value"
 
     @staticmethod
