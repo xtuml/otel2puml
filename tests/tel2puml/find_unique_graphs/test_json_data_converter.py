@@ -67,9 +67,9 @@ class TestProcessHeaders:
         assert _navigate_list(data2) == expected2
 
         # Test with an empty list
-        data = []
+        data3: list[dict[str, Any]] = []
         with pytest.raises(IndexError):
-            _navigate_list(data)
+            _navigate_list(data3)
 
     @staticmethod
     def test_extract_simple_value() -> None:
