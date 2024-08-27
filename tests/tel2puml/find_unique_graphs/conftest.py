@@ -1081,3 +1081,29 @@ def otel_linked_nodes_and_nodes() -> (
         "1": [nodes[2], nodes[3], nodes[4]],
     }
     return linked_nodes, nodes
+
+
+@pytest.fixture
+def otel_simple_linked_nodes_and_nodes() -> (
+    tuple[dict[str, list[NodeModel]], dict[int, NodeModel]]
+):
+    """Dict of 4 nodes, 2 nodes per job"""
+    nodes = {
+        f"{i}_{j}": NodeModel(
+            job_name="test_name",
+            job_id=f"{i}",
+            event_type=f"{i * 2 + j}",
+            event_id=f"{i}_{j}",
+            start_timestamp=10**12 + 10**10 * j,
+            end_timestamp=10**12 + 10**10 * j + 10**10,
+            application_name="test_application_name",
+            parent_event_id=None,
+        )
+        for i in range(2)
+        for j in range(2)
+    }
+    linked_nodes = {
+        "0_0": [nodes["0_1"]],
+        "1_0": [nodes["1_1"]],
+    }
+    return linked_nodes, nodes
