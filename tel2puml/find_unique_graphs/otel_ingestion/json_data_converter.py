@@ -715,8 +715,8 @@ def _navigate_dict(
             return data_to_return
         else:
             raise TypeError(
-                "Value should be of type dict, list or str - got"
-                f" {type(data[segment])} instead."
+                "Error navigating header - value should be of type dict,"
+                f" list or str - got {type(data[segment])} instead."
             )
     except KeyError:
         raise KeyError(f"{segment} is not a valid key.")
@@ -725,11 +725,11 @@ def _navigate_dict(
 def _navigate_list(
     data: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    """Navigate through a dictionary of the JSON data.
+    """Navigate through a list of the JSON data.
 
     :param data: The current data object
     :type data: `list`[`dict`[`str`, `Any`]]
-    :return: The value at the end of the navigation
+    :return: The value at index 0 of the list
     :rtype: `dict`[`str`, `Any`]
     """
     try:
