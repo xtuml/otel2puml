@@ -647,9 +647,7 @@ def _extract_value_from_path(
         return _extract_simple_value(data, path)
 
 
-def _extract_nested_value(
-    data: dict[str, Any], path: str
-) -> dict[str, Any]:
+def _extract_nested_value(data: dict[str, Any], path: str) -> dict[str, Any]:
     """Extract a nested value from JSON data using a complex path.
 
     :param data: The JSON data to traverse

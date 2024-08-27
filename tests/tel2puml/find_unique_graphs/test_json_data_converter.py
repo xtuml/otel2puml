@@ -23,20 +23,49 @@ class TestProcessHeaders:
     def test_navigate_dict() -> None:
         """Tests the function _navigate_segment"""
 
-        data = {"key1": {"key2": "value"}}
-        segment = "key1"
-        assert _navigate_dict(data, segment) == {"key2": "value"}
+        # Test valid dict
+        data1 = {"key1": {"key2": "value2"}}
+        segment1 = "key1"
+        expected1 = {"key2": "value2"}
+        assert _navigate_dict(data1, segment1) == expected1
+
+        # Test valid string
+        data2 = {"key1": "value1"}
+        segment2 = "key1"
+        expected2 = "value1"
+        assert _navigate_dict(data2, segment2) == expected2
+
+        # Test valid list
+        data3 = {"key1": [{"key2": "value2"}, {"key3": "value3"}]}
+        segment3 = "key1"
+        expected3 = [{"key2": "value2"}, {"key3": "value3"}]
+        assert _navigate_dict(data3, segment3) == expected3
+
         # Test with an invalid key
-        invalid_segment = "invalid"
+        data4 = {"key1": "value1"}
+        segment4 = "invalid"
         with pytest.raises(KeyError):
-            _navigate_dict(data, invalid_segment)
+            _navigate_dict(data4, segment4)
+
+        # Test invalid type
+        data5 = {"key1": 123}  # Not a dict, list, or str
+        segment5 = "key1"
+        with pytest.raises(TypeError):
+            _navigate_dict(data5, segment5)
 
     @staticmethod
     def test_navigate_list() -> None:
         """Tests the function _navigate_segment"""
 
-        data = [{"key1": {"key2": "value"}}]
-        assert _navigate_list(data) == {"key1": {"key2": "value"}}
+        # Test non empty list
+        data1 = [{"key1": {"key2": "value"}}]
+        assert _navigate_list(data1) == {"key1": {"key2": "value"}}
+
+        # Test list with single element
+        data2 = [{"key1": "value1"}]
+        expected2 = {"key1": "value1"}
+        assert _navigate_list(data2) == expected2
+
         # Test with an empty list
         data = []
         with pytest.raises(IndexError):
