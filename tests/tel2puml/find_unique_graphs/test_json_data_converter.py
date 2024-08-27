@@ -1,6 +1,7 @@
 """Tests for json data converter module."""
 
 import pytest
+import unittest.mock
 
 from tel2puml.find_unique_graphs.otel_ingestion.json_data_converter import (
     _navigate_dict,
@@ -66,3 +67,35 @@ class TestProcessHeaders:
             {"id": 1, "name": "item1"},
             {"id": 2, "name": "item2"},
         ]
+
+    @staticmethod
+    def test_extract_value_from_path() -> None:
+        """Tests the function _extract_value_from_path"""
+
+        with unittest.mock.patch(
+            "tel2puml.find_unique_graphs.otel_ingestion.json_data_converter._extract_simple_value"
+        ) as extract_simple_value, unittest.mock.patch(
+            "tel2puml.find_unique_graphs.otel_ingestion.json_data_converter._extract_nested_value"
+        ) as extract_nested_value:
+            # Test simple path
+            data = {"key1": {"key2": "value"}}
+            path = "key1:key2"
+            _extract_value_from_path(data, path)
+            extract_simple_value.assert_called_once()
+            extract_nested_value.assert_not_called()
+
+            # Reset the mocks
+            extract_simple_value.reset_mock()
+            extract_nested_value.reset_mock()
+
+            # Test complex path
+            data = {
+                "key1": [
+                    {"id": 1, "name": "item1"},
+                    {"id": 2, "name": "item2"},
+                ]
+            }
+            path = "key1::id"
+            _extract_value_from_path(data, path)
+            extract_simple_value.assert_not_called()
+            extract_nested_value.assert_called_once()
