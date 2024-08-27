@@ -157,8 +157,32 @@ class TestProcessHeaders:
     def test_build_nested_dict() -> None:
         """Tests the function _build_nested_dict"""
 
-        path_segments = ["segment1", "segment2", "segment3"]
-        parsed_data = "data"
-        assert _build_nested_dict(path_segments, parsed_data) == {
-            "segment2": {"segment3": "data"}
+        # Test multiple segments
+        path_segments1 = ["key1", "key2", "key3"]
+        parsed_data1 = {"key4": "value4"}
+        expected1 = {"key2": {"key3": {"key4": "value4"}}}
+        assert _build_nested_dict(path_segments1, parsed_data1) == expected1
+
+        # Test with string data
+        path_segments2 = ["key1", "key2", "key3"]
+        parsed_data2 = "string_value"
+        expected2 = {"key2": {"key3": "string_value"}}
+        assert _build_nested_dict(path_segments2, parsed_data2) == expected2
+
+        # Test with list of dicts3
+        path_segments3 = ["key1", "key2", "key3"]
+        parsed_data3 = [{"key4": "value4"}, {"key5": "value5"}]
+        expected3 = {
+            "key2": {"key3": [{"key4": "value4"}, {"key5": "value5"}]}
         }
+        assert _build_nested_dict(path_segments3, parsed_data3) == expected3
+
+        # Test error handling with one path segment. In reality there will
+        # always be more than one path segment since the path requires '::'
+        # for the function to be reached
+        path_segments4 = ["key1"]
+        parsed_data4 = 123
+        with pytest.raises(TypeError):
+            _build_nested_dict(
+                path_segments4, parsed_data4  # type: ignore[arg-type]
+            )
