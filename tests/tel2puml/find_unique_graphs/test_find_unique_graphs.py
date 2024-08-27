@@ -121,4 +121,4 @@ def test_compute_graph_hash_from_event_ids(
     assert compute_graph_hash_from_event_ids(
         nodes[5],
         node_links
-    ) == '6a81b47405b648ed'
+    ) == '6a81b47405b648ed'  # pragma: allowlist secret
