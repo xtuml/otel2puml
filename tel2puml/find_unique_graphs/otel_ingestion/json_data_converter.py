@@ -12,16 +12,16 @@ MAX_SEGMENT_COUNT = 50  # TODO have a think about this
 
 
 def _flatten_json_dict(
-    json_data: dict[str, Any] | list[dict[str, Any]],
+    data: dict[str, Any] | list[dict[str, Any]],
 ) -> flatdict.FlatterDict:
-    """Function to flatten a nested dictionary.
+    """Function to flatten a dictionary or list.
 
-    :param json_data: The JSON data to flatten.
-    :param json_data: `dict`[`str`,`Any`] | `list`[`dict`[`str`, `Any`]]
+    :param data: The JSON data to flatten.
+    :param data: `dict`[`str`,`Any`] | `list`[`dict`[`str`, `Any`]]
     :return: The flattened json as a dictionary
     :rtype: :class: `flatdict.FlatterDict`
     """
-    return flatdict.FlatterDict(json_data)
+    return flatdict.FlatterDict(data)
 
 
 def _map_data_to_json_schema(
@@ -655,7 +655,7 @@ def _extract_nested_value(data: dict[str, Any], path: str) -> dict[str, Any]:
     :param path: The complex path string
     :type path: `str`
     :return: A nested dictionary with the extracted value
-    :rtype: `dict`[`str`, `Any`] | `str`
+    :rtype: `dict`[`str`, `Any`]
     """
     path_segments = path.split(":")
     parsed_data: dict[str, Any] | str | list[dict[str, Any]] = data
