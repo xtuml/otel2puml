@@ -1,8 +1,8 @@
 """Module for finding unique graphs in a list of graphs from ingested
 OpenTelemetry data."""
 from typing import Iterable
-
 import sqlalchemy as sa
+import xxhash
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     NodeModel,
@@ -137,3 +137,27 @@ def create_event_id_to_child_nodes_map(
                 event_id_to_child_nodes_map[parent_event_id] = []
             event_id_to_child_nodes_map[parent_event_id].append(node)
     return event_id_to_child_nodes_map
+
+
+def compute_graph_hash_from_event_ids(
+    node: NodeModel,
+    node_to_children: dict[str, list[NodeModel]],
+) -> str:
+    """Compute the hash of a graph from the nodes ancestors.
+
+    :param node: The node to compute the hash for
+    :type node: :class:`NodeModel`
+    :param node_to_children: Mapping of node event IDs to their children
+    :type node_to_children: `dict`[`str`, `list`[:class:`NodeModel`]]
+    :return: The hash of the graph as a hex string
+    """
+    string_to_hash = str(node.event_type)
+    if node.event_id in node_to_children:
+        children = node_to_children[str(node.event_id)]
+        string_to_hash += "".join(
+            sorted(
+                compute_graph_hash_from_event_ids(child, node_to_children)
+                for child in children
+            )
+        )
+    return xxhash.xxh64_hexdigest(string_to_hash)

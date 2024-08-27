@@ -4,10 +4,10 @@ from pytest import MonkeyPatch
 import pytest
 import sqlalchemy as sa
 
-
 from tel2puml.find_unique_graphs.find_unique_graphs import (
     get_time_window,
     create_temp_table_of_root_nodes_in_time_window,
+    compute_graph_hash_from_event_ids,
     get_sql_batch_nodes,
     create_event_id_to_child_nodes_map
 )
@@ -94,3 +94,31 @@ def test_create_event_id_to_child_nodes_map(
         for i in range(5)
         for j in range(2)
     }
+
+
+def test_compute_graph_hash_from_event_ids(
+    monkeypatch: MonkeyPatch,
+    otel_linked_nodes_and_nodes: tuple[
+        dict[str, list[NodeModel]], dict[int, NodeModel]
+    ],
+) -> None:
+    """Test the compute_graph_hash_from_event_ids function."""
+    # test that order for string output is correct and the function is
+    # performing correctly recursively and sorting correctly
+    node_links, nodes = otel_linked_nodes_and_nodes
+    mock_hash = {
+        "1MNP": "MNPZ", "2": "P", "3": "M", "4": "N", "5": "MNPY",
+        "0MNPYMNPZ": "complete"
+    }
+    monkeypatch.setattr("xxhash.xxh64_hexdigest", lambda x: mock_hash[x])
+    compute_graph_hash_from_event_ids(
+        nodes[0],
+        node_links
+    ) == "complete"
+    # remove patch and test that hashing function is correct for a single node
+    # and is deterministic
+    monkeypatch.undo()
+    assert compute_graph_hash_from_event_ids(
+        nodes[5],
+        node_links
+    ) == '6a81b47405b648ed'  # pragma: allowlist secret
