@@ -4,10 +4,10 @@ from pytest import MonkeyPatch
 import pytest
 import sqlalchemy as sa
 
-
 from tel2puml.find_unique_graphs.find_unique_graphs import (
     get_time_window,
     create_temp_table_of_root_nodes_in_time_window,
+    compute_graph_hash_from_event_ids,
     get_sql_batch_nodes,
     create_event_id_to_child_nodes_map
 )
@@ -94,3 +94,8 @@ def test_create_event_id_to_child_nodes_map(
         for i in range(5)
         for j in range(2)
     }
+
+
+def test_compute_graph_hash_from_event_ids():
+    """Test the compute_graph_hash_from_event_ids function."""
+    pass

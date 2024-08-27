@@ -1,9 +1,8 @@
 """Module for finding unique graphs in a list of graphs from ingested
 OpenTelemetry data."""
 from typing import Iterable
-
 import sqlalchemy as sa
-import numba as nb
+import xxhash
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     NodeModel,
@@ -140,27 +139,25 @@ def create_event_id_to_child_nodes_map(
     return event_id_to_child_nodes_map
 
 
-@nb.njit
 def compute_graph_hash_from_event_ids(
-    event_id: str,
-    event_to_child_events_map: dict[str, list[str]],
-    event_id_to_event_type_map: dict[str, str]
-) -> int:
-    """Compute the hash of a graph from the event IDs.
+    node: NodeModel,
+    node_to_children: dict[str, list[NodeModel]],
+) -> str:
+    """Compute the hash of a graph from the nodes ancestors.
 
-    :param event_ids: The event IDs of the graph
-    :type event_ids: `list[str]`
-    :param event_id_to_index: The mapping of event IDs to indices
-    :type event_id_to_index: `dict[str, int]`
-    :return: The hash of the graph
-    :rtype: `int`
+    :param node: The node to compute the hash for
+    :type node: :class:`NodeModel`
+    :param node_to_children: Mapping of node event IDs to their children
+    :type node_to_children: `dict`[`str`, `list`[:class:`NodeModel`]]
+    :return: The hash of the graph as a hex string
     """
-    string_to_hash = event_id_to_event_type_map[event_id]
-    if event_id in event_to_child_events_map:
-        for child_event_id in event_to_child_events_map[event_id]:
-            string_to_hash += hex(compute_graph_hash_from_event_ids(
-                child_event_id,
-                event_to_child_events_map,
-                event_id_to_event_type_map,
-            ))
-    return hash(string_to_hash)
+    string_to_hash = str(node.event_type)
+    if node.event_id in node_to_children:
+        children = node_to_children[node.event_id]
+        string_to_hash += "".join(
+            sorted(
+                compute_graph_hash_from_event_ids(child, node_to_children)
+                for child in children
+            )
+        )
+    return xxhash.xxh64_hexdigest(string_to_hash)
