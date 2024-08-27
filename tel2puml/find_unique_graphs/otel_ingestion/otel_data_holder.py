@@ -147,22 +147,28 @@ class SQLDataHolder(DataHolder):
             # Reset batch
             self.node_models_to_save = []
             self.node_relationships_to_save = []
-        except IntegrityError as e:
+        except (IntegrityError, OperationalError, Exception) as e:
             self.session.rollback()
-            raise Exception(f"IntegrityError during data saving: {e}")
-        except OperationalError as e:
-            self.session.rollback()
-            raise Exception(f"OperationalError during data saving: {e}")
-        except Exception as e:
-            self.session.rollback()
-            raise Exception(f"Unexpected error during data saving: {e}")
+            raise e
+
+    def batch_insert_objects(self, objects: list[Base]) -> None:
+        """Method to batch insert objects into database.
+
+        :param objects: A list of SQLAlchemy objects
+        :type objects: `list`[:class:`Base`]
+        """
+
+        with self.session as session:
+            try:
+                session.add_all(objects)
+                session.commit()
+            except (IntegrityError, OperationalError, Exception) as e:
+                session.rollback()
+                raise e
 
     def batch_insert_node_models(self) -> None:
         """Method to batch insert NodeModel objects into database."""
-
-        with self.session as session:
-            session.add_all(self.node_models_to_save)
-            session.commit()
+        self.batch_insert_objects(self.node_models_to_save)
 
     def batch_insert_node_associations(self) -> None:
         """Method to batch insert node associations into database."""
@@ -189,8 +195,9 @@ class SQLDataHolder(DataHolder):
                     }
                 )
 
+    @staticmethod
     def convert_otel_event_to_node_model(
-        self, otel_event: OTelEvent
+        otel_event: OTelEvent
     ) -> NodeModel:
         """Method to convert an OTelEvent object to a NodeModel object.
 

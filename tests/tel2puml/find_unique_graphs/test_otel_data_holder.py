@@ -77,6 +77,12 @@ class TestSQLDataHolder:
 
         assert column_names == ["parent_id", "child_id"]
 
+        # Test get column names in job hash table
+        columns = inspector.get_columns("job_hashes")
+        column_names = [column["name"] for column in columns]
+
+        assert column_names == ["job_id", "job_hash"]
+
     @staticmethod
     def test_convert_otel_event_to_node_model(
         mock_sql_config: SQLDataHolderConfig, mock_otel_event: OTelEvent
