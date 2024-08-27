@@ -744,7 +744,7 @@ def _update_header_dict(
     value: dict[str, Any] | str | list[dict[str, Any]],
 ) -> None:
     """Updates the header dictionary with the extracted value. If the value is
-    a dictionary, flatten it first.
+    a dictionary or list, flatten it first.
 
     :param header_dict: The header dictionary to update
     :type header_dict: `dict`[`str`, `Any`]

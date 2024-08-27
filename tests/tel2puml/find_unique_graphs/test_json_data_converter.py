@@ -2,6 +2,9 @@
 
 import pytest
 import unittest.mock
+import flatdict
+
+from typing import Any
 
 from tel2puml.find_unique_graphs.otel_ingestion.json_data_converter import (
     _navigate_dict,
@@ -99,3 +102,55 @@ class TestProcessHeaders:
             _extract_value_from_path(data, path)
             extract_simple_value.assert_not_called()
             extract_nested_value.assert_called_once()
+
+    @staticmethod
+    def test_update_header_dict() -> None:
+        """Tests the function _update_header_dict"""
+
+        # Test updating with a dict simple path
+        header_dict: dict[str, Any] = {}
+        path = "key1:key2"
+        value = {"key3": "value"}
+        _update_header_dict(header_dict, path, value)
+        assert header_dict[path]
+        assert header_dict[path] == flatdict.FlatterDict(value)
+
+        # Test updating with a dict complex path
+        header_dict: dict[str, Any] = {}
+        path = "key1::key2"
+        value = {"key3": "value"}
+        _update_header_dict(header_dict, path, value)
+        assert header_dict["key1"]
+        assert header_dict["key1"] == flatdict.FlatterDict(value)
+
+        # Test updating with a list simple path
+        header_dict: dict[str, Any] = {}
+        path = "key1:key2"
+        value = [{"key3": "value"}]
+        _update_header_dict(header_dict, path, value)
+        assert header_dict[path]
+        assert header_dict[path] == flatdict.FlatterDict(value)
+
+        # Test updating with a list complex path
+        header_dict: dict[str, Any] = {}
+        path = "key1::key2"
+        value = [{"key3": "value"}]
+        _update_header_dict(header_dict, path, value)
+        assert header_dict["key1"]
+        assert header_dict["key1"] == flatdict.FlatterDict(value)
+
+        # Test updating with a string simple path
+        header_dict: dict[str, Any] = {}
+        path = "key1:key2"
+        value = "value"
+        _update_header_dict(header_dict, path, value)
+        assert header_dict[path]
+        assert header_dict[path] == "value"
+
+        # Test updating with a string complex path
+        header_dict: dict[str, Any] = {}
+        path = "key1::key2"
+        value = "value"
+        _update_header_dict(header_dict, path, value)
+        assert header_dict["key1"]
+        assert header_dict["key1"] == "value"
