@@ -153,7 +153,7 @@ def compute_graph_hash_from_event_ids(
     """
     string_to_hash = str(node.event_type)
     if node.event_id in node_to_children:
-        children = node_to_children[node.event_id]
+        children = node_to_children[str(node.event_id)]
         string_to_hash += "".join(
             sorted(
                 compute_graph_hash_from_event_ids(child, node_to_children)
