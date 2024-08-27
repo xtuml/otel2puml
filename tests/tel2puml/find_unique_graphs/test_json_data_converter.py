@@ -21,7 +21,7 @@ class TestProcessHeaders:
 
     @staticmethod
     def test_navigate_dict() -> None:
-        """Tests the function _navigate_segment"""
+        """Tests the function _navigate_dict"""
 
         # Test valid dict
         data1 = {"key1": {"key2": "value2"}}
@@ -55,7 +55,7 @@ class TestProcessHeaders:
 
     @staticmethod
     def test_navigate_list() -> None:
-        """Tests the function _navigate_segment"""
+        """Tests the function _navigate_list"""
 
         # Test non empty list
         data1 = [{"key1": {"key2": "value"}}]
