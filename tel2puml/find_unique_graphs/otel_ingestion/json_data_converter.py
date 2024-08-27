@@ -693,23 +693,39 @@ def _extract_simple_value(
 
 
 def _navigate_segment(
-    data: dict[str, Any] | str, segment: str
+    data: dict[str, Any] | str | list[dict[str, Any]], segment: str
 ) -> dict[str, Any] | str:
     """Navigate through a segment of the JSON data.
 
     :param data: The current data object
-    :type data: `dict`[`str`, `Any`]
+    :type data: `dict`[`str`, `Any`] | `str` | `list`[`dict`[`str`, `Any`]]
     :param segment: The segment to navigate
     :type segment: `str`
     :return: The value at the end of the navigation
     :rtype: `dict`[`str`, `Any`] | `str`
     """
-    if isinstance(data, dict):
-        data = data[segment]
-    elif isinstance(data, list):
-        data = data[0]
 
-    return data
+    if isinstance(data, str):
+        return data
+    elif isinstance(data, list):
+        if not data:
+            raise IndexError("Unable to access data within an empty list.")
+        data = data[0]
+    elif isinstance(data, dict):
+        try:
+            data = data[segment]
+        except KeyError:
+            raise KeyError(
+                f"'{segment}' is an invalid key for the given dictionary."
+            )
+
+    if isinstance(data, dict) or isinstance(data, str):
+        return data
+    else:
+        raise TypeError(
+            "Data should be of type 'dict', 'list', or 'str',"
+            f" got '{type(data)}' instead."
+        )
 
 
 def _update_header_dict(
