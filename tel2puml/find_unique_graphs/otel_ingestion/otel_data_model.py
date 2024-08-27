@@ -147,3 +147,20 @@ class IngestDataConfig(TypedDict):
     data_sources: dict[str, JSONDataSourceConfig]
     data_holders: dict[str, SQLDataHolderConfig]
     ingest_data: dict[str, str]
+
+
+class JobHash(Base):
+    """SQLAlchemy model representing job id mapped to a job hash."""
+
+    __tablename__ = "job_hashes"
+
+    job_id = Column(String, unique=True, nullable=False, primary_key=True)
+    job_hash = Column(String, nullable=False)
+
+    def __repr__(self) -> str:
+        return f"""
+        <JobHash(
+        job_id='{self.job_id}',
+        hash='{self.job_hash}'
+        )>
+        """
