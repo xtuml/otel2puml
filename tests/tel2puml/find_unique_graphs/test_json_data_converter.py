@@ -207,7 +207,7 @@ class TestProcessHeaders:
         expected2 = {"key2": {"key3": "string_value"}}
         assert _build_nested_dict(path_segments2, parsed_data2) == expected2
 
-        # Test with list of dicts3
+        # Test with list of dicts
         path_segments3 = ["key1", "key2", "key3"]
         parsed_data3 = [{"key4": "value4"}, {"key5": "value5"}]
         expected3 = {
@@ -218,9 +218,7 @@ class TestProcessHeaders:
         # Test error handling with one path segment. In reality there will
         # always be more than one path segment since the path requires '::'
         # for the function to be reached
-        path_segments4 = ["key1"]
-        parsed_data4 = 123
+        path_segments4 = ["key"]
+        parsed_data4 = "string_value"
         with pytest.raises(TypeError):
-            _build_nested_dict(
-                path_segments4, parsed_data4  # type: ignore[arg-type]
-            )
+            _build_nested_dict(path_segments4, parsed_data4)
