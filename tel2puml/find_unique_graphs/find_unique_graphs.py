@@ -172,8 +172,8 @@ def compute_graph_hashes_from_root_nodes(
     :type root_nodes: `list`[:class:`NodeModel`]
     :param node_to_children: Mapping of node event IDs to their children
     :type node_to_children: `dict`[`str`, `list`[:class:`NodeModel`]]
-    :return: The list of job ID and hash tuples
-    :rtype: `list`[:class:`JobIdHashTuple`]
+    :return: The list of JobHash objects
+    :rtype: `list`[:class:`JobHash`]
     """
     return [
         JobHash(job_id=node.job_id, job_hash=compute_graph_hash_from_event_ids(
@@ -188,8 +188,8 @@ def insert_job_hashes(
 ) -> None:
     """Insert the job hashes into the database.
 
-    :param job_hashes: The list of job ID and hash tuples
-    :type job_hashes: `list`[:class:`JobIdHashTuple`]
+    :param job_hashes: The list of JobHash objects
+    :type job_hashes: `list`[:class:`JobHash`]
     :param sql_data_holder: The SQL data holder object containing the ingested
     data
     :type sql_data_holder: :class:`SQLDataHolder`
@@ -205,8 +205,6 @@ def compute_graph_hashes_for_batch(
 
     :param root_nodes: The root nodes to compute the hashes for
     :type root_nodes: `list`[:class:`NodeModel`]
-    :return: The list of job ID and hash tuples
-    :rtype: `list`[:class:`JobIdHashTuple`]
     """
     batch_nodes = get_sql_batch_nodes(
         {str(node.job_id) for node in root_nodes}, sql_data_holder
