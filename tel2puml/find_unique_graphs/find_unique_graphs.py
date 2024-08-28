@@ -276,7 +276,7 @@ def get_unique_graph_job_ids_per_job_name(
     data
     :type sql_data_holder: :class:`SQLDataHolder`
     :return: The unique graphs per job name
-    :rtype: `list`[:class:`JobHash`]
+    :rtype: `dict`[`str`, `set`[`str`]]
     """
     job_name_to_job_ids: dict[str, set[str]] = {}
     with sql_data_holder.session as session:
