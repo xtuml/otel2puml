@@ -807,8 +807,8 @@ def process_spans(
             if isinstance(data, list):
                 if len(data) > 1:
                     raise ValueError(
-                        "Code is structured to process lists that have one item. "
-                        f"Got {len(data)} items instead."
+                        "Code is structured to process lists that have one"
+                        f" item. Got {len(data)} items instead."
                     )
                 data = data[0]
             else:
@@ -816,7 +816,6 @@ def process_spans(
             continue
 
         data = data[segment]
-
 
     if isinstance(data, list):
         if not data:
