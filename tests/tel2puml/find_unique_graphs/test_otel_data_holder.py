@@ -81,7 +81,7 @@ class TestSQLDataHolder:
         columns = inspector.get_columns("job_hashes")
         column_names = [column["name"] for column in columns]
 
-        assert column_names == ["job_id", "job_hash"]
+        assert column_names == ["job_id", "job_name", "job_hash"]
 
     @staticmethod
     def test_convert_otel_event_to_node_model(
