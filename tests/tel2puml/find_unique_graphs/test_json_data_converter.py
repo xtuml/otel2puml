@@ -18,6 +18,7 @@ from tel2puml.find_unique_graphs.otel_ingestion.json_data_converter import (
     _get_value_type,
     _add_or_append_value,
     _find_matching_header_value,
+    _handle_data_from_header,
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     IngestDataConfig,
@@ -384,6 +385,55 @@ class TestProcessHeaderTags:
                 config_index=0,
                 header_key="value:Value:Invalid",
             )
+
+    @staticmethod
+    def test_handle_data_from_header() -> None:
+        """Tests for the function _handle_data_from_header"""
+
+        field_name = "job_name"
+        field_config = {
+            "key_paths": [
+                "HEADER:resource:attributes::key",
+                "HEADER:resource:attributes::key",
+            ],
+            "key_value": ["service.name", "service.version"],
+            "value_paths": [
+                "value:Value:StringValue",
+                "value:Value:StringValue",
+            ],
+            "value_type": "string",
+        }
+        result_dict = {}
+        header_dict = {
+            "resource:attributes": flatdict.FlatterDict(
+                [
+                    {
+                        "key": "service.name",
+                        "value": {"Value": {"StringValue": "Frontend"}},
+                    },
+                    {
+                        "key": "service.version",
+                        "value": {"Value": {"StringValue": "1.0"}},
+                    },
+                ]
+            )
+        }
+
+        for index in range(2):
+            _handle_data_from_header(
+                field_name,
+                field_config,
+                config_index=index,
+                result_dict=result_dict,
+                header_data=header_dict,
+                initial_header_key=field_config["key_paths"][index].split(
+                    "::"
+                )[-1],
+                full_header_path=field_config["key_paths"][index],
+            )
+
+        assert len(result_dict) == 1
+        assert result_dict["job_name"] == "Frontend 1.0"
 
 
 def test_get_value_type() -> None:
