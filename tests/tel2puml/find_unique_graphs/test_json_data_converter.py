@@ -19,6 +19,7 @@ from tel2puml.find_unique_graphs.otel_ingestion.json_data_converter import (
     _add_or_append_value,
     _find_matching_header_value,
     _handle_data_from_header,
+    _get_key_value,
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     IngestDataConfig,
@@ -493,3 +494,30 @@ def test_add_or_append_value() -> None:
     result = {}
     with pytest.raises(ValueError):
         _add_or_append_value("span_id", "001", result, "invaid_type")
+
+
+def test_get_key_value() -> None:
+    """Tests the function _get_key_value"""
+
+    # Test with correct field spec
+    field_spec = {"key_value": ["value1", "value2", "value3"]}
+    assert _get_key_value(field_spec, 1) == "value2"
+
+    # Test with no key_value field
+    field_spec = {"key_paths": ["path1"]}
+    with pytest.raises(KeyError, match="key_value field not set."):
+        _get_key_value(field_spec, 0)
+
+    # Test with index out of range
+    field_spec = {"key_value": ["value1", "value2"]}
+    with pytest.raises(
+        IndexError, match="Index 5 is out of range for key_value"
+    ):
+        _get_key_value(field_spec, 5)
+
+    # Test with empty key_value
+    field_spec = {"key_value": ["value1", None, "value3"]}
+    with pytest.raises(
+        ValueError, match="key_value at index 1 is empty or None"
+    ):
+        _get_key_value(field_spec, 1)

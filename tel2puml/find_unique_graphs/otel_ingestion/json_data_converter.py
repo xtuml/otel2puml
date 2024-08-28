@@ -187,7 +187,6 @@ def _handle_empty_segments(
             # If the value is not found within the cache, we start looking at
             # the value of 'count' that is stored within the cache, as we have
             # already checked values up until count - 1.
-            # value_to_check = field_config["key_value"][index]
             value_to_check = _get_key_value(field_config, index)
             full_path = _get_cached_path(
                 cache_entry, value_to_check, full_path, segment_count
@@ -207,10 +206,11 @@ def _handle_empty_segments(
                 return
             _update_cache(cache_entry, flattened_data, full_path)
 
-        except (KeyError, TypeError):
+        except (KeyError, TypeError, IndexError, ValueError):
             # Keep a record of the count so that we don't have to iterate
             # through the tried keys again. We get KeyError and TypeErrors when
-            # we try accessing a key within the dictionary that doesn't exist.
+            # we try accessing a key within the field config dictionary that 
+            # doesn't exist.
             cache_entry["count"] += 1
         except Exception as e:
             print(f"An error occured - {e}")
@@ -466,7 +466,6 @@ def _process_matching_data(
     :param result: The mapped data
     :type result: `dict`[`str`, `Any`]
     """
-    # value_path = full_path.replace(key, field_config["value_paths"][index])
     value_path = full_path.replace(key, _get_value_path(field_config, index))
     value_type = _get_value_type(field_config)
     if value_type:
