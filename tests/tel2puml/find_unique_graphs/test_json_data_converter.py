@@ -282,6 +282,7 @@ class TestProcessHeaders:
 
         header_dict: dict[str, Any] = process_header(json_config, mock_data)
 
+        assert len(header_dict) == 2
         assert header_dict["resource:attributes"] == flatdict.FlatterDict(
             [
                 {
@@ -294,7 +295,6 @@ class TestProcessHeaders:
                 },
             ]
         )
-
         assert header_dict["scope_spans"] == flatdict.FlatterDict(
             {"scope": {"name": "TestJob"}}
         )
