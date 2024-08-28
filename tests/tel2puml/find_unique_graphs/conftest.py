@@ -1054,6 +1054,8 @@ def sql_data_holder_with_otel_jobs(
     sql_data_holder = SQLDataHolder(
         config=mock_sql_config,
     )
+    sql_data_holder.min_timestamp = 10**12
+    sql_data_holder.max_timestamp = 2 * 10**12
     with sql_data_holder.session as session:
         session.add_all(
             otel_node for otel_node in otel_nodes_from_otel_jobs.values()
@@ -1110,6 +1112,55 @@ def otel_linked_nodes_and_nodes() -> (
         "1": [nodes[2], nodes[3], nodes[4]],
     }
     return linked_nodes, nodes
+
+
+@pytest.fixture
+def otel_nodes_under_separate_job_name() -> list[NodeModel]:
+    """Creates a list of 5 nodes, each from a different job."""
+    nodes = [
+        NodeModel(
+            job_name="test_name_2",
+            job_id=f"{i}{j}",
+            event_type=f"{i}",
+            event_id=f"{i}{j}",
+            start_timestamp=10**12 + 10 ** 11,
+            end_timestamp=10**12 + 2 * 10 ** 11,
+            application_name="test_application_name",
+            parent_event_id=None,
+        )
+        for i in range(5)
+        for j in range(2)
+    ]
+    # add one outside the time window in tests to see it is not included
+    nodes.append(
+        NodeModel(
+            job_name="test_name_2",
+            job_id="xvgyt",
+            event_type="xvgyt",
+            event_id="xvgyt",
+            start_timestamp=10**12,
+            end_timestamp=10**12 + 10**10,
+            application_name="test_application_name",
+            parent_event_id=None,
+        )
+    )
+    return nodes
+
+
+@pytest.fixture
+def sql_data_holder_extended(
+    sql_data_holder_with_otel_jobs: SQLDataHolder,
+    otel_nodes_under_separate_job_name: list[NodeModel],
+) -> SQLDataHolder:
+    """Creates a SQLDataHolder object with 5 jobs, each with 2 events."""
+
+    with sql_data_holder_with_otel_jobs.session as session:
+        session.add_all(
+            otel_node
+            for otel_node in otel_nodes_under_separate_job_name
+        )
+        session.commit()
+    return sql_data_holder_with_otel_jobs
 
 
 @pytest.fixture

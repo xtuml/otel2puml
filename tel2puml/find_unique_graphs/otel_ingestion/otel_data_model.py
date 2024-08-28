@@ -155,12 +155,14 @@ class JobHash(Base):
     __tablename__ = "job_hashes"
 
     job_id = Column(String, unique=True, nullable=False, primary_key=True)
+    job_name = Column(String, nullable=False)
     job_hash = Column(String, nullable=False)
 
     def __repr__(self) -> str:
         return f"""
         <JobHash(
         job_id='{self.job_id}',
+        job_name='{self.job_name}',
         hash='{self.job_hash}'
         )>
         """

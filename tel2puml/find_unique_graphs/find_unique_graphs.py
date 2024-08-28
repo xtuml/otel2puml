@@ -229,7 +229,7 @@ def compute_graph_hashes_from_root_nodes(
     return [
         JobHash(job_id=node.job_id, job_hash=compute_graph_hash_from_event_ids(
             node, node_to_children
-        ))
+        ), job_name=node.job_name)
         for node in root_nodes
     ]
 
@@ -265,3 +265,65 @@ def compute_graph_hashes_for_batch(
         root_nodes, node_to_children
     )
     insert_job_hashes(job_ids_hashes, sql_data_holder)
+
+
+def get_unique_graph_job_ids_per_job_name(
+    sql_data_holder: SQLDataHolder
+) -> dict[str, set[str]]:
+    """Get the unique graphs per job name.
+
+    :param sql_data_holder: The SQL data holder object containing the ingested
+    data
+    :type sql_data_holder: :class:`SQLDataHolder`
+    :return: The unique graphs per job name
+    :rtype: `dict`[`str`, `set`[`str`]]
+    """
+    job_name_to_job_ids: dict[str, set[str]] = {}
+    with sql_data_holder.session as session:
+        stmt = (
+            sa.select(JobHash.job_name, JobHash.job_hash)
+            .group_by(JobHash.job_name, JobHash.job_hash)
+        )
+        job_hashes = session.execute(stmt).fetchall()
+        for job_name, job_id in job_hashes:
+            if job_name not in job_name_to_job_ids:
+                job_name_to_job_ids[job_name] = set()
+            job_name_to_job_ids[job_name].add(job_id)
+    return job_name_to_job_ids
+
+
+def find_unique_graphs(
+    time_buffer: int, batch_size: int, sql_data_holder: SQLDataHolder
+) -> dict[str, set[str]]:
+    """Find the unique graphs in the ingested OpenTelemetry data.
+
+    :param time_buffer: The time buffer to add to the time window in minutes
+    :type time_buffer: `int`
+    :param batch_size: The batch size to get the root nodes in
+    :type batch_size: `int`
+    :param sql_data_holder: The SQL data holder object containing the ingested
+    data
+    :type sql_data_holder: :class:`SQLDataHolder`
+    :return: The unique graph job ids per job name
+    :rtype: `dict`[`str`, `set`[`str`]]
+    """
+    time_window = get_time_window(time_buffer, sql_data_holder)
+    temp_table = create_temp_table_of_root_nodes_in_time_window(
+        time_window, sql_data_holder
+    )
+    start_row = 0
+    while True:
+        root_nodes = get_root_nodes(
+            start_row, batch_size, temp_table, sql_data_holder
+        )
+        if not root_nodes:
+            break
+        compute_graph_hashes_for_batch(root_nodes, sql_data_holder)
+        start_row += batch_size
+    job_name_to_job_ids_map = get_unique_graph_job_ids_per_job_name(
+        sql_data_holder
+    )
+    with sql_data_holder.session as session:
+        session.execute(sa.schema.DropTable(temp_table))
+        session.commit()
+    return job_name_to_job_ids_map

@@ -15,7 +15,9 @@ from tel2puml.find_unique_graphs.find_unique_graphs import (
     create_event_id_to_child_nodes_map,
     compute_graph_hashes_from_root_nodes,
     insert_job_hashes,
-    compute_graph_hashes_for_batch
+    compute_graph_hashes_for_batch,
+    get_unique_graph_job_ids_per_job_name,
+    find_unique_graphs
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder import (
     DataHolder, SQLDataHolder
@@ -223,23 +225,23 @@ def test_insert_job_hashes(mock_sql_config: SQLDataHolderConfig) -> None:
     sql_data_holder = SQLDataHolder(mock_sql_config)
     # check for integrity error if job_ids are not unique
     job_hashes = [
-        JobHash(job_id="1", job_hash="1"),
-        JobHash(job_id="1", job_hash="2"),
+        JobHash(job_id="1", job_hash="1", job_name="test_name"),
+        JobHash(job_id="1", job_hash="2", job_name="test_name"),
     ]
     with pytest.raises(IntegrityError):
         insert_job_hashes(job_hashes, sql_data_holder)
     # check normal use
     job_hashes = [
-        JobHash(job_id="1", job_hash="1"),
-        JobHash(job_id="2", job_hash="2"),
+        JobHash(job_id="1", job_hash="1", job_name="test_name"),
+        JobHash(job_id="2", job_hash="2", job_name="test_name"),
     ]
     insert_job_hashes(job_hashes, sql_data_holder)
     with sql_data_holder.engine.connect() as connection:
         result = connection.execute(JobHash.__table__.select())
         assert [
-            (row[0], row[1])
+            (row[0], row[1], row[2])
             for row in result.fetchall()
-        ] == [("1", "1"), ("2", "2")]
+        ] == [("1", "test_name", "1"), ("2", "test_name", "2")]
 
 
 def test_compute_graph_hashes_for_batch(
@@ -258,10 +260,62 @@ def test_compute_graph_hashes_for_batch(
     )
     with sql_data_holder_with_otel_jobs.engine.connect() as connection:
         result = connection.execute(JobHash.__table__.select())
-        assert [
-            (row[0], row[1])
-            for row in result.fetchall()
-        ] == [
-            (f"test_id_{i}", "7b03569ba77bbcdc")  # pragma: allowlist secret
+        assert [(row[0], row[1], row[2]) for row in result.fetchall()] == [
+            (
+                f"test_id_{i}",
+                "test_name",
+                "7b03569ba77bbcdc",  # pragma: allowlist secret
+            )
             for i in range(5)
         ]
+
+
+def test_get_unique_graph_job_ids_per_job_name(
+    sql_data_holder_with_otel_jobs: SQLDataHolder,
+) -> None:
+    """Test the get_unique_graph_job_ids_per_job_name function."""
+    with sql_data_holder_with_otel_jobs.session as session:
+        for j in range(2):
+            session.add_all(
+                [
+                    JobHash(
+                        job_id=f"test_id_{j}{i}",
+                        job_hash=f"{i % 2}",
+                        job_name=f"test_name_{j}"
+                    )
+                    for i in range(4)
+                ]
+            )
+        session.commit()
+    """Test the get_unique_graph_job_ids_per_job_name function."""
+    unique_job_ids_per_job_name = get_unique_graph_job_ids_per_job_name(
+        sql_data_holder_with_otel_jobs
+    )
+    assert list(unique_job_ids_per_job_name.keys()) == [
+        "test_name_0",
+        "test_name_1",
+    ]
+    assert unique_job_ids_per_job_name["test_name_0"] == {"0", "1"}
+    assert unique_job_ids_per_job_name["test_name_1"] == {"0", "1"}
+
+
+def test_find_unique_graphs(
+    monkeypatch: MonkeyPatch,
+    sql_data_holder_extended: SQLDataHolder,
+) -> None:
+    """Test the find_unique_graphs function."""
+    # test that the function is working correctly with a simple graph
+    monkeypatch.setattr("xxhash.xxh64_hexdigest", lambda x: x)
+    unique_job_ids_per_job_name = find_unique_graphs(
+        1, 2, sql_data_holder_extended
+    )
+    assert list(unique_job_ids_per_job_name.keys()) == [
+        "test_name",
+        "test_name_2",
+    ]
+    assert unique_job_ids_per_job_name["test_name"] == {
+        "event_type_0event_type_1"
+    }
+    assert unique_job_ids_per_job_name["test_name_2"] == {
+        str(i) for i in range(5)
+    }
