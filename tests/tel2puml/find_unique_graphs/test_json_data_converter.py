@@ -16,6 +16,7 @@ from tel2puml.find_unique_graphs.otel_ingestion.json_data_converter import (
     _extract_nested_value,
     process_header,
     _get_value_type,
+    _add_or_append_value,
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     IngestDataConfig,
@@ -308,9 +309,48 @@ class TestProcessHeaderTags:
 def test_get_value_type() -> None:
     """Tests the function _get_value_type"""
 
+    # Test with existing field
     field_config = {"key_paths": ["span_id"], "value_type": "string"}
     assert _get_value_type(field_config) == "string"
 
+    # Test with non-existing field
     field_config = {"key_paths": ["span_id"]}
     with pytest.raises(KeyError):
         _get_value_type(field_config)
+
+
+def test_add_or_append_value() -> None:
+    """Tests the function _add_or_append_value"""
+
+    # test adding unix nano, value int
+    result = {}
+    _add_or_append_value(
+        "start_timestamp", 1723544132228102912, result, "unix_nano"
+    )
+    assert len(result) == 1
+    assert result["start_timestamp"] == 1723544132228102912
+
+    # test adding unix nano, value non-int
+    result = {}
+    with pytest.raises(TypeError):
+        _add_or_append_value(
+            "start_timestamp", "1723544132228102912", result, "unix_nano"
+        )
+
+    # test adding string
+    result = {}
+    _add_or_append_value("span_id", "001", result, "string")
+    assert len(result) == 1
+    assert result["span_id"] == "001"
+
+    # test adding non-string
+    result = {}
+    _add_or_append_value("span_id", 1, result, "string")
+    assert len(result) == 1
+    assert result["span_id"] == "1"
+
+    # test appending to existing field
+    result = {"name": "Frontend"}
+    _add_or_append_value("name", "1.0", result, "string")
+    assert len(result) == 1
+    assert result["name"] == "Frontend 1.0"
