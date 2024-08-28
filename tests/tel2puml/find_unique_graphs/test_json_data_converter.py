@@ -17,6 +17,7 @@ from tel2puml.find_unique_graphs.otel_ingestion.json_data_converter import (
     process_header,
     _get_value_type,
     _add_or_append_value,
+    _find_matching_header_value,
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     IngestDataConfig,
@@ -304,6 +305,85 @@ class TestProcessHeaders:
 
 class TestProcessHeaderTags:
     """Tests for processing header tags within span field_mapping"""
+
+    @staticmethod
+    def test_find_matching_header_value() -> None:
+        """Tests for the function _find_matching_header_value"""
+
+        header_level = flatdict.FlatterDict(
+            [
+                {
+                    "key": "service.name",
+                    "value": {"Value": {"StringValue": "Frontend"}},
+                },
+                {
+                    "key": "service.version",
+                    "value": {"Value": {"StringValue": "1.0"}},
+                },
+            ]
+        )
+
+        # Test matching header success
+        assert (
+            _find_matching_header_value(
+                header_level=header_level,
+                target_key="key",
+                field_config={
+                    "key_value": ["service.name"],
+                },
+                config_index=0,
+                header_key="value:Value:StringValue",
+            )
+            == "Frontend"
+        )
+
+        # Test more than one header value
+        assert (
+            _find_matching_header_value(
+                header_level=header_level,
+                target_key="key",
+                field_config={
+                    "key_value": ["service.name", "service.version"],
+                },
+                config_index=1,
+                header_key="value:Value:StringValue",
+            )
+            == "1.0"
+        )
+
+        # Test inalid target key - no match found
+        with pytest.raises(KeyError, match="No matching value found"):
+            _find_matching_header_value(
+                header_level=header_level,
+                target_key="invalid_key",
+                field_config={
+                    "key_value": ["service.name"],
+                },
+                config_index=0,
+                header_key="value:Value:StringValue",
+            )
+
+        # Test invalid header_key
+        with pytest.raises(KeyError, match="invalid key"):
+            _find_matching_header_value(
+                header_level=header_level,
+                target_key="key",
+                field_config={"key_value": ["service.name"]},
+                config_index=0,
+                header_key="value:Value:Invalid",
+            )
+
+        # Test empty header
+        with pytest.raises(
+            ValueError, match="No data within header dictionary"
+        ):
+            _find_matching_header_value(
+                header_level={},
+                target_key="key",
+                field_config={"key_value": ["service.name"]},
+                config_index=0,
+                header_key="value:Value:Invalid",
+            )
 
 
 def test_get_value_type() -> None:

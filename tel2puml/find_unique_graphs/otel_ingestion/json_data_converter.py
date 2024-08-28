@@ -291,7 +291,7 @@ def _handle_data_from_header(
 
 
 def _find_matching_header_value(
-    header_level: dict[str, str],
+    header_level: flatdict.FlatterDict,
     target_key: str,
     field_config: dict[str, Any],
     config_index: int,
@@ -301,7 +301,7 @@ def _find_matching_header_value(
     Find the matching header value based on the target key and configuration.
 
     :param header_level: The current level of the header dictionary
-    :type header_level: `dict`[`str`, `str`]
+    :type header_level: :class:`flatdict.FlatterDict`
     :param target_key: The key to search for in the header
     :type target_key: `str`
     :param field_config: The configuration for the field
@@ -313,6 +313,9 @@ def _find_matching_header_value(
     :return: The extracted value from the header
     :rtype: `str`
     """
+    if not header_level:
+        raise ValueError("No data within header dictionary.")
+
     for key, value in header_level.items():
         key_suffix = key.split(":", 1)[-1]
         if (
@@ -322,7 +325,10 @@ def _find_matching_header_value(
             key_prefix = key.split(":", 1)[0]
             full_header_key = f"{key_prefix}:{header_key}"
 
-            return header_level[full_header_key]
+            try:
+                return header_level[full_header_key]
+            except KeyError:
+                raise KeyError(f"{full_header_key} is an invalid key.")
 
     raise KeyError(f"No matching value found for key: {target_key}")
 
