@@ -752,13 +752,13 @@ def _navigate_list(
     """
     if not data:
         raise IndexError("Cannot return a value for an empty list.")
-    
+
     if len(data) > 1:
         raise ValueError(
             "Code is structured to process lists that have one item. "
             f"Got {len(data)} items instead."
         )
-    
+
     return data[0]
 
 
