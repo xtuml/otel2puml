@@ -143,7 +143,8 @@ def test_compute_graph_hash_from_root_nodes(
         node_links
     )
     expected_hashes = {
-        ("0", "0a0d678d03e9644c"), ("1", "6cb8df24661bf2e6")
+        ("0", "0a0d678d03e9644c"),  # pragma: allowlist secret
+        ("1", "6cb8df24661bf2e6")  # pragma: allowlist secret
     }
     assert {
         (str(node.job_id), str(node.job_hash)) for node in hashes
@@ -202,6 +203,6 @@ def test_compute_graph_hashes_for_batch(
             (row[0], row[1])
             for row in result.fetchall()
         ] == [
-            (f"test_id_{i}", "7b03569ba77bbcdc")
+            (f"test_id_{i}", "7b03569ba77bbcdc")  # pragma: allowlist secret
             for i in range(5)
         ]
