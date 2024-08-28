@@ -15,6 +15,7 @@ from tel2puml.find_unique_graphs.otel_ingestion.json_data_converter import (
     _build_nested_dict,
     _extract_nested_value,
     process_header,
+    process_spans,
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     IngestDataConfig,
@@ -298,3 +299,92 @@ class TestProcessHeaders:
         assert header_dict["scope_spans"] == flatdict.FlatterDict(
             {"scope": {"name": "TestJob"}}
         )
+
+
+class TestProcessSpans:
+    """Tests for processing spans within json data converter module."""
+
+    @staticmethod
+    def test_process_spans(mock_yaml_config_dict: IngestDataConfig) -> None:
+        """Tests for the function process_spans"""
+        sample_data = {
+            "scope_spans": [
+                {
+                    "scope": "name",
+                    "spans": [
+                        {
+                            "trace_id": "trace001",
+                            "span_id": "span001",
+                            "parent_span_id": None,
+                        }
+                    ],
+                    "spans_not_in_list": {
+                        "trace_id": "trace001",
+                        "span_id": "span001",
+                        "parent_span_id": None,
+                    },
+                    "empty_spans": [],
+                    "more_than_one_span": [
+                        {"span1": "value1"},
+                        {"span2": "value2"},
+                    ],
+                    "nested_span": {"spans": [{"span3": "value3"}]},
+                }
+            ],
+            "more_than_one_scope_spans": [
+                {"spans": [{"span_id": "001"}]},
+                {"item2": "value2"},
+            ],
+        }
+
+        json_config: JSONDataSourceConfig = mock_yaml_config_dict[
+            "data_sources"
+        ]["json"]
+
+        # Test single span
+        spans = process_spans(json_config, sample_data)
+        assert spans == [
+            {
+                "trace_id": "trace001",
+                "span_id": "span001",
+                "parent_span_id": None,
+            }
+        ]
+
+        # Test multiple spans
+        json_config["span_mapping"]["spans"]["key_paths"] = [
+            "scope_spans::more_than_one_span"
+        ]
+        spans = process_spans(json_config, sample_data)
+        assert spans == [
+            {"span1": "value1"},
+            {"span2": "value2"},
+        ]
+
+        # Test spans not within a list
+        json_config["span_mapping"]["spans"]["key_paths"] = [
+            "scope_spans::spans_not_in_list"
+        ]
+        with pytest.raises(TypeError):
+            process_spans(json_config, sample_data)
+
+        # Test incorrect use of ::
+        json_config["span_mapping"]["spans"]["key_paths"] = [
+            "scope_spans::nested_span::spans"
+        ]
+        with pytest.raises(TypeError):
+            process_spans(json_config, sample_data)
+
+        # Test an empty list of spans
+        json_config["span_mapping"]["spans"]["key_paths"] = [
+            "scope_spans::empty_spans"
+        ]
+        with pytest.raises(ValueError):
+            process_spans(json_config, sample_data)
+
+        # Test more than one scope_spans
+        json_config["span_mapping"]["spans"]["key_paths"] = [
+            "more_than_one_scope_spans::spans"
+        ]
+        with pytest.raises(ValueError):
+            process_spans(json_config, sample_data)

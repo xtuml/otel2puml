@@ -805,6 +805,11 @@ def process_spans(
     for segment in path_segments:
         if segment == "":
             if isinstance(data, list):
+                if len(data) > 1:
+                    raise ValueError(
+                        "Code is structured to process lists that have one item. "
+                        f"Got {len(data)} items instead."
+                    )
                 data = data[0]
             else:
                 raise TypeError("Sub segment should be a list.")
@@ -812,7 +817,10 @@ def process_spans(
 
         data = data[segment]
 
+
     if isinstance(data, list):
+        if not data:
+            raise ValueError("Spans list is empty")
         return data
     else:
         raise TypeError("Spans should be within a list.")
