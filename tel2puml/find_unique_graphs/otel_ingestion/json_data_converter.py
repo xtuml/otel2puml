@@ -580,7 +580,7 @@ def _add_or_append_value(
             raise TypeError(
                 f"Datetime should be of type 'int', got '{type(value)}'."
             )
-    elif value:
+    else:
         if not isinstance(value, str):
             value = str(value)
 
