@@ -361,6 +361,13 @@ class TestProcessSpans:
             {"span2": "value2"},
         ]
 
+        # Test nested spans
+        json_config["span_mapping"]["spans"]["key_paths"] = [
+            "scope_spans::nested_span:spans"
+        ]
+        spans = process_spans(json_config, sample_data)
+        assert spans == [{"span3": "value3"}]
+
         # Test spans not within a list
         json_config["span_mapping"]["spans"]["key_paths"] = [
             "scope_spans::spans_not_in_list"
