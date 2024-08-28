@@ -16,7 +16,7 @@
         partition "get_root_nodes" {
         :<color:Blue>get root nodes;
         }
-        :input root_nodes;
+        :input root_nodes and sql_data_holder;
             partition "compute_graph_hashes_for_batch" {
                 :get distinct trace_ids from root_nodes;
                 :input trace_ids, sql_data_holder;

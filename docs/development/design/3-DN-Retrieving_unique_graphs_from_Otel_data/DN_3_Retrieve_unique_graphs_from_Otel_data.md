@@ -389,11 +389,13 @@ def get_root_nodes(start_row: int, batch_size: int, sql_data_holder: SQLDataHold
     """
     pass
 
-def compute_graph_hashes_for_batch(root_nodes: list[NodeModel]) -> None:
+def compute_graph_hashes_for_batch(root_nodes: list[NodeModel], sql_data_holder: SQLDataHolder) -> None:
     """Function to calculate graph hashes for a batch of root nodes, commiting the results to the database.
     
     :param root_nodes: The batch of root node objects to calculate graph hashes for
     :type root_nodes: :class: `NodeModel`
+    :param sql_data_holder: The SQLDataHolder object
+    :type sql_data_holder: :class:`SQLDataHolder`
     """
     pass
 

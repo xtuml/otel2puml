@@ -3,19 +3,26 @@
 from pytest import MonkeyPatch
 import pytest
 import sqlalchemy as sa
+from sqlalchemy.exc import IntegrityError
 
 from tel2puml.find_unique_graphs.find_unique_graphs import (
     get_time_window,
     create_temp_table_of_root_nodes_in_time_window,
     compute_graph_hash_from_event_ids,
     get_sql_batch_nodes,
-    create_event_id_to_child_nodes_map
+    create_event_id_to_child_nodes_map,
+    compute_graph_hashes_from_root_nodes,
+    insert_job_hashes,
+    compute_graph_hashes_for_batch
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder import (
     DataHolder, SQLDataHolder
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
-    NodeModel
+    NodeModel,
+    SQLDataHolderConfig,
+    JobHash,
+    OTelEvent
 )
 
 
@@ -122,3 +129,80 @@ def test_compute_graph_hash_from_event_ids(
         nodes[5],
         node_links
     ) == '6a81b47405b648ed'  # pragma: allowlist secret
+
+
+def test_compute_graph_hash_from_root_nodes(
+    otel_simple_linked_nodes_and_nodes: tuple[
+        dict[str, list[NodeModel]], dict[str, NodeModel]
+    ],
+) -> None:
+    """Test the compute_graph_hashes_from_root_nodes function."""
+    node_links, nodes = otel_simple_linked_nodes_and_nodes
+    hashes = compute_graph_hashes_from_root_nodes(
+        [nodes["0_0"], nodes["1_0"]],
+        node_links
+    )
+    expected_hashes = {
+        ("0", "0a0d678d03e9644c"),  # pragma: allowlist secret
+        ("1", "6cb8df24661bf2e6")  # pragma: allowlist secret
+    }
+    assert {
+        (str(node.job_id), str(node.job_hash)) for node in hashes
+    } == expected_hashes
+    # test that the order of the root nodes does not affect the output
+    hashes = compute_graph_hashes_from_root_nodes(
+        [nodes["1_0"], nodes["0_0"]],
+        node_links
+    )
+    assert {
+        (str(node.job_id), str(node.job_hash)) for node in hashes
+    } == expected_hashes
+
+
+def test_insert_job_hashes(mock_sql_config: SQLDataHolderConfig) -> None:
+    """Test the insert_job_hashes function."""
+    sql_data_holder = SQLDataHolder(mock_sql_config)
+    # check for integrity error if job_ids are not unique
+    job_hashes = [
+        JobHash(job_id="1", job_hash="1"),
+        JobHash(job_id="1", job_hash="2"),
+    ]
+    with pytest.raises(IntegrityError):
+        insert_job_hashes(job_hashes, sql_data_holder)
+    # check normal use
+    job_hashes = [
+        JobHash(job_id="1", job_hash="1"),
+        JobHash(job_id="2", job_hash="2"),
+    ]
+    insert_job_hashes(job_hashes, sql_data_holder)
+    with sql_data_holder.engine.connect() as connection:
+        result = connection.execute(JobHash.__table__.select())
+        assert [
+            (row[0], row[1])
+            for row in result.fetchall()
+        ] == [("1", "1"), ("2", "2")]
+
+
+def test_compute_graph_hashes_for_batch(
+    sql_data_holder_with_otel_jobs: SQLDataHolder,
+    otel_jobs: dict[str, list[OTelEvent]],
+) -> None:
+    """Test the compute_graph_hashes_for_batch function."""
+    root_nodes = [
+        SQLDataHolder.convert_otel_event_to_node_model(otel_event)
+        for value in otel_jobs.values()
+        for otel_event in value
+        if otel_event.event_id.endswith("_0")
+    ]
+    compute_graph_hashes_for_batch(
+        root_nodes, sql_data_holder_with_otel_jobs
+    )
+    with sql_data_holder_with_otel_jobs.engine.connect() as connection:
+        result = connection.execute(JobHash.__table__.select())
+        assert [
+            (row[0], row[1])
+            for row in result.fetchall()
+        ] == [
+            (f"test_id_{i}", "7b03569ba77bbcdc")  # pragma: allowlist secret
+            for i in range(5)
+        ]

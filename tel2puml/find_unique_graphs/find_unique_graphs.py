@@ -5,7 +5,7 @@ import sqlalchemy as sa
 import xxhash
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
-    NodeModel,
+    NodeModel, JobHash
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder import (
     DataHolder, SQLDataHolder
@@ -161,3 +161,56 @@ def compute_graph_hash_from_event_ids(
             )
         )
     return xxhash.xxh64_hexdigest(string_to_hash)
+
+
+def compute_graph_hashes_from_root_nodes(
+    root_nodes: list[NodeModel], node_to_children: dict[str, list[NodeModel]]
+) -> list[JobHash]:
+    """Compute the hashes of the graphs from the root nodes.
+
+    :param root_nodes: The root nodes to compute the hashes for
+    :type root_nodes: `list`[:class:`NodeModel`]
+    :param node_to_children: Mapping of node event IDs to their children
+    :type node_to_children: `dict`[`str`, `list`[:class:`NodeModel`]]
+    :return: The list of JobHash objects
+    :rtype: `list`[:class:`JobHash`]
+    """
+    return [
+        JobHash(job_id=node.job_id, job_hash=compute_graph_hash_from_event_ids(
+            node, node_to_children
+        ))
+        for node in root_nodes
+    ]
+
+
+def insert_job_hashes(
+    job_hashes: list[JobHash], sql_data_holder: SQLDataHolder
+) -> None:
+    """Insert the job hashes into the database.
+
+    :param job_hashes: The list of JobHash objects
+    :type job_hashes: `list`[:class:`JobHash`]
+    :param sql_data_holder: The SQL data holder object containing the ingested
+    data
+    :type sql_data_holder: :class:`SQLDataHolder`
+    """
+    sql_data_holder.batch_insert_objects(job_hashes)
+
+
+def compute_graph_hashes_for_batch(
+    root_nodes: list[NodeModel], sql_data_holder: SQLDataHolder
+) -> None:
+    """Compute the hashes of the graphs for a batch of root nodes and commit
+    them to the database.
+
+    :param root_nodes: The root nodes to compute the hashes for
+    :type root_nodes: `list`[:class:`NodeModel`]
+    """
+    batch_nodes = get_sql_batch_nodes(
+        {str(node.job_id) for node in root_nodes}, sql_data_holder
+    )
+    node_to_children = create_event_id_to_child_nodes_map(batch_nodes)
+    job_ids_hashes = compute_graph_hashes_from_root_nodes(
+        root_nodes, node_to_children
+    )
+    insert_job_hashes(job_ids_hashes, sql_data_holder)
