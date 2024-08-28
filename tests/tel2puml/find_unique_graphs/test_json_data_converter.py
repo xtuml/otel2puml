@@ -13,6 +13,12 @@ from tel2puml.find_unique_graphs.otel_ingestion.json_data_converter import (
     _extract_simple_value,
     _update_header_dict,
     _build_nested_dict,
+    _extract_nested_value,
+    process_header,
+)
+from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
+    IngestDataConfig,
+    JSONDataSourceConfig,
 )
 
 
@@ -222,3 +228,73 @@ class TestProcessHeaders:
         parsed_data4 = "string_value"
         with pytest.raises(TypeError):
             _build_nested_dict(path_segments4, parsed_data4)
+
+    @staticmethod
+    def test_extract_nested_value() -> None:
+        """Tests the function _extract_nested_value"""
+        sample_data = {
+            "resource": {
+                "attributes": [
+                    {
+                        "service": {"name": "frontend"},
+                        "response": "200",
+                        "spans": [{"trace_id": "001"}, {"span_id": "002"}],
+                    }
+                ]
+            },
+            "host": [{"provider": "receiever"}],
+        }
+
+        # Test simple case
+        path = "host::provider"
+        assert _extract_nested_value(sample_data, path) == {
+            "provider": "receiever"
+        }
+
+        # Test nested dictionary before list
+        path = "resource:attributes::response"
+        assert _extract_nested_value(sample_data, path) == {"response": "200"}
+
+        # Test nested dictionary before and after list
+        path = "resource:attributes::service:name"
+        assert _extract_nested_value(sample_data, path) == {
+            "service:name": "frontend"
+        }
+
+        # Test larger nested data structure after list
+        path = "resource:attributes::spans"
+        assert _extract_nested_value(sample_data, path) == {
+            "spans": [{"trace_id": "001"}, {"span_id": "002"}]
+        }
+
+    @staticmethod
+    def test_process_header(
+        mock_yaml_config_dict: IngestDataConfig, mock_json_data: dict[str, Any]
+    ) -> None:
+        """Tests for the function process_header"""
+        json_config: JSONDataSourceConfig = mock_yaml_config_dict[
+            "data_sources"
+        ]["json"]
+
+        # data_location within config.yaml will already have parsed json
+        # resulting in the below
+        mock_data = mock_json_data["resource_spans"][0]
+
+        header_dict: dict[str, Any] = process_header(json_config, mock_data)
+
+        assert header_dict["resource:attributes"] == flatdict.FlatterDict(
+            [
+                {
+                    "key": "service.name",
+                    "value": {"Value": {"StringValue": "Frontend"}},
+                },
+                {
+                    "key": "service.version",
+                    "value": {"Value": {"StringValue": "1.0"}},
+                },
+            ]
+        )
+
+        assert header_dict["scope_spans"] == flatdict.FlatterDict(
+            {"scope": {"name": "TestJob"}}
+        )
