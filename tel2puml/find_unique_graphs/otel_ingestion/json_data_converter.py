@@ -572,12 +572,15 @@ def _add_or_append_value(
     :param value_type: The field type
     :type value_type: `str`
     """
+    if not value_type in ["unix_nano", "string"]:
+        raise ValueError("Unrecognised value_type")
+
     if value_type == "unix_nano":
         if not isinstance(value, int):
             raise TypeError(
                 f"Datetime should be of type 'int', got '{type(value)}'."
             )
-    else:
+    elif value:
         if not isinstance(value, str):
             value = str(value)
 

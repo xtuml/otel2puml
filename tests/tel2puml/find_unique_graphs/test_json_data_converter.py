@@ -354,3 +354,8 @@ def test_add_or_append_value() -> None:
     _add_or_append_value("name", "1.0", result, "string")
     assert len(result) == 1
     assert result["name"] == "Frontend 1.0"
+
+    # test incorrect value_type
+    result = {}
+    with pytest.raises(ValueError):
+        _add_or_append_value("span_id", "001", result, "invaid_type")
