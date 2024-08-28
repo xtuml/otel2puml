@@ -1131,6 +1131,19 @@ def otel_nodes_under_separate_job_name() -> list[NodeModel]:
         for i in range(5)
         for j in range(2)
     ]
+    # add one outside the time window in tests to see it is not included
+    nodes.append(
+        NodeModel(
+            job_name="test_name_2",
+            job_id="xvgyt",
+            event_type="xvgyt",
+            event_id="xvgyt",
+            start_timestamp=10**12,
+            end_timestamp=10**12 + 10**10,
+            application_name="test_application_name",
+            parent_event_id=None,
+        )
+    )
     return nodes
 
 
