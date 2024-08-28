@@ -43,6 +43,29 @@ def get_time_window(
     )
 
 
+def intialise_temp_table_for_root_nodes(
+    sql_data_holder: SQLDataHolder,
+) -> sa.Table:
+    """Initialise a temporary table for the root nodes.
+
+    :param sql_data_holder: The SQL data holder object containing the ingested
+        data
+    :type sql_data_holder: :class:`SQLDataHolder`
+    :return: The temporary table for the root nodes
+    :rtype: :class:`sa`.`Table`
+    """
+    temp_table = sa.Table(
+        "temp_root_nodes",
+        sql_data_holder.base.metadata,
+        sa.Column("event_id", sa.String, unique=True, primary_key=True),
+        prefixes=["TEMPORARY"],
+    )
+    with sql_data_holder.session as session:
+        session.execute(sa.schema.CreateTable(temp_table))
+        session.commit()
+    return temp_table
+
+
 def create_temp_table_of_root_nodes_in_time_window(
     time_window: tuple[int, int], sql_data_holder: SQLDataHolder
 ) -> sa.Table:
@@ -56,12 +79,7 @@ def create_temp_table_of_root_nodes_in_time_window(
     :return: The temporary table with the root nodes in the time window
     :rtype: :class:`sa`.`Table`
     """
-    temp_table = sa.Table(
-        "temp_root_nodes",
-        sql_data_holder.base.metadata,
-        sa.Column("event_id", sa.String, unique=True, primary_key=True),
-        prefixes=["TEMPORARY"],
-    )
+    temp_table = intialise_temp_table_for_root_nodes(sql_data_holder)
 
     with sql_data_holder.session as session:
         stmt = (
@@ -87,11 +105,44 @@ def create_temp_table_of_root_nodes_in_time_window(
             .join(stmt, NodeModel.job_id == stmt.c.job_id)
             .where(NodeModel.parent_event_id.is_(None)).subquery()
         )
-        session.execute(sa.schema.CreateTable(temp_table))
         session.execute(temp_table.insert().from_select(["event_id"], stmt))
         session.commit()
 
     return temp_table
+
+
+def get_root_nodes(
+    start_row: int, batch_size: int,
+    temp_table: sa.Table, data_holder: SQLDataHolder
+) -> list[NodeModel]:
+    """Get the root nodes from the temporary table.
+
+    :param start_row: The starting row to get the root nodes from
+    :type start_row: `int`
+    :param batch_size: The batch size to get the root nodes in
+    :type batch_size: `int`
+    :param temp_table: The temporary table with the root nodes
+    :type temp_table: :class:`sa`.`Table`
+    :param data_holder: The SQL data holder object containing the ingested
+    data
+    :type data_holder: :class:`SQLDataHolder`
+    :return: The root nodes from the temporary table
+    :rtype: `list`[:class:`NodeModel`]
+    """
+    if start_row < 0:
+        raise ValueError("The start row must be greater than or equal to 0.")
+    if batch_size < 0:
+        raise ValueError("The batch size must be greater than or equal to 0.")
+    with data_holder.session:
+        stmt = data_holder.session.query(temp_table.c.event_id).slice(
+            start_row, start_row + batch_size
+        ).subquery()
+        root_nodes = (
+            data_holder.session.query(NodeModel)
+            .join(stmt, NodeModel.event_id == stmt.c.event_id)
+            .all()
+        )
+    return root_nodes
 
 
 def get_sql_batch_nodes(

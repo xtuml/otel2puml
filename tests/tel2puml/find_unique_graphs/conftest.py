@@ -1,12 +1,13 @@
 """Fixtures for testing find_unique_graphs module"""
-
-import pytest
 import yaml
 import json
-
 from pathlib import Path
 from unittest.mock import patch
 from typing import Generator, Any
+
+import pytest
+from sqlalchemy.sql.schema import Table
+import sqlalchemy as sa
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     OTelEvent,
@@ -15,6 +16,9 @@ from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder import (
     SQLDataHolder,
+)
+from tel2puml.find_unique_graphs.find_unique_graphs import (
+    intialise_temp_table_for_root_nodes
 )
 
 
@@ -1044,7 +1048,7 @@ def otel_nodes_from_otel_jobs(
 def sql_data_holder_with_otel_jobs(
     otel_nodes_from_otel_jobs: dict[str, NodeModel],
     mock_sql_config: SQLDataHolderConfig,
-) -> SQLDataHolder:
+) -> Generator[SQLDataHolder, Any, None]:
     """Creates a SQLDataHolder object with 5 jobs, each with 2 events."""
     mock_sql_config["time_buffer"] = 1
     sql_data_holder = SQLDataHolder(
@@ -1055,7 +1059,32 @@ def sql_data_holder_with_otel_jobs(
             otel_node for otel_node in otel_nodes_from_otel_jobs.values()
         )
         session.commit()
-    return sql_data_holder
+    yield sql_data_holder
+    with sql_data_holder.session as session:
+        if sa.inspect(sql_data_holder.engine).has_table(
+            'temp_root_nodes'
+        ):
+            session.execute(
+                sa.text("DROP TABLE temp_root_nodes")
+            )
+    sql_data_holder.base.metadata._remove_table("temp_root_nodes", None)
+
+
+@pytest.fixture
+def table_of_root_node_event_ids(
+    sql_data_holder_with_otel_jobs: SQLDataHolder,
+) -> Table:
+    """Creates a temporary table of root nodes."""
+    table = intialise_temp_table_for_root_nodes(
+        sql_data_holder_with_otel_jobs
+    )
+    with sql_data_holder_with_otel_jobs.session as session:
+        session.execute(
+            table.insert(),
+            [{"event_id": f"{i}_0"} for i in range(5)],
+        )
+        session.commit()
+    return table
 
 
 @pytest.fixture
