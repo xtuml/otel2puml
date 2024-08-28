@@ -335,6 +335,11 @@ class TestProcessSpans:
                 {"spans": [{"span_id": "001"}]},
                 {"item2": "value2"},
             ],
+            "nested_scope_span": {
+                "scope_span": [
+                    {"nested_span": {"spans": [{"span5": "value5"}]}},
+                ]
+            },
         }
 
         json_config: JSONDataSourceConfig = mock_yaml_config_dict[
@@ -367,6 +372,13 @@ class TestProcessSpans:
         ]
         spans = process_spans(json_config, sample_data)
         assert spans == [{"span3": "value3"}]
+
+        # Test nested scope spans and nested spans
+        json_config["span_mapping"]["spans"]["key_paths"] = [
+            "nested_scope_span:scope_span::nested_span:spans"
+        ]
+        spans = process_spans(json_config, sample_data)
+        assert spans == [{"span5": "value5"}]
 
         # Test spans not within a list
         json_config["span_mapping"]["spans"]["key_paths"] = [
