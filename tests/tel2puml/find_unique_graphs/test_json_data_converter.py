@@ -3,8 +3,10 @@
 import pytest
 import unittest.mock
 import flatdict
+import logging
 
 from typing import Any
+from pytest import LogCaptureFixture
 
 from tel2puml.find_unique_graphs.otel_ingestion.json_data_converter import (
     _navigate_dict,
@@ -21,6 +23,8 @@ from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     IngestDataConfig,
     JSONDataSourceConfig,
 )
+
+LOGGER = logging.getLogger(__name__)
 
 
 class TestProcessHeaders:
@@ -305,7 +309,9 @@ class TestProcessSpans:
     """Tests for processing spans within json data converter module."""
 
     @staticmethod
-    def test_process_spans(mock_yaml_config_dict: IngestDataConfig) -> None:
+    def test_process_spans(
+        mock_yaml_config_dict: IngestDataConfig, caplog: LogCaptureFixture
+    ) -> None:
         """Tests for the function process_spans"""
         sample_data = {
             "scope_spans": [
@@ -398,8 +404,12 @@ class TestProcessSpans:
         json_config["span_mapping"]["spans"]["key_paths"] = [
             "scope_spans::empty_spans"
         ]
-        with pytest.raises(ValueError):
-            process_spans(json_config, sample_data)
+        caplog.set_level(logging.WARNING)
+        process_spans(json_config, sample_data)
+        assert (
+            "WARNING - Encountered an empty list whilst processing spans."
+            in caplog.text
+        )
 
         # Test more than one scope_spans
         json_config["span_mapping"]["spans"]["key_paths"] = [

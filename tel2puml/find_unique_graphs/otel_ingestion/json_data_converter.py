@@ -1,6 +1,7 @@
 """This module converts JSON OTel data to adhere to the application schema."""
 
 import flatdict
+import logging
 
 from typing import Any, Literal
 
@@ -9,6 +10,7 @@ from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
 )
 
 MAX_SEGMENT_COUNT = 50  # TODO have a think about this
+LOGGER = logging.getLogger(__name__)
 
 
 def _flatten_json_dict(
@@ -819,7 +821,9 @@ def process_spans(
 
     if isinstance(data, list):
         if not data:
-            raise ValueError("Spans list is empty")
+            LOGGER.warning(
+                "WARNING - Encountered an empty list whilst processing spans."
+            )
         return data
     else:
         raise TypeError("Spans should be within a list.")
