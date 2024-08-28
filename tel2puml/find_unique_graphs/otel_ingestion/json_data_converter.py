@@ -822,7 +822,7 @@ def process_spans(
     if isinstance(data, list):
         if not data:
             LOGGER.warning(
-                "WARNING - Encountered an empty list whilst processing spans."
+                "Encountered an empty list whilst processing spans."
             )
         return data
     else:
