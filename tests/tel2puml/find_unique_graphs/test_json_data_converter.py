@@ -23,6 +23,7 @@ from tel2puml.find_unique_graphs.otel_ingestion.json_data_converter import (
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     IngestDataConfig,
     JSONDataSourceConfig,
+    FieldSpec,
 )
 
 
@@ -391,7 +392,7 @@ class TestProcessHeaderTags:
         """Tests for the function _handle_data_from_header"""
 
         field_name = "job_name"
-        field_config = {
+        field_config: FieldSpec = {
             "key_paths": [
                 "HEADER:resource:attributes::key",
                 "HEADER:resource:attributes::key",
@@ -403,7 +404,7 @@ class TestProcessHeaderTags:
             ],
             "value_type": "string",
         }
-        result_dict = {}
+        result_dict: dict[str, Any] = {}
         header_dict = {
             "resource:attributes": flatdict.FlatterDict(
                 [
@@ -440,7 +441,10 @@ def test_get_value_type() -> None:
     """Tests the function _get_value_type"""
 
     # Test with existing field
-    field_config = {"key_paths": ["span_id"], "value_type": "string"}
+    field_config: FieldSpec = {
+        "key_paths": ["span_id"],
+        "value_type": "string",
+    }
     assert _get_value_type(field_config) == "string"
 
     # Test with non-existing field
@@ -453,7 +457,7 @@ def test_add_or_append_value() -> None:
     """Tests the function _add_or_append_value"""
 
     # test adding unix nano, value int
-    result = {}
+    result: dict[str, Any] = {}
     _add_or_append_value(
         "start_timestamp", 1723544132228102912, result, "unix_nano"
     )

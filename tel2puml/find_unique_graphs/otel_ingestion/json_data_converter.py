@@ -2,10 +2,11 @@
 
 import flatdict
 
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     JSONDataSourceConfig,
+    FieldSpec,
 )
 
 MAX_SEGMENT_COUNT = 50  # TODO have a think about this
@@ -64,7 +65,7 @@ def _map_data_to_json_schema(
 
 def _process_field(
     field_name: str,
-    field_config: dict[str, Any],
+    field_config: FieldSpec,
     flattened_data: Any,
     result: dict[str, Any],
     field_cache: dict[str, str],
@@ -76,7 +77,7 @@ def _process_field(
     :param field_name: The field name within the mapping config
     :type field_name: `str`
     :param field_config: The config for the field name
-    :type field_config: `str` | `dict`[`str`,`Any`]
+    :type field_config: :class: `FieldSpec`
     :param flattened_data: JSON data as a flattened dictionary
     :type flattened_data: `Any`
     :param result: The mapped data
@@ -117,7 +118,7 @@ def _process_field(
 
 def _handle_empty_segments(
     field_name: str,
-    field_config: dict[str, Any],
+    field_config: FieldSpec,
     flattened_data: Any,
     index: int,
     result: dict[str, Any],
@@ -130,7 +131,7 @@ def _handle_empty_segments(
     the JSON data.
 
     :param field_name: The field name within the mapping config
-    :type field_name: `str`
+    :type field_name: :class: `FieldSpec`
     :param field_config: The config for the field name
     :type field_config: `dict`[`str`,`Any`]
     :param flattened_data: JSON data as a flattened dictionary
@@ -186,7 +187,8 @@ def _handle_empty_segments(
             # If the value is not found within the cache, we start looking at
             # the value of 'count' that is stored within the cache, as we have
             # already checked values up until count - 1.
-            value_to_check = field_config["key_value"][index]
+            # value_to_check = field_config["key_value"][index]
+            value_to_check = _get_key_value(field_config, index)
             full_path = _get_cached_path(
                 cache_entry, value_to_check, full_path, segment_count
             )
@@ -221,7 +223,7 @@ def _handle_empty_segments(
 
 def _handle_data_from_header(
     target_field_name: str,
-    field_config: dict[str, Any],
+    field_config: FieldSpec,
     config_index: int,
     result_dict: dict[str, Any],
     header_data: dict[str, Any],
@@ -234,7 +236,7 @@ def _handle_data_from_header(
     :param target_field_name: The field name within the mapping config
     :type target_field_name: `str`
     :param field_config: The configuration for the target field
-    :type field_config: `dict`[`str`,`Any`]
+    :type field_config: :class: `FieldSpec`
     :param config_index: The index of the current field in the configuration
     :type config_index: `int`
     :param result_dict: The dictionary to store the mapped data
@@ -260,7 +262,7 @@ def _handle_data_from_header(
         field_config.get("key_value")
         and field_config["key_value"][config_index]
     ):
-        header_key = field_config["value_paths"][config_index]
+        header_key = _get_value_path(field_config, config_index)
     else:
         header_key = initial_header_key
 
@@ -291,9 +293,9 @@ def _handle_data_from_header(
 
 
 def _find_matching_header_value(
-    header_level: flatdict.FlatterDict,
+    header_level: dict[str, str],
     target_key: str,
-    field_config: dict[str, Any],
+    field_config: FieldSpec,
     config_index: int,
     header_key: str,
 ) -> str:
@@ -301,11 +303,11 @@ def _find_matching_header_value(
     Find the matching header value based on the target key and configuration.
 
     :param header_level: The current level of the header dictionary
-    :type header_level: :class:`flatdict.FlatterDict`
+    :type header_level: `dict`[`str`, `str`]
     :param target_key: The key to search for in the header
     :type target_key: `str`
     :param field_config: The configuration for the field
-    :type field_config: `dict`[`str`, `Any`]
+    :type field_config: :class: `FieldSpec`
     :param config_index: The index of the current field in the configuration
     :type config_index: `int`
     :param header_key: The key to use for extracting the final value
@@ -439,7 +441,7 @@ def _is_matching_data(
 
 def _process_matching_data(
     field_name: str,
-    field_config: dict[str, Any],
+    field_config: FieldSpec,
     index: int,
     flattened_data: dict[str, Any],
     full_path: str,
@@ -452,7 +454,7 @@ def _process_matching_data(
     :param field_name: The field name within the mapping config
     :type field_name: `str`
     :param field_config: The config for the field name
-    :type field_config: `dict`[`str`,`Any`]
+    :type field_config: :class: `FieldSpec`
     :param index: The index of the field config
     :type index: `int`
     :param flattened_data: JSON data as a flattened dictionary
@@ -464,11 +466,13 @@ def _process_matching_data(
     :param result: The mapped data
     :type result: `dict`[`str`, `Any`]
     """
-    value_path = full_path.replace(key, field_config["value_paths"][index])
+    # value_path = full_path.replace(key, field_config["value_paths"][index])
+    value_path = full_path.replace(key, _get_value_path(field_config, index))
     value_type = _get_value_type(field_config)
-    _add_or_append_value(
-        field_name, flattened_data[value_path], result, value_type
-    )
+    if value_type:
+        _add_or_append_value(
+            field_name, flattened_data[value_path], result, value_type
+        )
 
 
 def _update_cache(
@@ -491,7 +495,7 @@ def _update_cache(
 
 def _handle_regular_path(
     field_name: str,
-    field_config: dict[str, Any],
+    field_config: FieldSpec,
     full_path: str,
     flattened_data: Any,
     result: dict[str, Any],
@@ -503,7 +507,7 @@ def _handle_regular_path(
     :param field_name: The field name within the mapping config
     :type field_name: `str`
     :param field_config: The config for the field name
-    :type field_config: `dict`[`str`,`Any`]
+    :type field_config: :class: `FieldSpec`
     :param full_path: The key of the flattened data
     :type full_path: `str`
     :param flattened_data: JSON data as a flattened dictionary
@@ -548,11 +552,11 @@ def _handle_regular_path(
         print(f"An error occurred - {e}")
 
 
-def _get_value_type(field_config: dict[str, str]) -> str:
+def _get_value_type(field_config: FieldSpec) -> str:
     """Function that returns the type of the field. Eg. "string", "unix_nano"
 
     :param field_config: The config for the field name
-    :type field_config: `dict`[`str`,`str`]
+    :type field_config: :class: `FieldSpec`
     :return: The field type
     :rtype: `str`
     """
@@ -828,3 +832,55 @@ def process_spans(
         return data
     else:
         raise TypeError("Spans should be within a list.")
+
+
+def _get_key_value(field_spec: FieldSpec, index: int) -> str:
+    """Helper function to get key value within field spec mapping.
+
+    :param field_spec: The field spec specified in the config file
+    :type field_spec: :class: `FieldSpec`
+    :param index: The index within the key_value list
+    :type index: `int`
+    :return: The value within the key_value list, or None
+    :rtype: `str`
+    """
+    try:
+        key_values = field_spec["key_value"]
+    except KeyError:
+        raise KeyError("key_value field not set.")
+
+    try:
+        key_value = key_values[index]
+    except IndexError:
+        raise IndexError(f"Index {index} is out of range for key_value")
+
+    if not key_value:
+        raise ValueError(f"key_value at index {index} is empty or None")
+
+    return key_value
+
+
+def _get_value_path(field_spec: FieldSpec, index: int) -> str:
+    """Helper function to get value path within field spec mapping.
+
+    :param field_spec: The field spec specified in the config file
+    :type field_spec: :class: `FieldSpec`
+    :param index: The index within the value_paths list
+    :type index: `int`
+    :return: The value within the value_paths list, or None
+    :rtype: `str`
+    """
+    try:
+        value_paths = field_spec["value_paths"]
+    except KeyError:
+        raise KeyError("value_paths field not set.")
+
+    try:
+        value_path = value_paths[index]
+    except IndexError:
+        raise IndexError(f"Index {index} is out of range for value_paths")
+
+    if not value_path:
+        raise ValueError(f"value_path at index {index} is empty or None")
+
+    return value_path

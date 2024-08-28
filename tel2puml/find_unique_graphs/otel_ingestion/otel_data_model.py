@@ -113,13 +113,13 @@ class SpanSpec(TypedDict):
     key_paths: list[str]
 
 
-class FieldSpec(TypedDict):
+class FieldSpec(TypedDict, total=False):
     """Typed dict for FieldSpec."""
 
     key_paths: list[str]
-    key_value: Optional[list[Optional[str]]]
-    value_paths: Optional[list[Optional[str]]]
-    value_type: Union[str, int]
+    key_value: list[Optional[str]]
+    value_paths: list[Optional[str]]
+    value_type: str
 
 
 class JSONDataSourceConfig(TypedDict):
