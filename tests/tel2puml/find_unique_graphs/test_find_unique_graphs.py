@@ -7,6 +7,8 @@ from sqlalchemy.exc import IntegrityError
 
 from tel2puml.find_unique_graphs.find_unique_graphs import (
     get_time_window,
+    intialise_temp_table_for_root_nodes,
+    get_root_nodes,
     create_temp_table_of_root_nodes_in_time_window,
     compute_graph_hash_from_event_ids,
     get_sql_batch_nodes,
@@ -39,30 +41,87 @@ def test_get_time_window(monkeypatch: MonkeyPatch) -> None:
         get_time_window(10, data_holder)
 
 
-def test_create_temp_table_of_root_nodes_in_time_window(
+def test_initialise_temp_table_for_root_nodes(
     sql_data_holder_with_otel_jobs: SQLDataHolder,
 ) -> None:
-    """Test the create_temp_table_of_root_nodes_in_time_window function."""
+    """Test the intialise_temp_table_for_root_nodes function."""
     assert not sa.inspect(sql_data_holder_with_otel_jobs.engine).has_table(
         'temp_root_nodes'
     )
-    time_window = (
-        10**12 + 6 * 10**10, 10**12 + 54 * 10**10
-    )
-    table = create_temp_table_of_root_nodes_in_time_window(
-        time_window, sql_data_holder_with_otel_jobs
+    table = intialise_temp_table_for_root_nodes(
+        sql_data_holder_with_otel_jobs
     )
     assert sa.inspect(sql_data_holder_with_otel_jobs.engine).has_table(
         'temp_root_nodes'
     )
     assert table.columns.keys() == ['event_id']
     assert table.primary_key.columns.keys() == ['event_id']
+
+
+def test_create_temp_table_of_root_nodes_in_time_window(
+    sql_data_holder_with_otel_jobs: SQLDataHolder,
+) -> None:
+    """Test the create_temp_table_of_root_nodes_in_time_window function."""
+    time_window = (
+        10**12 + 6 * 10**10, 10**12 + 54 * 10**10
+    )
+    table = create_temp_table_of_root_nodes_in_time_window(
+        time_window, sql_data_holder_with_otel_jobs
+    )
     with sql_data_holder_with_otel_jobs.engine.connect() as connection:
         result = connection.execute(table.select())
         assert [
             (row[0],)
             for row in result.fetchall()
         ] == [(f'{i}_0',) for i in range(1, 4)]
+
+
+def test_get_root_nodes(
+    sql_data_holder_with_otel_jobs: SQLDataHolder,
+    table_of_root_node_event_ids: sa.Table,
+    otel_jobs: dict[str, list[OTelEvent]]
+) -> None:
+    """Test the get_root_nodes function."""
+    # test possible start rows and batch sizes
+    start_row_and_batch_sizes = [
+        (0, 2), (1, 3), (0, 5), (0, 6), (3, 6),
+        (4, 0), (5, 10)
+    ]
+    for start_row, batch_size in start_row_and_batch_sizes:
+        root_nodes = get_root_nodes(
+            start_row,
+            batch_size,
+            table_of_root_node_event_ids,
+            sql_data_holder_with_otel_jobs,
+        )
+        start_row = min(start_row, 5)
+        end_row = min(start_row + batch_size, 5)
+        size = end_row - start_row
+        assert len(root_nodes) == size
+        for i in range(size):
+            assert root_nodes[i].job_name == "test_name"
+            assert root_nodes[i].event_id == f"{i + start_row}_0"
+            assert root_nodes[i].job_id == f"test_id_{i + start_row}"
+            assert root_nodes[i].event_type == "event_type_0"
+            assert (
+                root_nodes[i].start_timestamp
+                == otel_jobs[f"{i + start_row}"][1].start_timestamp
+            )
+            assert (
+                root_nodes[i].end_timestamp
+                == otel_jobs[f"{i + start_row}"][1].end_timestamp
+            )
+            assert root_nodes[i].application_name == "test_application_name"
+            assert root_nodes[i].parent_event_id is None
+    # test invalid start row and batch size
+    with pytest.raises(ValueError):
+        get_root_nodes(
+            -1, 0, table_of_root_node_event_ids, sql_data_holder_with_otel_jobs
+        )
+    with pytest.raises(ValueError):
+        get_root_nodes(
+            0, -1, table_of_root_node_event_ids, sql_data_holder_with_otel_jobs
+        )
 
 
 def test_get_sql_batch_nodes(

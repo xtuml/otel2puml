@@ -16,6 +16,9 @@ from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder import (
     SQLDataHolder,
 )
+from tel2puml.find_unique_graphs.find_unique_graphs import (
+    intialise_temp_table_for_root_nodes
+)
 
 
 @pytest.fixture
@@ -1056,6 +1059,23 @@ def sql_data_holder_with_otel_jobs(
         )
         session.commit()
     return sql_data_holder
+
+
+@pytest.fixture
+def table_of_root_node_event_ids(
+    sql_data_holder_with_otel_jobs: SQLDataHolder,
+) -> Any:
+    """Creates a temporary table of root nodes."""
+    table = intialise_temp_table_for_root_nodes(
+        sql_data_holder_with_otel_jobs
+    )
+    with sql_data_holder_with_otel_jobs.session as session:
+        session.execute(
+            table.insert(),
+            [{"event_id": f"{i}_0"} for i in range(5)],
+        )
+        session.commit()
+    return table
 
 
 @pytest.fixture
