@@ -71,6 +71,11 @@ class TestProcessHeaders:
         with pytest.raises(IndexError):
             _navigate_list(data3)
 
+        # Test list with more than one element
+        data4 = [{"key1": "value1"}, {"key2": "value2"}]
+        with pytest.raises(ValueError):
+            _navigate_list(data4)
+
     @staticmethod
     def test_extract_simple_value() -> None:
         """Tests the function _extract_simple_value."""

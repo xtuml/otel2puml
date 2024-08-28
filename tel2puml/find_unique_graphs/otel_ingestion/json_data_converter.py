@@ -750,10 +750,16 @@ def _navigate_list(
     :return: The value at index 0 of the list
     :rtype: `dict`[`str`, `Any`]
     """
-    try:
-        return data[0]
-    except IndexError:
+    if not data:
         raise IndexError("Cannot return a value for an empty list.")
+    
+    if len(data) > 1:
+        raise ValueError(
+            "Code is structured to process lists that have one item. "
+            f"Got {len(data)} items instead."
+        )
+    
+    return data[0]
 
 
 def _update_header_dict(
