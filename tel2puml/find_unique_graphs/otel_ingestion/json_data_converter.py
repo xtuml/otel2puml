@@ -550,7 +550,10 @@ def _get_value_type(field_config: dict[str, str]) -> str:
     :return: The field type
     :rtype: `str`
     """
-    return field_config["value_type"]
+    try:
+        return field_config["value_type"]
+    except KeyError:
+        raise KeyError("Field config must include a 'value_type' section.")
 
 
 def _add_or_append_value(

@@ -15,6 +15,7 @@ from tel2puml.find_unique_graphs.otel_ingestion.json_data_converter import (
     _build_nested_dict,
     _extract_nested_value,
     process_header,
+    _get_value_type,
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     IngestDataConfig,
@@ -298,3 +299,18 @@ class TestProcessHeaders:
         assert header_dict["scope_spans"] == flatdict.FlatterDict(
             {"scope": {"name": "TestJob"}}
         )
+
+
+class TestProcessHeaderTags:
+    """Tests for processing header tags within span field_mapping"""
+
+
+def test_get_value_type() -> None:
+    """Tests the function _get_value_type"""
+
+    field_config = {"key_paths": ["span_id"], "value_type": "string"}
+    assert _get_value_type(field_config) == "string"
+
+    field_config = {"key_paths": ["span_id"]}
+    with pytest.raises(KeyError):
+        _get_value_type(field_config)
