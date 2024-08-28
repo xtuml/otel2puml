@@ -11,15 +11,17 @@ from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
 MAX_SEGMENT_COUNT = 50  # TODO have a think about this
 
 
-def _flatten_json_dict(json_data: dict[str, Any]) -> flatdict.FlatterDict:
-    """Function to flatten a nested dictionary.
+def _flatten_json_dict(
+    data: dict[str, Any] | list[dict[str, Any]],
+) -> flatdict.FlatterDict:
+    """Function to flatten a dictionary or list.
 
-    :param json_data: The JSON data to flatten.
-    :param json_data: `dict`[`str`,`Any`]
+    :param data: The JSON data to flatten.
+    :param data: `dict`[`str`,`Any`] | `list`[`dict`[`str`, `Any`]]
     :return: The flattened json as a dictionary
     :rtype: :class: `flatdict.FlatterDict`
     """
-    return flatdict.FlatterDict(json_data)
+    return flatdict.FlatterDict(data)
 
 
 def _map_data_to_json_schema(
@@ -629,7 +631,7 @@ def process_header(
 
 def _extract_value_from_path(
     data: dict[str, Any], path: str
-) -> dict[str, Any] | str:
+) -> dict[str, Any] | str | list[dict[str, Any]]:
     """Extract a value from nested JSON data using a path string.
 
     :param data: The JSON data to traverse
@@ -637,7 +639,7 @@ def _extract_value_from_path(
     :param path: The path string to follow
     :type path: `str`
     :return: The extracted value
-    :rtype: `dict`[`str`, `Any`] | `str`
+    :rtype: `dict`[`str`, `Any`] | `str` | `list`[`dict`[`str`, `Any`]]
     """
     if "::" in path:
         return _extract_nested_value(data, path)
@@ -645,35 +647,56 @@ def _extract_value_from_path(
         return _extract_simple_value(data, path)
 
 
-def _extract_nested_value(
-    data: dict[str, Any] | str, path: str
-) -> dict[str, Any] | str:
+def _extract_nested_value(data: dict[str, Any], path: str) -> dict[str, Any]:
     """Extract a nested value from JSON data using a complex path.
 
     :param data: The JSON data to traverse
-    :type data: `dict`[`str`, `Any`] | `str`
+    :type data: `dict`[`str`, `Any`]
     :param path: The complex path string
     :type path: `str`
     :return: A nested dictionary with the extracted value
-    :rtype: `dict`[`str`, `Any`] | `str`
+    :rtype: `dict`[`str`, `Any`]
     """
     path_segments = path.split(":")
+    parsed_data: dict[str, Any] | str | list[dict[str, Any]] = data
     for segment in path_segments:
-        data = _navigate_segment(data, segment)
+        if isinstance(parsed_data, dict):
+            parsed_data = _navigate_dict(parsed_data, segment)
+        elif isinstance(parsed_data, list):
+            parsed_data = _navigate_list(parsed_data)
 
-    result = data
     path_segments = ":".join(path_segments).split("::")
-    # Create a nested dictionary by building it from the inside out. This is
-    # bypassed if data is a string
+
+    return _build_nested_dict(path_segments, parsed_data)
+
+
+def _build_nested_dict(
+    path_segments: list[str],
+    parsed_data: dict[str, Any] | str | list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Generates a nested dictionary by building it from the inside out.
+
+    :param path_segments: The segments within the path, split by ::
+    :type path_segments: `list`[`str`]
+    :param parsed_data: The parsed data within the json
+    :type parsed_data: `dict`[`str`, `Any`] | `str` |
+    `list`[`dict`[`str`, `Any`]]
+    :return: The nested dictionary
+    :rtype: `dict`[`str`, `Any`]
+    """
+    result = parsed_data
     for key in reversed(path_segments[1:]):
         result = {key: result}
 
-    return result
+    if isinstance(result, dict):
+        return result
+    else:
+        raise TypeError(f"Expected type dict, got {type(result)} instead.")
 
 
 def _extract_simple_value(
-    data: dict[str, Any] | str, path: str
-) -> flatdict.FlatterDict | str:
+    data: dict[str, Any], path: str
+) -> dict[str, Any] | str | list[dict[str, Any]]:
     """Extract a simple value from JSON data using a path.
 
     :param data: The JSON data to traverse
@@ -681,52 +704,81 @@ def _extract_simple_value(
     :param path: The simple path string
     :type path: `str`
     :return: The extracted value
-    :rtype: :class: `flatdict.FlatterDict` | `str`
+    :rtype: `dict`[`str`, `Any`] | `str` | `list`[`dict`[`str`, `Any`]]
     """
+    parsed_data: dict[str, Any] | str | list[dict[str, Any]] = data
     segments = path.split(":")
     for segment in segments:
-        data = _navigate_segment(data, segment)
+        if isinstance(parsed_data, dict):
+            parsed_data = _navigate_dict(parsed_data, segment)
 
-    if isinstance(data, dict) or isinstance(data, list):
-        return _flatten_json_dict(data)
-    return data
+    return parsed_data
 
 
-def _navigate_segment(
-    data: dict[str, Any] | str, segment: str
-) -> dict[str, Any] | str:
-    """Navigate through a segment of the JSON data.
+def _navigate_dict(
+    data: dict[str, Any], segment: str
+) -> dict[str, Any] | str | list[dict[str, Any]]:
+    """Navigate through a dictionary of the JSON data.
 
     :param data: The current data object
     :type data: `dict`[`str`, `Any`]
     :param segment: The segment to navigate
     :type segment: `str`
     :return: The value at the end of the navigation
-    :rtype: `dict`[`str`, `Any`] | `str`
+    :rtype: `dict`[`str`, `Any`] | `str` | `list`[`dict`[`str`, `Any`]]
     """
-    if isinstance(data, dict):
-        data = data[segment]
-    elif isinstance(data, list):
-        data = data[0]
+    try:
+        data_to_return = data[segment]
+        if isinstance(data_to_return, (dict, list, str)):
+            return data_to_return
+        else:
+            raise TypeError(
+                "Error navigating header - value should be of type dict,"
+                f" list or str - got {type(data[segment])} instead."
+            )
+    except KeyError:
+        raise KeyError(f"{segment} is not a valid key.")
 
-    return data
+
+def _navigate_list(
+    data: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Navigate through a list of the JSON data.
+
+    :param data: The current data object
+    :type data: `list`[`dict`[`str`, `Any`]]
+    :return: The value at index 0 of the list
+    :rtype: `dict`[`str`, `Any`]
+    """
+    if not data:
+        raise IndexError("Cannot return a value for an empty list.")
+
+    if len(data) > 1:
+        raise ValueError(
+            "Code is structured to process lists that have one item. "
+            f"Got {len(data)} items instead."
+        )
+
+    return data[0]
 
 
 def _update_header_dict(
-    header_dict: dict[str, Any], path: str, value: dict[str, Any] | str
+    header_dict: dict[str, Any],
+    path: str,
+    value: dict[str, Any] | str | list[dict[str, Any]],
 ) -> None:
     """Updates the header dictionary with the extracted value. If the value is
-    a dictionary, flatten it first.
+    a dictionary or list, flatten it first.
 
     :param header_dict: The header dictionary to update
     :type header_dict: `dict`[`str`, `Any`]
     :param path: The original path string
     :type path: `str`
     :param value: The value to add to header_dict
-    :type value: `dict`[`str`, `Any`] | `str`
+    :type value: `dict`[`str`, `Any`] | `str` | `list`[`dict`[`str`, `Any`]]
     """
     key = path.split("::")[0]
-    if isinstance(value, dict):
+    if isinstance(value, (dict, list)):
         header_dict[key] = _flatten_json_dict(value)
     else:
         header_dict[key] = value
