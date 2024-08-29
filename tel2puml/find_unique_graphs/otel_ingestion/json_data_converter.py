@@ -2,7 +2,7 @@
 
 import flatdict
 
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     JSONDataSourceConfig,
@@ -177,7 +177,7 @@ def _handle_empty_segments(
             # that the path within key_paths is the full path and the value
             # at that path is what we want.
             if (
-                not "key_value" in field_config
+                "key_value" not in field_config
                 or not field_config["key_value"][index]
             ):
                 if flattened_data.get(full_path):
@@ -583,7 +583,7 @@ def _add_or_append_value(
     :param value_type: The field type
     :type value_type: `str`
     """
-    if not value_type in ["unix_nano", "string"]:
+    if value_type not in ["unix_nano", "string"]:
         raise ValueError("Unrecognised value_type")
 
     if value_type == "unix_nano":

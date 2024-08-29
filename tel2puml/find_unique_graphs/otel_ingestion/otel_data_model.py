@@ -1,6 +1,6 @@
 """Module containing classes to ingest OTel data into a data holder."""
 
-from typing import NamedTuple, Optional, TypedDict, Union
+from typing import NamedTuple, Optional, TypedDict
 
 from sqlalchemy import (
     Column,
