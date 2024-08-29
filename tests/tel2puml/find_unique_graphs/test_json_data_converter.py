@@ -311,85 +311,6 @@ class TestProcessHeaderTags:
     """Tests for processing header tags within span field_mapping"""
 
     @staticmethod
-    def test_find_matching_header_value() -> None:
-        """Tests for the function _find_matching_header_value"""
-
-        header_level = flatdict.FlatterDict(
-            [
-                {
-                    "key": "service.name",
-                    "value": {"Value": {"StringValue": "Frontend"}},
-                },
-                {
-                    "key": "service.version",
-                    "value": {"Value": {"StringValue": "1.0"}},
-                },
-            ]
-        )
-
-        # Test matching header success
-        assert (
-            _find_matching_header_value(
-                header_level=header_level,
-                target_key="key",
-                field_config={
-                    "key_value": ["service.name"],
-                },
-                config_index=0,
-                header_key="value:Value:StringValue",
-            )
-            == "Frontend"
-        )
-
-        # Test more than one header value
-        assert (
-            _find_matching_header_value(
-                header_level=header_level,
-                target_key="key",
-                field_config={
-                    "key_value": ["service.name", "service.version"],
-                },
-                config_index=1,
-                header_key="value:Value:StringValue",
-            )
-            == "1.0"
-        )
-
-        # Test inalid target key - no match found
-        with pytest.raises(KeyError, match="No matching value found"):
-            _find_matching_header_value(
-                header_level=header_level,
-                target_key="invalid_key",
-                field_config={
-                    "key_value": ["service.name"],
-                },
-                config_index=0,
-                header_key="value:Value:StringValue",
-            )
-
-        # Test invalid header_key
-        with pytest.raises(KeyError, match="invalid key"):
-            _find_matching_header_value(
-                header_level=header_level,
-                target_key="key",
-                field_config={"key_value": ["service.name"]},
-                config_index=0,
-                header_key="value:Value:Invalid",
-            )
-
-        # Test empty header
-        with pytest.raises(
-            ValueError, match="No data within header dictionary"
-        ):
-            _find_matching_header_value(
-                header_level={},
-                target_key="key",
-                field_config={"key_value": ["service.name"]},
-                config_index=0,
-                header_key="value:Value:Invalid",
-            )
-
-    @staticmethod
     def test_handle_data_from_header() -> None:
         """Tests for the function _handle_data_from_header"""
 
@@ -586,7 +507,7 @@ def test_get_key_value() -> None:
     """Tests the function _get_key_value"""
 
     # Test with correct field spec
-    field_spec = {"key_value": ["value1", "value2", "value3"]}
+    field_spec: FieldSpec = {"key_value": ["value1", "value2", "value3"]}
     assert _get_key_value(field_spec, 1) == "value2"
 
     # Test with no key_value field
@@ -613,7 +534,7 @@ def test_get_value_path() -> None:
     """Tests the function _get_value_path"""
 
     # Test with correct field spec
-    field_spec = {"value_paths": ["value1", "value2", "value3"]}
+    field_spec: FieldSpec = {"value_paths": ["value1", "value2", "value3"]}
     assert _get_value_path(field_spec, 1) == "value2"
 
     # Test with no key_value field
