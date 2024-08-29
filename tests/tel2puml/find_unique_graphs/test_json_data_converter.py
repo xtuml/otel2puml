@@ -20,6 +20,7 @@ from tel2puml.find_unique_graphs.otel_ingestion.json_data_converter import (
     _find_matching_header_value,
     _handle_data_from_header,
     _get_key_value,
+    _get_value_path,
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     IngestDataConfig,
@@ -521,3 +522,29 @@ def test_get_key_value() -> None:
         ValueError, match="key_value at index 1 should not return None."
     ):
         _get_key_value(field_spec, 1)
+
+def test_get_value_path() -> None:
+    """Tests the function _get_value_path"""
+
+    # Test with correct field spec
+    field_spec = {"value_paths": ["value1", "value2", "value3"]}
+    assert _get_value_path(field_spec, 1) == "value2"
+
+    # Test with no key_value field
+    field_spec = {"key_paths": ["path1"]}
+    with pytest.raises(KeyError, match="value_paths field not set."):
+        _get_value_path(field_spec, 0)
+
+    # Test with index out of range
+    field_spec = {"value_paths": ["value1", "value2"]}
+    with pytest.raises(
+        IndexError, match="Index 5 is out of range for value_paths."
+    ):
+        _get_value_path(field_spec, 5)
+
+    # Test with empty key_value
+    field_spec = {"value_paths": ["value1", None, "value3"]}
+    with pytest.raises(
+        ValueError, match="value_path at index 1 is empty or None."
+    ):
+        _get_value_path(field_spec, 1)

@@ -879,9 +879,9 @@ def _get_value_path(field_spec: FieldSpec, index: int) -> str:
     try:
         value_path = value_paths[index]
     except IndexError:
-        raise IndexError(f"Index {index} is out of range for value_paths")
+        raise IndexError(f"Index {index} is out of range for value_paths.")
 
     if not value_path:
-        raise ValueError(f"value_path at index {index} is empty or None")
+        raise ValueError(f"value_path at index {index} is empty or None.")
 
     return value_path
