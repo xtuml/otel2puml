@@ -255,7 +255,7 @@ def _handle_data_from_header(
     # Remove the 'HEADER:' prefix from the full path
     clean_header_path = full_header_path.split("HEADER:", 1)[1]
 
-    if not "::" in clean_header_path:
+    if "::" not in clean_header_path:
         # Resolves simple case
         extracted_value = header_data[clean_header_path]
     else:

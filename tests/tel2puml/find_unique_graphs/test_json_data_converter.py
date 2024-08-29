@@ -349,7 +349,7 @@ class TestProcessHeaderTags:
             ],
             "value_type": "string",
         }
-        result_dict: dict[str, Any] = {}
+        result_dict = {}
         _handle_data_from_header(
             target_field_name="job_name",
             field_config=field_config,
