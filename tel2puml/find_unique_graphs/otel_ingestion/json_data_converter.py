@@ -332,7 +332,7 @@ def _find_matching_header_value(
             try:
                 return header_level[full_header_key]
             except KeyError:
-                raise KeyError(f"{full_header_key} is an invalid key.")
+                raise KeyError(f"{header_key} is an invalid key.")
 
     raise KeyError(f"No matching value found for key: {target_key}")
 

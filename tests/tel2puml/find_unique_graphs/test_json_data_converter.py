@@ -438,6 +438,91 @@ class TestProcessHeaderTags:
         assert len(result_dict) == 1
         assert result_dict["job_name"] == "Frontend 1.0"
 
+    @staticmethod
+    def test_find_matching_header_value() -> None:
+        """Tests the function _find_matching_header_value"""
+
+        # Test successful path
+        header_level = flatdict.FlatterDict(
+            [
+                {
+                    "key": "service.name",
+                    "value": {"Value": {"StringValue": "Frontend"}},
+                },
+                {
+                    "key": "service.version",
+                    "value": {"Value": {"IntValue": "1.0"}},
+                },
+            ]
+        )
+        field_config: FieldSpec = {
+            "key_paths": [
+                "HEADER:resource:attributes::key",
+                "HEADER:resource:attributes::key",
+            ],
+            "key_value": ["service.name", "service.version"],
+            "value_paths": [
+                "value:Value:StringValue",
+                "value:Value:IntValue",
+            ],
+            "value_type": "string",
+        }
+        assert (
+            _find_matching_header_value(
+                header_level=header_level,
+                target_key="key",
+                field_config=field_config,
+                config_index=0,
+                header_key="value:Value:StringValue",
+            )
+            == "Frontend"
+        )
+
+        assert (
+            _find_matching_header_value(
+                header_level=header_level,
+                target_key="key",
+                field_config=field_config,
+                config_index=1,
+                header_key="value:Value:IntValue",
+            )
+            == "1.0"
+        )
+
+        # Test header level empty
+        with pytest.raises(ValueError):
+            _find_matching_header_value(
+                header_level={},
+                target_key="key",
+                field_config=field_config,
+                config_index=1,
+                header_key="value:Value:IntValue",
+            )
+
+        # Test no matching values for target key
+        with pytest.raises(
+            KeyError, match="No matching value found for key: no_match_key"
+        ):
+            _find_matching_header_value(
+                header_level=header_level,
+                target_key="no_match_key",
+                field_config=field_config,
+                config_index=1,
+                header_key="value:Value:IntValue",
+            )
+
+        # Test invalid header key
+        with pytest.raises(
+            KeyError, match="value:Value:InvalidKey is an invalid key."
+        ):
+            _find_matching_header_value(
+                header_level=header_level,
+                target_key="key",
+                field_config=field_config,
+                config_index=0,
+                header_key="value:Value:InvalidKey",
+            )
+
 
 def test_get_value_type() -> None:
     """Tests the function _get_value_type"""
@@ -522,6 +607,7 @@ def test_get_key_value() -> None:
         ValueError, match="key_value at index 1 should not return None."
     ):
         _get_key_value(field_spec, 1)
+
 
 def test_get_value_path() -> None:
     """Tests the function _get_value_path"""
