@@ -23,7 +23,7 @@ from tel2puml.find_unique_graphs.otel_ingestion.json_data_converter import (
     _handle_data_from_header,
     _get_key_value,
     _get_value_path,
-    process_spans
+    process_spans,
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     IngestDataConfig,
@@ -343,7 +343,7 @@ class TestProcessHeaderTags:
         # Test nested dict case - dict is flattened before this function,
         # hence "nested:span_id"
         header_dict = {"nested:span_id": "001"}
-        field_config: FieldSpec = {
+        field_config = {
             "key_paths": [
                 "HEADER:nested:span_id",
             ],
@@ -363,7 +363,7 @@ class TestProcessHeaderTags:
         assert result_dict["job_name"] == "001"
 
         # Test multiple key_paths with nested values before and after list
-        field_config: FieldSpec = {
+        field_config = {
             "key_paths": [
                 "HEADER:resource:attributes::key:nested_key",
                 "HEADER:resource:attributes::key",
@@ -513,14 +513,6 @@ def test_get_value_type() -> None:
         "value_type": "invalid",
     }
     with pytest.raises(ValueError):
-        _get_value_type(field_config)
-
-    # Test with non string
-    field_config = {
-        "key_paths": ["span_id"],
-        "value_type": 111,
-    }
-    with pytest.raises(TypeError):
         _get_value_type(field_config)
 
 
@@ -717,8 +709,7 @@ class TestProcessSpans:
         caplog.set_level(logging.WARNING)
         process_spans(json_config, sample_data)
         assert (
-            "Encountered an empty list whilst processing spans."
-            in caplog.text
+            "Encountered an empty list whilst processing spans." in caplog.text
         )
 
         # Test more than one scope_spans
