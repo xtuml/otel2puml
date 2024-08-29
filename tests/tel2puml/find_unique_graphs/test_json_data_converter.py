@@ -407,7 +407,7 @@ class TestProcessSpans:
         caplog.set_level(logging.WARNING)
         process_spans(json_config, sample_data)
         assert (
-            "WARNING - Encountered an empty list whilst processing spans."
+            "Encountered an empty list whilst processing spans."
             in caplog.text
         )
 
