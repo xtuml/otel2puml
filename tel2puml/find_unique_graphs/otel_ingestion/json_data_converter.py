@@ -252,45 +252,43 @@ def _handle_data_from_header(
     :param full_header_path: The full path given in the 'key_paths' config
     :type full_header_path: `str`
     """
+    # Note: To reach this function, '::' has to be specified in the
+    # full_header_path.
+
     # Remove the 'HEADER:' prefix from the full path
     clean_header_path = full_header_path.split("HEADER:", 1)[1]
 
-    if "::" not in clean_header_path:
-        # Resolves simple case
-        extracted_value = header_data[clean_header_path]
+    path_segments = clean_header_path.split("::")
+
+    # The last segment is the key we're searching for in the header_data
+    target_key = path_segments[-1]
+
+    # Update the header key to the key within 'value_paths' if a specific
+    # 'key_value' needs to be matched
+    if (
+        field_config.get("key_value")
+        and field_config["key_value"][config_index]
+    ):
+        header_key = _get_value_path(field_config, config_index)
     else:
-        # If a list is involvd, split segments
-        path_segments = clean_header_path.split("::")
+        header_key = initial_header_key
 
-        # The last segment is the key we're searching for in the header_data
-        target_key = path_segments[-1]
+    # Navigate through the nested structure of header_data
+    current_header_level = header_data
+    for segment in path_segments[:-1]:
+        current_header_level = current_header_level[segment]
 
-        # Update the header key to the key within 'value_paths' if a specific
-        # 'key_value' needs to be matched
-        if (
-            field_config.get("key_value")
-            and field_config["key_value"][config_index]
-        ):
-            header_key = _get_value_path(field_config, config_index)
-        else:
-            header_key = initial_header_key
-
-        # Navigate through the nested structure of header_data
-        current_header_level = header_data
-        for segment in path_segments[:-1]:
-            current_header_level = current_header_level[segment]
-
-        # Extract the value from header_data
-        if header_key == target_key:
-            extracted_value = current_header_level[header_key]
-        else:
-            extracted_value = _find_matching_header_value(
-                current_header_level,
-                target_key,
-                field_config,
-                config_index,
-                header_key,
-            )
+    # Extract the value from header_data
+    if header_key == target_key:
+        extracted_value = current_header_level[header_key]
+    else:
+        extracted_value = _find_matching_header_value(
+            current_header_level,
+            target_key,
+            field_config,
+            config_index,
+            header_key,
+        )
 
     # Get the value type from the field config
     value_type = _get_value_type(field_config)

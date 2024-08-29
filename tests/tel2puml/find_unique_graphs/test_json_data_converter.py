@@ -319,51 +319,12 @@ class TestProcessHeaderTags:
     def test_handle_data_from_header() -> None:
         """Tests for the function _handle_data_from_header"""
 
-        # Test simple case
-        header_dict = {"span_id": "001"}
-        field_config: FieldSpec = {
-            "key_paths": [
-                "HEADER:span_id",
-            ],
-            "value_type": "string",
-        }
-        result_dict: dict[str, Any] = {}
-        _handle_data_from_header(
-            target_field_name="job_name",
-            field_config=field_config,
-            config_index=0,
-            result_dict=result_dict,
-            header_data=header_dict,
-            initial_header_key=field_config["key_paths"][0].split("::")[-1],
-            full_header_path=field_config["key_paths"][0],
-        )
-        assert len(result_dict) == 1
-        assert result_dict["job_name"] == "001"
-
-        # Test nested dict case - dict is flattened before this function,
-        # hence "nested:span_id"
-        header_dict = {"nested:span_id": "001"}
-        field_config = {
-            "key_paths": [
-                "HEADER:nested:span_id",
-            ],
-            "value_type": "string",
-        }
-        result_dict = {}
-        _handle_data_from_header(
-            target_field_name="job_name",
-            field_config=field_config,
-            config_index=0,
-            result_dict=result_dict,
-            header_data=header_dict,
-            initial_header_key=field_config["key_paths"][0].split("::")[-1],
-            full_header_path=field_config["key_paths"][0],
-        )
-        assert len(result_dict) == 1
-        assert result_dict["job_name"] == "001"
+        # Simple cases such as key_paths = [key:nested_key] are not
+        # covered here as '::' is required in a key_path for this function
+        # to be reached.
 
         # Test multiple key_paths with nested values before and after list
-        field_config = {
+        field_config: FieldSpec = {
             "key_paths": [
                 "HEADER:resource:attributes::key:nested_key",
                 "HEADER:resource:attributes::key",
@@ -375,7 +336,7 @@ class TestProcessHeaderTags:
             ],
             "value_type": "string",
         }
-        result_dict = {}
+        result_dict: dict[str, Any] = {}
         header_dict = {
             "resource:attributes": flatdict.FlatterDict(
                 [
