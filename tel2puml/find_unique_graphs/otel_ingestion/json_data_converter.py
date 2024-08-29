@@ -854,7 +854,7 @@ def _get_key_value(field_spec: FieldSpec, index: int) -> str:
         key_value = key_values[index]
     except IndexError:
         raise IndexError(f"Index {index} is out of range for key_value.")
-    
+
     if not key_value:
         raise ValueError(f"key_value at index {index} should not return None.")
 
