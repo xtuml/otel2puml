@@ -357,7 +357,7 @@ class TestProcessHeaderTags:
         assert len(result_dict) == 1
         assert result_dict["job_name"] == "001"
 
-        # Test multiple key_paths with values after a list
+        # Test multiple key_paths with nested values before and after list
         field_config: FieldSpec = {
             "key_paths": [
                 "HEADER:resource:attributes::key:nested_key",

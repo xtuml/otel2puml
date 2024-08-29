@@ -573,13 +573,13 @@ def _get_value_type(field_config: FieldSpec) -> str:
 
     if not isinstance(value_type, str):
         raise TypeError(
-            f"value_type should be a string, got {type(value_type)} instead."
+            f"value_type should be a string, got '{type(value_type)}' instead."
         )
 
     if value_type not in expected_value_types:
         raise ValueError(
             "Supported value types include "
-            f"'{','.join(expected_value_types)}', got {value_type} instead."
+            f"'{','.join(expected_value_types)}', got '{value_type}' instead."
         )
     return value_type
 
