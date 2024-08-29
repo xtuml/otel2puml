@@ -176,11 +176,13 @@ def _handle_empty_segments(
             # check for case where key value is not specifed, indicating
             # that the path within key_paths is the full path and the value
             # at that path is what we want.
-            if not field_config.get("key_value") and flattened_data.get(
-                full_path
+            if (
+                not "key_value" in field_config
+                or not field_config["key_value"][index]
             ):
-                result[field_name] = flattened_data.get(full_path)
-                return
+                if flattened_data.get(full_path):
+                    result[field_name] = flattened_data.get(full_path)
+                    return
 
             # Check the cache to see if the value that we are looking for has
             # already been looped over and stored.
@@ -206,10 +208,10 @@ def _handle_empty_segments(
                 return
             _update_cache(cache_entry, flattened_data, full_path)
 
-        except (KeyError, TypeError, IndexError, ValueError):
+        except (KeyError, TypeError):
             # Keep a record of the count so that we don't have to iterate
             # through the tried keys again. We get KeyError and TypeErrors when
-            # we try accessing a key within the field config dictionary that 
+            # we try accessing a key within the field config dictionary that
             # doesn't exist.
             cache_entry["count"] += 1
         except Exception as e:
@@ -841,7 +843,7 @@ def _get_key_value(field_spec: FieldSpec, index: int) -> str:
     :param index: The index within the key_value list
     :type index: `int`
     :return: The value within the key_value list, or None
-    :rtype: `str`
+    :rtype: `str` | `None`
     """
     try:
         key_values = field_spec["key_value"]
@@ -851,10 +853,10 @@ def _get_key_value(field_spec: FieldSpec, index: int) -> str:
     try:
         key_value = key_values[index]
     except IndexError:
-        raise IndexError(f"Index {index} is out of range for key_value")
-
+        raise IndexError(f"Index {index} is out of range for key_value.")
+    
     if not key_value:
-        raise ValueError(f"key_value at index {index} is empty or None")
+        raise ValueError(f"key_value at index {index} should not return None.")
 
     return key_value
 

@@ -493,7 +493,7 @@ def test_add_or_append_value() -> None:
     # test incorrect value_type
     result = {}
     with pytest.raises(ValueError):
-        _add_or_append_value("span_id", "001", result, "invaid_type")
+        _add_or_append_value("span_id", "001", result, "invalid_type")
 
 
 def test_get_key_value() -> None:
@@ -518,6 +518,6 @@ def test_get_key_value() -> None:
     # Test with empty key_value
     field_spec = {"key_value": ["value1", None, "value3"]}
     with pytest.raises(
-        ValueError, match="key_value at index 1 is empty or None"
+        ValueError, match="key_value at index 1 should not return None."
     ):
         _get_key_value(field_spec, 1)
