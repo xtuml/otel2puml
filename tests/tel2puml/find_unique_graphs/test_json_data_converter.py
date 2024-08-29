@@ -448,16 +448,32 @@ class TestProcessHeaderTags:
 def test_get_value_type() -> None:
     """Tests the function _get_value_type"""
 
-    # Test with existing field
+    # Test with correct field
     field_config: FieldSpec = {
         "key_paths": ["span_id"],
         "value_type": "string",
     }
     assert _get_value_type(field_config) == "string"
 
-    # Test with non-existing field
+    # Test with non-existing value_type field
     field_config = {"key_paths": ["span_id"]}
     with pytest.raises(KeyError):
+        _get_value_type(field_config)
+
+    # Test with invalid type
+    field_config = {
+        "key_paths": ["span_id"],
+        "value_type": "invalid",
+    }
+    with pytest.raises(ValueError):
+        _get_value_type(field_config)
+
+    # Test with non string
+    field_config = {
+        "key_paths": ["span_id"],
+        "value_type": 111,
+    }
+    with pytest.raises(TypeError):
         _get_value_type(field_config)
 
 
@@ -497,11 +513,6 @@ def test_add_or_append_value() -> None:
     assert len(result) == 1
     assert result["name"] == "Frontend 1.0"
 
-    # test incorrect value_type
-    result = {}
-    with pytest.raises(ValueError):
-        _add_or_append_value("span_id", "001", result, "invalid_type")
-
 
 def test_get_key_value() -> None:
     """Tests the function _get_key_value"""
@@ -537,7 +548,7 @@ def test_get_value_path() -> None:
     field_spec: FieldSpec = {"value_paths": ["value1", "value2", "value3"]}
     assert _get_value_path(field_spec, 1) == "value2"
 
-    # Test with no key_value field
+    # Test with no value_paths field
     field_spec = {"key_paths": ["path1"]}
     with pytest.raises(KeyError, match="value_paths field not set."):
         _get_value_path(field_spec, 0)
@@ -549,7 +560,7 @@ def test_get_value_path() -> None:
     ):
         _get_value_path(field_spec, 5)
 
-    # Test with empty key_value
+    # Test with empty value_paths
     field_spec = {"value_paths": ["value1", None, "value3"]}
     with pytest.raises(
         ValueError, match="value_path at index 1 is empty or None."

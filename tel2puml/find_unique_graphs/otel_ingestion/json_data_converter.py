@@ -470,10 +470,9 @@ def _process_matching_data(
     """
     value_path = full_path.replace(key, _get_value_path(field_config, index))
     value_type = _get_value_type(field_config)
-    if value_type:
-        _add_or_append_value(
-            field_name, flattened_data[value_path], result, value_type
-        )
+    _add_or_append_value(
+        field_name, flattened_data[value_path], result, value_type
+    )
 
 
 def _update_cache(
@@ -561,10 +560,23 @@ def _get_value_type(field_config: FieldSpec) -> str:
     :return: The field type
     :rtype: `str`
     """
+    expected_value_types = ["unix_nano", "string"]
     try:
-        return field_config["value_type"]
+        value_type = field_config["value_type"]
     except KeyError:
         raise KeyError("Field config must include a 'value_type' section.")
+
+    if not isinstance(value_type, str):
+        raise TypeError(
+            f"value_type should be a string, got {type(value_type)} instead."
+        )
+
+    if value_type not in expected_value_types:
+        raise ValueError(
+            "Supported value types include "
+            f"'{','.join(expected_value_types)}', got {value_type} instead."
+        )
+    return value_type
 
 
 def _add_or_append_value(
@@ -583,9 +595,6 @@ def _add_or_append_value(
     :param value_type: The field type
     :type value_type: `str`
     """
-    if value_type not in ["unix_nano", "string"]:
-        raise ValueError("Unrecognised value_type")
-
     if value_type == "unix_nano":
         if not isinstance(value, int):
             raise TypeError(
