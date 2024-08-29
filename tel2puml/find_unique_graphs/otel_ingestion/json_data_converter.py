@@ -29,7 +29,7 @@ def _flatten_json_dict(
 
 def _map_data_to_json_schema(
     json_config: JSONDataSourceConfig,
-    flattened_data: Any,
+    flattened_data: flatdict.FlatterDict,
     config_key: Literal["field_mapping"],
     header_dict: dict[str, Any],
 ) -> dict[str, Any]:
@@ -40,7 +40,7 @@ def _map_data_to_json_schema(
     :param json_config: The mapping config pulled from the yaml config file
     :type json_config: :class:`JSONDataSourceConfig`
     :param flattened_data: JSON data as a flattened dictionary
-    :type flattened_data: `Any`
+    :type flattened_data: :class:`flatdict.FlatterDict`
     :param config_key: The key for the json config fields
     :type config_key: `Literal`["field_mapping"]
     :param header_dict: A dictionary of flattened json data containing header
@@ -68,7 +68,7 @@ def _map_data_to_json_schema(
 def _process_field(
     field_name: str,
     field_config: FieldSpec,
-    flattened_data: Any,
+    flattened_data: flatdict.FlatterDict,
     result: dict[str, Any],
     field_cache: dict[str, str],
     header_dict: dict[str, Any],
@@ -81,7 +81,7 @@ def _process_field(
     :param field_config: The config for the field name
     :type field_config: :class: `FieldSpec`
     :param flattened_data: JSON data as a flattened dictionary
-    :type flattened_data: `Any`
+    :type flattened_data: :class:`flatdict.FlatterDict`
     :param result: The mapped data
     :type result: `dict`[`str`, `Any`]
     :param field_cache: Cache for optimising field access and path generation
@@ -121,7 +121,7 @@ def _process_field(
 def _handle_empty_segments(
     field_name: str,
     field_config: FieldSpec,
-    flattened_data: Any,
+    flattened_data: flatdict.FlatterDict,
     index: int,
     result: dict[str, Any],
     field_cache: dict[str, str],
@@ -137,7 +137,7 @@ def _handle_empty_segments(
     :param field_config: The config for the field name
     :type field_config: `dict`[`str`,`Any`]
     :param flattened_data: JSON data as a flattened dictionary
-    :type flattened_data: `Any`
+    :type flattened_data: :class:`flatdict.FlatterDict`
     :param index: The index of the field config
     :type index: `int`
     :param result: The mapped data
@@ -425,14 +425,14 @@ def _get_cached_path(
 
 
 def _is_matching_data(
-    flattened_data: dict[str, str], full_path: str, value_to_check: str
+    flattened_data: flatdict.FlatterDict, full_path: str, value_to_check: str
 ) -> bool:
     """
     Function that checks if the data at the given path in flattened_data
     matches the value_to_check.
 
     :param flattened_data: The flattened JSON data to check
-    :type flattened_data: `dict`[`str`, `str`]
+    :type flattened_data: :class: `flatdict.FlatterDict`
     :param full_path: The path to check in the flattened data
     :type full_path: `str`
     :param value_to_check: The value to compare against the data at full_path
@@ -450,7 +450,7 @@ def _process_matching_data(
     field_name: str,
     field_config: FieldSpec,
     index: int,
-    flattened_data: dict[str, Any],
+    flattened_data: flatdict.FlatterDict,
     full_path: str,
     key: str,
     result: dict[str, Any],
@@ -465,7 +465,7 @@ def _process_matching_data(
     :param index: The index of the field config
     :type index: `int`
     :param flattened_data: JSON data as a flattened dictionary
-    :type flattened_data: `Any`
+    :type flattened_data: :class: `flatdict.FlatterDict`
     :param full_path: The original path containing placeholders
     :type full_path: `str`
     :param key: The key within the full path to replace
@@ -482,7 +482,7 @@ def _process_matching_data(
 
 def _update_cache(
     cache_entry: dict[str, Any],
-    flattened_data: dict[str, str],
+    flattened_data: flatdict.FlatterDict,
     full_path: str,
 ) -> None:
     """Function to update the cache.
@@ -490,7 +490,7 @@ def _update_cache(
     :param cache_entry: The current entry within the cache
     :type cache_entry: `dict`[str, `Any`]
     :param flattened_data: JSON data as a flattened dictionary
-    :type flattened_data: `Any`
+    :type flattened_data: :class:`flatdict.FlatterDict`
     :param full_path: The path to update within the cache
     :type full_path: `str`
     """
@@ -502,7 +502,7 @@ def _handle_regular_path(
     field_name: str,
     field_config: FieldSpec,
     full_path: str,
-    flattened_data: Any,
+    flattened_data: flatdict.FlatterDict,
     result: dict[str, Any],
     header_dict: dict[str, Any],
 ) -> None:
@@ -516,7 +516,7 @@ def _handle_regular_path(
     :param full_path: The key of the flattened data
     :type full_path: `str`
     :param flattened_data: JSON data as a flattened dictionary
-    :type flattened_data: `Any`
+    :type flattened_data: :class: `flatdict.FlatterDict`
     :param result: The mapped data
     :type result: `dict`[`str`, `Any`]
     :param header_dict: A dictionary of flattened json data containing header
