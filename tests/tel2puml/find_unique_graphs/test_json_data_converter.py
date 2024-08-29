@@ -314,10 +314,53 @@ class TestProcessHeaderTags:
     def test_handle_data_from_header() -> None:
         """Tests for the function _handle_data_from_header"""
 
-        field_name = "job_name"
+        # Test simple case
+        header_dict = {"span_id": "001"}
         field_config: FieldSpec = {
             "key_paths": [
-                "HEADER:resource:attributes::key",
+                "HEADER:span_id",
+            ],
+            "value_type": "string",
+        }
+        result_dict: dict[str, Any] = {}
+        _handle_data_from_header(
+            target_field_name="job_name",
+            field_config=field_config,
+            config_index=0,
+            result_dict=result_dict,
+            header_data=header_dict,
+            initial_header_key=field_config["key_paths"][0].split("::")[-1],
+            full_header_path=field_config["key_paths"][0],
+        )
+        assert len(result_dict) == 1
+        assert result_dict["job_name"] == "001"
+
+        # Test nested dict case - dict is flattened before this function,
+        # hence "nested:span_id"
+        header_dict = {"nested:span_id": "001"}
+        field_config: FieldSpec = {
+            "key_paths": [
+                "HEADER:nested:span_id",
+            ],
+            "value_type": "string",
+        }
+        result_dict: dict[str, Any] = {}
+        _handle_data_from_header(
+            target_field_name="job_name",
+            field_config=field_config,
+            config_index=0,
+            result_dict=result_dict,
+            header_data=header_dict,
+            initial_header_key=field_config["key_paths"][0].split("::")[-1],
+            full_header_path=field_config["key_paths"][0],
+        )
+        assert len(result_dict) == 1
+        assert result_dict["job_name"] == "001"
+
+        # Test multiple key_paths with values after a list
+        field_config: FieldSpec = {
+            "key_paths": [
+                "HEADER:resource:attributes::key:nested_key",
                 "HEADER:resource:attributes::key",
             ],
             "key_value": ["service.name", "service.version"],
@@ -327,12 +370,12 @@ class TestProcessHeaderTags:
             ],
             "value_type": "string",
         }
-        result_dict: dict[str, Any] = {}
+        result_dict = {}
         header_dict = {
             "resource:attributes": flatdict.FlatterDict(
                 [
                     {
-                        "key": "service.name",
+                        "key": {"nested_key": "service.name"},
                         "value": {"Value": {"StringValue": "Frontend"}},
                     },
                     {
@@ -342,11 +385,10 @@ class TestProcessHeaderTags:
                 ]
             )
         }
-
         for index in range(2):
             _handle_data_from_header(
-                field_name,
-                field_config,
+                target_field_name="job_name",
+                field_config=field_config,
                 config_index=index,
                 result_dict=result_dict,
                 header_data=header_dict,
