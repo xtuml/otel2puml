@@ -1,3 +1,5 @@
+"""Module to transform input JSON to a format that can be used to find unique
+graphs."""
 from typing import Any
 
 import jq
@@ -8,7 +10,15 @@ from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
 
 
 class JQVariableTree:
+    """Class to represent a tree of variables for use in jq queries.
+
+    :param var_num: The number of the variable, defaults to 0
+    :type var_num: `int`, optional
+    :param var_prefix: The prefix for the variable, defaults to "var"
+    :type var_prefix: `str`, optional
+    """
     def __init__(self, var_num: int = 0, var_prefix: str = "var") -> None:
+        """Constructor method."""
         self.var_num: int = var_num
         self.child_var_dict: dict[str, JQVariableTree] = {}
         self.var_prefix: str = var_prefix
@@ -16,6 +26,16 @@ class JQVariableTree:
     def get_variable(
         self, key_path: str, var_num: int
     ) -> tuple["JQVariableTree", int]:
+        """Get the variable tree for the given key path.
+
+        :param key_path: The key path to get the variable tree for
+        :type key_path: `str`
+        :param var_num: The current variable number
+        :type var_num: `int`
+        :return: The variable tree for the given key path and the updated
+        variable number
+        :rtype: `tuple`[:class:`JQVariableTree`, `int`]
+        """
         if key_path not in self.child_var_dict:
             var_num += 1
             self.child_var_dict[key_path] = JQVariableTree(
@@ -24,6 +44,7 @@ class JQVariableTree:
         return self.child_var_dict[key_path], var_num
 
     def __str__(self) -> str:
+        """Return the string representation of the variable tree."""
         return f"${self.var_prefix}{self.var_num}"
 
 
@@ -33,6 +54,21 @@ def get_updated_path_from_key_path_key_value_and_root_var_tree(
     root_var_tree: JQVariableTree,
     var_num: int,
 ) -> tuple[str, int]:
+    """Get the updated path from the key path, key value, and root variable
+    tree.
+
+    :param key_path: The key path
+    :type key_path: `str`
+    :param key_value: The key value
+    :type key_value: `str` | `None`
+    :param root_var_tree: The root variable tree
+    :type root_var_tree: :class:`JQVariableTree`
+    :param var_num: The current variable number
+    :type var_num: `int`
+    :return: The updated path and the updated variable number
+    :rtype: `tuple`[:class:`str`, `int`]
+    """
+
     split_on_array = key_path.split(".[].")
     if len(split_on_array) == 1 and key_value is not None:
         raise ValueError(
@@ -67,6 +103,17 @@ def get_updated_path_from_key_path_key_value_and_root_var_tree(
 def update_field_spec_with_variables(
     field_spec: FieldSpec, root_var_tree: JQVariableTree, var_num: int = 0
 ) -> int:
+    """Update the field spec with variables.
+
+    :param field_spec: The field spec to update
+    :type field_spec: :class:`FieldSpec`
+    :param root_var_tree: The root variable tree
+    :type root_var_tree: :class:`JQVariableTree`
+    :param var_num: The current variable number, defaults to 0
+    :type var_num: `int`, optional
+    :return: The updated variable number
+    :rtype: `int`
+    """
     updated_key_paths: list[str] = []
     for key_path, key_value in zip(
         field_spec["key_paths"],
@@ -89,6 +136,13 @@ def update_field_spec_with_variables(
 def update_field_specs_with_variables(
     field_mapping: dict[str, FieldSpec],
 ) -> JQVariableTree:
+    """Update the field specs with variables.
+
+    :param field_mapping: The field mapping to update
+    :type field_mapping: `dict`[:class:`str`, :class:`FieldSpec`]
+    :return: The root variable tree
+    :rtype: :class:`JQVariableTree`
+    """
     root_var_tree = JQVariableTree()
     var_num = 0
     for field_spec in field_mapping.values():
@@ -103,6 +157,17 @@ def build_base_variable_jq_query(
     parent_var_tree: JQVariableTree | None = None,
     path: str = "",
 ) -> str:
+    """Build the base variable jq query.
+
+    :param var_tree: The variable tree
+    :type var_tree: :class:`JQVariable`
+    :param parent_var_tree: The parent variable tree, defaults to None
+    :type parent_var_tree: :class:`JQVariableTree` | None, optional
+    :param path: The path, defaults to ""
+    :type path: `str`, optional
+    :return: The base variable jq query
+    :rtype: `str`
+    """
     if parent_var_tree is None:
         jq_query = ". as " + str(var_tree)
     else:
@@ -117,6 +182,15 @@ def build_base_variable_jq_query(
 
 
 def get_jq_for_field_spec(field_spec: FieldSpec, out_var: str) -> str:
+    """Get the jq query for the field spec.
+
+    :param field_spec: The field spec
+    :type field_spec: :class:`FieldSpec`
+    :param out_var: The output variable
+    :type out_var: `str`
+    :return: The jq query
+    :rtype: `str`
+    """
     jq_query = ""
     variables: list[str] = []
     for i, key_path, key_value, value_path in zip(
@@ -166,6 +240,13 @@ def get_jq_for_field_spec(field_spec: FieldSpec, out_var: str) -> str:
 
 
 def get_jq_using_field_mapping(field_mapping: dict[str, FieldSpec]) -> str:
+    """Get the jq query using the field mapping.
+
+    :param field_mapping: The field mapping
+    :type field_mapping: `dict`[:class:`str`, :class:`FieldSpec`]
+    :return: The jq query
+    :rtype: `str`
+    """
     jq_query = ""
     var_num = 0
     map_to_var: dict[str, str] = {}
@@ -188,12 +269,29 @@ def get_jq_query_from_field_mapping_with_variables_and_var_tree(
     field_mapping: dict[str, FieldSpec],
     var_tree: JQVariableTree,
 ) -> str:
+    """Get the jq query from the field mapping with variables and variable
+    tree.
+
+    :param field_mapping: The field mapping
+    :type field_mapping: `dict`[:class:`str`, :class:`FieldSpec`]
+    :param var_tree: The variable tree
+    :type var_tree: :class:`JQVariable`
+    :return: The jq query
+    :rtype: `str`
+    """
     jq_query = build_base_variable_jq_query(var_tree)
     jq_query += get_jq_using_field_mapping(field_mapping)
     return f"[{jq_query}]"
 
 
 def field_mapping_to_jq_query(field_mapping: dict[str, FieldSpec]) -> str:
+    """Convert the field mapping to a jq query.
+
+    :param field_mapping: The field mapping
+    :type field_mapping: `dict`[:class:`str`, :class:`FieldSpec`]
+    :return: The jq query
+    :rtype: `str`
+    """
     var_tree = update_field_specs_with_variables(field_mapping)
     return get_jq_query_from_field_mapping_with_variables_and_var_tree(
         field_mapping, var_tree
@@ -201,5 +299,12 @@ def field_mapping_to_jq_query(field_mapping: dict[str, FieldSpec]) -> str:
 
 
 def field_mapping_to_compiled_jq(field_mapping: dict[str, FieldSpec]) -> Any:
+    """Convert the field mapping to a compiled jq query.
+
+    :param field_mapping: The field mapping
+    :type field_mapping: `dict`[:class:`str`, :class:`FieldSpec`]
+    :return: The compiled jq query
+    :rtype: `Any`
+    """
     jq_query = field_mapping_to_jq_query(field_mapping)
     return jq.compile(jq_query)

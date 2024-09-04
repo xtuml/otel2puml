@@ -2,7 +2,6 @@ import pytest
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     FieldSpec,
-    JSONDataSourceConfig,
 )
 from tel2puml.find_unique_graphs.otel_ingestion.json_jq_converter import (
     JQVariableTree,
@@ -11,6 +10,7 @@ from tel2puml.find_unique_graphs.otel_ingestion.json_jq_converter import (
 
 @pytest.fixture
 def field_spec_1() -> FieldSpec:
+    """Fixture for FieldSpec object."""
     return FieldSpec(
         key_paths=[
             "first.[].second_1.second_2.[].third_1.third_2",
@@ -23,6 +23,7 @@ def field_spec_1() -> FieldSpec:
 
 @pytest.fixture
 def field_spec_2() -> FieldSpec:
+    """Fixture for FieldSpec object."""
     return FieldSpec(
         key_paths=["first.second.third", "first.second.third"],
         key_value=[None, None],
@@ -31,6 +32,7 @@ def field_spec_2() -> FieldSpec:
 
 @pytest.fixture
 def field_spec_3() -> FieldSpec:
+    """Fixture for FieldSpec object."""
     return FieldSpec(
         key_paths=[
             "fourth.[].fifth",
@@ -44,6 +46,7 @@ def field_spec_3() -> FieldSpec:
 def field_mapping(
     field_spec_1: FieldSpec, field_spec_2: FieldSpec, field_spec_3: FieldSpec
 ) -> dict[str, FieldSpec]:
+    """Fixture for field mapping using previous fiedl specs"""
     return {
         "field_1": field_spec_1,
         "field_2": field_spec_2,
@@ -53,6 +56,7 @@ def field_mapping(
 
 @pytest.fixture
 def field_spec_with_variables_1() -> FieldSpec:
+    """Fixture for 1st FieldSpec object with variables added"""
     return FieldSpec(
         key_paths=[
             "$var1.second_1.second_2.[].third_1.third_2",
@@ -65,6 +69,7 @@ def field_spec_with_variables_1() -> FieldSpec:
 
 @pytest.fixture
 def field_spec_with_variables_2() -> FieldSpec:
+    """Fixture for 2nd FieldSpec object with variables added"""
     return FieldSpec(
         key_paths=["$var0.first.second.third", "$var0.first.second.third"],
         key_value=[None, None],
@@ -73,6 +78,7 @@ def field_spec_with_variables_2() -> FieldSpec:
 
 @pytest.fixture
 def field_spec_with_variables_3() -> FieldSpec:
+    """Fixture for 3rd FieldSpec object with variables added"""
     return FieldSpec(
         key_paths=[
             "$var3.fifth",
@@ -88,6 +94,8 @@ def field_mapping_with_variables(
     field_spec_with_variables_2: FieldSpec,
     field_spec_with_variables_3: FieldSpec,
 ) -> dict[str, FieldSpec]:
+    """Fixture for field mapping using previous field specs with variables
+    added"""
     return {
         "field_1": field_spec_with_variables_1,
         "field_2": field_spec_with_variables_2,
@@ -97,6 +105,7 @@ def field_mapping_with_variables(
 
 @pytest.fixture
 def field_spec_with_variables_1_expected_jq() -> str:
+    """Expected JQ query for field_spec_with_variables_1"""
     return (
         ' | ($var1.second_1.second_2.[] | select(.third_1.third_2 == "value"))'
         '.value_path.next as'
@@ -109,6 +118,7 @@ def field_spec_with_variables_1_expected_jq() -> str:
 
 @pytest.fixture
 def field_spec_with_variables_2_expected_jq() -> str:
+    """Expected JQ query for field_spec_with_variables_2"""
     return (
         " | $var0.first.second.third as $out1concat0"
         " | $var0.first.second.third as $out1concat1"
@@ -119,6 +129,7 @@ def field_spec_with_variables_2_expected_jq() -> str:
 
 @pytest.fixture
 def field_spec_with_variables_3_expected_jq() -> str:
+    """Expected JQ query for field_spec_with_variables_3"""
     return (
         " | $var3.fifth as $out2concat0"
         " | $var3.fifth as $out2concat1"
@@ -129,6 +140,7 @@ def field_spec_with_variables_3_expected_jq() -> str:
 
 @pytest.fixture
 def var_tree() -> JQVariableTree:
+    """Fixture for JQVariableTree object"""
     root_var_tree = JQVariableTree()
     var_num = 0
     first_child, var_num = root_var_tree.get_variable("first", var_num)
@@ -143,6 +155,7 @@ def expected_field_mapping_query(
     field_spec_with_variables_2_expected_jq: str,
     field_spec_with_variables_3_expected_jq: str,
 ) -> str:
+    """Expected JQ query for field mapping"""
     return (
         f"{field_spec_with_variables_1_expected_jq}"
         f"{field_spec_with_variables_2_expected_jq}"
@@ -158,6 +171,7 @@ def expected_field_mapping_query(
 def expected_full_query(
     expected_field_mapping_query: str,
 ) -> str:
+    """Expected full JQ query"""
     return (
         "["
         + ". as $var0 | $var0.first.[] as $var1 | $var1.second_1.second_2.[] "
@@ -168,21 +182,9 @@ def expected_full_query(
 
 
 @pytest.fixture
-def config_with_jq_type_field_mapping(
-    field_mapping: dict[str, FieldSpec],
-) -> JSONDataSourceConfig:
-    return JSONDataSourceConfig(
-        filepath="file_path",
-        dirpath="dir_path",
-        data_location="data_location",
-        header={},
-        span_mapping={},
-        field_mapping=field_mapping,
-    )
-
-
-@pytest.fixture
 def field_mapping_for_fixture_data() -> dict[str, FieldSpec]:
+    """Fixture for field mapping using previous field specs with variables
+    added"""
     return {
         "field_1": FieldSpec(
             key_paths=[
@@ -211,6 +213,7 @@ def field_mapping_for_fixture_data() -> dict[str, FieldSpec]:
 
 @pytest.fixture
 def expected_mapped_json() -> list[dict[str, str]]:
+    """Expected mapped JSON data"""
     return [
         {
             "field_1": "Frontend_TestJob",

@@ -1,3 +1,4 @@
+"""Tests for the json_jq_converter module."""
 from typing import Any
 import pytest
 
@@ -19,8 +20,10 @@ from tel2puml.find_unique_graphs.otel_ingestion.json_jq_converter import (
 
 
 class TestJQVariableTree:
+    """Tests for the JQVariableTree class."""
     @staticmethod
     def test__init__() -> None:
+        """Test the __init__ method of the JQVariableTree class."""
         # test with defaults
         var_tree = JQVariableTree()
         assert var_tree.var_num == 0
@@ -34,6 +37,7 @@ class TestJQVariableTree:
 
     @staticmethod
     def test_get_variable() -> None:
+        """Test the get_variable method of the JQVariableTree class."""
         var_tree = JQVariableTree(var_num=0, var_prefix="test")
         # test case with no children
         first_child, var_num = var_tree.get_variable("first", 0)
@@ -62,6 +66,7 @@ class TestJQVariableTree:
 
     @staticmethod
     def test__str__() -> None:
+        """Test the __str__ method of the JQVariableTree class."""
         var_tree = JQVariableTree(var_num=0, var_prefix="test")
         assert str(var_tree) == "$test0"
         var_tree = JQVariableTree(var_num=1, var_prefix="variable")
@@ -69,10 +74,13 @@ class TestJQVariableTree:
 
 
 class TestFieldMappingToCompiledJQ:
+    """Tests for the field_mapping_to_compiled_jq function and related
+    functions."""
     @staticmethod
     def check_first_child(
         first_child: JQVariableTree, second_child=False
     ) -> None:
+        """Check the first child of the root variable tree and its children."""
         assert first_child.var_num == 1
         if second_child:
             assert len(first_child.child_var_dict) == 1
@@ -88,6 +96,7 @@ class TestFieldMappingToCompiledJQ:
         root_var_tree: JQVariableTree,
         second_child=False,
     ) -> None:
+        """Check the root variable tree and its children."""
         assert len(root_var_tree.child_var_dict) == 1
         assert "first" in root_var_tree.child_var_dict
         first_child = root_var_tree.child_var_dict["first"]
@@ -96,11 +105,15 @@ class TestFieldMappingToCompiledJQ:
     def check_root_var_tree_for_no_arrays(
         self, root_var_tree: JQVariableTree
     ) -> None:
+        """Check the root variable tree and its children when there are no
+        arrays in the key path."""
         assert len(root_var_tree.child_var_dict) == 0
 
     def test_get_updated_path_from_key_path_key_value_and_root_var_tree(
         self,
     ) -> None:
+        """Test the get_updated_path_from_key_path_key_value_and_root_var_tree
+        function."""
         root_var_tree = JQVariableTree()
         # test case with key value
         key_path = "first.[].second_1.second_2.[].third_1.third_2"
@@ -150,6 +163,7 @@ class TestFieldMappingToCompiledJQ:
     def test_update_field_spec_with_variables(
         self, field_spec_1: FieldSpec, field_spec_2: FieldSpec
     ) -> None:
+        """Test the update_field_spec_with_variables function."""
         field_spec = field_spec_1
         root_var_tree = JQVariableTree()
         var_num = update_field_spec_with_variables(field_spec, root_var_tree)
@@ -174,6 +188,7 @@ class TestFieldMappingToCompiledJQ:
         field_mapping: dict[str, FieldSpec],
         field_mapping_with_variables: dict[str, FieldSpec],
     ) -> None:
+        """Test the update_field_specs_with_variables function."""
         root_var_tree = update_field_specs_with_variables(field_mapping)
         assert len(field_mapping) == 3
         assert len(root_var_tree.child_var_dict) == 2
@@ -187,6 +202,7 @@ class TestFieldMappingToCompiledJQ:
 
     @staticmethod
     def test_build_base_variable_jq_query() -> None:
+        """Test the build_base_variable_jq_query function."""
         # test root var with no children
         for path in ["", "first", "first.second"]:
             root_var_tree = JQVariableTree()
@@ -239,6 +255,7 @@ class TestFieldMappingToCompiledJQ:
         field_spec_with_variables_1_expected_jq: str,
         field_spec_with_variables_2_expected_jq: str,
     ) -> None:
+        """Test the get_jq_for_field_spec function."""
         field_spec = field_spec_with_variables_1
         assert get_jq_for_field_spec(field_spec, "$out0") == (
             field_spec_with_variables_1_expected_jq
@@ -289,6 +306,7 @@ class TestFieldMappingToCompiledJQ:
         field_mapping_with_variables: dict[str, FieldSpec],
         expected_field_mapping_query: str,
     ) -> None:
+        """Test the get_jq_using_field_mapping function."""
         field_mapping = field_mapping_with_variables
         assert get_jq_using_field_mapping(field_mapping) == (
             expected_field_mapping_query
@@ -300,6 +318,8 @@ class TestFieldMappingToCompiledJQ:
         var_tree: JQVariableTree,
         expected_full_query: str,
     ) -> None:
+        """Test the get_jq_query_from_field_mapping_with_variables_and_var_tree
+        function."""
         jq_query = get_jq_query_from_field_mapping_with_variables_and_var_tree(
             field_mapping_with_variables, var_tree
         )
@@ -310,6 +330,7 @@ class TestFieldMappingToCompiledJQ:
         field_mapping: dict[str, FieldSpec],
         expected_full_query: str,
     ) -> None:
+        """Test the field_mapping_to_jq_query function."""
         jq_query = field_mapping_to_jq_query(field_mapping)
         assert jq_query == (expected_full_query)
 
@@ -319,6 +340,7 @@ class TestFieldMappingToCompiledJQ:
         mock_json_data: dict[str, Any],
         expected_mapped_json: list[dict[str, str]],
     ) -> None:
+        """Test the field_mapping_to_compiled_jq function."""
         compiled_jq = field_mapping_to_compiled_jq(
             field_mapping_for_fixture_data
         )
