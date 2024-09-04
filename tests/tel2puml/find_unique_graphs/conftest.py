@@ -327,7 +327,7 @@ def mock_json_data() -> dict[str, Any]:
                                 "scope": {"name": "cds-NgdScW"},
                             },
                         ],
-                    },
+                    }
                 ],
             },
             {
