@@ -223,16 +223,6 @@ def expected_mapped_json() -> list[dict[str, str]]:
             "field_3": "1723544132228288000",
         },
         {
-            "field_1": "Frontend_TestJob-scope2",
-            "field_2": "jCWhAvRzcM_500",
-            "field_3": "1723544132228102912",
-        },
-        {
-            "field_1": "Frontend_TestJob-scope2",
-            "field_2": "cVh8nOperation_401",
-            "field_3": "1723544132228288000",
-        },
-        {
             "field_1": "Backend_TestJob",
             "field_2": "2lAmnOperation_201",
             "field_3": "1723544154817766912",
