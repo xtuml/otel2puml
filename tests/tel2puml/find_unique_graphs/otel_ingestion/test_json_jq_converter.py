@@ -18,25 +18,68 @@ from tel2puml.find_unique_graphs.otel_ingestion.json_jq_converter import (
 )
 
 
-class TestUpdateFieldSpecWithVariables:
+class TestJQVariableTree:
+    @staticmethod
+    def test__init__() -> None:
+        # test with defaults
+        var_tree = JQVariableTree()
+        assert var_tree.var_num == 0
+        assert var_tree.var_prefix == "var"
+        assert len(var_tree.child_var_dict) == 0
+        # test with custom values
+        var_tree = JQVariableTree(var_num=1, var_prefix="variable")
+        assert var_tree.var_num == 1
+        assert var_tree.var_prefix == "variable"
+        assert len(var_tree.child_var_dict) == 0
+
+    @staticmethod
+    def test_get_variable() -> None:
+        var_tree = JQVariableTree(var_num=0, var_prefix="test")
+        # test case with no children
+        first_child, var_num = var_tree.get_variable("first", 0)
+        assert first_child.var_num == 1
+        assert first_child.var_prefix == "test"
+        assert var_num == 1
+        assert len(var_tree.child_var_dict) == 1
+        assert "first" in var_tree.child_var_dict
+        assert first_child.child_var_dict == {}
+        # test case when key path already exists
+        first_child_again, var_num = var_tree.get_variable("first", 2)
+        assert first_child_again == first_child
+        assert var_num == 2
+        assert first_child.child_var_dict == {}
+        # test case with another child
+        second_child, var_num = var_tree.get_variable("second", 3)
+        assert second_child.var_num == 4
+        assert second_child.var_prefix == "test"
+        assert var_num == 4
+        assert len(var_tree.child_var_dict) == 2
+        assert (
+            "second" in var_tree.child_var_dict
+            and "first" in var_tree.child_var_dict
+        )
+        assert second_child.child_var_dict == {}
+
+    @staticmethod
+    def test__str__() -> None:
+        var_tree = JQVariableTree(var_num=0, var_prefix="test")
+        assert str(var_tree) == "$test0"
+        var_tree = JQVariableTree(var_num=1, var_prefix="variable")
+        assert str(var_tree) == "$variable1"
+
+
+class TestFieldMappingToCompiledJQ:
     @staticmethod
     def check_first_child(
-        first_child: JQVariableTree, second_child=False, third_child=False
-    ):
+        first_child: JQVariableTree, second_child=False
+    ) -> None:
         assert first_child.var_num == 1
         if second_child:
             assert len(first_child.child_var_dict) == 1
             assert "second_1.second_2" in first_child.child_var_dict
             second_child = first_child.child_var_dict["second_1.second_2"]
             assert second_child.var_num == 2
-            if third_child:
-                assert len(second_child.child_var_dict) == 1
-                assert "third_1.third_2" in second_child.child_var_dict
-                third_child = second_child.child_var_dict["third_1.third_2"]
-                assert third_child.var_num == 3
-                assert len(third_child.child_var_dict) == 0
-            else:
-                assert len(second_child.child_var_dict) == 0
+            assert len(second_child.child_var_dict) == 0
         else:
             assert len(first_child.child_var_dict) == 0
 
@@ -44,14 +87,11 @@ class TestUpdateFieldSpecWithVariables:
         self,
         root_var_tree: JQVariableTree,
         second_child=False,
-        third_child=False,
     ) -> None:
         assert len(root_var_tree.child_var_dict) == 1
         assert "first" in root_var_tree.child_var_dict
         first_child = root_var_tree.child_var_dict["first"]
-        self.check_first_child(
-            first_child, second_child=second_child, third_child=third_child
-        )
+        self.check_first_child(first_child, second_child=second_child)
 
     def check_root_var_tree_for_no_arrays(
         self, root_var_tree: JQVariableTree

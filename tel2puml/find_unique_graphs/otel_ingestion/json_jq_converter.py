@@ -26,9 +26,6 @@ class JQVariableTree:
     def __str__(self) -> str:
         return f"${self.var_prefix}{self.var_num}"
 
-    def __repr__(self) -> str:
-        return f"JQVariableTree({self.var_num}, {self.var_prefix})"
-
 
 def get_updated_path_from_key_path_key_value_and_root_var_tree(
     key_path: str,
