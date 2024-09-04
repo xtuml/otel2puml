@@ -36,7 +36,7 @@
                 :put each event in a group of its own;
                 :Input ->\nlist of groups;
                 if (check if async flag is set) then (true) 
-                    :Call "sequence_list_of_otel_events_asynchronously"|
+                    :Call "sequence_groups_of_otel_events_asynchronously"|
                 else (false)
                     :call "order_groups_by_start_timestamp"|
                 endif
@@ -55,7 +55,7 @@
         end
         start
         :Input ->\nlist of list of OTelEvents;
-        group "sequence_list_of_otel_events_asynchronously"
+        group "sequence_groups_of_otel_events_asynchronously"
             :Input ->\nlist of list of OTelEvents;
             :call "order_groups_by_start_timestamp"|
             :create empty list of groups and add first group;
