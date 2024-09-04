@@ -1,3 +1,4 @@
+"""Configuration for tests in otel_ingestion module."""
 import pytest
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
@@ -18,6 +19,7 @@ def field_spec_1() -> FieldSpec:
         ],
         key_value=["value", None],
         value_paths=["value_path.next", None],
+        value_type="string",
     )
 
 
@@ -27,6 +29,8 @@ def field_spec_2() -> FieldSpec:
     return FieldSpec(
         key_paths=["first.second.third", "first.second.third"],
         key_value=[None, None],
+        value_paths=[None, None],
+        value_type="string",
     )
 
 
@@ -39,6 +43,8 @@ def field_spec_3() -> FieldSpec:
             "fourth.[].fifth",
         ],
         key_value=[None, None],
+        value_paths=[None, None],
+        value_type="string",
     )
 
 
@@ -64,6 +70,7 @@ def field_spec_with_variables_1() -> FieldSpec:
         ],
         key_value=["value", None],
         value_paths=["value_path.next", None],
+        value_type="string",
     )
 
 
@@ -73,6 +80,8 @@ def field_spec_with_variables_2() -> FieldSpec:
     return FieldSpec(
         key_paths=["$var0.first.second.third", "$var0.first.second.third"],
         key_value=[None, None],
+        value_paths=[None, None],
+        value_type="string",
     )
 
 
@@ -85,6 +94,8 @@ def field_spec_with_variables_3() -> FieldSpec:
             "$var3.fifth",
         ],
         key_value=[None, None],
+        value_paths=[None, None],
+        value_type="string",
     )
 
 
@@ -193,6 +204,7 @@ def field_mapping_for_fixture_data() -> dict[str, FieldSpec]:
             ],
             key_value=["service.name", None],
             value_paths=["value.Value.StringValue", None],
+            value_type="string",
         ),
         "field_2": FieldSpec(
             key_paths=[
@@ -201,12 +213,16 @@ def field_mapping_for_fixture_data() -> dict[str, FieldSpec]:
             ],
             key_value=["coral.operation", "http.status_code"],
             value_paths=["value.Value.StringValue", "value.Value.IntValue"],
+            value_type="string",
         ),
         "field_3": FieldSpec(
             key_paths=[
                 "resource_spans.[].scope_spans.[].spans.[]."
                 "start_time_unix_nano",
             ],
+            key_value=None,
+            value_paths=None,
+            value_type="string",
         ),
     }
 

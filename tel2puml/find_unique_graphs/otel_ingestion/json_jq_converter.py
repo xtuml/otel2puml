@@ -2,7 +2,7 @@
 graphs."""
 from typing import Any
 
-import jq
+import jq  # type: ignore[import-not-found]
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     FieldSpec,
@@ -119,7 +119,7 @@ def update_field_spec_with_variables(
         field_spec["key_paths"],
         (
             field_spec["key_value"]
-            if "key_value" in field_spec
+            if field_spec["key_value"] is not None
             else [None] * len(field_spec["key_paths"])
         ),
     ):
@@ -198,12 +198,12 @@ def get_jq_for_field_spec(field_spec: FieldSpec, out_var: str) -> str:
         field_spec["key_paths"],
         (
             field_spec["key_value"]
-            if "key_value" in field_spec
+            if field_spec["key_value"] is not None
             else [None] * len(field_spec["key_paths"])
         ),
         (
             field_spec["value_paths"]
-            if "value_paths" in field_spec
+            if field_spec["value_paths"] is not None
             else [None] * len(field_spec["key_paths"])
         ),
     ):

@@ -78,23 +78,23 @@ class TestFieldMappingToCompiledJQ:
     functions."""
     @staticmethod
     def check_first_child(
-        first_child: JQVariableTree, second_child=False
+        first_child: JQVariableTree, second_child: bool = False
     ) -> None:
         """Check the first child of the root variable tree and its children."""
         assert first_child.var_num == 1
         if second_child:
             assert len(first_child.child_var_dict) == 1
             assert "second_1.second_2" in first_child.child_var_dict
-            second_child = first_child.child_var_dict["second_1.second_2"]
-            assert second_child.var_num == 2
-            assert len(second_child.child_var_dict) == 0
+            second_child_var = first_child.child_var_dict["second_1.second_2"]
+            assert second_child_var.var_num == 2
+            assert len(second_child_var.child_var_dict) == 0
         else:
             assert len(first_child.child_var_dict) == 0
 
     def check_root_var_tree(
         self,
         root_var_tree: JQVariableTree,
-        second_child=False,
+        second_child: bool = False,
     ) -> None:
         """Check the root variable tree and its children."""
         assert len(root_var_tree.child_var_dict) == 1
@@ -269,6 +269,7 @@ class TestFieldMappingToCompiledJQ:
             key_paths=["first.[].second.third", "first.second.third"],
             key_value=["value", None],
             value_paths=["value_path.next", None],
+            value_type="string",
         )
         with pytest.raises(ValueError):
             get_jq_for_field_spec(field_spec, "$out0")
@@ -281,6 +282,7 @@ class TestFieldMappingToCompiledJQ:
             ],
             key_value=["value", None],
             value_paths=["value_path.next", None],
+            value_type="string",
         )
         with pytest.raises(ValueError):
             get_jq_for_field_spec(field_spec, "$out0")
@@ -289,6 +291,7 @@ class TestFieldMappingToCompiledJQ:
             key_paths=["first.second.third", "first.second.third"],
             key_value=["value", None],
             value_paths=["value_path.next", None],
+            value_type="string",
         )
         with pytest.raises(ValueError):
             get_jq_for_field_spec(field_spec, "$out0")
@@ -297,6 +300,7 @@ class TestFieldMappingToCompiledJQ:
             key_paths=["first.[].second.[].third", "first.[].second.third"],
             key_value=["value", None],
             value_paths=["value_path.next", None],
+            value_type="string",
         )
         with pytest.raises(ValueError):
             get_jq_for_field_spec(field_spec, "$out0")
