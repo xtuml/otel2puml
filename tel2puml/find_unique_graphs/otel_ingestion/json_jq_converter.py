@@ -1,10 +1,8 @@
-import re
 from typing import Any
 
 import jq
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
-    JSONDataSourceConfig,
     FieldSpec,
 )
 
@@ -30,68 +28,6 @@ class JQVariableTree:
 
     def __repr__(self) -> str:
         return f"JQVariableTree({self.var_num}, {self.var_prefix})"
-
-
-def convert_config_to_jq_path(config_path: str) -> str:
-    """Converts a config path to a jq path."""
-    return re.sub(r":", r".", re.sub(r"::", r".[].", config_path))
-
-
-def add_trailing_colons(value: str) -> str:
-    if not value.endswith("::"):
-        if value.endswith(":"):
-            return value
-        return value + ":"
-    return value
-
-
-def get_data_location(config: JSONDataSourceConfig) -> str:
-    """Returns the data location from the JSONDataSourceConfig."""
-    value = config["data_location"]
-    if value is None:
-        raise ValueError("data_location is not defined in the config.")
-    if not isinstance(value, str):
-        raise ValueError("data_location must be a string.")
-    if not value:
-        raise ValueError("data_location must not be empty.")
-    return add_trailing_colons(value)
-
-
-def get_spans_path(
-    data_location: str, config: JSONDataSourceConfig
-) -> list[str]:
-    return data_location + config["span_mapping"]["key_paths"][0] + "::"
-
-
-def update_config_field_paths(
-    data_location: str, spans_path: str, config: JSONDataSourceConfig
-) -> None:
-    field_mapping = config["field_mapping"]
-    for field_spec in field_mapping.values():
-        updated_key_paths: list[str] = []
-        updated_value_paths: list[str | None] = []
-        for key_path in field_spec["key_paths"]:
-            if "HEADER:" in key_path:
-                new_key_path = data_location + key_path.replace("HEADER:", "")
-            else:
-                new_key_path = spans_path + key_path
-            updated_key_paths.append(convert_config_to_jq_path(new_key_path))
-        field_spec["key_paths"] = updated_key_paths
-        if field_spec["value_paths"] is not None:
-            for value_path in field_spec["value_paths"]:
-                if value_path is not None:
-                    value_path = value_path.replace(":", ".")
-                updated_value_paths.append(value_path)
-
-
-def update_config_with_variables(
-    config: JSONDataSourceConfig,
-) -> JSONDataSourceConfig:
-    updated_config = config.copy()
-    data_location = get_data_location(config)
-    spans_path = get_spans_path(data_location, config)
-    update_config_field_paths(data_location, spans_path, config)
-    return updated_config
 
 
 def get_updated_path_from_key_path_key_value_and_root_var_tree(
