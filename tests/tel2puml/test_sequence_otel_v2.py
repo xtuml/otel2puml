@@ -15,6 +15,7 @@ class TestSeqeunceOTelJobs:
     """Test the sequence_otel_v2 module."""
     @staticmethod
     def reverse_order_groups() -> list[list[OTelEvent]]:
+        """Return groups of OTelEvents in reverse order."""
         return [
             [
                 OTelEvent(
@@ -35,6 +36,7 @@ class TestSeqeunceOTelJobs:
 
     @staticmethod
     def correct_order_groups() -> list[list[OTelEvent]]:
+        """Return a list of groups of OTelEvents in the correct order."""
         return [
             [
                 OTelEvent(
