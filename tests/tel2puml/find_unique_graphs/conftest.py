@@ -1046,7 +1046,7 @@ def otel_nodes_from_otel_jobs(
 
 @pytest.fixture
 def sql_data_holder_with_otel_jobs(
-    otel_nodes_from_otel_jobs: dict[str, NodeModel],
+    otel_jobs: dict[str, list[OTelEvent]],
     mock_sql_config: SQLDataHolderConfig,
 ) -> Generator[SQLDataHolder, Any, None]:
     """Creates a SQLDataHolder object with 5 jobs, each with 2 events."""
@@ -1056,11 +1056,42 @@ def sql_data_holder_with_otel_jobs(
     )
     sql_data_holder.min_timestamp = 10**12
     sql_data_holder.max_timestamp = 2 * 10**12
+    with sql_data_holder:
+        for otel_events in otel_jobs.values():
+            for otel_event in otel_events:
+                sql_data_holder.save_data(otel_event)
+    yield sql_data_holder
     with sql_data_holder.session as session:
-        session.add_all(
-            otel_node for otel_node in otel_nodes_from_otel_jobs.values()
-        )
-        session.commit()
+        if sa.inspect(sql_data_holder.engine).has_table(
+            'temp_root_nodes'
+        ):
+            session.execute(
+                sa.text("DROP TABLE temp_root_nodes")
+            )
+    sql_data_holder.base.metadata._remove_table("temp_root_nodes", None)
+
+
+@pytest.fixture
+def sql_data_holder_with_shuffled_otel_events(
+    otel_jobs: dict[str, list[OTelEvent]],
+    mock_sql_config: SQLDataHolderConfig,
+) -> Generator[SQLDataHolder, Any, None]:
+    """Creates a SQLDataHolder object with 5 jobs, each with 2 events."""
+    mock_sql_config["time_buffer"] = 1
+    sql_data_holder = SQLDataHolder(
+        config=mock_sql_config,
+    )
+    sql_data_holder.min_timestamp = 10**12
+    sql_data_holder.max_timestamp = 2 * 10**12
+    with sql_data_holder:
+        shuffled_tuples = [
+            ("1", 0), ("0", 0), ("3", 1), ("0", 1), ("1", 1), ("2", 1),
+            ("2", 0), ("3", 0), ("4", 1), ("4", 0)
+        ]
+        for shuffled_tuple in shuffled_tuples:
+            sql_data_holder.save_data(
+                otel_jobs[shuffled_tuple[0]][shuffled_tuple[1]]
+            )
     yield sql_data_holder
     with sql_data_holder.session as session:
         if sa.inspect(sql_data_holder.engine).has_table(
