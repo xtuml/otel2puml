@@ -40,12 +40,12 @@ def order_groups_by_start_timestamp(
 
 def sequence_events_by_async_event_types(
     events: list[OTelEvent],
-    async_event_types: list[list[str]],
+    async_event_types: dict[str, str],
 ) -> list[list[OTelEvent]]:
     """Sequence the pv events from the otel unique graph asynchronously given the event types that should be sequenced in parallel
     
     :param events: the list of otel events to sequence in order of their start time
-    :param async_event_types: a list of lists of event types that should be sequenced in parallel
+    :param async_event_types: a dict mapping event type to a group id
     :return: a list of lists of otel events with those in the same list parallel
     """
 
@@ -63,7 +63,7 @@ def sequence_otel_event_and_ancestors(
     event_id_to_event_map: dict[str, OTelEvent],
     previous_event_ids: list[str] | None = None,
     async_flag: bool = False,
-    event_type_to_async_events_map: dict[str, list[list[str]]] | None = None,
+    event_type_to_async_events_map: dict[str, dict[str, str]] | None = None,
 ) -> Iterable[PVEvent]:
     """Sequence the pv events from the otel unique graph
 
@@ -71,19 +71,19 @@ def sequence_otel_event_and_ancestors(
     :param event_id_to_event_map: a map of event ids to otel events
     :param previous_event_ids: a list of previous event ids to sequence before the event
     :param async_flag: a flag to indicate if the sequencing should be done asynchronously
-    :param event_type_to_async_events_map: a map of event types to lists of lists of event types that should be sequenced in parallel
+    :param event_type_to_async_events_map: a map of event types to a dict mapping event type to a group id
     """
 
 def sequence_otel_event_job(
     job: dict[str, OTelEvent],
     async_flag: bool = False,
-    event_type_to_async_events_map: dict[str, list[list[str]]] | None = None,
+    event_type_to_async_events_map: dict[str, dict[str, str]] | None = None,
 ) -> Iterable[PVEvent]:
     """Sequence the pv events from the otel unique graph
 
     :param job: the otel unique graph as a dictionary of event ids to otel events
     :param async_flag: a flag to indicate if the sequencing should be done asynchronously
-    :param event_type_to_async_events_map: a map of event types to lists of lists of event types that should be sequenced in parallel
+    :param event_type_to_async_events_map: a map of event types to a dict mapping event type to a group id
     :return: an Iterable of pv events sequenced from the otel unique graph
     """
 
@@ -91,14 +91,14 @@ def sequence_otel_event_job(
 def sequence_otel_jobs(
     jobs: Iterable[dict[str, OTelEvent]],
     async_flag: bool = False,
-    event_type_to_async_events_map: dict[str, list[list[str]]] | None = None,
+    event_type_to_async_events_map: dict[str, dict[str, str]] | None = None,
 ) -> Iterable[Iterable[PVEvent]]:
     """Sequences the pv events from the otel unique graphs
 
     :param jobs: the otel unique graphs as an iterable of dictionaries
     of event ids to otel events
     :param async_flag: a flag to indicate if the sequencing should be done asynchronously
-    :param event_type_to_async_events_map: a map of event types to lists of lists of event types that should be sequenced in parallel
+    :param event_type_to_async_events_map: a map of event types to a dict mapping event type to a group id
     :return: an iterable of iterables of pv events for each of the jobs
     """
     pass
