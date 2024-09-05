@@ -75,8 +75,8 @@ def sequence_events_by_async_event_types(
     if not events:
         return []
     async_groups: dict[str, list[OTelEvent]] = {
-        async_event_type: []
-        for async_event_type in async_event_types.values()
+        group_id: []
+        for group_id in async_event_types.values()
     }
     non_async_groups: list[list[OTelEvent]] = []
     for event in events:
