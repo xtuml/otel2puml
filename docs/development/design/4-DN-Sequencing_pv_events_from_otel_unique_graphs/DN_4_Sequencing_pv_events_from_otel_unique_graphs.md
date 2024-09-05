@@ -49,7 +49,7 @@ def sequence_events_by_async_event_types(
     :return: a list of lists of otel events with those in the same list parallel
     """
 
-def sequence_list_of_otel_events_asynchronously(
+def sequence_groups_of_otel_events_asynchronously(
     events: list[OTelEvent],
 ) -> list[list[OTelEvent]]:
     """Sequence the pv events from the otel unique graph asynchronously

@@ -13,8 +13,8 @@ digraph G {
             sequence_events_by_async_event_types [label="sequence_events_by_async_event_types"];
             sequence_otel_event_and_ancestors -> sequence_events_by_async_event_types;
                 sequence_events_by_async_event_types -> order_groups_by_start_timestamp;
-            sequence_list_of_otel_events_asynchronously [label="sequence_list_of_otel_events_asynchronously"];
-            sequence_otel_event_and_ancestors -> sequence_list_of_otel_events_asynchronously;
-                sequence_list_of_otel_events_asynchronously -> order_groups_by_start_timestamp;
+            sequence_groups_of_otel_events_asynchronously [label="sequence_groups_of_otel_events_asynchronously"];
+            sequence_otel_event_and_ancestors -> sequence_groups_of_otel_events_asynchronously;
+                sequence_groups_of_otel_events_asynchronously -> order_groups_by_start_timestamp;
 }
 @enduml

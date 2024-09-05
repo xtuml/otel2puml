@@ -11,9 +11,9 @@ def order_groups_by_start_timestamp(
     """Order groups by start timestamp.
 
     :param groups: A list of groups of OTelEvents.
-    :type groups: `list`[`list`[`OTelEvent`]]
+    :type groups: `list`[`list`[:class:`OTelEvent`]]
     :return: A list of groups of OTelEvents ordered by start timestamp.
-    :rtype: `list`[`list`[`OTelEvent`]]
+    :rtype: `list`[`list`[:class:`OTelEvent`]]
     """
     try:
         return sorted(
@@ -27,3 +27,33 @@ def order_groups_by_start_timestamp(
         raise ValueError(
             "Groups in the input list must contain at least one OTelEvent."
         )
+
+
+def sequence_groups_of_otel_events_asynchronously(
+    groups: list[list[OTelEvent]],
+) -> list[list[OTelEvent]]:
+    """Sequence groups of OTelEvents asynchronously.
+
+    :param groups: A list of groups of OTelEvents.
+    :type groups: `list`[`list`[:class:`OTelEvent`]]
+    :return: A list of groups of OTelEvents sequenced asynchronously.
+    :rtype: `list`[`list`[:class:`OTelEvent`]]
+    """
+    ordered_groups = order_groups_by_start_timestamp(groups)
+    if not ordered_groups:
+        return []
+    ordered_groups_async: list[list[OTelEvent]] = [ordered_groups[0]]
+    max_timestamp = ordered_groups[0][-1].end_timestamp
+    for group in ordered_groups[1:]:
+        previous_group_last_event = ordered_groups_async[-1][-1]
+        group_first_event = group[0]
+        group_last_event = group[-1]
+        if (
+            previous_group_last_event.end_timestamp
+            < group_first_event.start_timestamp
+        ):
+            ordered_groups_async.append(group)
+        else:
+            ordered_groups_async[-1].extend(group)
+        max_timestamp = max(max_timestamp, group_last_event.end_timestamp)
+    return ordered_groups_async
