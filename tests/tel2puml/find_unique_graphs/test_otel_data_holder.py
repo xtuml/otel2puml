@@ -352,11 +352,13 @@ class TestSQLDataHolder:
         # test that the method returns the correct OTelEvent that has a child
         with sql_data_holder_with_otel_jobs.session as session:
             node = session.query(NodeModel).filter_by(event_id="0_0").first()
+            assert node is not None
             assert SQLDataHolder.node_to_otel_event(node) == otel_jobs["0"][1]
         # test that a detached instance error is raised when the session the
         # node was created in is closed
         with sql_data_holder_with_otel_jobs.session as session:
             node = session.query(NodeModel).filter_by(event_id="0_0").first()
+            assert node is not None
         caplog.clear()
         caplog.set_level(logging.ERROR)
         with pytest.raises(DetachedInstanceError):

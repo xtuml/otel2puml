@@ -9,7 +9,7 @@ from sqlalchemy import (
     Table,
     Integer,
 )
-from sqlalchemy.orm import relationship, DeclarativeBase
+from sqlalchemy.orm import relationship, DeclarativeBase, mapped_column, Mapped
 
 
 class OTelEvent(NamedTuple):
@@ -67,17 +67,19 @@ class NodeModel(Base):
 
     __tablename__ = "nodes"
 
-    id = Column(Integer, primary_key=True)
-    job_name = Column(String, nullable=False)
-    job_id = Column(String, nullable=False)
-    event_type = Column(String, nullable=False)
-    event_id = Column(String, unique=True, nullable=False)
-    start_timestamp = Column(Integer, nullable=False)
-    end_timestamp = Column(Integer, nullable=False)
-    application_name = Column(String, nullable=False)
-    parent_event_id = Column(String, ForeignKey("nodes.event_id"))
+    id: Mapped[str] = mapped_column(Integer, primary_key=True)
+    job_name: Mapped[str] = mapped_column(String, nullable=False)
+    job_id: Mapped[str] = mapped_column(String, nullable=False)
+    event_type: Mapped[str] = mapped_column(String, nullable=False)
+    event_id: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    start_timestamp: Mapped[int] = mapped_column(Integer, nullable=False)
+    end_timestamp: Mapped[int] = mapped_column(Integer, nullable=False)
+    application_name: Mapped[str] = mapped_column(String, nullable=False)
+    parent_event_id: Mapped[Optional[str]] = mapped_column(
+        String, ForeignKey("nodes.event_id")
+    )
 
-    children = relationship(
+    children: Mapped[list["NodeModel"]] = relationship(
         "NodeModel",
         secondary=NODE_ASSOCIATION,
         primaryjoin=(event_id == NODE_ASSOCIATION.c.parent_id),
@@ -154,9 +156,11 @@ class JobHash(Base):
 
     __tablename__ = "job_hashes"
 
-    job_id = Column(String, unique=True, nullable=False, primary_key=True)
-    job_name = Column(String, nullable=False)
-    job_hash = Column(String, nullable=False)
+    job_id: Mapped[str] = mapped_column(
+        String, unique=True, nullable=False, primary_key=True
+    )
+    job_name: Mapped[str] = mapped_column(String, nullable=False)
+    job_hash: Mapped[str] = mapped_column(String, nullable=False)
 
     def __repr__(self) -> str:
         return f"""

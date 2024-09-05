@@ -179,11 +179,11 @@ def create_event_id_to_child_nodes_map(
     """
     event_id_to_child_nodes_map: dict[str, list[NodeModel]] = {}
     for node in nodes:
-        event_id = str(node.event_id)
+        event_id = node.event_id
         if event_id not in event_id_to_child_nodes_map:
             event_id_to_child_nodes_map[event_id] = []
         if node.parent_event_id is not None:
-            parent_event_id = str(node.parent_event_id)
+            parent_event_id = node.parent_event_id
             if parent_event_id not in event_id_to_child_nodes_map:
                 event_id_to_child_nodes_map[parent_event_id] = []
             event_id_to_child_nodes_map[parent_event_id].append(node)
@@ -202,9 +202,9 @@ def compute_graph_hash_from_event_ids(
     :type node_to_children: `dict`[`str`, `list`[:class:`NodeModel`]]
     :return: The hash of the graph as a hex string
     """
-    string_to_hash = str(node.event_type)
+    string_to_hash = node.event_type
     if node.event_id in node_to_children:
-        children = node_to_children[str(node.event_id)]
+        children = node_to_children[node.event_id]
         string_to_hash += "".join(
             sorted(
                 compute_graph_hash_from_event_ids(child, node_to_children)
@@ -258,7 +258,7 @@ def compute_graph_hashes_for_batch(
     :type root_nodes: `list`[:class:`NodeModel`]
     """
     batch_nodes = get_sql_batch_nodes(
-        {str(node.job_id) for node in root_nodes}, sql_data_holder
+        {node.job_id for node in root_nodes}, sql_data_holder
     )
     node_to_children = create_event_id_to_child_nodes_map(batch_nodes)
     job_ids_hashes = compute_graph_hashes_from_root_nodes(

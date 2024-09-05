@@ -89,13 +89,15 @@ class DataHolder(ABC):
     @abstractmethod
     def get_otel_events_from_job_ids(
         self, job_ids: set[str]
-    ) -> Generator[OTelEvent, Any, None]:
+    ) -> Generator[dict[str, OTelEvent], Any, None]:
         """Abstract method to get OTelEvents from job_ids.
 
         :param job_ids: A set of job_ids
         :type job_ids: `set`[`str`]
-        :return: A generator of OTelEvent objects
-        :rtype: :class:`Generator`[:class:`OTelEvent`, `Any`, `None`]
+        :return: A generator of dictionaries mapping event ids to OTelEvent
+        objects
+        :rtype: :class:`Generator`[`dict`[`str`, :class:`OTelEvent`], `Any`,
+        `None`]
         """
 
 
@@ -256,7 +258,9 @@ class SQLDataHolder(DataHolder):
                 end_timestamp=node.end_timestamp,
                 application_name=node.application_name,
                 parent_event_id=node.parent_event_id,
-                child_event_ids=[child.event_id for child in node.children],
+                child_event_ids=[
+                    child.event_id for child in node.children
+                ],
             )
         except DetachedInstanceError:
             logging.error(
@@ -271,8 +275,10 @@ class SQLDataHolder(DataHolder):
 
         :param job_ids: A set of job_ids
         :type job_ids: `set`[`str`]
-        :return: A generator of OTelEvent objects
-        :rtype: :class:`Generator`[:class:`OTelEvent`, `Any`, `None`]
+        :return: A generator of dictionaries mapping event ids to OTelEvent
+        objects
+        :rtype: :class:`Generator`[`dict`[`str`, :class:`OTelEvent`], `Any`,
+        `None`]
         """
         with self.session as session:
             nodes = (
@@ -288,8 +294,8 @@ class SQLDataHolder(DataHolder):
                     if current_job_id is not None:
                         yield output
                     output = {}
-                    current_job_id = node.job_id
-                output[node.event_id] = self.node_to_otel_event(
+                    current_job_id = str(node.job_id)
+                output[str(node.event_id)] = self.node_to_otel_event(
                     node
                 )
             yield output
