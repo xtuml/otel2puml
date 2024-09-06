@@ -57,3 +57,32 @@ def sequence_groups_of_otel_events_asynchronously(
             ordered_groups_async[-1].extend(group)
         max_timestamp = max(max_timestamp, group_last_event.end_timestamp)
     return ordered_groups_async
+
+
+def sequence_events_by_async_event_types(
+    events: list[OTelEvent],
+    async_event_types: dict[str, str],
+) -> list[list[OTelEvent]]:
+    """Sequence events by async event type groups.
+
+    :param events: A list of OTelEvents.
+    :type events: `list`[`OTelEvent`]
+    :param async_event_types: A dictionary mapping event types to groups of
+    events that occur asynchronously.
+    :return: A list of groups of OTelEvents sequenced by async event types.
+    :rtype: `list`[`list`[`OTelEvent`]]
+    """
+    if not events:
+        return []
+    async_groups: dict[str, list[OTelEvent]] = {
+        group_id: []
+        for group_id in async_event_types.values()
+    }
+    non_async_groups: list[list[OTelEvent]] = []
+    for event in events:
+        if event.event_type in async_event_types:
+            async_groups[async_event_types[event.event_type]].append(event)
+        else:
+            non_async_groups.append([event])
+    groups = list(async_groups.values()) + non_async_groups
+    return order_groups_by_start_timestamp(groups)
