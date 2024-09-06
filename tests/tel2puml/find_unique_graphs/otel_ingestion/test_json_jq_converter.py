@@ -36,33 +36,53 @@ class TestJQVariableTree:
         assert len(var_tree.child_var_dict) == 0
 
     @staticmethod
-    def test_get_variable() -> None:
-        """Test the get_variable method of the JQVariableTree class."""
+    def test_add_child() -> None:
+        """Test the add_child method of the JQVariableTree class."""
         var_tree = JQVariableTree(var_num=0, var_prefix="test")
         # test case with no children
-        first_child, var_num = var_tree.get_variable("first", 0)
-        assert first_child.var_num == 1
-        assert first_child.var_prefix == "test"
-        assert var_num == 1
+        first_child = var_tree.add_child("first", 1)
         assert len(var_tree.child_var_dict) == 1
         assert "first" in var_tree.child_var_dict
-        assert first_child.child_var_dict == {}
-        # test case when key path already exists
-        first_child_again, var_num = var_tree.get_variable("first", 2)
-        assert first_child_again == first_child
-        assert var_num == 2
-        assert first_child.child_var_dict == {}
+        assert var_tree.child_var_dict["first"] == first_child
+        assert first_child.var_num == 1
+        assert first_child.var_prefix == "test"
         # test case with another child
-        second_child, var_num = var_tree.get_variable("second", 3)
-        assert second_child.var_num == 4
-        assert second_child.var_prefix == "test"
-        assert var_num == 4
+        second_child = var_tree.add_child("second", 2)
         assert len(var_tree.child_var_dict) == 2
         assert (
             "second" in var_tree.child_var_dict
             and "first" in var_tree.child_var_dict
         )
-        assert second_child.child_var_dict == {}
+        assert var_tree.child_var_dict["second"] == second_child
+        assert second_child.var_num == 2
+        assert second_child.var_prefix == "test"
+        # test case with a child that already exists
+        with pytest.raises(ValueError):
+            var_tree.add_child("first", 3)
+
+    @staticmethod
+    def test_has_child() -> None:
+        """Test the has_child method of the JQVariableTree class."""
+        var_tree = JQVariableTree(var_num=0, var_prefix="test")
+        assert not var_tree.has_child("first")
+        var_tree.add_child("first", 1)
+        assert var_tree.has_child("first")
+
+    @staticmethod
+    def test_get_child() -> None:
+        """Test the get_variable method of the JQVariableTree class."""
+        var_tree = JQVariableTree(var_num=0, var_prefix="test")
+        # test case with no children
+        with pytest.raises(KeyError):
+            var_tree.get_child("first")
+        # test case with a single child
+        first_child = var_tree.add_child("first", 1)
+        assert var_tree.get_child("first") == first_child
+        with pytest.raises(KeyError):
+            var_tree.get_child("second")
+        # test case with multiple children
+        second_child = var_tree.add_child("second", 2)
+        assert var_tree.get_child("second") == second_child
 
     @staticmethod
     def test__str__() -> None:
@@ -212,26 +232,25 @@ class TestFieldMappingToCompiledJQ:
             )
         # test root var with one child
         root_var_tree = JQVariableTree()
-        var_num = 0
-        first_child, var_num = root_var_tree.get_variable("first", var_num)
+        first_child = root_var_tree.add_child("first", 1)
         assert build_base_variable_jq_query(root_var_tree) == (
             ". as $var0 | $var0.first.[] as $var1"
         )
         # test case with grandchild
-        grand_child, var_num = first_child.get_variable("grand_child", var_num)
+        grand_child = first_child.add_child("grand_child", 2)
         assert build_base_variable_jq_query(root_var_tree) == (
             ". as $var0 | $var0.first.[] as $var1 | $var1.grand_child.[] as"
             " $var2"
         )
         # test case with great grandchild
-        _, var_num = grand_child.get_variable("great_grand_child", var_num)
+        grand_child.add_child("great_grand_child", 3)
         assert build_base_variable_jq_query(root_var_tree) == (
             ". as $var0 | $var0.first.[] as $var1 | $var1.grand_child.[] as"
             " $var2 "
             "| $var2.great_grand_child.[] as $var3"
         )
         # test case with a sibling of the first child
-        _, var_num = root_var_tree.get_variable("second", var_num)
+        root_var_tree.add_child("second", 4)
         assert build_base_variable_jq_query(root_var_tree) == (
             ". as $var0 | $var0.first.[] as $var1 | $var1.grand_child.[] as"
             " $var2 "
@@ -239,7 +258,7 @@ class TestFieldMappingToCompiledJQ:
             " | $var0.second.[] as $var4"
         )
         # test case with a sibling of the first child grandchild
-        _, var_num = first_child.get_variable("grand_child_2", var_num)
+        first_child.add_child("grand_child_2", 5)
         assert build_base_variable_jq_query(root_var_tree) == (
             ". as $var0 | $var0.first.[] as $var1 | $var1.grand_child.[] as"
             " $var2 "

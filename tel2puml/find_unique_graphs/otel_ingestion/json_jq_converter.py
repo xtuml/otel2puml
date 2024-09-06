@@ -1,6 +1,6 @@
 """Module to transform input JSON to a format that can be used to find unique
 graphs."""
-from typing import Any
+from typing import Any, Generator
 
 import jq  # type: ignore[import-not-found]
 
@@ -23,29 +23,65 @@ class JQVariableTree:
         self.child_var_dict: dict[str, JQVariableTree] = {}
         self.var_prefix: str = var_prefix
 
-    def get_variable(
-        self, key_path: str, var_num: int
-    ) -> tuple["JQVariableTree", int]:
-        """Get the variable tree for the given key path.
+    def has_child(self, key_path: str) -> bool:
+        """Check if the key path is a child of the variable tree.
+
+        :param key_path: The key path to check
+        :type key_path: `str`
+        :return: True if the key path is a child of the variable tree, False
+        otherwise
+        :rtype: `bool`
+        """
+        return key_path in self.child_var_dict
+
+    def add_child(self, key_path: str, var_num: int) -> "JQVariableTree":
+        """Add a child to the variable tree.
+
+        :param key_path: The key path to add
+        :type key_path: `str`
+        :param var_num: The variable number to assign to the child
+        :type var_num: `int`
+        :return: The child variable tree
+        :rtype: :class:`JQVariable
+        """
+        if key_path in self.child_var_dict:
+            raise ValueError(
+                f"Key path {key_path} already exists in the variable tree."
+            )
+        self.child_var_dict[key_path] = JQVariableTree(
+            var_num, self.var_prefix
+        )
+        return self.child_var_dict[key_path]
+
+    def get_child(
+        self, key_path: str
+    ) -> "JQVariableTree":
+        """Get the variable tree for the given key path. Raise a ValueError if
+        the key path does not exist in the variable tree.
 
         :param key_path: The key path to get the variable tree for
         :type key_path: `str`
-        :param var_num: The current variable number
-        :type var_num: `int`
-        :return: The variable tree for the given key path and the updated
-        variable number
-        :rtype: `tuple`[:class:`JQVariableTree`, `int`]
+        :return: The variable tree for the given key path
+        :rtype: :class:`JQVariableTree
         """
-        if key_path not in self.child_var_dict:
-            var_num += 1
-            self.child_var_dict[key_path] = JQVariableTree(
-                var_num, self.var_prefix
+        if not self.has_child(key_path):
+            raise KeyError(
+                f"Key path {key_path} does not exist in the variable tree."
             )
-        return self.child_var_dict[key_path], var_num
+        return self.child_var_dict[key_path]
 
     def __str__(self) -> str:
         """Return the string representation of the variable tree."""
         return f"${self.var_prefix}{self.var_num}"
+
+    def __iter__(self) -> Generator[tuple[str, "JQVariableTree"], Any, None]:
+        """Iterate over the variable tree.
+
+        :return: A generator of key path and variable tree pairs
+        :rtype: `Generator`[`tuple`[`str`, :class:`JQVariableTree`], `Any`,
+        `None`]
+        """
+        yield from self.child_var_dict.items()
 
 
 def get_updated_path_from_key_path_key_value_and_root_var_tree(
@@ -84,9 +120,11 @@ def get_updated_path_from_key_path_key_value_and_root_var_tree(
         if i == len(split_on_array) - 1:  # and key_value is not None:
             variable_build_array.append(path)
         else:
-            working_var_tree, var_num = working_var_tree.get_variable(
-                path, var_num
-            )
+            if not working_var_tree.has_child(path):
+                var_num += 1
+                working_var_tree = working_var_tree.add_child(path, var_num)
+            else:
+                working_var_tree = working_var_tree.get_child(path)
             variable_build_array[0] = working_var_tree
     return (
         ".".join(
@@ -173,7 +211,7 @@ def build_base_variable_jq_query(
     else:
         insert = path if path == "" else path + "."
         jq_query = f"{str(parent_var_tree)}.{insert}[] as {str(var_tree)}"
-    for key_path, child_var_tree in var_tree.child_var_dict.items():
+    for key_path, child_var_tree in var_tree:
         child_query = build_base_variable_jq_query(
             child_var_tree, var_tree, key_path
         )

@@ -153,10 +153,9 @@ def field_spec_with_variables_3_expected_jq() -> str:
 def var_tree() -> JQVariableTree:
     """Fixture for JQVariableTree object"""
     root_var_tree = JQVariableTree()
-    var_num = 0
-    first_child, var_num = root_var_tree.get_variable("first", var_num)
-    _, var_num = first_child.get_variable("second_1.second_2", var_num)
-    root_var_tree.get_variable("fourth", var_num)
+    first_child = root_var_tree.add_child("first", 1)
+    first_child.add_child("second_1.second_2", 2)
+    root_var_tree.add_child("fourth", 3)
     return root_var_tree
 
 
