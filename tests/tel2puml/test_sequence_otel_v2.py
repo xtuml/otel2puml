@@ -9,8 +9,9 @@ from tel2puml.sequence_otel_v2 import (
     sequence_otel_event_ancestors
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
-    OTelEvent,
+    OTelEvent
 )
+from tel2puml.tel2puml_types import PVEvent
 
 
 class TestSeqeunceOTelJobs:
@@ -78,6 +79,87 @@ class TestSeqeunceOTelJobs:
             ]
             for i in range(3)
         ]
+
+    def synchronous_previous_event_ids(self) -> dict[str, list[str]]:
+        """Return a dictionary mapping event ids to a list of previous event
+        ids."""
+        return {
+            "root": ["01"],
+            "00": ["11"],
+            "01": ["00"],
+            "10": ["21"],
+            "11": ["10"],
+            "20": [],
+            "21": ["20"],
+        }
+
+    def async_previous_event_ids(self) -> dict[str, list[str]]:
+        """Return a dictionary mapping event ids to a list of previous event
+        ids."""
+        return {
+            "root": ["00", "01"],
+            "00": ["10", "11"],
+            "01": [],
+            "10": ["20", "21"],
+            "11": [],
+            "20": [],
+            "21": [],
+        }
+
+    def prior_async_information_event_ids(self) -> dict[str, list[str]]:
+        """Return a dictionary mapping event ids to a list of previous event
+        ids."""
+        return {
+            "root": ["00", "01"],
+            "00": ["11"],
+            "01": [],
+            "10": ["20", "21"],
+            "11": ["10"],
+            "20": [],
+            "21": [],
+        }
+
+    def event_to_async_group_map(self) -> dict[str, dict[str, str]]:
+        """Return a dictionary mapping event types to async groups.
+        """
+        return {
+            "root": {
+                "event_type_00": "group_0",
+                "event_type_01": "group_0",
+            },
+            "event_type_10": {
+                "event_type_20": "group_0",
+                "event_type_21": "group_0",
+            },
+        }
+
+    def pv_events(
+        self,
+        previous_event_ids: dict[str, list[str]],
+        events: dict[str, OTelEvent],
+    ) -> dict[str, PVEvent]:
+        """Return a list of PVEvents.
+
+        :param previous_event_ids: A dictionary mapping event ids to a list of
+        previous event ids.
+        :type previous_event_ids: `dict`[`str`, `list`[`str`]]
+        :param events: A dictionary mapping event ids to OTelEvents.
+        :type events: `dict`[`str`, :class:`OTelEvent`]
+        :return: A list of PVEvents.
+        :rtype: `list`[:class:`PVEvent`]
+        """
+        return sorted([
+            PVEvent(
+                eventId=event.event_id,
+                jobId=event.job_id,
+                timestamp=event.end_timestamp,
+                previousEventIds=previous_event_ids.get(event.event_id, []),
+                eventType=event.event_type,
+                applicationName=event.application_name,
+                jobName=event.job_name,
+            )
+            for event in events.values()
+        ])
 
     def test_order_groups_by_start_timestamp(self) -> None:
         """Test order_groups_by_start_timestamp."""
@@ -174,66 +256,28 @@ class TestSeqeunceOTelJobs:
         event = events["01"]
         assert sequence_otel_event_ancestors(event, {}) == {"01": []}
         # synchronous sequencing
-        assert sequence_otel_event_ancestors(events["root"], events) == {
-            "root": ["01"],
-            "00": ["11"],
-            "01": ["00"],
-            "10": ["21"],
-            "11": ["10"],
-            "20": [],
-            "21": ["20"],
-        }
+        assert (
+            sequence_otel_event_ancestors(events["root"], events)
+            == self.synchronous_previous_event_ids()
+        )
         # async flag set to True
         assert sequence_otel_event_ancestors(
             events["root"], events, async_flag=True
-        ) == {
-            "root": ["00", "01"],
-            "00": ["10", "11"],
-            "01": [],
-            "10": ["20", "21"],
-            "11": [],
-            "20": [],
-            "21": [],
-        }
+        ) == self.async_previous_event_ids()
         # async information is provided
-        event_to_async_group_map = {
-            "root_event": {
-                "event_type_00": "group_0",
-                "event_type_01": "group_0",
-            },
-            "event_type_10": {
-                "event_type_20": "group_0",
-                "event_type_21": "group_0",
-            },
-        }
+        event_to_async_group_map = self.event_to_async_group_map()
         assert sequence_otel_event_ancestors(
             events["root"],
             events,
             event_to_async_group_map=event_to_async_group_map,
-        ) == {
-            "root": ["00", "01"],
-            "00": ["11"],
-            "01": [],
-            "10": ["20", "21"],
-            "11": ["10"],
-            "20": [],
-            "21": [],
-        }
+        ) == self.prior_async_information_event_ids()
         # async information is provided and async flag is set to True
         assert sequence_otel_event_ancestors(
             events["root"],
             events,
             event_to_async_group_map=event_to_async_group_map,
             async_flag=True,
-        ) == {
-            "root": ["00", "01"],
-            "00": ["10", "11"],
-            "01": [],
-            "10": ["20", "21"],
-            "11": [],
-            "20": [],
-            "21": [],
-        }
+        ) == self.async_previous_event_ids()
         # raise error if child event ids has not been set
         with pytest.raises(ValueError):
             sequence_otel_event_ancestors(
@@ -250,3 +294,28 @@ class TestSeqeunceOTelJobs:
                 ),
                 {},
             )
+
+    def test_sequence_otel_event_job(self) -> None:
+        """Test sequence_otel_event_job."""
+        events = self.events_with_root()
+        assert sorted(sequence_otel_event_job(events)) == self.pv_events(
+            self.synchronous_previous_event_ids(), events
+        )
+        assert sorted(
+            sequence_otel_event_job(events, async_flag=True)
+        ) == self.pv_events(self.async_previous_event_ids(), events)
+        event_to_async_group_map = self.event_to_async_group_map()
+        assert sorted(
+            sequence_otel_event_job(
+                events, event_to_async_group_map=event_to_async_group_map
+            )
+        ) == self.pv_events(self.prior_async_information_event_ids(), events)
+        assert sorted(
+            sequence_otel_event_job(
+                events,
+                event_to_async_group_map=event_to_async_group_map,
+                async_flag=True,
+            )
+        ) == self.pv_events(self.async_previous_event_ids(), events)
+        # test case where there are no events
+        assert sequence_otel_event_job({}) == []
