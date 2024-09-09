@@ -29,7 +29,7 @@
             :create empty map of event id to previous event ids;
             :get list of child OTelEvents from event_id to OTelEvent map;
             if (OTelEvent event type is in map of event type\nto dict mapping following event-types to group id) then (true)
-                :get dict mapping following event-types to group id\nfrom map of event type to list of lists of async\nfollowing event types;
+                :get dict mapping following event-types to group id\nfrom map of event type to dict mapping following\nevent-types to group id;
             else (false)
                 :create empty dict mapping following event-types\nto group id;
             endif

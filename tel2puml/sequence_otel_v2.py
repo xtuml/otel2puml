@@ -103,7 +103,8 @@ def sequence_otel_event_ancestors(
     :type event_id_to_event_map: `dict`[`str`, :class:`OTelEvent`]
     :param previous_event_ids: A list of previous event IDs.
     :type previous_event_ids: `list`[`str`] | `None`
-    :param async_flag: A flag indicating whether to use async information.
+    :param async_flag: A flag indicating whether to sequence event groups
+    asynchronously or not.
     :type async_flag: `bool`
     :param event_to_async_group_map: A dictionary mapping event types to
     groups of events that occur asynchronously.
