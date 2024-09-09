@@ -1,8 +1,11 @@
 """Module to sequence OTel data from grouped OTelEvents"""
 
+from typing import Any, Generator
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     OTelEvent,
 )
+from tel2puml.tel2puml_types import PVEvent
+from tel2puml.utils import unix_nano_to_pv_string
 
 
 def order_groups_by_start_timestamp(
@@ -101,13 +104,13 @@ def sequence_otel_event_ancestors(
     :type event: :class:`OTelEvent`
     :param event_id_to_event_map: A dictionary mapping event IDs to OTelEvents.
     :type event_id_to_event_map: `dict`[`str`, :class:`OTelEvent`]
-    :param previous_event_ids: A list of previous event IDs.
+    :param previous_event_ids: A list of previous event IDs, defaults to None.
     :type previous_event_ids: `list`[`str`] | `None`
     :param async_flag: A flag indicating whether to sequence event groups
-    asynchronously or not.
+    asynchronously or not, defaults to False.
     :type async_flag: `bool`
     :param event_to_async_group_map: A dictionary mapping event types to
-    groups of events that occur asynchronously.
+    groups of events that occur asynchronously, defaults to None.
     :type event_to_async_group_map: `dict`[`str`, `dict`[`str`, `str`]] |
     `None`
     :return: A dictionary mapping event IDs to previous event IDs.
@@ -164,3 +167,68 @@ def sequence_otel_event_ancestors(
     # the final group will be the previous event ids for the current event
     event_id_to_previous_event_ids[event.event_id] = previous_event_ids
     return event_id_to_previous_event_ids
+
+
+def get_root_event_from_event_id_to_event_map(
+    event_id_to_event_map: dict[str, OTelEvent],
+) -> OTelEvent:
+    """Get the root event from a dictionary of OTelEvents.
+
+    :param event_id_to_event_map: A dictionary mapping event IDs to OTelEvents.
+    :type event_id_to_event_map: `dict`[`str`, :class:`OTelEvent`]
+    :return: The root event.
+    :rtype: :class:`OTelEvent`
+    """
+    events_without_parents = [
+        event
+        for event in event_id_to_event_map.values()
+        if event.parent_event_id is None
+    ]
+    if len(events_without_parents) != 1:
+        raise ValueError(
+            "There should only be exactly one event without a parent event to"
+            "act as the root event."
+        )
+    return events_without_parents[0]
+
+
+def sequence_otel_event_job(
+    event_id_to_event_map: dict[str, OTelEvent],
+    async_flag: bool = False,
+    event_to_async_group_map: dict[str, dict[str, str]] | None = None,
+) -> Generator[PVEvent, Any, None]:
+    """Sequence OTel events in a job.
+
+    :param event_id_to_event_map: A dictionary mapping event IDs to OTelEvents.
+    :type event_id_to_event_map: `dict`[`str`, :class:`OTelEvent`]
+    :param async_flag: A flag indicating whether to sequence event groups
+    asynchronously or not, defaults to False.
+    :type async_flag: `bool`
+    :param event_to_async_group_map: A dictionary mapping event types to
+    groups of events that occur asynchronously, defaults to None.
+    :type event_to_async_group_map: `dict`[`str`, `dict`[`str`, `str`]] |
+    `None`
+    :return: A generator of PVEvents.
+    :rtype: `Generator`[:class:`PVEvent`, `Any`, `None`]
+    """
+    if event_to_async_group_map is None:
+        event_to_async_group_map = {}
+    root_event = get_root_event_from_event_id_to_event_map(
+        event_id_to_event_map
+    )
+    event_id_to_previous_event_ids = sequence_otel_event_ancestors(
+        root_event,
+        event_id_to_event_map,
+        async_flag=async_flag,
+        event_to_async_group_map=event_to_async_group_map,
+    )
+    for event_id, event in event_id_to_event_map.items():
+        yield PVEvent(
+            jobId=event.job_id,
+            eventId=event_id,
+            eventType=event.event_type,
+            timestamp=unix_nano_to_pv_string(event.end_timestamp),
+            previousEventIds=event_id_to_previous_event_ids[event_id],
+            applicationName=event.application_name,
+            jobName=event.job_name,
+        )
