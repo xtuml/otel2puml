@@ -1,6 +1,6 @@
 """Module to sequence OTel data from grouped OTelEvents"""
 
-from typing import Any, Generator
+from typing import Any, Generator, Iterable
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     OTelEvent,
 )
@@ -231,4 +231,29 @@ def sequence_otel_event_job(
             previousEventIds=event_id_to_previous_event_ids[event_id],
             applicationName=event.application_name,
             jobName=event.job_name,
+        )
+
+
+def sequence_otel_jobs(
+    jobs: Iterable[dict[str, OTelEvent]],
+    async_flag: bool = False,
+    event_to_async_group_map: dict[str, dict[str, str]] | None = None,
+) -> Generator[Generator[PVEvent, Any, None], Any, None]:
+    """Sequence OTel events in multiple jobs.
+
+    :param jobs: An iterable of dictionaries mapping event IDs to
+    OTelEvents.
+    :type jobs: `Iterable`[`dict`[`str`, :class:`OTelEvent`]]
+    :param async_flag: A flag indicating whether to sequence event groups
+    asynchronously or not, defaults to False.
+    :type async_flag: `bool`
+    :param event_to_async_group_map: A dictionary mapping event types to
+    groups of events that occur asynchronously, defaults to None.
+    :type event_to_async_group_map: `dict`[`str`, `dict`[`str`, `str`]] |
+    `None`
+    :return: A generator of jobs (generators) of PVEvents.
+    """
+    for job in jobs:
+        yield sequence_otel_event_job(
+            job, async_flag, event_to_async_group_map
         )
