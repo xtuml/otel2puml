@@ -28,18 +28,18 @@
         group "sequence_otel_event_and_ancestors"
             :create empty map of event id to previous event ids;
             :get list of child OTelEvents from event_id to OTelEvent map;
-            if (OTelEvent event type is in map of event type\nto dict mapping following event-types to group id\nand async flag set) then (true)
+            if (OTelEvent event type is in map of event type\nto dict mapping following event-types to group id) then (true)
                 :get dict mapping following event-types to group id\nfrom map of event type to list of lists of async\nfollowing event types;
-                :Input ->\nlist of child OTelEvents,\ndict mapping following event-types to group id;
-                :call "sequence_events_by_async_event_types"|
             else (false)
-                :put each event in a group of its own;
-                :Input ->\nlist of groups;
-                if (check if async flag is set) then (true) 
-                    :Call "sequence_groups_of_otel_events_asynchronously"|
-                else (false)
-                    :call "order_groups_by_start_timestamp"|
-                endif
+                :create empty dict mapping following event-types\nto group id;
+            endif
+            :Input ->\nlist of child OTelEvents,\ndict mapping following event-types to group id;
+            :call "group_events_using_async_information"|
+            :Input ->\nlist of groups of OTelEvents;
+            if (check if async flag is set) then (true) 
+                :Call "sequence_groups_of_otel_events_asynchronously"|
+            else (false)
+                :call "order_groups_by_start_timestamp"|
             endif
             repeat
                 repeat
@@ -80,20 +80,17 @@
         end
         start
         :Input ->\nlist of OTelEvents,\ndict mapping following event-types to group id;
-        group "sequence_events_by_async_event_types"
+        group "group_events_using_async_information"
             :create dict mapping group id to lists of OTelEvents;
             :create empty list of groups;
             repeat
-                if (OTelEvent event type is in dict mapping following event-types to group id) then (true)
+                if (OTelEvent event type is in dict mapping\nfollowing event-types to group id) then (true)
                     :add OTelEvent to group;
                 else (false)
                     :add otel event as a group to list of groups;
                 endif
             repeat while (for each event in list of OTelEvents)
             :update list of groups with each group of OTelEvents\nfrom dict mapping group id to lists of OTelEvents;
-            :Input ->\nlist of groups;
-            :call "order_groups_by_start_timestamp"|
-            :output sorted list of groups;
         end group
         end
     }
