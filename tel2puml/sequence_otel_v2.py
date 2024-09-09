@@ -252,6 +252,8 @@ def sequence_otel_jobs(
     :type event_to_async_group_map: `dict`[`str`, `dict`[`str`, `str`]] |
     `None`
     :return: A generator of jobs (generators) of PVEvents.
+    :rtype: `Generator`[`Generator`[:class:`PVEvent`, `Any`, `None`], `Any`,
+    `None`]
     """
     for job in jobs:
         yield sequence_otel_event_job(
