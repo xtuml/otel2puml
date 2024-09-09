@@ -10,9 +10,8 @@ digraph G {
             order_groups_by_start_timestamp [label="order_groups_by_start_timestamp"];
             sequence_otel_event_and_ancestors -> order_groups_by_start_timestamp;
             sequence_otel_event_and_ancestors -> sequence_otel_event_and_ancestors [label="recursion"];
-            sequence_events_by_async_event_types [label="sequence_events_by_async_event_types"];
-            sequence_otel_event_and_ancestors -> sequence_events_by_async_event_types;
-                sequence_events_by_async_event_types -> order_groups_by_start_timestamp;
+            group_events_using_async_information [label="group_events_using_async_information"];
+            sequence_otel_event_and_ancestors -> group_events_using_async_information;
             sequence_groups_of_otel_events_asynchronously [label="sequence_groups_of_otel_events_asynchronously"];
             sequence_otel_event_and_ancestors -> sequence_groups_of_otel_events_asynchronously;
                 sequence_groups_of_otel_events_asynchronously -> order_groups_by_start_timestamp;

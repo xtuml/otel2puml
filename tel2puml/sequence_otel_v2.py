@@ -59,7 +59,7 @@ def sequence_groups_of_otel_events_asynchronously(
     return ordered_groups_async
 
 
-def sequence_events_by_async_event_types(
+def group_events_using_async_information(
     events: list[OTelEvent],
     async_event_types: dict[str, str],
 ) -> list[list[OTelEvent]]:
@@ -85,4 +85,82 @@ def sequence_events_by_async_event_types(
         else:
             non_async_groups.append([event])
     groups = list(async_groups.values()) + non_async_groups
-    return order_groups_by_start_timestamp(groups)
+    return groups
+
+
+def sequence_otel_event_ancestors(
+    event: OTelEvent,
+    event_id_to_event_map: dict[str, OTelEvent],
+    previous_event_ids: list[str] | None = None,
+    async_flag: bool = False,
+    event_to_async_group_map: dict[str, dict[str, str]] | None = None,
+) -> dict[str, list[str]]:
+    """Sequence OTel event ancestors using async information, if available.
+
+    :param event: An OTelEvent.
+    :type event: :class:`OTelEvent`
+    :param event_id_to_event_map: A dictionary mapping event IDs to OTelEvents.
+    :type event_id_to_event_map: `dict`[`str`, :class:`OTelEvent`]
+    :param previous_event_ids: A list of previous event IDs.
+    :type previous_event_ids: `list`[`str`] | `None`
+    :param async_flag: A flag indicating whether to sequence event groups
+    asynchronously or not.
+    :type async_flag: `bool`
+    :param event_to_async_group_map: A dictionary mapping event types to
+    groups of events that occur asynchronously.
+    :type event_to_async_group_map: `dict`[`str`, `dict`[`str`, `str`]] |
+    `None`
+    :return: A dictionary mapping event IDs to previous event IDs.
+    :rtype: `dict`[`str`, `list`[`str`]]
+    """
+    # setup empty data structures if not provided
+    if previous_event_ids is None:
+        previous_event_ids = []
+    if event_to_async_group_map is None:
+        event_to_async_group_map = {}
+    # create an empty mapping of event IDs to previous event IDs
+    event_id_to_previous_event_ids: dict[str, list[str]] = {}
+    # get the async groups for the event type, if available
+    if event.event_type in event_to_async_group_map:
+        event_type_to_group_map = event_to_async_group_map[event.event_type]
+    else:
+        event_type_to_group_map = {}
+    # get the child events for the event
+    if not isinstance(event.child_event_ids, list):
+        raise ValueError(
+            "All events must have a list of child event ids even if this list "
+            f"is empty. Event ID: {event.event_id}"
+        )
+    child_events = [
+        event_id_to_event_map[event_id]
+        for event_id in event.child_event_ids
+    ]
+    # group the child events using async information
+    event_groups = group_events_using_async_information(
+        child_events, event_type_to_group_map
+    )
+    if async_flag:
+        event_groups = sequence_groups_of_otel_events_asynchronously(
+            event_groups
+        )
+    else:
+        event_groups = order_groups_by_start_timestamp(event_groups)
+    # sequence the child event groups by recursively calling this function
+    # and updating the mapping of event IDs to previous event IDs
+    # the previous event ids for the following group are the events in the
+    # previous group
+    for group in event_groups:
+        for group_event in group:
+            event_id_to_previous_event_ids.update(
+                sequence_otel_event_ancestors(
+                    group_event,
+                    event_id_to_event_map,
+                    previous_event_ids,
+                    async_flag,
+                    event_to_async_group_map,
+                )
+            )
+        previous_event_ids = [group_event.event_id for group_event in group]
+    # the final group will be the previous event ids for the current event
+    event_id_to_previous_event_ids[event.event_id] = previous_event_ids
+    return event_id_to_previous_event_ids
