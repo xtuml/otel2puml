@@ -1,4 +1,5 @@
 """Test the tel2puml.sequence_otel_v2 module."""
+from typing import Iterable
 
 import pytest
 
@@ -8,7 +9,8 @@ from tel2puml.sequence_otel_v2 import (
     group_events_using_async_information,
     sequence_otel_event_ancestors,
     get_root_event_from_event_id_to_event_map,
-    sequence_otel_event_job
+    sequence_otel_event_job,
+    sequence_otel_jobs
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     OTelEvent
@@ -136,6 +138,15 @@ class TestSeqeunceOTelJobs:
             },
         }
 
+    def sort_pv_events(
+        self, unsorted_pv_events: Iterable[PVEvent]
+    ) -> list[PVEvent]:
+        """Return a sorted list of PVEvents."""
+        return sorted(
+            unsorted_pv_events,
+            key=lambda pv_event: pv_event["eventId"],
+        )
+
     def pv_events(
         self,
         previous_event_ids: dict[str, list[str]],
@@ -143,7 +154,7 @@ class TestSeqeunceOTelJobs:
     ) -> list[PVEvent]:
         """Return a list of PVEvents.
         """
-        return sorted(
+        return self.sort_pv_events(
             [
                 PVEvent(
                     eventId=event.event_id,
@@ -157,8 +168,7 @@ class TestSeqeunceOTelJobs:
                     jobName=event.job_name,
                 )
                 for event in events.values()
-            ],
-            key=lambda pv_event: pv_event["eventId"],
+            ]
         )
 
     def test_order_groups_by_start_timestamp(self) -> None:
@@ -318,30 +328,53 @@ class TestSeqeunceOTelJobs:
     def test_sequence_otel_event_job(self) -> None:
         """Test sequence_otel_event_job."""
         events = self.events_with_root()
-        assert sorted(
-            sequence_otel_event_job(events),
-            key=lambda pv_event: pv_event["eventId"],
+        assert self.sort_pv_events(
+            sequence_otel_event_job(events)
         ) == self.pv_events(self.synchronous_previous_event_ids(), events)
-        assert sorted(
-            sequence_otel_event_job(events, async_flag=True),
-            key=lambda pv_event: pv_event["eventId"],
+        assert self.sort_pv_events(
+            sequence_otel_event_job(events, async_flag=True)
         ) == self.pv_events(self.async_previous_event_ids(), events)
         event_to_async_group_map = self.event_to_async_group_map()
-        assert sorted(
+        assert self.sort_pv_events(
             sequence_otel_event_job(
                 events, event_to_async_group_map=event_to_async_group_map
-            ),
-            key=lambda pv_event: pv_event["eventId"],
+            )
         ) == self.pv_events(self.prior_async_information_event_ids(), events)
-        assert sorted(
+        assert self.sort_pv_events(
             sequence_otel_event_job(
                 events,
                 event_to_async_group_map=event_to_async_group_map,
                 async_flag=True,
-            ),
-            key=lambda pv_event: pv_event["eventId"],
+            )
         ) == self.pv_events(self.async_previous_event_ids(), events)
         # test case where there are no events, should raise an error due to
         # the lack of a root event
         with pytest.raises(ValueError):
             list(sequence_otel_event_job({}))
+
+    def test_sequence_otel_jobs(self) -> None:
+        """Test sequence_otel_jobs."""
+        events = self.events_with_root()
+        for pv_events in sequence_otel_jobs([events] * 2):
+            assert self.sort_pv_events(pv_events) == self.pv_events(
+                self.synchronous_previous_event_ids(), events
+            )
+        for pv_events in sequence_otel_jobs([events] * 2, async_flag=True):
+            assert self.sort_pv_events(pv_events) == self.pv_events(
+                self.async_previous_event_ids(), events
+            )
+        for pv_events in sequence_otel_jobs(
+            [events] * 2,
+            event_to_async_group_map=self.event_to_async_group_map(),
+        ):
+            assert self.sort_pv_events(pv_events) == self.pv_events(
+                self.prior_async_information_event_ids(), events
+            )
+        for pv_events in sequence_otel_jobs(
+            [events] * 2,
+            event_to_async_group_map=self.event_to_async_group_map(),
+            async_flag=True,
+        ):
+            assert self.sort_pv_events(pv_events) == self.pv_events(
+                self.async_previous_event_ids(), events
+            )
