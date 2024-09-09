@@ -59,7 +59,7 @@ def sequence_groups_of_otel_events_asynchronously(
     return ordered_groups_async
 
 
-def sequence_events_by_async_event_types(
+def group_events_using_async_information(
     events: list[OTelEvent],
     async_event_types: dict[str, str],
 ) -> list[list[OTelEvent]]:
@@ -85,4 +85,4 @@ def sequence_events_by_async_event_types(
         else:
             non_async_groups.append([event])
     groups = list(async_groups.values()) + non_async_groups
-    return order_groups_by_start_timestamp(groups)
+    return groups
