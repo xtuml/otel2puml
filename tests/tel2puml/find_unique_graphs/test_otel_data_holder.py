@@ -1,12 +1,14 @@
 """Tests for OTel data holder classes."""
+import logging
 
 import pytest
-
 from unittest.mock import patch
+from pytest import LogCaptureFixture
 from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.exc import IntegrityError, OperationalError
+from sqlalchemy.orm.exc import DetachedInstanceError
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     OTelEvent,
@@ -339,3 +341,53 @@ class TestSQLDataHolder:
         assert len(relationships) == 2
         assert relationships[0].parent_id == "456"
         assert relationships[0].child_id in ["101", "102"]
+
+    @staticmethod
+    def test_node_to_otel_event(
+        sql_data_holder_with_otel_jobs: SQLDataHolder,
+        otel_jobs: dict[str, list[OTelEvent]],
+        caplog: LogCaptureFixture
+    ) -> None:
+        """Tests node_to_otel_event method."""
+        # test that the method returns the correct OTelEvent that has a child
+        with sql_data_holder_with_otel_jobs.session as session:
+            node = session.query(NodeModel).filter_by(event_id="0_0").first()
+            assert node is not None
+            assert SQLDataHolder.node_to_otel_event(node) == otel_jobs["0"][1]
+        # test that a detached instance error is raised when the session the
+        # node was created in is closed
+        with sql_data_holder_with_otel_jobs.session as session:
+            node = session.query(NodeModel).filter_by(event_id="0_0").first()
+            assert node is not None
+        caplog.clear()
+        caplog.set_level(logging.ERROR)
+        with pytest.raises(DetachedInstanceError):
+            SQLDataHolder.node_to_otel_event(node)
+        assert (
+            "Likely not within a session so cannot access children."
+            in caplog.text
+        )
+
+    @staticmethod
+    def test_get_otel_events_from_job_ids(
+        sql_data_holder_with_shuffled_otel_events: SQLDataHolder,
+        otel_jobs: dict[str, list[OTelEvent]]
+    ) -> None:
+        """Tests get_otel_events_from_job_ids method."""
+
+        job_ids = {"test_id_2", "test_id_3"}
+
+        otel_events = list(
+            sql_data_holder_with_shuffled_otel_events.
+            get_otel_events_from_job_ids(
+                job_ids
+            )
+        )
+
+        assert len(otel_events) == 2
+        assert len(otel_events[0]) == 2
+        assert len(otel_events[1]) == 2
+        assert otel_events[0]["2_0"] == otel_jobs["2"][1]
+        assert otel_events[0]["2_1"] == otel_jobs["2"][0]
+        assert otel_events[1]["3_0"] == otel_jobs["3"][1]
+        assert otel_events[1]["3_1"] == otel_jobs["3"][0]

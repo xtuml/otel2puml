@@ -2,11 +2,13 @@
 
 from abc import ABC, abstractmethod
 from types import TracebackType
-from typing import Self, Optional, TypeVar
+from typing import Self, Optional, TypeVar, Any, Generator
+import logging
 
 from sqlalchemy import create_engine, insert
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError, IntegrityError
+from sqlalchemy.orm.exc import DetachedInstanceError
 from sqlalchemy.engine.base import Engine
 
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
@@ -16,6 +18,9 @@ from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     Base,
     NODE_ASSOCIATION,
 )
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 T = TypeVar("T")
@@ -80,6 +85,20 @@ class DataHolder(ABC):
         :type otel_event: :class: `OTelEvent`
         """
         pass
+
+    @abstractmethod
+    def get_otel_events_from_job_ids(
+        self, job_ids: set[str]
+    ) -> Generator[dict[str, OTelEvent], Any, None]:
+        """Abstract method to get OTelEvents from job_ids.
+
+        :param job_ids: A set of job_ids
+        :type job_ids: `set`[`str`]
+        :return: A generator of dictionaries mapping event ids to OTelEvent
+        objects
+        :rtype: :class:`Generator`[`dict`[`str`, :class:`OTelEvent`], `Any`,
+        `None`]
+        """
 
 
 class SQLDataHolder(DataHolder):
@@ -219,3 +238,64 @@ class SQLDataHolder(DataHolder):
             application_name=otel_event.application_name,
             parent_event_id=otel_event.parent_event_id or None,
         )
+
+    @staticmethod
+    def node_to_otel_event(node: NodeModel) -> OTelEvent:
+        """Method to convert a NodeModel object to an OTelEvent object.
+
+        :param: A NodeModel object
+        :type node: :class:`NodeModel`
+        :return: An OTelEvent object.
+        :rtype: :class:`OTelEvent`
+        """
+        try:
+            return OTelEvent(
+                job_name=node.job_name,
+                job_id=node.job_id,
+                event_type=node.event_type,
+                event_id=node.event_id,
+                start_timestamp=node.start_timestamp,
+                end_timestamp=node.end_timestamp,
+                application_name=node.application_name,
+                parent_event_id=node.parent_event_id,
+                child_event_ids=[
+                    child.event_id for child in node.children
+                ],
+            )
+        except DetachedInstanceError:
+            logging.error(
+                "Likely not within a session so cannot access children."
+            )
+            raise
+
+    def get_otel_events_from_job_ids(
+        self, job_ids: set[str]
+    ) -> Generator[dict[str, OTelEvent], Any, None]:
+        """Method to get OTelEvents from job_ids
+
+        :param job_ids: A set of job_ids
+        :type job_ids: `set`[`str`]
+        :return: A generator of dictionaries mapping event ids to OTelEvent
+        objects
+        :rtype: :class:`Generator`[`dict`[`str`, :class:`OTelEvent`], `Any`,
+        `None`]
+        """
+        with self.session as session:
+            nodes = (
+                session.query(NodeModel)
+                .filter(NodeModel.job_id.in_(job_ids))
+                .order_by(NodeModel.job_id)
+                .all()
+            )
+            output: dict[str, OTelEvent] = {}
+            current_job_id: str | None = None
+            for node in nodes:
+                if current_job_id != node.job_id:
+                    if current_job_id is not None:
+                        yield output
+                    output = {}
+                    current_job_id = str(node.job_id)
+                output[str(node.event_id)] = self.node_to_otel_event(
+                    node
+                )
+            yield output
