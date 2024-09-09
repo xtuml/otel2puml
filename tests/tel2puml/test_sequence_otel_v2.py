@@ -6,12 +6,15 @@ from tel2puml.sequence_otel_v2 import (
     order_groups_by_start_timestamp,
     sequence_groups_of_otel_events_asynchronously,
     group_events_using_async_information,
-    sequence_otel_event_ancestors
+    sequence_otel_event_ancestors,
+    get_root_event_from_event_id_to_event_map,
+    sequence_otel_event_job
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     OTelEvent
 )
 from tel2puml.tel2puml_types import PVEvent
+from tel2puml.utils import unix_nano_to_pv_string
 
 
 class TestSeqeunceOTelJobs:
@@ -28,7 +31,7 @@ class TestSeqeunceOTelJobs:
                 start_timestamp=i * 2 + j,
                 end_timestamp=i * 2 + j + 1,
                 application_name="application_name",
-                parent_event_id=None,
+                parent_event_id="root" if i == 0 else f"{i - 1}{0}",
                 child_event_ids=[] if i == 2 or j == 1 else [
                     f"{i + 1}0", f"{i + 1}1"
                 ],
@@ -123,7 +126,7 @@ class TestSeqeunceOTelJobs:
         """Return a dictionary mapping event types to async groups.
         """
         return {
-            "root": {
+            "root_event": {
                 "event_type_00": "group_0",
                 "event_type_01": "group_0",
             },
@@ -137,29 +140,26 @@ class TestSeqeunceOTelJobs:
         self,
         previous_event_ids: dict[str, list[str]],
         events: dict[str, OTelEvent],
-    ) -> dict[str, PVEvent]:
+    ) -> list[PVEvent]:
         """Return a list of PVEvents.
-
-        :param previous_event_ids: A dictionary mapping event ids to a list of
-        previous event ids.
-        :type previous_event_ids: `dict`[`str`, `list`[`str`]]
-        :param events: A dictionary mapping event ids to OTelEvents.
-        :type events: `dict`[`str`, :class:`OTelEvent`]
-        :return: A list of PVEvents.
-        :rtype: `list`[:class:`PVEvent`]
         """
-        return sorted([
-            PVEvent(
-                eventId=event.event_id,
-                jobId=event.job_id,
-                timestamp=event.end_timestamp,
-                previousEventIds=previous_event_ids.get(event.event_id, []),
-                eventType=event.event_type,
-                applicationName=event.application_name,
-                jobName=event.job_name,
-            )
-            for event in events.values()
-        ])
+        return sorted(
+            [
+                PVEvent(
+                    eventId=event.event_id,
+                    jobId=event.job_id,
+                    timestamp=unix_nano_to_pv_string(event.end_timestamp),
+                    previousEventIds=previous_event_ids.get(
+                        event.event_id, []
+                    ),
+                    eventType=event.event_type,
+                    applicationName=event.application_name,
+                    jobName=event.job_name,
+                )
+                for event in events.values()
+            ],
+            key=lambda pv_event: pv_event["eventId"],
+        )
 
     def test_order_groups_by_start_timestamp(self) -> None:
         """Test order_groups_by_start_timestamp."""
@@ -295,27 +295,53 @@ class TestSeqeunceOTelJobs:
                 {},
             )
 
+    def test_get_root_event_from_event_id_to_event_map(self) -> None:
+        """Test get_root_event_from_event_id_to_event_map."""
+        events = self.events_with_root()
+        assert (
+            get_root_event_from_event_id_to_event_map(events)
+            == self.root_event()
+        )
+        # test case where there are no events
+        with pytest.raises(ValueError):
+            get_root_event_from_event_id_to_event_map({})
+        # test case where there are multiple root events
+        with pytest.raises(ValueError):
+            get_root_event_from_event_id_to_event_map(
+                {f"{i}": self.root_event() for i in range(2)}
+            )
+        # test the case where there is no root event
+        del events["root"]
+        with pytest.raises(ValueError):
+            get_root_event_from_event_id_to_event_map(events)
+
     def test_sequence_otel_event_job(self) -> None:
         """Test sequence_otel_event_job."""
         events = self.events_with_root()
-        assert sorted(sequence_otel_event_job(events)) == self.pv_events(
-            self.synchronous_previous_event_ids(), events
-        )
         assert sorted(
-            sequence_otel_event_job(events, async_flag=True)
+            sequence_otel_event_job(events),
+            key=lambda pv_event: pv_event["eventId"],
+        ) == self.pv_events(self.synchronous_previous_event_ids(), events)
+        assert sorted(
+            sequence_otel_event_job(events, async_flag=True),
+            key=lambda pv_event: pv_event["eventId"],
         ) == self.pv_events(self.async_previous_event_ids(), events)
         event_to_async_group_map = self.event_to_async_group_map()
         assert sorted(
             sequence_otel_event_job(
                 events, event_to_async_group_map=event_to_async_group_map
-            )
+            ),
+            key=lambda pv_event: pv_event["eventId"],
         ) == self.pv_events(self.prior_async_information_event_ids(), events)
         assert sorted(
             sequence_otel_event_job(
                 events,
                 event_to_async_group_map=event_to_async_group_map,
                 async_flag=True,
-            )
+            ),
+            key=lambda pv_event: pv_event["eventId"],
         ) == self.pv_events(self.async_previous_event_ids(), events)
-        # test case where there are no events
-        assert sequence_otel_event_job({}) == []
+        # test case where there are no events, should raise an error due to
+        # the lack of a root event
+        with pytest.raises(ValueError):
+            list(sequence_otel_event_job({}))
