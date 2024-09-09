@@ -125,6 +125,11 @@ def sequence_otel_event_ancestors(
     else:
         event_type_to_group_map = {}
     # get the child events for the event
+    if not isinstance(event.child_event_ids, list):
+        raise ValueError(
+            "All events must have a list of child event ids even if this list "
+            f"is empty. Event ID: {event.event_id}"
+        )
     child_events = [
         event_id_to_event_map[event_id]
         for event_id in event.child_event_ids

@@ -234,3 +234,19 @@ class TestSeqeunceOTelJobs:
             "20": [],
             "21": [],
         }
+        # raise error if child event ids has not been set
+        with pytest.raises(ValueError):
+            sequence_otel_event_ancestors(
+                OTelEvent(
+                    job_name="job_name",
+                    job_id="job_id",
+                    event_type="event_type",
+                    event_id="event_id",
+                    start_timestamp=0,
+                    end_timestamp=1,
+                    application_name="application_name",
+                    parent_event_id=None,
+                    child_event_ids=None,
+                ),
+                {},
+            )
