@@ -1,5 +1,5 @@
 """Utils for the tel2puml package."""
-from datetime import datetime
+from datetime import datetime, UTC
 from itertools import permutations
 from typing import Optional, Generator, Any, TypeVar, Iterable, Hashable
 
@@ -213,6 +213,19 @@ def datetime_to_pv_string(date_time: datetime) -> str:
     :rtype: `str`
     """
     return date_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+
+def unix_nano_to_pv_string(unix_nano: int) -> str:
+    """Convert a unix nano timestamp to a pv string.
+
+    :param unix_nano: The unix nano timestamp to convert.
+    :type unix_nano: `int`
+    :return: The pv string.
+    :rtype: `str`
+    """
+    return datetime_to_pv_string(
+        datetime.fromtimestamp(unix_nano / 1e9, tz=UTC)
+    )
 
 
 def check_is_sub_list(
