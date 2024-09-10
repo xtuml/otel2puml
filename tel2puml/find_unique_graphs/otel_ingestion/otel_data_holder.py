@@ -18,6 +18,7 @@ from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     Base,
     NODE_ASSOCIATION,
 )
+import tel2puml.find_unique_graphs.find_unique_graphs as unique_graphs
 
 
 LOGGER = logging.getLogger(__name__)
@@ -100,6 +101,17 @@ class DataHolder(ABC):
         `None`]
         """
 
+    @abstractmethod
+    def find_unique_graphs(self) -> dict[str, set[str]]:
+        """Abstract method to find unique graphs from OTel data in the data
+        holder. Returns a dictionary mapping job names to a set of unique
+        job_ids.
+
+        :return: A dictionary mapping job names to a set of unique job_ids
+        :rtype: `dict`[`str`, `set`[`str`]]
+        """
+        pass
+
 
 class SQLDataHolder(DataHolder):
     """A class to handle saving data in SQL databases using SQLAlchemy."""
@@ -114,6 +126,7 @@ class SQLDataHolder(DataHolder):
         self.node_models_to_save: list[NodeModel] = []
         self.node_relationships_to_save: list[dict[str, str]] = []
         self.batch_size: int = config["batch_size"]
+        self.time_buffer: int = config["time_buffer"]
         self.engine: Engine = create_engine(config["db_uri"], echo=False)
         self.base: Base = Base()
         self.session: Session = Session(bind=self.engine)
@@ -299,3 +312,15 @@ class SQLDataHolder(DataHolder):
                     node
                 )
             yield output
+
+    def find_unique_graphs(self) -> dict[str, set[str]]:
+        """Method to find unique graphs from OTel data in the data holder.
+
+        :return: A dictionary mapping job names to a set of unique job_ids
+        :rtype: `dict`[`str`, `set`[`str`]]
+        """
+        return unique_graphs.find_unique_graphs(
+            self.time_buffer,
+            self.batch_size,
+            self
+        )

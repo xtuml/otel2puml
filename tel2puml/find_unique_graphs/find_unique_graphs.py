@@ -7,13 +7,11 @@ import xxhash
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     NodeModel, JobHash
 )
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder import (
-    DataHolder, SQLDataHolder
-)
+import tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder as dh
 
 
 def get_time_window(
-    time_buffer: int, data_holder: DataHolder
+    time_buffer: int, data_holder: "dh.DataHolder"
 ) -> tuple[int, int]:
     """Get the time window for the unique graphs.
 
@@ -44,7 +42,7 @@ def get_time_window(
 
 
 def intialise_temp_table_for_root_nodes(
-    sql_data_holder: SQLDataHolder,
+    sql_data_holder: "dh.SQLDataHolder",
 ) -> sa.Table:
     """Initialise a temporary table for the root nodes.
 
@@ -67,7 +65,7 @@ def intialise_temp_table_for_root_nodes(
 
 
 def create_temp_table_of_root_nodes_in_time_window(
-    time_window: tuple[int, int], sql_data_holder: SQLDataHolder
+    time_window: tuple[int, int], sql_data_holder: "dh.SQLDataHolder"
 ) -> sa.Table:
     """Create a temporary table with the root nodes in the time window.
 
@@ -113,7 +111,7 @@ def create_temp_table_of_root_nodes_in_time_window(
 
 def get_root_nodes(
     start_row: int, batch_size: int,
-    temp_table: sa.Table, data_holder: SQLDataHolder
+    temp_table: sa.Table, data_holder: "dh.SQLDataHolder"
 ) -> list[NodeModel]:
     """Get the root nodes from the temporary table.
 
@@ -146,7 +144,7 @@ def get_root_nodes(
 
 
 def get_sql_batch_nodes(
-    job_ids: set[str], data_holder: SQLDataHolder
+    job_ids: set[str], data_holder: "dh.SQLDataHolder"
 ) -> list[NodeModel]:
     """Get the nodes for each job ID in the batch.
 
@@ -235,7 +233,7 @@ def compute_graph_hashes_from_root_nodes(
 
 
 def insert_job_hashes(
-    job_hashes: list[JobHash], sql_data_holder: SQLDataHolder
+    job_hashes: list[JobHash], sql_data_holder: "dh.SQLDataHolder"
 ) -> None:
     """Insert the job hashes into the database.
 
@@ -249,7 +247,7 @@ def insert_job_hashes(
 
 
 def compute_graph_hashes_for_batch(
-    root_nodes: list[NodeModel], sql_data_holder: SQLDataHolder
+    root_nodes: list[NodeModel], sql_data_holder: "dh.SQLDataHolder"
 ) -> None:
     """Compute the hashes of the graphs for a batch of root nodes and commit
     them to the database.
@@ -268,7 +266,7 @@ def compute_graph_hashes_for_batch(
 
 
 def get_unique_graph_job_ids_per_job_name(
-    sql_data_holder: SQLDataHolder
+    sql_data_holder: "dh.SQLDataHolder"
 ) -> dict[str, set[str]]:
     """Get the unique graphs per job name.
 
@@ -293,7 +291,7 @@ def get_unique_graph_job_ids_per_job_name(
 
 
 def find_unique_graphs(
-    time_buffer: int, batch_size: int, sql_data_holder: SQLDataHolder
+    time_buffer: int, batch_size: int, sql_data_holder: "dh.SQLDataHolder"
 ) -> dict[str, set[str]]:
     """Find the unique graphs in the ingested OpenTelemetry data.
 
