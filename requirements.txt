@@ -9,3 +9,4 @@ pandas-stubs==2.2.1.240316
 numba~=0.59.0
 ijson~=3.3.0
 xxhash~=3.5.0
+pydantic~=2.9.1
