@@ -93,9 +93,10 @@ def mock_yaml_config_string() -> str:
 
 
 @pytest.fixture
-def mock_yaml_config_dict(mock_yaml_config_string: str) -> Any:
+def mock_yaml_config_dict(mock_yaml_config_string: str) -> dict[str, Any]:
     """Mocks a dict when reading the yaml config."""
-    return yaml.safe_load(mock_yaml_config_string)
+    config_dict: dict[str, Any] = yaml.safe_load(mock_yaml_config_string)
+    return config_dict
 
 
 @pytest.fixture

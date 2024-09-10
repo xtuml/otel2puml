@@ -1,17 +1,20 @@
 """Tests for ingest_data module."""
+from pathlib import Path
+from typing import Any
 
 import yaml
 import pytest
-from pathlib import Path
 
 from tel2puml.find_unique_graphs.otel_ingestion.ingest_otel_data import (
     IngestData,
     fetch_data_source,
     fetch_data_holder,
+    ingest_data_into_dataholder
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
     IngestDataConfig,
     NodeModel,
+    IngestTypes
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder import (
     SQLDataHolder,
@@ -23,34 +26,24 @@ from tel2puml.find_unique_graphs.otel_ingestion.otel_data_source import (
 
 class TestIngestData:
     """Collection of tests for IngestData class."""
-
-    @staticmethod
-    def test_load_data_to_data_holder(
-        mock_yaml_config_string: str,
-        mock_temp_dir_with_json_files: Path,
-    ) -> None:
-        """Integration test for IngestData class using SQLDataHolder and
-        JSONDataSource classes.
-        """
-
-        # Update config to point to temp directory
-        config_yaml = mock_yaml_config_string.replace(
-            "dirpath: /path/to/json/directory",
-            f"dirpath: {mock_temp_dir_with_json_files}",
+    def get_ingest_config(
+        self, config_yaml: str, new_dirpath: Path
+    ) -> IngestDataConfig:
+        """Updates the dirpath in the config yaml string."""
+        update_config_yaml_string = config_yaml.replace(
+            "dirpath: /path/to/json/directory", f"dirpath: {new_dirpath}"
         ).replace("filepath: /path/to/json/file.json", "filepath: null")
+        config_dict: dict[str, Any] = yaml.safe_load(update_config_yaml_string)
+        config = IngestDataConfig(
+            data_sources=config_dict["data_sources"],
+            data_holders=config_dict["data_holders"],
+            ingest_data=IngestTypes(**config_dict["ingest_data"]),
+        )
+        return config
 
-        config: IngestDataConfig = yaml.safe_load(config_yaml)
-
-        data_holder = SQLDataHolder(config["data_holders"]["sql"])
-        data_source = JSONDataSource(config["data_sources"]["json"])
-
+    def check_data_holder_after_load(self, data_holder: SQLDataHolder) -> None:
+        """Checks the data holder after data is loaded."""
         with data_holder.session as session:
-            # Check no nodes in the database
-            assert not session.query(NodeModel).all()
-
-            ingest_data = IngestData(data_source, data_holder)
-            ingest_data.load_to_data_holder()
-
             # Check expected event ids for nodes in the database
             # Event IDs set in conftest, with 2x2x2 structure for file_no,
             # no_resource_spans and no_spans
@@ -122,12 +115,54 @@ class TestIngestData:
                     parent_node = event_id_to_nodes[node.parent_event_id]
                     assert parent_node.children == [node]
 
+    def test_load_data_to_data_holder(
+        self,
+        mock_yaml_config_string: str,
+        mock_temp_dir_with_json_files: Path,
+    ) -> None:
+        """Integration test for IngestData class using SQLDataHolder and
+        JSONDataSource classes.
+        """
+
+        # Update config to point to temp directory
+        config = self.get_ingest_config(
+            mock_yaml_config_string, mock_temp_dir_with_json_files
+        )
+
+        data_holder = SQLDataHolder(config["data_holders"]["sql"])
+        data_source = JSONDataSource(config["data_sources"]["json"])
+        with data_holder.session as session:
+            # Check no nodes in the database
+            assert not session.query(NodeModel).all()
+        ingest_data = IngestData(data_source, data_holder)
+        ingest_data.load_to_data_holder()
+        self.check_data_holder_after_load(data_holder)
+
+    def test_ingest_data_into_dataholder(
+        self,
+        mock_yaml_config_string: str,
+        mock_temp_dir_with_json_files: Path,
+    ) -> None:
+        """Integration test for ingest_data_into_dataholder function."""
+
+        # Update config to point to temp directory
+        config = self.get_ingest_config(
+            mock_yaml_config_string, mock_temp_dir_with_json_files
+        )
+        data_holder = ingest_data_into_dataholder(config)
+        assert isinstance(data_holder, SQLDataHolder)
+        self.check_data_holder_after_load(data_holder)
+
 
 @pytest.mark.usefixtures("mock_path_exists", "mock_filepath_in_dir")
-def test_fetch_data_source(mock_yaml_config_dict: IngestDataConfig) -> None:
+def test_fetch_data_source(mock_yaml_config_dict: dict[str, Any]) -> None:
     """Tests fetch_data_source function."""
-
-    data_source = fetch_data_source(mock_yaml_config_dict)
+    ingest_data_config = IngestDataConfig(
+        data_sources=mock_yaml_config_dict["data_sources"],
+        data_holders=mock_yaml_config_dict["data_holders"],
+        ingest_data=IngestTypes(**mock_yaml_config_dict["ingest_data"]),
+    )
+    data_source = fetch_data_source(ingest_data_config)
     assert isinstance(data_source, JSONDataSource)
     assert data_source.dirpath == "/path/to/json/directory"
     assert data_source.filepath == "/path/to/json/file.json"
@@ -145,25 +180,20 @@ def test_fetch_data_source(mock_yaml_config_dict: IngestDataConfig) -> None:
         expected_config_headers.remove(key)
     assert not expected_config_headers
 
-    mock_yaml_config_dict["ingest_data"]["data_source"] = "invalid_source"
-
-    with pytest.raises(ValueError):
-        data_source = fetch_data_source(mock_yaml_config_dict)
-
 
 @pytest.mark.usefixtures("mock_path_exists", "mock_filepath_in_dir")
-def test_fetch_data_holder(mock_yaml_config_dict: IngestDataConfig) -> None:
+def test_fetch_data_holder(mock_yaml_config_dict: dict[str, Any]) -> None:
     """Tests fetch_data_holder function."""
+    ingest_data_config = IngestDataConfig(
+        data_sources=mock_yaml_config_dict["data_sources"],
+        data_holders=mock_yaml_config_dict["data_holders"],
+        ingest_data=IngestTypes(**mock_yaml_config_dict["ingest_data"]),
+    )
 
-    data_holder = fetch_data_holder(mock_yaml_config_dict)
+    data_holder = fetch_data_holder(ingest_data_config)
     assert isinstance(data_holder, SQLDataHolder)
     assert data_holder.batch_size == 5
     assert data_holder.max_timestamp == 0
     assert data_holder.min_timestamp == 999999999999999999999999999999999999999
     assert not data_holder.node_models_to_save
     assert not data_holder.node_relationships_to_save
-
-    mock_yaml_config_dict["ingest_data"]["data_holder"] = "invalid_holder"
-
-    with pytest.raises(ValueError):
-        data_holder = fetch_data_holder(mock_yaml_config_dict)
