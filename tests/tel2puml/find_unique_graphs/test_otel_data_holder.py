@@ -3,7 +3,7 @@ import logging
 
 import pytest
 from unittest.mock import patch
-from pytest import LogCaptureFixture
+from pytest import LogCaptureFixture, MonkeyPatch
 from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 from sqlalchemy.engine.base import Engine
@@ -391,3 +391,24 @@ class TestSQLDataHolder:
         assert otel_events[0]["2_1"] == otel_jobs["2"][0]
         assert otel_events[1]["3_0"] == otel_jobs["3"][1]
         assert otel_events[1]["3_1"] == otel_jobs["3"][0]
+
+    @staticmethod
+    def test_find_unique_graphs(
+        monkeypatch: MonkeyPatch,
+        sql_data_holder_extended: SQLDataHolder
+    ) -> None:
+        """Tests find_unique_graphs method."""
+        monkeypatch.setattr("xxhash.xxh64_hexdigest", lambda x: x)
+        unique_job_ids_per_job_name = (
+            sql_data_holder_extended.find_unique_graphs()
+        )
+        assert list(unique_job_ids_per_job_name.keys()) == [
+            "test_name",
+            "test_name_2",
+        ]
+        assert unique_job_ids_per_job_name["test_name"] == {
+            "event_type_0event_type_1"
+        }
+        assert unique_job_ids_per_job_name["test_name_2"] == {
+            str(i) for i in range(5)
+        }
