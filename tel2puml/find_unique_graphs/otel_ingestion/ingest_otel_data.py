@@ -12,8 +12,6 @@ from tel2puml.find_unique_graphs.otel_ingestion.otel_data_source import (
     OTELDataSource,
 )
 from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
-    SQLDataHolderConfig,
-    JSONDataSourceConfig,
     IngestDataConfig,
 )
 
@@ -51,21 +49,12 @@ def fetch_data_source(config: IngestDataConfig) -> OTELDataSource:
     :return: The subclass of OTelDataSource
     :rtype: :class: `OTelDataSource`
     """
-    data_source_type = config["ingest_data"]["data_source"]
-
-    if data_source_type == "json":
-        source_dict = config["data_sources"]["json"]
-        json_config = JSONDataSourceConfig(
-            filepath=source_dict["filepath"],
-            dirpath=source_dict["dirpath"],
-            data_location=source_dict["data_location"],
-            header=source_dict["header"],
-            span_mapping=source_dict["span_mapping"],
-            field_mapping=source_dict["field_mapping"],
+    data_source_type = config["ingest_data"].data_source
+    if data_source_type not in config["data_sources"]:
+        raise ValueError(
+            f"{data_source_type} is not present in the data source config."
         )
-        return JSONDataSource(json_config)
-
-    raise ValueError(f"{data_source_type} is not a valid data source type.")
+    return JSONDataSource(config["data_sources"][data_source_type])
 
 
 def fetch_data_holder(config: IngestDataConfig) -> DataHolder:
@@ -76,18 +65,26 @@ def fetch_data_holder(config: IngestDataConfig) -> DataHolder:
     :return: The subclass of DataHolder
     :rtype: :class: `DataHolder`
     """
-    data_holder_type = config["ingest_data"]["data_holder"]
-
-    if data_holder_type == "sql":
-        holder_dict = config["data_holders"]["sql"]
-        sql_config = SQLDataHolderConfig(
-            db_uri=holder_dict["db_uri"],
-            batch_size=holder_dict["batch_size"],
-            time_buffer=holder_dict["time_buffer"],
+    data_holder_type = config["ingest_data"].data_holder
+    if data_holder_type not in config["data_holders"]:
+        raise ValueError(
+            f"{data_holder_type} is not present in the data holder config."
         )
-        return SQLDataHolder(sql_config)
+    return SQLDataHolder(config["data_holders"][data_holder_type])
 
-    raise ValueError(f"{data_holder_type} is not a valid data holder type.")
+
+def ingest_data_into_dataholder(config: IngestDataConfig) -> DataHolder:
+    """Ingests data into data holder.
+
+    :param config: The config
+    :type config: :class:`IngestDataConfig`
+    """
+    data_source = fetch_data_source(config)
+    data_holder = fetch_data_holder(config)
+
+    ingest_data = IngestData(data_source, data_holder)
+    ingest_data.load_to_data_holder()
+    return data_holder
 
 
 if __name__ == "__main__":
