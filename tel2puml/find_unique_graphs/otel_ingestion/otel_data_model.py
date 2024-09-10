@@ -184,7 +184,7 @@ def load_config_from_dict(config: dict[str, Any]) -> IngestDataConfig:
     """Loads config from yaml string.
 
     :param config_string: The config string
-    :type config_string: `str`
+    :type config_string: `dict`[`str`, `Any`]
     :return: The config
     :rtype: :class:`IngestData
     """
