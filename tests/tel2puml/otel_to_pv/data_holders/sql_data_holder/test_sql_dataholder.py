@@ -12,7 +12,6 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm.exc import DetachedInstanceError
 
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
-    OTelEvent,
     NodeModel,
     Base,
     NODE_ASSOCIATION,
@@ -33,6 +32,7 @@ from tel2puml.otel_to_pv.data_holders.sql_data_holder.sql_dataholder import (
     find_unique_graphs
 )
 from tel2puml.otel_to_pv.config import SQLDataHolderConfig
+from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 
 
 class TestSQLDataHolder:

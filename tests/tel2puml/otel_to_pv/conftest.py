@@ -10,9 +10,9 @@ from sqlalchemy.sql.schema import Table
 import sqlalchemy as sa
 
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
-    OTelEvent,
     NodeModel,
 )
+from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.sql_dataholder import (
     SQLDataHolder,
     intialise_temp_table_for_root_nodes,

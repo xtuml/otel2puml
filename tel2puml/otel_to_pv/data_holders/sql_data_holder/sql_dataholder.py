@@ -12,7 +12,6 @@ from sqlalchemy.engine.base import Engine
 import xxhash
 
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
-    OTelEvent,
     NodeModel,
     Base,
     NODE_ASSOCIATION,
@@ -20,6 +19,7 @@ from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
 )
 from ..base import DataHolder, get_time_window
 from tel2puml.otel_to_pv.config import SQLDataHolderConfig
+from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 
 T = TypeVar("T")
 

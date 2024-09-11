@@ -12,9 +12,7 @@ from tel2puml.sequence_otel_v2 import (
     sequence_otel_event_job,
     sequence_otel_jobs
 )
-from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
-    OTelEvent
-)
+from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 from tel2puml.tel2puml_types import PVEvent
 from tel2puml.utils import unix_nano_to_pv_string
 

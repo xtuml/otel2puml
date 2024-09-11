@@ -4,9 +4,7 @@ from typing import Any, Iterator
 
 import ijson
 
-from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
-    OTelEvent,
-)
+from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 from ..base import OTELDataSource
 from . import json_data_converter
 from tel2puml.otel_to_pv.config import JSONDataSourceConfig

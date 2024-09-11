@@ -1,9 +1,7 @@
 """Module containing base classes to provide interfaces for data sources."""
 from abc import ABC, abstractmethod
 from typing import Self
-from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
-    OTelEvent,
-)
+from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 
 
 class OTELDataSource(ABC):
