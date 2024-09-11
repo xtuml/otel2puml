@@ -14,7 +14,7 @@ from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (
     SQLDataHolderConfig,
     NodeModel,
 )
-from tel2puml.otel_to_pv.otel_ingestion.otel_data_holder import (
+from tel2puml.otel_to_pv.data_holders.otel_data_holder import (
     SQLDataHolder,
 )
 from tel2puml.otel_to_pv.find_unique_graphs import (
