@@ -1,48 +1,244 @@
-"""Module for finding unique graphs in a list of graphs from ingested
-OpenTelemetry data."""
-from typing import Iterable
+"""DataHolder subclasses for SQL databases and finding unique OTel trees"""
+from types import TracebackType
+from typing import Any, Generator, TypeVar, Iterable
+import logging
+
 import sqlalchemy as sa
+from sqlalchemy import create_engine, insert
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import OperationalError, IntegrityError
+from sqlalchemy.orm.exc import DetachedInstanceError
+from sqlalchemy.engine.base import Engine
 import xxhash
 
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
-    NodeModel, JobHash
+from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
+    NodeModel,
+    Base,
+    NODE_ASSOCIATION,
+    JobHash,
 )
-import tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder as dh
+from ..base import DataHolder, get_time_window
+from tel2puml.otel_to_pv.config import SQLDataHolderConfig
+from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
+
+T = TypeVar("T")
 
 
-def get_time_window(
-    time_buffer: int, data_holder: "dh.DataHolder"
-) -> tuple[int, int]:
-    """Get the time window for the unique graphs.
+class SQLDataHolder(DataHolder):
+    """A class to handle saving data in SQL databases using SQLAlchemy."""
 
-    :param time_buffer: The time buffer to add to the time window in minutes
-    :type time_buffer: `int`
-    :param data_holder: The data holder object containing the ingested data
-    :type data_holder: :class:`DataHolder`
-    :return: The time window for the unique graphs
-    :rtype: `tuple`[`int`, `int`]
-    :raises ValueError: If the time buffer is too large for the ingested data
-    """
-    time_buffer_in_nanoseconds = time_buffer * 60 * 1000000000
-    buffer_min_timestamp = (
-        data_holder.min_timestamp + time_buffer_in_nanoseconds
-    )
-    buffer_max_timestamp = (
-        data_holder.max_timestamp - time_buffer_in_nanoseconds
-    )
-    if buffer_min_timestamp >= buffer_max_timestamp:
-        raise ValueError(
-            "The time buffer is too large for the ingested data. "
-            "Please reduce the time buffer."
+    def __init__(self, config: SQLDataHolderConfig) -> None:
+        """Constructor method.
+
+        :param config: Configuration parameters.
+        :type config: :class: `SQLDataHolderConfig`
+        """
+        super().__init__()
+        self.node_models_to_save: list[NodeModel] = []
+        self.node_relationships_to_save: list[dict[str, str]] = []
+        self.batch_size: int = config["batch_size"]
+        self.time_buffer: int = config["time_buffer"]
+        self.engine: Engine = create_engine(config["db_uri"], echo=False)
+        self.base: Base = Base()
+        self.session: Session = Session(bind=self.engine)
+        self.create_db_tables()
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        """
+        Method to handle tear down tasks within the context manager.
+
+        :param exc_type: The exception type
+        :type exc_type: `Optional`[`type`[:class:`BaseException`]]
+        :param exc_val: The exception value
+        :type exc_val: `Optional`[:class:`BaseException`]
+        :param exc_tb: The exception traceback
+        :type exc_tb: `Optional`[:class:`TracebackType`]
+        """
+        super().__exit__(exc_type, exc_val, exc_tb)
+        self.commit_batched_data_to_database()
+        self.session.close()
+
+    def create_db_tables(self) -> None:
+        """Method to create the database tables based on the defined models."""
+
+        self.base.metadata.create_all(self.engine)
+
+    def _save_data(self, otel_event: OTelEvent) -> None:
+        """Method for batching and saving OTel data to SQL database.
+
+        :param otel_event: An OTelEvent object.
+        :type otel_event: :class: `OTelEvent`
+        """
+        node_model = self.convert_otel_event_to_node_model(otel_event)
+
+        self.node_models_to_save.append(node_model)
+        self.add_node_relations(otel_event)
+
+        if len(self.node_models_to_save) >= self.batch_size:
+            self.commit_batched_data_to_database()
+
+    def commit_batched_data_to_database(self) -> None:
+        """Method to commit batched node models, and their relationships to
+        a SQL database.
+        """
+
+        try:
+            self.batch_insert_node_models()
+            self.batch_insert_node_associations()
+            # Reset batch
+            self.node_models_to_save = []
+            self.node_relationships_to_save = []
+        except (IntegrityError, OperationalError, Exception) as e:
+            self.session.rollback()
+            raise e
+
+    def batch_insert_objects(self, objects: list[T]) -> None:
+        """Method to batch insert objects into database.
+
+        :param objects: A list of SQLAlchemy objects
+        :type objects: `list`[:class:`T`]
+        """
+
+        with self.session as session:
+            try:
+                session.add_all(objects)
+                session.commit()
+            except (IntegrityError, OperationalError, Exception) as e:
+                session.rollback()
+                raise e
+
+    def batch_insert_node_models(self) -> None:
+        """Method to batch insert NodeModel objects into database."""
+        self.batch_insert_objects(self.node_models_to_save)
+
+    def batch_insert_node_associations(self) -> None:
+        """Method to batch insert node associations into database."""
+
+        if len(self.node_relationships_to_save) > 0:
+            with self.session as session:
+                stmt = insert(NODE_ASSOCIATION)
+                session.execute(stmt, self.node_relationships_to_save)
+                session.commit()
+
+    def add_node_relations(self, otel_event: OTelEvent) -> None:
+        """Method to add parent-child node relations.
+
+        :param otel_event: An OTelEvent object
+        :type otel_event: :class: `OTelEvent`
+        """
+
+        if otel_event.child_event_ids:
+            for child_event_id in otel_event.child_event_ids:
+                self.node_relationships_to_save.append(
+                    {
+                        "parent_id": otel_event.event_id,
+                        "child_id": child_event_id,
+                    }
+                )
+
+    @staticmethod
+    def convert_otel_event_to_node_model(
+        otel_event: OTelEvent
+    ) -> NodeModel:
+        """Method to convert an OTelEvent object to a NodeModel object.
+
+        :param otel_event: An OTelEvent object
+        :type otel_event: :class: `OTelEvent`
+        :return: A NodeModel object
+        :rtype: :class:`NodeModel`
+        """
+        return NodeModel(
+            job_name=otel_event.job_name,
+            job_id=otel_event.job_id,
+            event_type=otel_event.event_type,
+            event_id=otel_event.event_id,
+            start_timestamp=otel_event.start_timestamp,
+            end_timestamp=otel_event.end_timestamp,
+            application_name=otel_event.application_name,
+            parent_event_id=otel_event.parent_event_id or None,
         )
-    return (
-        data_holder.min_timestamp + time_buffer_in_nanoseconds,
-        data_holder.max_timestamp - time_buffer_in_nanoseconds,
-    )
+
+    @staticmethod
+    def node_to_otel_event(node: NodeModel) -> OTelEvent:
+        """Method to convert a NodeModel object to an OTelEvent object.
+
+        :param: A NodeModel object
+        :type node: :class:`NodeModel`
+        :return: An OTelEvent object.
+        :rtype: :class:`OTelEvent`
+        """
+        try:
+            return OTelEvent(
+                job_name=node.job_name,
+                job_id=node.job_id,
+                event_type=node.event_type,
+                event_id=node.event_id,
+                start_timestamp=node.start_timestamp,
+                end_timestamp=node.end_timestamp,
+                application_name=node.application_name,
+                parent_event_id=node.parent_event_id,
+                child_event_ids=[
+                    child.event_id for child in node.children
+                ],
+            )
+        except DetachedInstanceError:
+            logging.error(
+                "Likely not within a session so cannot access children."
+            )
+            raise
+
+    def get_otel_events_from_job_ids(
+        self, job_ids: set[str]
+    ) -> Generator[dict[str, OTelEvent], Any, None]:
+        """Method to get OTelEvents from job_ids
+
+        :param job_ids: A set of job_ids
+        :type job_ids: `set`[`str`]
+        :return: A generator of dictionaries mapping event ids to OTelEvent
+        objects
+        :rtype: :class:`Generator`[`dict`[`str`, :class:`OTelEvent`], `Any`,
+        `None`]
+        """
+        with self.session as session:
+            nodes = (
+                session.query(NodeModel)
+                .filter(NodeModel.job_id.in_(job_ids))
+                .order_by(NodeModel.job_id)
+                .all()
+            )
+            output: dict[str, OTelEvent] = {}
+            current_job_id: str | None = None
+            for node in nodes:
+                if current_job_id != node.job_id:
+                    if current_job_id is not None:
+                        yield output
+                    output = {}
+                    current_job_id = str(node.job_id)
+                output[str(node.event_id)] = self.node_to_otel_event(
+                    node
+                )
+            yield output
+
+    def find_unique_graphs(self) -> dict[str, set[str]]:
+        """Method to find unique graphs from OTel data in the data holder.
+
+        :return: A dictionary mapping job names to a set of unique job_ids
+        :rtype: `dict`[`str`, `set`[`str`]]
+        """
+        return find_unique_graphs(
+            self.time_buffer,
+            self.batch_size,
+            self
+        )
 
 
 def intialise_temp_table_for_root_nodes(
-    sql_data_holder: "dh.SQLDataHolder",
+    sql_data_holder: SQLDataHolder,
 ) -> sa.Table:
     """Initialise a temporary table for the root nodes.
 
@@ -65,7 +261,7 @@ def intialise_temp_table_for_root_nodes(
 
 
 def create_temp_table_of_root_nodes_in_time_window(
-    time_window: tuple[int, int], sql_data_holder: "dh.SQLDataHolder"
+    time_window: tuple[int, int], sql_data_holder: SQLDataHolder
 ) -> sa.Table:
     """Create a temporary table with the root nodes in the time window.
 
@@ -111,7 +307,7 @@ def create_temp_table_of_root_nodes_in_time_window(
 
 def get_root_nodes(
     start_row: int, batch_size: int,
-    temp_table: sa.Table, data_holder: "dh.SQLDataHolder"
+    temp_table: sa.Table, data_holder: SQLDataHolder
 ) -> list[NodeModel]:
     """Get the root nodes from the temporary table.
 
@@ -144,7 +340,7 @@ def get_root_nodes(
 
 
 def get_sql_batch_nodes(
-    job_ids: set[str], data_holder: "dh.SQLDataHolder"
+    job_ids: set[str], data_holder: SQLDataHolder
 ) -> list[NodeModel]:
     """Get the nodes for each job ID in the batch.
 
@@ -233,7 +429,7 @@ def compute_graph_hashes_from_root_nodes(
 
 
 def insert_job_hashes(
-    job_hashes: list[JobHash], sql_data_holder: "dh.SQLDataHolder"
+    job_hashes: list[JobHash], sql_data_holder: SQLDataHolder
 ) -> None:
     """Insert the job hashes into the database.
 
@@ -247,7 +443,7 @@ def insert_job_hashes(
 
 
 def compute_graph_hashes_for_batch(
-    root_nodes: list[NodeModel], sql_data_holder: "dh.SQLDataHolder"
+    root_nodes: list[NodeModel], sql_data_holder: SQLDataHolder
 ) -> None:
     """Compute the hashes of the graphs for a batch of root nodes and commit
     them to the database.
@@ -266,7 +462,7 @@ def compute_graph_hashes_for_batch(
 
 
 def get_unique_graph_job_ids_per_job_name(
-    sql_data_holder: "dh.SQLDataHolder"
+    sql_data_holder: SQLDataHolder
 ) -> dict[str, set[str]]:
     """Get the unique graphs per job name.
 
@@ -291,7 +487,7 @@ def get_unique_graph_job_ids_per_job_name(
 
 
 def find_unique_graphs(
-    time_buffer: int, batch_size: int, sql_data_holder: "dh.SQLDataHolder"
+    time_buffer: int, batch_size: int, sql_data_holder: SQLDataHolder
 ) -> dict[str, set[str]]:
     """Find the unique graphs in the ingested OpenTelemetry data.
 

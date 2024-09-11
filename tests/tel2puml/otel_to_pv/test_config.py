@@ -1,13 +1,11 @@
-"""Tests for the module otel_data_model.py."""
+"""Tests for the module config.py."""
 from typing import Any
 from copy import deepcopy
 
 import pytest
 from pydantic import ValidationError
 
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
-    load_config_from_dict
-)
+from tel2puml.otel_to_pv.config import load_config_from_dict
 
 
 def test_load_config_from_dict(

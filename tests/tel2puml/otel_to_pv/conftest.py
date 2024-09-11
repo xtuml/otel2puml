@@ -9,17 +9,15 @@ import pytest
 from sqlalchemy.sql.schema import Table
 import sqlalchemy as sa
 
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
-    OTelEvent,
-    SQLDataHolderConfig,
+from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
     NodeModel,
 )
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder import (
+from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
+from tel2puml.otel_to_pv.data_holders.sql_data_holder.sql_dataholder import (
     SQLDataHolder,
+    intialise_temp_table_for_root_nodes,
 )
-from tel2puml.find_unique_graphs.find_unique_graphs import (
-    intialise_temp_table_for_root_nodes
-)
+from tel2puml.otel_to_pv.config import SQLDataHolderConfig
 
 
 @pytest.fixture

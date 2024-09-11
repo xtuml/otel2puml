@@ -5,23 +5,20 @@ from typing import Any
 import yaml
 import pytest
 
-from tel2puml.find_unique_graphs.otel_ingestion.ingest_otel_data import (
+from tel2puml.otel_to_pv.ingest_otel_data import (
     IngestData,
     fetch_data_source,
     fetch_data_holder,
     ingest_data_into_dataholder
 )
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
-    IngestDataConfig,
-    NodeModel,
-    IngestTypes
+from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
+    NodeModel
 )
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder import (
-    SQLDataHolder,
-)
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_source import (
+from tel2puml.otel_to_pv.data_holders import SQLDataHolder
+from tel2puml.otel_to_pv.data_sources import (
     JSONDataSource,
 )
+from tel2puml.otel_to_pv.config import IngestDataConfig, IngestTypes
 
 
 class TestIngestData:

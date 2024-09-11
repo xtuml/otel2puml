@@ -1,22 +1,19 @@
 """Tests for otel_data_source module."""
-
 import json
 import os
-import yaml
-import pytest
 import shutil
 
+import yaml
+import pytest
 from pytest import FixtureRequest
 from pathlib import Path
 from unittest.mock import mock_open, patch
 
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_source import (
+from tel2puml.otel_to_pv.data_sources.json_data_source.json_datasource import (
     JSONDataSource,
 )
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
-    IngestDataConfig,
-    OTelEvent,
-)
+from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
+from tel2puml.otel_to_pv.config import IngestDataConfig
 
 
 class TestJSONDataSource:

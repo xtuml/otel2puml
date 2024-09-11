@@ -1,12 +1,10 @@
-"""Module to transform input JSON to a format that can be used to find unique
-graphs."""
+"""Module to transform input JSON to a format that can be ingested into a
+DataHolder."""
 from typing import Any, Generator
 
 import jq  # type: ignore[import-not-found]
 
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
-    FieldSpec,
-)
+from tel2puml.otel_to_pv.config import FieldSpec
 
 
 class JQVariableTree:

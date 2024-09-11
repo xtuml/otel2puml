@@ -2,21 +2,20 @@
 from typing import Any
 import pytest
 
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
-    FieldSpec,
-)
-from tel2puml.find_unique_graphs.otel_ingestion.json_jq_converter import (
-    JQVariableTree,
-    get_updated_path_from_key_path_key_value_and_root_var_tree,
-    update_field_spec_with_variables,
-    update_field_specs_with_variables,
-    build_base_variable_jq_query,
-    get_jq_for_field_spec,
-    get_jq_using_field_mapping,
-    get_jq_query_from_field_mapping_with_variables_and_var_tree,
-    field_mapping_to_jq_query,
-    field_mapping_to_compiled_jq,
-)
+from tel2puml.otel_to_pv.config import FieldSpec
+from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter \
+    import (
+        JQVariableTree,
+        get_updated_path_from_key_path_key_value_and_root_var_tree,
+        update_field_spec_with_variables,
+        update_field_specs_with_variables,
+        build_base_variable_jq_query,
+        get_jq_for_field_spec,
+        get_jq_using_field_mapping,
+        get_jq_query_from_field_mapping_with_variables_and_var_tree,
+        field_mapping_to_jq_query,
+        field_mapping_to_compiled_jq,
+    )
 
 
 class TestJQVariableTree:

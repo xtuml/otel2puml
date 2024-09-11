@@ -5,9 +5,7 @@ import logging
 
 from typing import Any, Literal
 
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
-    JSONDataSourceConfig,
-)
+from tel2puml.otel_to_pv.config import JSONDataSourceConfig
 
 MAX_SEGMENT_COUNT = 50  # TODO have a think about this
 LOGGER = logging.getLogger(__name__)
