@@ -5,7 +5,7 @@ import pytest
 import sqlalchemy as sa
 from sqlalchemy.exc import IntegrityError
 
-from tel2puml.find_unique_graphs.find_unique_graphs import (
+from tel2puml.otel_to_pv.find_unique_graphs import (
     get_time_window,
     intialise_temp_table_for_root_nodes,
     get_root_nodes,
@@ -19,10 +19,10 @@ from tel2puml.find_unique_graphs.find_unique_graphs import (
     get_unique_graph_job_ids_per_job_name,
     find_unique_graphs
 )
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder import (
+from tel2puml.otel_to_pv.otel_ingestion.otel_data_holder import (
     DataHolder, SQLDataHolder
 )
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
+from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (
     NodeModel,
     SQLDataHolderConfig,
     JobHash,

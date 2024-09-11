@@ -11,14 +11,14 @@ from sqlalchemy.exc import OperationalError, IntegrityError
 from sqlalchemy.orm.exc import DetachedInstanceError
 from sqlalchemy.engine.base import Engine
 
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
+from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (
     OTelEvent,
     SQLDataHolderConfig,
     NodeModel,
     Base,
     NODE_ASSOCIATION,
 )
-import tel2puml.find_unique_graphs.find_unique_graphs as unique_graphs
+import tel2puml.otel_to_pv.find_unique_graphs as unique_graphs
 
 
 LOGGER = logging.getLogger(__name__)

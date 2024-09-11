@@ -5,11 +5,11 @@ import ijson
 from abc import ABC, abstractmethod
 from typing import Self, Any, Iterator
 
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
+from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (
     OTelEvent,
     JSONDataSourceConfig,
 )
-from tel2puml.find_unique_graphs.otel_ingestion import json_data_converter
+from tel2puml.otel_to_pv.otel_ingestion import json_data_converter
 
 
 class OTELDataSource(ABC):

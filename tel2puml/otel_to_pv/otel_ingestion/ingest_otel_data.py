@@ -3,15 +3,15 @@ data holder."""
 
 import yaml
 
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder import (
+from tel2puml.otel_to_pv.otel_ingestion.otel_data_holder import (
     SQLDataHolder,
     DataHolder,
 )
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_source import (
+from tel2puml.otel_to_pv.otel_ingestion.otel_data_source import (
     JSONDataSource,
     OTELDataSource,
 )
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
+from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (
     IngestDataConfig,
 )
 

@@ -4,7 +4,7 @@ from typing import Any, Generator
 
 import jq  # type: ignore[import-not-found]
 
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
+from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (
     FieldSpec,
 )
 

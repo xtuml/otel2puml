@@ -10,14 +10,14 @@ from sqlalchemy.engine.base import Engine
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm.exc import DetachedInstanceError
 
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
+from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (
     OTelEvent,
     NodeModel,
     SQLDataHolderConfig,
     Base,
     NODE_ASSOCIATION,
 )
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder import (
+from tel2puml.otel_to_pv.otel_ingestion.otel_data_holder import (
     SQLDataHolder,
 )
 

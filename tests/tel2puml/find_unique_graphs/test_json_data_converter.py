@@ -8,7 +8,7 @@ import logging
 from typing import Any
 from pytest import LogCaptureFixture
 
-from tel2puml.find_unique_graphs.otel_ingestion.json_data_converter import (
+from tel2puml.otel_to_pv.otel_ingestion.json_data_converter import (
     _navigate_dict,
     _navigate_list,
     _extract_value_from_path,
@@ -19,7 +19,7 @@ from tel2puml.find_unique_graphs.otel_ingestion.json_data_converter import (
     process_header,
     process_spans,
 )
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
+from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (
     IngestDataConfig,
     JSONDataSourceConfig,
 )

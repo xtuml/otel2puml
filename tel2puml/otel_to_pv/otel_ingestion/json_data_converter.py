@@ -5,7 +5,7 @@ import logging
 
 from typing import Any, Literal
 
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
+from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (
     JSONDataSourceConfig,
 )
 

@@ -4,10 +4,10 @@ from typing import Iterable
 import sqlalchemy as sa
 import xxhash
 
-from tel2puml.find_unique_graphs.otel_ingestion.otel_data_model import (
+from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (
     NodeModel, JobHash
 )
-import tel2puml.find_unique_graphs.otel_ingestion.otel_data_holder as dh
+import tel2puml.otel_to_pv.otel_ingestion.otel_data_holder as dh
 
 
 def get_time_window(
