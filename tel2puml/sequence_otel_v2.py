@@ -1,7 +1,7 @@
 """Module to sequence OTel data from grouped OTelEvents"""
 
 from typing import Any, Generator, Iterable
-from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (
+from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
     OTelEvent,
 )
 from tel2puml.tel2puml_types import PVEvent

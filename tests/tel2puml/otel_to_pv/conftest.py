@@ -9,7 +9,7 @@ import pytest
 from sqlalchemy.sql.schema import Table
 import sqlalchemy as sa
 
-from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (
+from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
     OTelEvent,
     SQLDataHolderConfig,
     NodeModel,

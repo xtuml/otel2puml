@@ -11,7 +11,7 @@ from tel2puml.otel_to_pv.ingest_otel_data import (
     fetch_data_holder,
     ingest_data_into_dataholder
 )
-from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (
+from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
     IngestDataConfig,
     NodeModel,
     IngestTypes

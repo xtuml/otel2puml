@@ -11,7 +11,7 @@ from sqlalchemy.engine.base import Engine
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm.exc import DetachedInstanceError
 
-from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (
+from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
     OTelEvent,
     NodeModel,
     SQLDataHolderConfig,

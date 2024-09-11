@@ -21,7 +21,7 @@ from tel2puml.otel_to_pv.data_sources.json_data_source.json_data_converter \
         process_spans,
     )
 
-from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (
+from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
     IngestDataConfig,
     JSONDataSourceConfig,
 )

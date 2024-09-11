@@ -12,7 +12,7 @@ from unittest.mock import mock_open, patch
 from tel2puml.otel_to_pv.data_sources.json_data_source.json_datasource import (
     JSONDataSource,
 )
-from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (
+from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
     IngestDataConfig,
     OTelEvent,
 )
