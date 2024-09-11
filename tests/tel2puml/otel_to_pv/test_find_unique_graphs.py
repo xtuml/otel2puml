@@ -19,7 +19,7 @@ from tel2puml.otel_to_pv.find_unique_graphs import (
     get_unique_graph_job_ids_per_job_name,
     find_unique_graphs
 )
-from tel2puml.otel_to_pv.data_holders.base import (
+from tel2puml.otel_to_pv.data_holders import (
     DataHolder, SQLDataHolder
 )
 from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (

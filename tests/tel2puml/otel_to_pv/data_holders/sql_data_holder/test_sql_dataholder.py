@@ -1,4 +1,4 @@
-"""Tests for OTel data holder classes."""
+"""Tests for sql_data_holder.py."""
 import logging
 
 import pytest
@@ -17,9 +17,7 @@ from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (
     Base,
     NODE_ASSOCIATION,
 )
-from tel2puml.otel_to_pv.data_holders.base import (
-    SQLDataHolder,
-)
+from tel2puml.otel_to_pv.data_holders import SQLDataHolder
 
 
 class TestSQLDataHolder:

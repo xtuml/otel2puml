@@ -16,9 +16,7 @@ from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (
     NodeModel,
     IngestTypes
 )
-from tel2puml.otel_to_pv.data_holders.base import (
-    SQLDataHolder,
-)
+from tel2puml.otel_to_pv.data_holders import SQLDataHolder
 from tel2puml.otel_to_pv.data_sources.base import (
     JSONDataSource,
 )
