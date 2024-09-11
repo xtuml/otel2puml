@@ -121,10 +121,10 @@ class TestProcessHeaders:
         """Tests the function _extract_value_from_path"""
 
         with unittest.mock.patch(
-            "tel2puml.find_unique_graphs.otel_ingestion."
+            "tel2puml.otel_to_pv.otel_ingestion."
             "json_data_converter._extract_simple_value"
         ) as extract_simple_value, unittest.mock.patch(
-            "tel2puml.find_unique_graphs.otel_ingestion."
+            "tel2puml.otel_to_pv.otel_ingestion."
             "json_data_converter._extract_nested_value"
         ) as extract_nested_value:
             # Test simple path
