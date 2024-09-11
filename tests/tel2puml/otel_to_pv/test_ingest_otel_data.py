@@ -5,7 +5,7 @@ from typing import Any
 import yaml
 import pytest
 
-from tel2puml.otel_to_pv.otel_ingestion.ingest_otel_data import (
+from tel2puml.otel_to_pv.ingest_otel_data import (
     IngestData,
     fetch_data_source,
     fetch_data_holder,
