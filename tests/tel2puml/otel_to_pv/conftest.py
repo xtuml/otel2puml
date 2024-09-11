@@ -14,9 +14,9 @@ from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (
     SQLDataHolderConfig,
     NodeModel,
 )
-from tel2puml.otel_to_pv.data_holders import SQLDataHolder
-from tel2puml.otel_to_pv.find_unique_graphs import (
-    intialise_temp_table_for_root_nodes
+from tel2puml.otel_to_pv.data_holders.sql_data_holder.sql_dataholder import (
+    SQLDataHolder,
+    intialise_temp_table_for_root_nodes,
 )
 
 
