@@ -6,10 +6,10 @@ import ijson
 
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
     OTelEvent,
-    JSONDataSourceConfig,
 )
 from ..base import OTELDataSource
 from . import json_data_converter
+from tel2puml.otel_to_pv.config import JSONDataSourceConfig
 
 
 class JSONDataSource(OTELDataSource):

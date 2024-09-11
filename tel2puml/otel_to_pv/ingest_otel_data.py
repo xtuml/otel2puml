@@ -1,8 +1,5 @@
 """Module to stream OTel data from a data source and store it within a
 data holder."""
-
-import yaml
-
 from tel2puml.otel_to_pv.data_holders import (
     SQLDataHolder,
     DataHolder,
@@ -11,9 +8,7 @@ from tel2puml.otel_to_pv.data_sources import (
     JSONDataSource,
     OTELDataSource,
 )
-from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
-    IngestDataConfig,
-)
+from tel2puml.otel_to_pv.config import IngestDataConfig
 
 
 class IngestData:
@@ -85,14 +80,3 @@ def ingest_data_into_dataholder(config: IngestDataConfig) -> DataHolder:
     ingest_data = IngestData(data_source, data_holder)
     ingest_data.load_to_data_holder()
     return data_holder
-
-
-if __name__ == "__main__":
-    with open("tel2puml/find_unique_graphs/config.yaml", "r") as f:
-        config: IngestDataConfig = yaml.load(f, Loader=yaml.SafeLoader)
-
-    data_source = fetch_data_source(config)
-    data_holder = fetch_data_holder(config)
-
-    ingest_data = IngestData(data_source, data_holder)
-    ingest_data.load_to_data_holder()

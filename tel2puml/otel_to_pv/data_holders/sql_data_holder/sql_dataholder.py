@@ -13,13 +13,13 @@ import xxhash
 
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
     OTelEvent,
-    SQLDataHolderConfig,
     NodeModel,
     Base,
     NODE_ASSOCIATION,
     JobHash,
 )
 from ..base import DataHolder, get_time_window
+from tel2puml.otel_to_pv.config import SQLDataHolderConfig
 
 T = TypeVar("T")
 

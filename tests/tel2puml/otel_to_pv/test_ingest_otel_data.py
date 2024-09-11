@@ -12,14 +12,13 @@ from tel2puml.otel_to_pv.ingest_otel_data import (
     ingest_data_into_dataholder
 )
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
-    IngestDataConfig,
-    NodeModel,
-    IngestTypes
+    NodeModel
 )
 from tel2puml.otel_to_pv.data_holders import SQLDataHolder
 from tel2puml.otel_to_pv.data_sources import (
     JSONDataSource,
 )
+from tel2puml.otel_to_pv.config import IngestDataConfig, IngestTypes
 
 
 class TestIngestData:

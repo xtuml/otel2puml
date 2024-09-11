@@ -11,13 +11,13 @@ import sqlalchemy as sa
 
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
     OTelEvent,
-    SQLDataHolderConfig,
     NodeModel,
 )
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.sql_dataholder import (
     SQLDataHolder,
     intialise_temp_table_for_root_nodes,
 )
+from tel2puml.otel_to_pv.config import SQLDataHolderConfig
 
 
 @pytest.fixture

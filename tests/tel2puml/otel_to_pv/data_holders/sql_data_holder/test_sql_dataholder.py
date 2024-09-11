@@ -14,7 +14,6 @@ from sqlalchemy.orm.exc import DetachedInstanceError
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
     OTelEvent,
     NodeModel,
-    SQLDataHolderConfig,
     Base,
     NODE_ASSOCIATION,
     JobHash
@@ -33,6 +32,7 @@ from tel2puml.otel_to_pv.data_holders.sql_data_holder.sql_dataholder import (
     get_unique_graph_job_ids_per_job_name,
     find_unique_graphs
 )
+from tel2puml.otel_to_pv.config import SQLDataHolderConfig
 
 
 class TestSQLDataHolder:

@@ -6,7 +6,9 @@ from typing import Self, Optional, Any, Generator
 import logging
 
 
-from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import OTelEvent
+from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
+    OTelEvent,
+)
 
 
 LOGGER = logging.getLogger(__name__)
