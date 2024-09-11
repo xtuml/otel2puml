@@ -3,11 +3,11 @@ data holder."""
 
 import yaml
 
-from tel2puml.otel_to_pv.data_holders.otel_data_holder import (
+from tel2puml.otel_to_pv.data_holders.base import (
     SQLDataHolder,
     DataHolder,
 )
-from tel2puml.otel_to_pv.data_sources.otel_data_source import (
+from tel2puml.otel_to_pv.data_sources.base import (
     JSONDataSource,
     OTELDataSource,
 )

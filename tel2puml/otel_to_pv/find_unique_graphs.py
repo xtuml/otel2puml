@@ -7,7 +7,7 @@ import xxhash
 from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (
     NodeModel, JobHash
 )
-import tel2puml.otel_to_pv.data_holders.otel_data_holder as dh
+import tel2puml.otel_to_pv.data_holders.base as dh
 
 
 def get_time_window(
