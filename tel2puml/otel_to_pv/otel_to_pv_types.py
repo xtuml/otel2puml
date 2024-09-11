@@ -1,4 +1,4 @@
-"""This module contains the named tuple for OTel event."""
+"""This module contains types required for otel_to_pv package."""
 from typing import NamedTuple, Optional
 
 

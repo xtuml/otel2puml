@@ -1,5 +1,5 @@
-"""Module to transform input JSON to a format that can be used to find unique
-graphs."""
+"""Module to transform input JSON to a format that can be ingested into a
+DataHolder."""
 from typing import Any, Generator
 
 import jq  # type: ignore[import-not-found]

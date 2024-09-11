@@ -1,4 +1,4 @@
-"""Module containing data source class responsible for JSON ingestion."""
+"""Module containing DataSource sub class responsible for JSON ingestion."""
 import os
 from typing import Any, Iterator
 

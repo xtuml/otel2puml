@@ -1,4 +1,4 @@
-"""Config module for otel_to_pv."""
+"""Config schemas for otel_to_pv."""
 from typing import (
     Optional,
     TypedDict,

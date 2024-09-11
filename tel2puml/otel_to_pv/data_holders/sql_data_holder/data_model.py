@@ -1,4 +1,4 @@
-"""Module containing classes to ingest OTel data into a data holder."""
+"""Module containing SQL classes to ingest OTel data into a SQLDataHolder."""
 
 from typing import Optional
 
