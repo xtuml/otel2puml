@@ -5,7 +5,7 @@ import pytest
 from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (
     FieldSpec,
 )
-from tel2puml.otel_to_pv.otel_ingestion.json_jq_converter import (
+from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter import (
     JQVariableTree,
     get_updated_path_from_key_path_key_value_and_root_var_tree,
     update_field_spec_with_variables,

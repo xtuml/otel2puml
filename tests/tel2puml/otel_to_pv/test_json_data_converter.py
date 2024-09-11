@@ -8,17 +8,19 @@ import logging
 from typing import Any
 from pytest import LogCaptureFixture
 
-from tel2puml.otel_to_pv.otel_ingestion.json_data_converter import (
-    _navigate_dict,
-    _navigate_list,
-    _extract_value_from_path,
-    _extract_simple_value,
-    _update_header_dict,
-    _build_nested_dict,
-    _extract_nested_value,
-    process_header,
-    process_spans,
-)
+from tel2puml.otel_to_pv.data_sources.json_data_source.json_data_converter \
+    import (
+        _navigate_dict,
+        _navigate_list,
+        _extract_value_from_path,
+        _extract_simple_value,
+        _update_header_dict,
+        _build_nested_dict,
+        _extract_nested_value,
+        process_header,
+        process_spans,
+    )
+
 from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (
     IngestDataConfig,
     JSONDataSourceConfig,
@@ -121,10 +123,10 @@ class TestProcessHeaders:
         """Tests the function _extract_value_from_path"""
 
         with unittest.mock.patch(
-            "tel2puml.otel_to_pv.otel_ingestion."
+            "tel2puml.otel_to_pv.data_sources.json_data_source."
             "json_data_converter._extract_simple_value"
         ) as extract_simple_value, unittest.mock.patch(
-            "tel2puml.otel_to_pv.otel_ingestion."
+            "tel2puml.otel_to_pv.data_sources.json_data_source."
             "json_data_converter._extract_nested_value"
         ) as extract_nested_value:
             # Test simple path

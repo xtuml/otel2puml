@@ -9,7 +9,7 @@ from tel2puml.otel_to_pv.otel_ingestion.otel_data_model import (
     OTelEvent,
     JSONDataSourceConfig,
 )
-from tel2puml.otel_to_pv.otel_ingestion import json_data_converter
+from tel2puml.otel_to_pv.data_sources.json_data_source import json_data_converter
 
 
 class OTELDataSource(ABC):
