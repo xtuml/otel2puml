@@ -7,7 +7,7 @@ from tel2puml.otel_to_pv.data_holders.otel_data_holder import (
     SQLDataHolder,
     DataHolder,
 )
-from tel2puml.otel_to_pv.otel_ingestion.otel_data_source import (
+from tel2puml.otel_to_pv.data_sources.otel_data_source import (
     JSONDataSource,
     OTELDataSource,
 )
