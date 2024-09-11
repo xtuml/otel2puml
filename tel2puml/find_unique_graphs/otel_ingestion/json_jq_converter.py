@@ -117,7 +117,7 @@ def get_updated_path_from_key_path_key_value_and_root_var_tree(
     variable_build_array: list[JQVariableTree | str] = [root_var_tree]
     working_var_tree = root_var_tree
     for i, path in enumerate(split_on_array):
-        if i == len(split_on_array) - 1:  # and key_value is not None:
+        if i == len(split_on_array) - 1:
             variable_build_array.append(path)
         else:
             if not working_var_tree.has_child(path):
