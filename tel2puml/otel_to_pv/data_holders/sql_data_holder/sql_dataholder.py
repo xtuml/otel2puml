@@ -232,7 +232,11 @@ class SQLDataHolder(DataHolder):
         self,
         job_name_to_job_ids_map: dict[str, set[str]] | None = None,
         filter_job_names: set[str] | None = None,
-    ) -> dict[str, Generator[Generator[OTelEvent, Any, None], Any, None]]:
+    ) -> Generator[
+        tuple[str, Generator[Generator[OTelEvent, Any, None], Any, None]],
+        Any,
+        None,
+    ]:
         """Method to stream data from the SQL data holder.
 
         This method allows streaming of OTelEvent objects, potentially filtered
@@ -269,11 +273,15 @@ class SQLDataHolder(DataHolder):
 
             query = query.yield_per(self.batch_size)
 
-            def node_generator(nodes):
+            def node_generator(
+                nodes: list[NodeModel],
+            ) -> Generator[OTelEvent, Any, None]:
                 for node in nodes:
                     yield self.node_to_otel_event(node)
 
-            def job_generator(job_group):
+            def job_generator(
+                job_group: list[NodeModel],
+            ) -> Generator[Generator[OTelEvent, Any, None], Any, None]:
                 for _, nodes in groupby(job_group, key=lambda x: x.job_id):
                     yield node_generator(list(nodes))
 
