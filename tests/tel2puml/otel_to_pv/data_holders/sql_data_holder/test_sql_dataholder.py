@@ -714,7 +714,7 @@ def test_stream_data(
     sql_data_holder_with_multiple_otel_job_names: SQLDataHolder,
 ) -> None:
     """Test the stream_data function"""
-
+    sql_data_holder_with_multiple_otel_job_names.batch_size = 2
     # Test 1: Stream all data
     result = sql_data_holder_with_multiple_otel_job_names.stream_data()
 

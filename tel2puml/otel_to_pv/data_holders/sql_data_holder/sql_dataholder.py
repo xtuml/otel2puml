@@ -269,9 +269,9 @@ class SQLDataHolder(DataHolder):
                 query = query.filter(or_(*job_filters))
 
             # Order the query for grouping
-            query = query.order_by(NodeModel.job_name, NodeModel.job_id)
-
-            query = query.yield_per(self.batch_size)
+            query = query.order_by(
+                NodeModel.job_name, NodeModel.job_id
+            ).yield_per(self.batch_size)
 
             def node_generator(
                 nodes: list[NodeModel],
