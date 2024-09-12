@@ -268,7 +268,7 @@ class SQLDataHolder(DataHolder):
                 ]
                 query = query.filter(or_(*job_filters))
 
-            # Order the query for grouping
+            # Order the query for grouping, and limit query size
             query = query.order_by(
                 NodeModel.job_name, NodeModel.job_id
             ).yield_per(self.batch_size)
@@ -276,14 +276,28 @@ class SQLDataHolder(DataHolder):
             def node_generator(
                 nodes: list[NodeModel],
             ) -> Generator[OTelEvent, Any, None]:
+                """Generate OTelEvents from a list of NodeModels.
+
+                :param nodes: List of NodeModel objects.
+                :type nodes: list[NodeModel]
+                :return: Generator yielding OTelEvent objects.
+                :rtype: `Generator`[:class: `OTelEvent`, `Any`, `None`]
+                """
                 for node in nodes:
                     yield self.node_to_otel_event(node)
 
             def job_generator(
                 job_group: list[NodeModel],
             ) -> Generator[Generator[OTelEvent, Any, None], Any, None]:
-                for _, nodes in groupby(job_group, key=lambda x: x.job_id):
-                    yield node_generator(list(nodes))
+                """Generate a generator of OTelEvents for a job group.
+
+                :param job_group: List of NodeModel objects for a specific job.
+                :type job_group: list[NodeModel]
+                :return: Generator yielding generators of OTelEvent objects.
+                :rtype: `Generator`[`Generator`[:class: `OTelEvent`, `Any`,
+                `None`], `Any`, `None`]
+                """
+                yield node_generator(job_group)
 
             current_job_name = None
             current_job_group = []

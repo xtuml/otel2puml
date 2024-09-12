@@ -726,16 +726,17 @@ def test_stream_data(
             job_name in expected_job_names
         )
         expected_job_names.remove(job_name)
-
+        job_event_counts[job_name] = 0
         for event_generator in job_generator:
             events = list(event_generator)
-            job_event_counts[job_name] = len(events)
+            job_event_counts[job_name] += len(events)
             all_events.extend(events)
 
+    assert len(expected_job_names) == 0
     assert len(all_events) == 20
-    assert all(count == 2 for count in job_event_counts.values())
+    assert all(count == 10 for count in job_event_counts.values())
 
-    # Test 2: Filter job_name
+    # Test 2: Filter by job_name
     result = sql_data_holder_with_multiple_otel_job_names.stream_data(
         filter_job_names={"test_name_0"}
     )
@@ -749,6 +750,7 @@ def test_stream_data(
             events = list(event_generator)
             all_events.extend(events)
 
+    assert len(expected_job_names) == 0
     assert len(all_events) == 10
 
     # Test 3: Filter job_name and job_id

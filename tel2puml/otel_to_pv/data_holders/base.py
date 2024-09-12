@@ -100,9 +100,14 @@ class DataHolder(ABC):
 
     @abstractmethod
     def stream_data(
+        self,
         job_name_to_job_ids_map: dict[str, set[str]] | None = None,
         filter_job_names: set[str] | None = None,
-    ) -> dict[str, Generator[Generator[OTelEvent, Any, None], Any, None]]:
+    ) -> Generator[
+        tuple[str, Generator[Generator[OTelEvent, Any, None], Any, None]],
+        Any,
+        None,
+    ]:
         """Abstract method to stream data from a data holder.
 
         This method allows streaming of OTelEvent objects, potentially filtered
