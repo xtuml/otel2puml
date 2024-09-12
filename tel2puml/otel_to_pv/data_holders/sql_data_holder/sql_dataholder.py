@@ -1,4 +1,5 @@
 """DataHolder subclasses for SQL databases and finding unique OTel trees"""
+
 from types import TracebackType
 from typing import Any, Generator, TypeVar, Iterable
 from itertools import groupby
@@ -143,9 +144,7 @@ class SQLDataHolder(DataHolder):
                 )
 
     @staticmethod
-    def convert_otel_event_to_node_model(
-        otel_event: OTelEvent
-    ) -> NodeModel:
+    def convert_otel_event_to_node_model(otel_event: OTelEvent) -> NodeModel:
         """Method to convert an OTelEvent object to a NodeModel object.
 
         :param otel_event: An OTelEvent object
@@ -183,9 +182,7 @@ class SQLDataHolder(DataHolder):
                 end_timestamp=node.end_timestamp,
                 application_name=node.application_name,
                 parent_event_id=node.parent_event_id,
-                child_event_ids=[
-                    child.event_id for child in node.children
-                ],
+                child_event_ids=[child.event_id for child in node.children],
             )
         except DetachedInstanceError:
             logging.error(
@@ -220,9 +217,7 @@ class SQLDataHolder(DataHolder):
                         yield output
                     output = {}
                     current_job_id = str(node.job_id)
-                output[str(node.event_id)] = self.node_to_otel_event(
-                    node
-                )
+                output[str(node.event_id)] = self.node_to_otel_event(node)
             yield output
 
     def find_unique_graphs(self) -> dict[str, set[str]]:
@@ -231,11 +226,7 @@ class SQLDataHolder(DataHolder):
         :return: A dictionary mapping job names to a set of unique job_ids
         :rtype: `dict`[`str`, `set`[`str`]]
         """
-        return find_unique_graphs(
-            self.time_buffer,
-            self.batch_size,
-            self
-        )
+        return find_unique_graphs(self.time_buffer, self.batch_size, self)
 
     def stream_data(
         self,
@@ -253,10 +244,10 @@ class SQLDataHolder(DataHolder):
         :param filter_job_names: A set of job names to filter by. If None, all
         job names are considered.
         :type filter_job_names: `set`[`str`] | `None`
-        :return: A dictionary mapping job name to a generator of jobs to a
-        generator of OtelEvents.
-        :rtype: `dict`[`str`, `Generator`[`Generator`[:class:`OTelEvent`,
-        `Any`, `None`],`Any`, `None`]]
+        :return: A generator of tuples mapping job name to a generator of
+        jobs to a generator of OtelEvents.
+        :rtype: `Generator`[`tuple`[`str`, `Generator`[`Generator`[
+        :class:`OTelEvent`, `Any`, `None`],`Any`, `None`]]]
         """
         with self.session as session:
             query = session.query(NodeModel)
@@ -276,22 +267,33 @@ class SQLDataHolder(DataHolder):
             # Order the query for grouping
             query = query.order_by(NodeModel.job_name, NodeModel.job_id)
 
+            query = query.yield_per(self.batch_size)
+
             def node_generator(nodes):
                 for node in nodes:
                     yield self.node_to_otel_event(node)
 
             def job_generator(job_group):
                 for _, nodes in groupby(job_group, key=lambda x: x.job_id):
-                    yield node_generator(nodes)
+                    yield node_generator(list(nodes))
 
-            result = {}
+            current_job_name = None
+            current_job_group = []
 
-            for job_name, job_group in groupby(
-                query, key=lambda x: x.job_name
-            ):
-                result[job_name] = job_generator(list(job_group))
+            for node in query:
+                if node.job_name != current_job_name:
+                    if current_job_name is not None:
+                        yield (
+                            current_job_name,
+                            job_generator(current_job_group),
+                        )
+                    current_job_name = node.job_name
+                    current_job_group = [node]
+                else:
+                    current_job_group.append(node)
 
-            return result
+            if current_job_name is not None:
+                yield (current_job_name, job_generator(current_job_group))
 
 
 def intialise_temp_table_for_root_nodes(
@@ -354,7 +356,8 @@ def create_temp_table_of_root_nodes_in_time_window(
         stmt = (
             session.query(NodeModel.event_id)
             .join(stmt, NodeModel.job_id == stmt.c.job_id)
-            .where(NodeModel.parent_event_id.is_(None)).subquery()
+            .where(NodeModel.parent_event_id.is_(None))
+            .subquery()
         )
         session.execute(temp_table.insert().from_select(["event_id"], stmt))
         session.commit()
@@ -363,8 +366,10 @@ def create_temp_table_of_root_nodes_in_time_window(
 
 
 def get_root_nodes(
-    start_row: int, batch_size: int,
-    temp_table: sa.Table, data_holder: SQLDataHolder
+    start_row: int,
+    batch_size: int,
+    temp_table: sa.Table,
+    data_holder: SQLDataHolder,
 ) -> list[NodeModel]:
     """Get the root nodes from the temporary table.
 
@@ -385,9 +390,11 @@ def get_root_nodes(
     if batch_size < 0:
         raise ValueError("The batch size must be greater than or equal to 0.")
     with data_holder.session:
-        stmt = data_holder.session.query(temp_table.c.event_id).slice(
-            start_row, start_row + batch_size
-        ).subquery()
+        stmt = (
+            data_holder.session.query(temp_table.c.event_id)
+            .slice(start_row, start_row + batch_size)
+            .subquery()
+        )
         root_nodes = (
             data_holder.session.query(NodeModel)
             .join(stmt, NodeModel.event_id == stmt.c.event_id)
@@ -419,7 +426,7 @@ def get_sql_batch_nodes(
 
 
 def create_event_id_to_child_nodes_map(
-    nodes: Iterable[NodeModel]
+    nodes: Iterable[NodeModel],
 ) -> dict[str, list[NodeModel]]:
     """Create a map of event IDs to their child nodes.
 
@@ -478,9 +485,11 @@ def compute_graph_hashes_from_root_nodes(
     :rtype: `list`[:class:`JobHash`]
     """
     return [
-        JobHash(job_id=node.job_id, job_hash=compute_graph_hash_from_event_ids(
-            node, node_to_children
-        ), job_name=node.job_name)
+        JobHash(
+            job_id=node.job_id,
+            job_hash=compute_graph_hash_from_event_ids(node, node_to_children),
+            job_name=node.job_name,
+        )
         for node in root_nodes
     ]
 
@@ -519,7 +528,7 @@ def compute_graph_hashes_for_batch(
 
 
 def get_unique_graph_job_ids_per_job_name(
-    sql_data_holder: SQLDataHolder
+    sql_data_holder: SQLDataHolder,
 ) -> dict[str, set[str]]:
     """Get the unique graphs per job name.
 
@@ -531,9 +540,8 @@ def get_unique_graph_job_ids_per_job_name(
     """
     job_name_to_job_ids: dict[str, set[str]] = {}
     with sql_data_holder.session as session:
-        stmt = (
-            sa.select(JobHash.job_name, JobHash.job_hash)
-            .group_by(JobHash.job_name, JobHash.job_hash)
+        stmt = sa.select(JobHash.job_name, JobHash.job_hash).group_by(
+            JobHash.job_name, JobHash.job_hash
         )
         job_hashes = session.execute(stmt).fetchall()
         for job_name, job_id in job_hashes:

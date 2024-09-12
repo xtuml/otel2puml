@@ -1,4 +1,5 @@
 """Tests for sql_data_holder.py."""
+
 import logging
 
 import pytest
@@ -10,12 +11,13 @@ from sqlalchemy.orm import Session
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm.exc import DetachedInstanceError
+from typing import Generator, Any
 
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
     NodeModel,
     Base,
     NODE_ASSOCIATION,
-    JobHash
+    JobHash,
 )
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.sql_dataholder import (
     SQLDataHolder,
@@ -29,7 +31,7 @@ from tel2puml.otel_to_pv.data_holders.sql_data_holder.sql_dataholder import (
     insert_job_hashes,
     compute_graph_hashes_for_batch,
     get_unique_graph_job_ids_per_job_name,
-    find_unique_graphs
+    find_unique_graphs,
 )
 from tel2puml.otel_to_pv.config import SQLDataHolderConfig
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
@@ -359,7 +361,7 @@ class TestSQLDataHolder:
     def test_node_to_otel_event(
         sql_data_holder_with_otel_jobs: SQLDataHolder,
         otel_jobs: dict[str, list[OTelEvent]],
-        caplog: LogCaptureFixture
+        caplog: LogCaptureFixture,
     ) -> None:
         """Tests node_to_otel_event method."""
         # test that the method returns the correct OTelEvent that has a child
@@ -384,15 +386,14 @@ class TestSQLDataHolder:
     @staticmethod
     def test_get_otel_events_from_job_ids(
         sql_data_holder_with_shuffled_otel_events: SQLDataHolder,
-        otel_jobs: dict[str, list[OTelEvent]]
+        otel_jobs: dict[str, list[OTelEvent]],
     ) -> None:
         """Tests get_otel_events_from_job_ids method."""
 
         job_ids = {"test_id_2", "test_id_3"}
 
         otel_events = list(
-            sql_data_holder_with_shuffled_otel_events.
-            get_otel_events_from_job_ids(
+            sql_data_holder_with_shuffled_otel_events.get_otel_events_from_job_ids(
                 job_ids
             )
         )
@@ -407,8 +408,7 @@ class TestSQLDataHolder:
 
     @staticmethod
     def test_find_unique_graphs(
-        monkeypatch: MonkeyPatch,
-        sql_data_holder_extended: SQLDataHolder
+        monkeypatch: MonkeyPatch, sql_data_holder_extended: SQLDataHolder
     ) -> None:
         """Tests find_unique_graphs method."""
         monkeypatch.setattr("xxhash.xxh64_hexdigest", lambda x: x)
@@ -432,46 +432,46 @@ def test_initialise_temp_table_for_root_nodes(
 ) -> None:
     """Test the intialise_temp_table_for_root_nodes function."""
     assert not sa.inspect(sql_data_holder_with_otel_jobs.engine).has_table(
-        'temp_root_nodes'
+        "temp_root_nodes"
     )
-    table = intialise_temp_table_for_root_nodes(
-        sql_data_holder_with_otel_jobs
-    )
+    table = intialise_temp_table_for_root_nodes(sql_data_holder_with_otel_jobs)
     assert sa.inspect(sql_data_holder_with_otel_jobs.engine).has_table(
-        'temp_root_nodes'
+        "temp_root_nodes"
     )
-    assert table.columns.keys() == ['event_id']
-    assert table.primary_key.columns.keys() == ['event_id']
+    assert table.columns.keys() == ["event_id"]
+    assert table.primary_key.columns.keys() == ["event_id"]
 
 
 def test_create_temp_table_of_root_nodes_in_time_window(
     sql_data_holder_with_otel_jobs: SQLDataHolder,
 ) -> None:
     """Test the create_temp_table_of_root_nodes_in_time_window function."""
-    time_window = (
-        10**12 + 6 * 10**10, 10**12 + 54 * 10**10
-    )
+    time_window = (10**12 + 6 * 10**10, 10**12 + 54 * 10**10)
     table = create_temp_table_of_root_nodes_in_time_window(
         time_window, sql_data_holder_with_otel_jobs
     )
     with sql_data_holder_with_otel_jobs.engine.connect() as connection:
         result = connection.execute(table.select())
-        assert [
-            (row[0],)
-            for row in result.fetchall()
-        ] == [(f'{i}_0',) for i in range(1, 4)]
+        assert [(row[0],) for row in result.fetchall()] == [
+            (f"{i}_0",) for i in range(1, 4)
+        ]
 
 
 def test_get_root_nodes(
     sql_data_holder_with_otel_jobs: SQLDataHolder,
     table_of_root_node_event_ids: sa.Table,
-    otel_jobs: dict[str, list[OTelEvent]]
+    otel_jobs: dict[str, list[OTelEvent]],
 ) -> None:
     """Test the get_root_nodes function."""
     # test possible start rows and batch sizes
     start_row_and_batch_sizes = [
-        (0, 2), (1, 3), (0, 5), (0, 6), (3, 6),
-        (4, 0), (5, 10)
+        (0, 2),
+        (1, 3),
+        (0, 5),
+        (0, 6),
+        (3, 6),
+        (4, 0),
+        (5, 10),
     ]
     for start_row, batch_size in start_row_and_batch_sizes:
         root_nodes = get_root_nodes(
@@ -515,8 +515,7 @@ def test_get_sql_batch_nodes(
 ) -> None:
     """Test the get_sql_batch_nodes function."""
     node_models = get_sql_batch_nodes(
-        {f"test_id_{i}" for i in range(3)},
-        sql_data_holder_with_otel_jobs
+        {f"test_id_{i}" for i in range(3)}, sql_data_holder_with_otel_jobs
     )
     assert len(node_models) == 6
     expected_job_ids = [f"test_id_{i}" for i in range(3)] * 2
@@ -531,7 +530,7 @@ def test_get_sql_batch_nodes(
 
 
 def test_create_event_id_to_child_nodes_map(
-    otel_nodes_from_otel_jobs: dict[str, NodeModel]
+    otel_nodes_from_otel_jobs: dict[str, NodeModel],
 ) -> None:
     """Test the create_event_id_to_child_nodes_map function."""
     event_id_to_child_nodes_map = create_event_id_to_child_nodes_map(
@@ -539,9 +538,7 @@ def test_create_event_id_to_child_nodes_map(
     )
     assert event_id_to_child_nodes_map == {
         f"{i}_{j}": (
-            [otel_nodes_from_otel_jobs[f"{i}_{j + 1}"]]
-            if j < 1
-            else []
+            [otel_nodes_from_otel_jobs[f"{i}_{j + 1}"]] if j < 1 else []
         )
         for i in range(5)
         for j in range(2)
@@ -559,21 +556,22 @@ def test_compute_graph_hash_from_event_ids(
     # performing correctly recursively and sorting correctly
     node_links, nodes = otel_linked_nodes_and_nodes
     mock_hash = {
-        "1MNP": "MNPZ", "2": "P", "3": "M", "4": "N", "5": "MNPY",
-        "0MNPYMNPZ": "complete"
+        "1MNP": "MNPZ",
+        "2": "P",
+        "3": "M",
+        "4": "N",
+        "5": "MNPY",
+        "0MNPYMNPZ": "complete",
     }
     monkeypatch.setattr("xxhash.xxh64_hexdigest", lambda x: mock_hash[x])
-    compute_graph_hash_from_event_ids(
-        nodes[0],
-        node_links
-    ) == "complete"
+    compute_graph_hash_from_event_ids(nodes[0], node_links) == "complete"
     # remove patch and test that hashing function is correct for a single node
     # and is deterministic
     monkeypatch.undo()
-    assert compute_graph_hash_from_event_ids(
-        nodes[5],
-        node_links
-    ) == '6a81b47405b648ed'  # pragma: allowlist secret
+    assert (
+        compute_graph_hash_from_event_ids(nodes[5], node_links)
+        == "6a81b47405b648ed"
+    )  # pragma: allowlist secret
 
 
 def test_compute_graph_hash_from_root_nodes(
@@ -584,20 +582,18 @@ def test_compute_graph_hash_from_root_nodes(
     """Test the compute_graph_hashes_from_root_nodes function."""
     node_links, nodes = otel_simple_linked_nodes_and_nodes
     hashes = compute_graph_hashes_from_root_nodes(
-        [nodes["0_0"], nodes["1_0"]],
-        node_links
+        [nodes["0_0"], nodes["1_0"]], node_links
     )
     expected_hashes = {
         ("0", "0a0d678d03e9644c"),  # pragma: allowlist secret
-        ("1", "6cb8df24661bf2e6")  # pragma: allowlist secret
+        ("1", "6cb8df24661bf2e6"),  # pragma: allowlist secret
     }
     assert {
         (str(node.job_id), str(node.job_hash)) for node in hashes
     } == expected_hashes
     # test that the order of the root nodes does not affect the output
     hashes = compute_graph_hashes_from_root_nodes(
-        [nodes["1_0"], nodes["0_0"]],
-        node_links
+        [nodes["1_0"], nodes["0_0"]], node_links
     )
     assert {
         (str(node.job_id), str(node.job_hash)) for node in hashes
@@ -622,10 +618,10 @@ def test_insert_job_hashes(mock_sql_config: SQLDataHolderConfig) -> None:
     insert_job_hashes(job_hashes, sql_data_holder)
     with sql_data_holder.engine.connect() as connection:
         result = connection.execute(JobHash.__table__.select())
-        assert [
-            (row[0], row[1], row[2])
-            for row in result.fetchall()
-        ] == [("1", "test_name", "1"), ("2", "test_name", "2")]
+        assert [(row[0], row[1], row[2]) for row in result.fetchall()] == [
+            ("1", "test_name", "1"),
+            ("2", "test_name", "2"),
+        ]
 
 
 def test_compute_graph_hashes_for_batch(
@@ -639,9 +635,7 @@ def test_compute_graph_hashes_for_batch(
         for otel_event in value
         if otel_event.event_id.endswith("_0")
     ]
-    compute_graph_hashes_for_batch(
-        root_nodes, sql_data_holder_with_otel_jobs
-    )
+    compute_graph_hashes_for_batch(root_nodes, sql_data_holder_with_otel_jobs)
     with sql_data_holder_with_otel_jobs.engine.connect() as connection:
         result = connection.execute(JobHash.__table__.select())
         assert [(row[0], row[1], row[2]) for row in result.fetchall()] == [
@@ -665,7 +659,7 @@ def test_get_unique_graph_job_ids_per_job_name(
                     JobHash(
                         job_id=f"test_id_{j}{i}",
                         job_hash=f"{i % 2}",
-                        job_name=f"test_name_{j}"
+                        job_name=f"test_name_{j}",
                     )
                     for i in range(4)
                 ]
@@ -705,6 +699,17 @@ def test_find_unique_graphs(
     }
 
 
+def process_job_generator(
+    job_generator: Generator[Generator[OTelEvent, Any, None], Any, None],
+) -> list[OTelEvent]:
+    events = []
+    for event_generator in job_generator:
+        batch = list(event_generator)
+        assert len(batch) <= 0
+        events.extend(batch)
+    return events
+
+
 def test_stream_data(
     sql_data_holder_with_multiple_otel_job_names: SQLDataHolder,
 ) -> None:
@@ -713,11 +718,55 @@ def test_stream_data(
     # Test 1: Stream all data
     result = sql_data_holder_with_multiple_otel_job_names.stream_data()
 
-    assert len(result.keys()) == 5
-    expected_job_names = [f"test_name_{i}" for i in range(5)]
-    for job_name in result.keys():
+    expected_job_names = ["test_name_0", "test_name_1"]
+    job_event_counts = {}
+    all_events = []
+    for job_name, job_generator in result:
+        assert (
+            job_name in expected_job_names
+        )
+        expected_job_names.remove(job_name)
+
+        for event_generator in job_generator:
+            events = list(event_generator)
+            job_event_counts[job_name] = len(events)
+            all_events.extend(events)
+
+    assert len(all_events) == 20
+    assert all(count == 2 for count in job_event_counts.values())
+
+    # Test 2: Filter job_name
+    result = sql_data_holder_with_multiple_otel_job_names.stream_data(
+        filter_job_names={"test_name_0"}
+    )
+    expected_job_names = ["test_name_0"]
+    all_events = []
+    for job_name, job_generator in result:
         assert job_name in expected_job_names
         expected_job_names.remove(job_name)
-    assert len(expected_job_names) == 0
 
-    
+        for event_generator in job_generator:
+            events = list(event_generator)
+            all_events.extend(events)
+
+    assert len(all_events) == 10
+
+    # Test 3: Filter job_name and job_id
+    result = sql_data_holder_with_multiple_otel_job_names.stream_data(
+        job_name_to_job_ids_map={
+            "test_name_0": {"test_id_0", "test_id_1"},
+            "test_name_1": {"test_id_2", "test_id_3", "test_id_4"},
+        },
+    )
+    job_event_counts = {}
+    all_events = []
+    for job_name, job_generator in result:
+        job_event_counts[job_name] = 0
+        for event_generator in job_generator:
+            events = list(event_generator)
+            all_events.extend(events)
+            job_event_counts[job_name] += len(events)
+
+    assert len(all_events) == 10
+    assert job_event_counts["test_name_0"] == 4
+    assert job_event_counts["test_name_1"] == 6
