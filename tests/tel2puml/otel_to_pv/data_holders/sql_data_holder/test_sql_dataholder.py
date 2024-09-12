@@ -703,3 +703,21 @@ def test_find_unique_graphs(
     assert unique_job_ids_per_job_name["test_name_2"] == {
         str(i) for i in range(5)
     }
+
+
+def test_stream_data(
+    sql_data_holder_with_multiple_otel_job_names: SQLDataHolder,
+) -> None:
+    """Test the stream_data function"""
+
+    # Test 1: Stream all data
+    result = sql_data_holder_with_multiple_otel_job_names.stream_data()
+
+    assert len(result.keys()) == 5
+    expected_job_names = [f"test_name_{i}" for i in range(5)]
+    for job_name in result.keys():
+        assert job_name in expected_job_names
+        expected_job_names.remove(job_name)
+    assert len(expected_job_names) == 0
+
+    

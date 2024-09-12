@@ -1021,6 +1021,54 @@ def otel_jobs() -> dict[str, list[OTelEvent]]:
 
 
 @pytest.fixture
+def otel_jobs_multiple_job_names() -> dict[str, list[OTelEvent]]:
+    """Dict of 2x job names with 5 OTelEvents lists."""
+    timestamp_choices = [
+        tuple(10**12 + boundary for boundary in addition)
+        for addition in [
+            (0, 3 * 10**10),
+            (10**11, 2 * 10**11),
+            (57 * 10**10, 60 * 10**10),
+        ]
+    ]
+    cases = [
+        (timestamp_choices[0], timestamp_choices[0]),
+        (timestamp_choices[0], timestamp_choices[1]),
+        (timestamp_choices[1], timestamp_choices[1]),
+        (timestamp_choices[1], timestamp_choices[2]),
+        (timestamp_choices[2], timestamp_choices[2]),
+    ]
+    job_names = [f"test_name_{i}" for i in range(2)]
+
+    otel_jobs: dict[str, list[OTelEvent]] = {}
+    for job_name in job_names:
+        for i, case in enumerate(cases):
+            prev_parent_event_id = None
+            otel_jobs[f"{job_name}_{i}"] = []
+            for j, timestamps in enumerate(reversed(case)):
+                event_id = f"{job_name}_{i}_{j}"
+                next_event_id = [f"{i}_{j+1}"] if j < 1 else []
+                otel_jobs[f"{job_name}_{i}"].append(
+                    OTelEvent(
+                        job_name=job_name,
+                        job_id=f"test_id_{i}",
+                        event_type=f"event_type_{j}",
+                        event_id=event_id,
+                        start_timestamp=timestamps[0],
+                        end_timestamp=timestamps[1],
+                        application_name="test_application_name",
+                        parent_event_id=prev_parent_event_id,
+                        child_event_ids=next_event_id,
+                    )
+                )
+                prev_parent_event_id = event_id
+            otel_jobs[f"{job_name}_{i}"] = list(
+                reversed(otel_jobs[f"{job_name}_{i}"])
+            )
+    return otel_jobs
+
+
+@pytest.fixture
 def otel_nodes_from_otel_jobs(
     otel_jobs: dict[str, list[OTelEvent]],
 ) -> dict[str, NodeModel]:
@@ -1068,6 +1116,31 @@ def sql_data_holder_with_otel_jobs(
             session.execute(
                 sa.text("DROP TABLE temp_root_nodes")
             )
+    sql_data_holder.base.metadata._remove_table("temp_root_nodes", None)
+
+
+@pytest.fixture
+def sql_data_holder_with_multiple_otel_job_names(
+    otel_jobs_multiple_job_names: dict[str, list[OTelEvent]],
+    mock_sql_config: SQLDataHolderConfig,
+) -> Generator[SQLDataHolder, Any, None]:
+    """Creates a SQLDataHolder object with 10 jobs consisting of 2 job names,
+    each with 2 events."""
+    mock_sql_config["time_buffer"] = 1
+    mock_sql_config["batch_size"] = 2
+    sql_data_holder = SQLDataHolder(
+        config=mock_sql_config,
+    )
+    sql_data_holder.min_timestamp = 10**12
+    sql_data_holder.max_timestamp = 2 * 10**12
+    with sql_data_holder:
+        for otel_events in otel_jobs_multiple_job_names.values():
+            for otel_event in otel_events:
+                sql_data_holder.save_data(otel_event)
+    yield sql_data_holder
+    with sql_data_holder.session as session:
+        if sa.inspect(sql_data_holder.engine).has_table("temp_root_nodes"):
+            session.execute(sa.text("DROP TABLE temp_root_nodes"))
     sql_data_holder.base.metadata._remove_table("temp_root_nodes", None)
 
 

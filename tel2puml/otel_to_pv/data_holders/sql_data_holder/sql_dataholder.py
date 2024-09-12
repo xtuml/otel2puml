@@ -1,10 +1,11 @@
 """DataHolder subclasses for SQL databases and finding unique OTel trees"""
 from types import TracebackType
 from typing import Any, Generator, TypeVar, Iterable
+from itertools import groupby
 import logging
 
 import sqlalchemy as sa
-from sqlalchemy import create_engine, insert
+from sqlalchemy import create_engine, insert, or_
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError, IntegrityError
 from sqlalchemy.orm.exc import DetachedInstanceError
@@ -235,6 +236,62 @@ class SQLDataHolder(DataHolder):
             self.batch_size,
             self
         )
+
+    def stream_data(
+        self,
+        job_name_to_job_ids_map: dict[str, set[str]] | None = None,
+        filter_job_names: set[str] | None = None,
+    ) -> dict[str, Generator[Generator[OTelEvent, Any, None], Any, None]]:
+        """Method to stream data from the SQL data holder.
+
+        This method allows streaming of OTelEvent objects, potentially filtered
+        by job names and IDs.
+
+        :param job_name_to_job_ids_map: Job name to job id map. If None, all
+        job IDs are considered.
+        :type job_name_to_job_ids_map: `dict`[`str`, `set`[`str`]] | `None`
+        :param filter_job_names: A set of job names to filter by. If None, all
+        job names are considered.
+        :type filter_job_names: `set`[`str`] | `None`
+        :return: A dictionary mapping job name to a generator of jobs to a
+        generator of OtelEvents.
+        :rtype: `dict`[`str`, `Generator`[`Generator`[:class:`OTelEvent`,
+        `Any`, `None`],`Any`, `None`]]
+        """
+        with self.session as session:
+            query = session.query(NodeModel)
+
+            # Apply filters
+            if filter_job_names:
+                query = query.filter(NodeModel.job_name.in_(filter_job_names))
+
+            if job_name_to_job_ids_map:
+                job_filters = [
+                    (NodeModel.job_name == job_name)
+                    & (NodeModel.job_id.in_(job_ids))
+                    for job_name, job_ids in job_name_to_job_ids_map.items()
+                ]
+                query = query.filter(or_(*job_filters))
+
+            # Order the query for grouping
+            query = query.order_by(NodeModel.job_name, NodeModel.job_id)
+
+            def node_generator(nodes):
+                for node in nodes:
+                    yield self.node_to_otel_event(node)
+
+            def job_generator(job_group):
+                for _, nodes in groupby(job_group, key=lambda x: x.job_id):
+                    yield node_generator(nodes)
+
+            result = {}
+
+            for job_name, job_group in groupby(
+                query, key=lambda x: x.job_name
+            ):
+                result[job_name] = job_generator(list(job_group))
+
+            return result
 
 
 def intialise_temp_table_for_root_nodes(

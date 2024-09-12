@@ -1,5 +1,6 @@
 """Module containing base abstract class for DataHolders, providing required
 interfaces."""
+
 from abc import ABC, abstractmethod
 from types import TracebackType
 from typing import Self, Optional, Any, Generator
@@ -94,6 +95,29 @@ class DataHolder(ABC):
 
         :return: A dictionary mapping job names to a set of unique job_ids
         :rtype: `dict`[`str`, `set`[`str`]]
+        """
+        pass
+
+    @abstractmethod
+    def stream_data(
+        job_name_to_job_ids_map: dict[str, set[str]] | None = None,
+        filter_job_names: set[str] | None = None,
+    ) -> dict[str, Generator[Generator[OTelEvent, Any, None], Any, None]]:
+        """Abstract method to stream data from a data holder.
+
+        This method allows streaming of OTelEvent objects, potentially filtered
+        by job names and IDs.
+
+        :param job_name_to_job_ids_map: Job name to job id map. If None, all
+        job IDs are considered.
+        :type job_name_to_job_ids_map: `dict`[`str`, `set`[`str`]] | `None`
+        :param filter_job_names: A set of job names to filter by. If None, all
+        job names are considered.
+        :type filter_job_names: `set`[`str`] | `None`
+        :return: A dictionary mapping job name to a generator of jobs to a
+        generator of OtelEvents.
+        :rtype: `dict`[`str`, `Generator`[`Generator`[:class:`OTelEvent`,
+        `Any`, `None`],`Any`, `None`]]
         """
         pass
 
