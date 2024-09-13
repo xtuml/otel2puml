@@ -714,7 +714,7 @@ def test_stream_data(
     sql_data_holder_with_multiple_otel_job_names: SQLDataHolder,
 ) -> None:
     """Test the stream_data function"""
-    sql_data_holder_with_multiple_otel_job_names.batch_size = 2
+
     # Test 1: Stream all data
     result = sql_data_holder_with_multiple_otel_job_names.stream_data()
 
@@ -722,9 +722,7 @@ def test_stream_data(
     job_event_counts = {}
     all_events = []
     for job_name, job_generator in result:
-        assert (
-            job_name in expected_job_names
-        )
+        assert job_name in expected_job_names
         expected_job_names.remove(job_name)
         job_event_counts[job_name] = 0
         for event_generator in job_generator:
@@ -735,6 +733,18 @@ def test_stream_data(
     assert len(expected_job_names) == 0
     assert len(all_events) == 20
     assert all(count == 10 for count in job_event_counts.values())
+
+    # Check events
+    event_no = 0
+    for job_name in ["test_name_0", "test_name_1"]:
+        for i in range(5):
+            for j in reversed(range(2)):
+                otel_event = all_events[event_no]
+                assert otel_event.job_name == job_name
+                assert otel_event.job_id == f"test_id_{i}"
+                assert otel_event.event_id == f"{job_name}_{i}_{j}"
+                assert otel_event.event_type == f"event_type_{j}"
+                event_no += 1
 
     # Test 2: Filter by job_name
     result = sql_data_holder_with_multiple_otel_job_names.stream_data(
@@ -753,7 +763,7 @@ def test_stream_data(
     assert len(expected_job_names) == 0
     assert len(all_events) == 10
 
-    # Test 3: Filter job_name and job_id
+    # Test 3: Filter job_name job_id map
     result = sql_data_holder_with_multiple_otel_job_names.stream_data(
         job_name_to_job_ids_map={
             "test_name_0": {"test_id_0", "test_id_1"},
@@ -772,3 +782,40 @@ def test_stream_data(
     assert len(all_events) == 10
     assert job_event_counts["test_name_0"] == 4
     assert job_event_counts["test_name_1"] == 6
+
+    # Test 4: Filter by job_name, then use map for further filtering
+    result = sql_data_holder_with_multiple_otel_job_names.stream_data(
+        filter_job_names={"test_name_0"},
+        job_name_to_job_ids_map={"test_name_0": {"test_id_0", "test_id_1"}},
+    )
+    all_events = []
+    for job_name, job_generator in result:
+        for event_generator in job_generator:
+            events = list(event_generator)
+            all_events.extend(events)
+
+    assert len(all_events) == 4
+
+    # Test 5: Filter by non-existant job name
+    result = sql_data_holder_with_multiple_otel_job_names.stream_data(
+        filter_job_names={"invalid_job_name"},
+    )
+    all_events = []
+    for job_name, job_generator in result:
+        for event_generator in job_generator:
+            events = list(event_generator)
+            all_events.extend(events)
+
+    assert len(all_events) == 0
+
+    # Test 6: Filter by non-existant job name to job id map
+    result = sql_data_holder_with_multiple_otel_job_names.stream_data(
+        job_name_to_job_ids_map={"invalid_job_name": {"test_id_0"}},
+    )
+    all_events = []
+    for job_name, job_generator in result:
+        for event_generator in job_generator:
+            events = list(event_generator)
+            all_events.extend(events)
+
+    assert len(all_events) == 0
