@@ -714,57 +714,47 @@ def test_stream_data(
     sql_data_holder_with_multiple_otel_job_names: SQLDataHolder,
 ) -> None:
     """Test the stream_data function"""
+    sql_data_holder = sql_data_holder_with_multiple_otel_job_names
 
     # Test 1: Stream all data
-    result = sql_data_holder_with_multiple_otel_job_names.stream_data()
+    # Prep expected events
+    expected_events = {}
+    with sql_data_holder.session as session:
+        nodes = session.query(NodeModel).all()
+        for node in nodes:
+            otel_event = sql_data_holder.node_to_otel_event(node)
+            expected_events[otel_event.event_id] = otel_event
 
-    expected_job_names = ["test_name_0", "test_name_1"]
-    job_event_counts = {}
-    all_events = []
-    for job_name, job_generator in result:
-        assert job_name in expected_job_names
-        expected_job_names.remove(job_name)
-        job_event_counts[job_name] = 0
-        for event_generator in job_generator:
-            events = list(event_generator)
-            job_event_counts[job_name] += len(events)
-            all_events.extend(events)
+    # Stream data and collect events
+    result = sql_data_holder.stream_data()
+    streamed_events = {}
+    for job_name, otel_event_gen in result:
+        for otel_event in otel_event_gen:
+            streamed_events[otel_event.event_id] = otel_event
 
-    assert len(expected_job_names) == 0
-    assert len(all_events) == 20
-    assert all(count == 10 for count in job_event_counts.values())
+    # Compare the expected and streamed data
+    assert len(expected_events) == len(streamed_events)
 
-    # Check events
-    event_no = 0
-    for job_name in ["test_name_0", "test_name_1"]:
-        for i in range(5):
-            for j in reversed(range(2)):
-                otel_event = all_events[event_no]
-                assert otel_event.job_name == job_name
-                assert otel_event.job_id == f"test_id_{i}"
-                assert otel_event.event_id == f"{job_name}_{i}_{j}"
-                assert otel_event.event_type == f"event_type_{j}"
-                event_no += 1
+    for event_id, expected_event in expected_events.items():
+        assert event_id in streamed_events
+        assert expected_event == streamed_events[event_id]
 
     # Test 2: Filter by job_name
-    result = sql_data_holder_with_multiple_otel_job_names.stream_data(
-        filter_job_names={"test_name_0"}
-    )
+    result = sql_data_holder.stream_data(filter_job_names={"test_name_0"})
     expected_job_names = ["test_name_0"]
     all_events = []
-    for job_name, job_generator in result:
+    for job_name, otel_event_gen in result:
         assert job_name in expected_job_names
         expected_job_names.remove(job_name)
 
-        for event_generator in job_generator:
-            events = list(event_generator)
-            all_events.extend(events)
+        for otel_event in otel_event_gen:
+            all_events.append(otel_event)
 
     assert len(expected_job_names) == 0
     assert len(all_events) == 10
 
     # Test 3: Filter job_name job_id map
-    result = sql_data_holder_with_multiple_otel_job_names.stream_data(
+    result = sql_data_holder.stream_data(
         job_name_to_job_ids_map={
             "test_name_0": {"test_id_0", "test_id_1"},
             "test_name_1": {"test_id_2", "test_id_3", "test_id_4"},
@@ -772,50 +762,104 @@ def test_stream_data(
     )
     job_event_counts = {}
     all_events = []
-    for job_name, job_generator in result:
+    for job_name, otel_event_gen in result:
         job_event_counts[job_name] = 0
-        for event_generator in job_generator:
-            events = list(event_generator)
-            all_events.extend(events)
-            job_event_counts[job_name] += len(events)
+        for otel_event in otel_event_gen:
+            all_events.append(otel_event)
+            job_event_counts[job_name] += 1
 
     assert len(all_events) == 10
     assert job_event_counts["test_name_0"] == 4
     assert job_event_counts["test_name_1"] == 6
 
     # Test 4: Filter by job_name, then use map for further filtering
-    result = sql_data_holder_with_multiple_otel_job_names.stream_data(
+    result = sql_data_holder.stream_data(
         filter_job_names={"test_name_0"},
         job_name_to_job_ids_map={"test_name_0": {"test_id_0", "test_id_1"}},
     )
     all_events = []
-    for job_name, job_generator in result:
-        for event_generator in job_generator:
-            events = list(event_generator)
-            all_events.extend(events)
+    for job_name, otel_event_gen in result:
+        for otel_event in otel_event_gen:
+            all_events.append(otel_event)
 
     assert len(all_events) == 4
 
     # Test 5: Filter by non-existant job name
-    result = sql_data_holder_with_multiple_otel_job_names.stream_data(
+    result = sql_data_holder.stream_data(
         filter_job_names={"invalid_job_name"},
     )
     all_events = []
-    for job_name, job_generator in result:
-        for event_generator in job_generator:
-            events = list(event_generator)
-            all_events.extend(events)
+    for job_name, otel_event_gen in result:
+        for otel_event in otel_event_gen:
+            all_events.append(otel_event)
 
     assert len(all_events) == 0
 
     # Test 6: Filter by non-existant job name to job id map
-    result = sql_data_holder_with_multiple_otel_job_names.stream_data(
+    result = sql_data_holder.stream_data(
         job_name_to_job_ids_map={"invalid_job_name": {"test_id_0"}},
     )
     all_events = []
-    for job_name, job_generator in result:
-        for event_generator in job_generator:
-            events = list(event_generator)
-            all_events.extend(events)
+    for job_name, otel_event_gen in result:
+        for otel_event in otel_event_gen:
+            all_events.append(otel_event)
 
     assert len(all_events) == 0
+
+    # Test 7: Stream from empty database
+    empty_sql_data_holder = SQLDataHolder(
+        config=SQLDataHolderConfig(
+            db_uri="sqlite:///:memory:", batch_size=10, time_buffer=30
+        )
+    )
+
+    with empty_sql_data_holder:
+        result = empty_sql_data_holder.stream_data()
+
+        all_events = []
+        for job_name, otel_event_gen in result:
+            for otel_event in otel_event_gen:
+                all_events.append(otel_event)
+
+        assert len(all_events) == 0
+
+    # Test 8: Stream from large dataset
+    large_sql_data_holder = SQLDataHolder(
+        config=SQLDataHolderConfig(
+            db_uri="sqlite:///:memory:", batch_size=1000, time_buffer=30
+        )
+    )
+
+    num_jobs = 10
+    events_per_job = 10000  # Total of 100,000 events
+
+    with large_sql_data_holder:
+        for job_index in range(num_jobs):
+            job_name = f"job_{job_index}"
+            job_id = f"job_id_{job_index}"
+            for event_index in range(events_per_job):
+                otel_event = OTelEvent(
+                    job_name=job_name,
+                    job_id=job_id,
+                    event_type=f"event_type_{event_index}",
+                    event_id=f"event_{job_index}_{event_index}",
+                    start_timestamp=1723544132228288000 + event_index,
+                    end_timestamp=1723544132228288000 + event_index + 10,
+                    application_name="test_application",
+                    parent_event_id=None,
+                    child_event_ids=[],
+                )
+                large_sql_data_holder.save_data(otel_event)
+
+    # Stream data and verify counts
+    total_events_streamed = 0
+    with large_sql_data_holder:
+        result = large_sql_data_holder.stream_data()
+        for job_name, otel_event_gen in result:
+            event_count = 0
+            for otel_event in otel_event_gen:
+                event_count += 1
+            assert event_count == events_per_job
+            total_events_streamed += event_count
+
+    assert total_events_streamed == num_jobs * events_per_job

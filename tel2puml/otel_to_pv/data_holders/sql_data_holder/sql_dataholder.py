@@ -232,34 +232,43 @@ class SQLDataHolder(DataHolder):
         self,
         job_name_to_job_ids_map: dict[str, set[str]] | None = None,
         filter_job_names: set[str] | None = None,
-    ) -> Generator[
-        tuple[str, Generator[Generator[OTelEvent, Any, None], Any, None]],
-        Any,
-        None,
-    ]:
-        """Method to stream data from the SQL data holder.
-
-        This method allows streaming of OTelEvent objects, potentially filtered
-        by job names and IDs.
-
-        :param job_name_to_job_ids_map: Job name to job id map. If None, all
-        job IDs are considered.
-        :type job_name_to_job_ids_map: `dict`[`str`, `set`[`str`]] | `None`
-        :param filter_job_names: A set of job names to filter by. If None, all
-        job names are considered.
-        :type filter_job_names: `set`[`str`] | `None`
-        :return: A generator of tuples mapping job name to a generator of
-        jobs to a generator of OtelEvents.
-        :rtype: `Generator`[`tuple`[`str`, `Generator`[`Generator`[
-        :class:`OTelEvent`, `Any`, `None`],`Any`, `None`]]]
+    ) -> Generator[tuple[str, Generator[OTelEvent, None, None]], None, None]:
         """
-        with self.session as session:
-            query = session.query(NodeModel)
+        Stream data grouped by job_name from the SQL data holder.
 
+        :param job_name_to_job_ids_map: Optional mapping of job names to job
+        IDs to filter.
+        :type job_name_to_job_ids_map: `dict`[`str`, `set`[`str`]] | `None`
+        :param filter_job_names: Optional set of job names to filter.
+        :type filter_job_names: `set`[`str`] | `None`
+        :return: Generator yielding tuples of (job_name, OTelEvent generator).
+        :rtype: `Generator`[`tuple`[`str`, `Generator`[:class:`OTelEvent`,
+        `None`, `None`]], `None`, `None`]
+        """
+
+        def stream_job_name_batches(
+            session: Session,
+            job_name_to_job_ids_map: dict[str, set[str]] | None = None,
+            filter_job_names: set[str] | None = None,
+        ) -> Generator[tuple[str, OTelEvent], None, None]:
+            """
+            Stream (job_name, OTelEvent) tuples from the database.
+
+            :param session: SQLAlchemy Session object.
+            :type session: :class: `sqlalchemy.orm.Session`
+            :param job_name_to_job_ids_map: Optional mapping of job names to
+            job IDs to filter.
+            :type job_name_to_job_ids_map: `dict`[`str`, `set`[`str`]] | `None`
+            :param filter_job_names: Optional set of job names to filter.
+            :type filter_job_names: `set`[`str`] | `None`
+            :return: Generator yielding (job_name, OTelEvent) tuples.
+            :rtype: `Generator`[`tuple`[`str`, :class: `OTelEvent`], `None`,
+            `None`]
+            """
+            query = session.query(NodeModel)
             # Apply filters
             if filter_job_names:
                 query = query.filter(NodeModel.job_name.in_(filter_job_names))
-
             if job_name_to_job_ids_map:
                 job_filters = [
                     (NodeModel.job_name == job_name)
@@ -268,54 +277,28 @@ class SQLDataHolder(DataHolder):
                 ]
                 query = query.filter(or_(*job_filters))
 
+            # Order by job_name and job_id to use groupby later on.
+            # Limit query object to batch_size
             query = query.order_by(
                 NodeModel.job_name, NodeModel.job_id
             ).yield_per(self.batch_size)
 
-            def node_generator(
-                nodes: list[NodeModel],
-            ) -> Generator[OTelEvent, Any, None]:
-                """Generate OTelEvents from a list of NodeModels.
-
-                :param nodes: List of NodeModel objects.
-                :type nodes: list[NodeModel]
-                :return: Generator yielding OTelEvent objects.
-                :rtype: `Generator`[:class: `OTelEvent`, `Any`, `None`]
-                """
-                for node in nodes:
-                    yield self.node_to_otel_event(node)
-
-            def job_generator(
-                job_group: list[NodeModel],
-            ) -> Generator[Generator[OTelEvent, Any, None], Any, None]:
-                """Generate a generator of OTelEvents for a job group.
-
-                :param job_group: List of NodeModel objects for a specific job.
-                :type job_group: list[NodeModel]
-                :return: Generator yielding generators of OTelEvent objects.
-                :rtype: `Generator`[`Generator`[:class: `OTelEvent`, `Any`,
-                `None`], `Any`, `None`]
-                """
-                for _, nodes in groupby(job_group, key=lambda x: x.job_id):
-                    yield node_generator(nodes)
-
-            current_job_name = None
-            current_job_group = []
-
             for node in query:
-                if node.job_name != current_job_name:
-                    if current_job_name is not None:
-                        yield (
-                            current_job_name,
-                            job_generator(current_job_group),
-                        )
-                    current_job_name = node.job_name
-                    current_job_group = [node]
-                else:
-                    current_job_group.append(node)
+                job_name = node.job_name
+                otel_event = self.node_to_otel_event(node)
+                yield job_name, otel_event
 
-            if current_job_name is not None:
-                yield (current_job_name, job_generator(current_job_group))
+        with self.session as session:
+            # Get a generator of (job_name, OTelEvent) tuples
+            job_name_event_generator = stream_job_name_batches(
+                session, job_name_to_job_ids_map, filter_job_names
+            )
+            # Group the tuples by job_name
+            grouped = groupby(job_name_event_generator, key=lambda x: x[0])
+            for job_name, group in grouped:
+                # Create a generator of OTelEvent objects
+                otel_event_gen = (event for _, event in group)
+                yield job_name, otel_event_gen
 
 
 def intialise_temp_table_for_root_nodes(
