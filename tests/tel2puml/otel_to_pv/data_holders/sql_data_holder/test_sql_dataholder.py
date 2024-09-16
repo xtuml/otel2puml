@@ -570,8 +570,8 @@ def test_compute_graph_hash_from_event_ids(
     monkeypatch.undo()
     assert (
         compute_graph_hash_from_event_ids(nodes[5], node_links)
-        == "6a81b47405b648ed"
-    )  # pragma: allowlist secret
+        == "6a81b47405b648ed"  # pragma: allowlist secret
+    )
 
 
 def test_compute_graph_hash_from_root_nodes(
@@ -697,17 +697,6 @@ def test_find_unique_graphs(
     assert unique_job_ids_per_job_name["test_name_2"] == {
         str(i) for i in range(5)
     }
-
-
-def process_job_generator(
-    job_generator: Generator[Generator[OTelEvent, Any, None], Any, None],
-) -> list[OTelEvent]:
-    events = []
-    for event_generator in job_generator:
-        batch = list(event_generator)
-        assert len(batch) <= 0
-        events.extend(batch)
-    return events
 
 
 def test_stream_data(
