@@ -1036,11 +1036,13 @@ def otel_jobs_multiple_job_names(
     for i, otel_events in enumerate(otel_jobs.values()):
         otel_jobs_updated[f"{i+5}"] = []
         for j, event in enumerate(reversed(otel_events)):
-            event = event._replace(job_name="test_name_1")._replace(
-                job_id=f"test_id_{i+5}"
-            )._replace(event_id = f"{i+5}_{j}")
+            event = (
+                event._replace(job_name="test_name_1")
+                ._replace(job_id=f"test_id_{i+5}")
+                ._replace(event_id=f"{i+5}_{j}")
+            )
             if j == 0:
-                event = event._replace(child_event_ids = [f"{i+5}_{j+1}"])
+                event = event._replace(child_event_ids=[f"{i+5}_{j+1}"])
             else:
                 event = event._replace(parent_event_id=f"{i+5}_{j-1}")
             otel_jobs_updated[f"{i+5}"].append(event)
