@@ -103,26 +103,18 @@ class DataHolder(ABC):
         self,
         job_name_to_job_ids_map: dict[str, set[str]] | None = None,
         filter_job_names: set[str] | None = None,
-    ) -> Generator[
-        tuple[str, Generator[Generator[OTelEvent, Any, None], Any, None]],
-        Any,
-        None,
-    ]:
-        """Abstract method to stream data from a data holder.
+    ) -> Generator[tuple[str, Generator[OTelEvent, None, None]], None, None]:
+        """
+        Abstract methods to stream data from the data holder.
 
-        This method allows streaming of OTelEvent objects, potentially filtered
-        by job names and IDs.
-
-        :param job_name_to_job_ids_map: Job name to job id map. If None, all
-        job IDs are considered.
+        :param job_name_to_job_ids_map: Optional mapping of job names to job
+        IDs to filter.
         :type job_name_to_job_ids_map: `dict`[`str`, `set`[`str`]] | `None`
-        :param filter_job_names: A set of job names to filter by. If None, all
-        job names are considered.
+        :param filter_job_names: Optional set of job names to filter.
         :type filter_job_names: `set`[`str`] | `None`
-        :return: A dictionary mapping job name to a generator of jobs to a
-        generator of OtelEvents.
-        :rtype: `dict`[`str`, `Generator`[`Generator`[:class:`OTelEvent`,
-        `Any`, `None`],`Any`, `None`]]
+        :return: Generator yielding tuples of (job_name, OTelEvent generator).
+        :rtype: `Generator`[`tuple`[`str`, `Generator`[:class:`OTelEvent`,
+        `None`, `None`]], `None`, `None`]
         """
         pass
 
