@@ -1,6 +1,8 @@
 """Fixtures for testing find_unique_graphs module"""
+
 import yaml
 import json
+import copy
 from pathlib import Path
 from unittest.mock import patch
 from typing import Generator, Any
@@ -1021,51 +1023,29 @@ def otel_jobs() -> dict[str, list[OTelEvent]]:
 
 
 @pytest.fixture
-def otel_jobs_multiple_job_names() -> dict[str, list[OTelEvent]]:
+def otel_jobs_multiple_job_names(
+    otel_jobs: dict[str, list[OTelEvent]],
+) -> dict[str, list[OTelEvent]]:
     """Dict of 2x job names with 5 OTelEvents lists."""
-    timestamp_choices = [
-        tuple(10**12 + boundary for boundary in addition)
-        for addition in [
-            (0, 3 * 10**10),
-            (10**11, 2 * 10**11),
-            (57 * 10**10, 60 * 10**10),
-        ]
-    ]
-    cases = [
-        (timestamp_choices[0], timestamp_choices[0]),
-        (timestamp_choices[0], timestamp_choices[1]),
-        (timestamp_choices[1], timestamp_choices[1]),
-        (timestamp_choices[1], timestamp_choices[2]),
-        (timestamp_choices[2], timestamp_choices[2]),
-    ]
-    job_names = [f"test_name_{i}" for i in range(2)]
 
-    otel_jobs: dict[str, list[OTelEvent]] = {}
-    for job_name in job_names:
-        for i, case in enumerate(cases):
-            prev_parent_event_id = None
-            otel_jobs[f"{job_name}_{i}"] = []
-            for j, timestamps in enumerate(reversed(case)):
-                event_id = f"{job_name}_{i}_{j}"
-                next_event_id = [f"{i}_{j+1}"] if j < 1 else []
-                otel_jobs[f"{job_name}_{i}"].append(
-                    OTelEvent(
-                        job_name=job_name,
-                        job_id=f"test_id_{i}",
-                        event_type=f"event_type_{j}",
-                        event_id=event_id,
-                        start_timestamp=timestamps[0],
-                        end_timestamp=timestamps[1],
-                        application_name="test_application_name",
-                        parent_event_id=prev_parent_event_id,
-                        child_event_ids=next_event_id,
-                    )
-                )
-                prev_parent_event_id = event_id
-            otel_jobs[f"{job_name}_{i}"] = list(
-                reversed(otel_jobs[f"{job_name}_{i}"])
-            )
-    return otel_jobs
+    otel_jobs_copy = copy.deepcopy(otel_jobs)
+    otel_jobs_updated_name = {}
+
+    for i, otel_events in enumerate(otel_jobs.values()):
+        otel_jobs_updated_name[f"{i+5}"] = []
+        for j, event in enumerate(reversed(otel_events)):
+            event = event._replace(job_name="test_name_1")._replace(
+                job_id=f"test_id_{i+5}"
+            )._replace(event_id = f"{i+5}_{j}")
+            if j == 0:
+                event = event._replace(child_event_ids = [f"{i+5}_{j+1}"])
+            else:
+                event = event._replace(parent_event_id=f"{i+5}_{j-1}")
+            otel_jobs_updated_name[f"{i+5}"].append(event)
+
+    updated_otel_jobs = dict(otel_jobs_copy, **otel_jobs_updated_name)
+
+    return updated_otel_jobs
 
 
 @pytest.fixture
@@ -1110,12 +1090,8 @@ def sql_data_holder_with_otel_jobs(
                 sql_data_holder.save_data(otel_event)
     yield sql_data_holder
     with sql_data_holder.session as session:
-        if sa.inspect(sql_data_holder.engine).has_table(
-            'temp_root_nodes'
-        ):
-            session.execute(
-                sa.text("DROP TABLE temp_root_nodes")
-            )
+        if sa.inspect(sql_data_holder.engine).has_table("temp_root_nodes"):
+            session.execute(sa.text("DROP TABLE temp_root_nodes"))
     sql_data_holder.base.metadata._remove_table("temp_root_nodes", None)
 
 
@@ -1158,8 +1134,16 @@ def sql_data_holder_with_shuffled_otel_events(
     sql_data_holder.max_timestamp = 2 * 10**12
     with sql_data_holder:
         shuffled_tuples = [
-            ("1", 0), ("0", 0), ("3", 1), ("0", 1), ("1", 1), ("2", 1),
-            ("2", 0), ("3", 0), ("4", 1), ("4", 0)
+            ("1", 0),
+            ("0", 0),
+            ("3", 1),
+            ("0", 1),
+            ("1", 1),
+            ("2", 1),
+            ("2", 0),
+            ("3", 0),
+            ("4", 1),
+            ("4", 0),
         ]
         for shuffled_tuple in shuffled_tuples:
             sql_data_holder.save_data(
@@ -1167,12 +1151,8 @@ def sql_data_holder_with_shuffled_otel_events(
             )
     yield sql_data_holder
     with sql_data_holder.session as session:
-        if sa.inspect(sql_data_holder.engine).has_table(
-            'temp_root_nodes'
-        ):
-            session.execute(
-                sa.text("DROP TABLE temp_root_nodes")
-            )
+        if sa.inspect(sql_data_holder.engine).has_table("temp_root_nodes"):
+            session.execute(sa.text("DROP TABLE temp_root_nodes"))
     sql_data_holder.base.metadata._remove_table("temp_root_nodes", None)
 
 
@@ -1181,9 +1161,7 @@ def table_of_root_node_event_ids(
     sql_data_holder_with_otel_jobs: SQLDataHolder,
 ) -> Table:
     """Creates a temporary table of root nodes."""
-    table = intialise_temp_table_for_root_nodes(
-        sql_data_holder_with_otel_jobs
-    )
+    table = intialise_temp_table_for_root_nodes(sql_data_holder_with_otel_jobs)
     with sql_data_holder_with_otel_jobs.session as session:
         session.execute(
             table.insert(),
@@ -1227,8 +1205,8 @@ def otel_nodes_under_separate_job_name() -> list[NodeModel]:
             job_id=f"{i}{j}",
             event_type=f"{i}",
             event_id=f"{i}{j}",
-            start_timestamp=10**12 + 10 ** 11,
-            end_timestamp=10**12 + 2 * 10 ** 11,
+            start_timestamp=10**12 + 10**11,
+            end_timestamp=10**12 + 2 * 10**11,
             application_name="test_application_name",
             parent_event_id=None,
         )
@@ -1260,8 +1238,7 @@ def sql_data_holder_extended(
 
     with sql_data_holder_with_otel_jobs.session as session:
         session.add_all(
-            otel_node
-            for otel_node in otel_nodes_under_separate_job_name
+            otel_node for otel_node in otel_nodes_under_separate_job_name
         )
         session.commit()
     return sql_data_holder_with_otel_jobs

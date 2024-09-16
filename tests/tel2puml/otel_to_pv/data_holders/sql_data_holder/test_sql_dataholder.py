@@ -727,8 +727,8 @@ def test_stream_data(
         assert expected_event == streamed_events[event_id]
 
     # Test 2: Filter by job_name
-    result = sql_data_holder.stream_data(filter_job_names={"test_name_0"})
-    expected_job_names = ["test_name_0"]
+    result = sql_data_holder.stream_data(filter_job_names={"test_name"})
+    expected_job_names = ["test_name"]
     all_events = []
     for job_name, otel_event_gen in result:
         assert job_name in expected_job_names
@@ -743,8 +743,8 @@ def test_stream_data(
     # Test 3: Filter job_name job_id map
     result = sql_data_holder.stream_data(
         job_name_to_job_ids_map={
-            "test_name_0": {"test_id_0", "test_id_1"},
-            "test_name_1": {"test_id_2", "test_id_3", "test_id_4"},
+            "test_name": {"test_id_0", "test_id_1"},
+            "test_name_1": {"test_id_5", "test_id_6", "test_id_7"},
         },
     )
     job_event_counts = {}
@@ -756,13 +756,13 @@ def test_stream_data(
             job_event_counts[job_name] += 1
 
     assert len(all_events) == 10
-    assert job_event_counts["test_name_0"] == 4
+    assert job_event_counts["test_name"] == 4
     assert job_event_counts["test_name_1"] == 6
 
     # Test 4: Filter by job_name, then use map for further filtering
     result = sql_data_holder.stream_data(
-        filter_job_names={"test_name_0"},
-        job_name_to_job_ids_map={"test_name_0": {"test_id_0", "test_id_1"}},
+        filter_job_names={"test_name"},
+        job_name_to_job_ids_map={"test_name": {"test_id_0", "test_id_1"}},
     )
     all_events = []
     for job_name, otel_event_gen in result:
