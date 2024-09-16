@@ -286,11 +286,9 @@ class SQLDataHolder(DataHolder):
         `None`, `None`]], `None`, `None`]
         """
         with self.session as session:
-            # Get a generator of (job_name, OTelEvent) tuples
             job_name_event_generator = self.stream_job_name_batches(
                 session, job_name_to_job_ids_map, filter_job_names
             )
-            # Group the tuples by job_name
             grouped = groupby(
                 job_name_event_generator, key=lambda x: x.job_name
             )
