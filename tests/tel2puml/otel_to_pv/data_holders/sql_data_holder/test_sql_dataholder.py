@@ -391,10 +391,9 @@ class TestSQLDataHolder:
 
         job_ids = {"test_id_2", "test_id_3"}
 
+        sql_data_holder = sql_data_holder_with_shuffled_otel_events
         otel_events = list(
-        sql_data_holder_with_shuffled_otel_events.get_otel_events_from_job_ids(
-                job_ids
-            )
+            sql_data_holder.get_otel_events_from_job_ids(job_ids)
         )
 
         assert len(otel_events) == 2
