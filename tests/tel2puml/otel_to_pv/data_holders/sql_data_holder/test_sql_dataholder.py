@@ -11,7 +11,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm.exc import DetachedInstanceError
-from typing import Generator, Any
 
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
     NodeModel,
@@ -393,7 +392,7 @@ class TestSQLDataHolder:
         job_ids = {"test_id_2", "test_id_3"}
 
         otel_events = list(
-            sql_data_holder_with_shuffled_otel_events.get_otel_events_from_job_ids(
+        sql_data_holder_with_shuffled_otel_events.get_otel_events_from_job_ids(
                 job_ids
             )
         )
