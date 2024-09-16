@@ -1026,13 +1026,15 @@ def otel_jobs() -> dict[str, list[OTelEvent]]:
 def otel_jobs_multiple_job_names(
     otel_jobs: dict[str, list[OTelEvent]],
 ) -> dict[str, list[OTelEvent]]:
-    """Dict of 2x job names with 5 OTelEvents lists."""
+    """Adds an extra set of 5 OTelEvents lists to otel_jobs with a job_name
+    of test_name_1.
+    """
 
     otel_jobs_copy = copy.deepcopy(otel_jobs)
-    otel_jobs_updated_name = {}
+    otel_jobs_updated: dict[str, list[OTelEvent]] = {}
 
     for i, otel_events in enumerate(otel_jobs.values()):
-        otel_jobs_updated_name[f"{i+5}"] = []
+        otel_jobs_updated[f"{i+5}"] = []
         for j, event in enumerate(reversed(otel_events)):
             event = event._replace(job_name="test_name_1")._replace(
                 job_id=f"test_id_{i+5}"
@@ -1041,9 +1043,9 @@ def otel_jobs_multiple_job_names(
                 event = event._replace(child_event_ids = [f"{i+5}_{j+1}"])
             else:
                 event = event._replace(parent_event_id=f"{i+5}_{j-1}")
-            otel_jobs_updated_name[f"{i+5}"].append(event)
+            otel_jobs_updated[f"{i+5}"].append(event)
 
-    updated_otel_jobs = dict(otel_jobs_copy, **otel_jobs_updated_name)
+    updated_otel_jobs = dict(otel_jobs_copy, **otel_jobs_updated)
 
     return updated_otel_jobs
 
