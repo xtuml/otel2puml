@@ -228,6 +228,49 @@ class SQLDataHolder(DataHolder):
         """
         return find_unique_graphs(self.time_buffer, self.batch_size, self)
 
+    def stream_job_name_batches(
+        self,
+        session: Session,
+        job_name_to_job_ids_map: dict[str, set[str]] | None = None,
+        filter_job_names: set[str] | None = None,
+    ) -> Generator[tuple[str, OTelEvent], None, None]:
+        """
+        Stream (job_name, OTelEvent) tuples from the database.
+
+        :param session: SQLAlchemy Session object.
+        :type session: :class: `sqlalchemy.orm.Session`
+        :param job_name_to_job_ids_map: Optional mapping of job names to
+        job IDs to filter.
+        :type job_name_to_job_ids_map: `dict`[`str`, `set`[`str`]] | `None`
+        :param filter_job_names: Optional set of job names to filter.
+        :type filter_job_names: `set`[`str`] | `None`
+        :return: Generator yielding (job_name, OTelEvent) tuples.
+        :rtype: `Generator`[`tuple`[`str`, :class: `OTelEvent`], `None`,
+        `None`]
+        """
+        query = session.query(NodeModel)
+        # Apply filters
+        if filter_job_names:
+            query = query.filter(NodeModel.job_name.in_(filter_job_names))
+        if job_name_to_job_ids_map:
+            job_filters = [
+                (NodeModel.job_name == job_name)
+                & (NodeModel.job_id.in_(job_ids))
+                for job_name, job_ids in job_name_to_job_ids_map.items()
+            ]
+            query = query.filter(or_(*job_filters))
+
+        # Order by job_name and job_id to use groupby later on.
+        # Limit query object to batch_size
+        query = query.order_by(NodeModel.job_name, NodeModel.job_id).yield_per(
+            self.batch_size
+        )
+
+        for node in query:
+            job_name = node.job_name
+            otel_event = self.node_to_otel_event(node)
+            yield job_name, otel_event
+
     def stream_data(
         self,
         job_name_to_job_ids_map: dict[str, set[str]] | None = None,
@@ -245,52 +288,9 @@ class SQLDataHolder(DataHolder):
         :rtype: `Generator`[`tuple`[`str`, `Generator`[:class:`OTelEvent`,
         `None`, `None`]], `None`, `None`]
         """
-
-        def stream_job_name_batches(
-            session: Session,
-            job_name_to_job_ids_map: dict[str, set[str]] | None = None,
-            filter_job_names: set[str] | None = None,
-        ) -> Generator[tuple[str, OTelEvent], None, None]:
-            """
-            Stream (job_name, OTelEvent) tuples from the database.
-
-            :param session: SQLAlchemy Session object.
-            :type session: :class: `sqlalchemy.orm.Session`
-            :param job_name_to_job_ids_map: Optional mapping of job names to
-            job IDs to filter.
-            :type job_name_to_job_ids_map: `dict`[`str`, `set`[`str`]] | `None`
-            :param filter_job_names: Optional set of job names to filter.
-            :type filter_job_names: `set`[`str`] | `None`
-            :return: Generator yielding (job_name, OTelEvent) tuples.
-            :rtype: `Generator`[`tuple`[`str`, :class: `OTelEvent`], `None`,
-            `None`]
-            """
-            query = session.query(NodeModel)
-            # Apply filters
-            if filter_job_names:
-                query = query.filter(NodeModel.job_name.in_(filter_job_names))
-            if job_name_to_job_ids_map:
-                job_filters = [
-                    (NodeModel.job_name == job_name)
-                    & (NodeModel.job_id.in_(job_ids))
-                    for job_name, job_ids in job_name_to_job_ids_map.items()
-                ]
-                query = query.filter(or_(*job_filters))
-
-            # Order by job_name and job_id to use groupby later on.
-            # Limit query object to batch_size
-            query = query.order_by(
-                NodeModel.job_name, NodeModel.job_id
-            ).yield_per(self.batch_size)
-
-            for node in query:
-                job_name = node.job_name
-                otel_event = self.node_to_otel_event(node)
-                yield job_name, otel_event
-
         with self.session as session:
             # Get a generator of (job_name, OTelEvent) tuples
-            job_name_event_generator = stream_job_name_batches(
+            job_name_event_generator = self.stream_job_name_batches(
                 session, job_name_to_job_ids_map, filter_job_names
             )
             # Group the tuples by job_name
