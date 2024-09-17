@@ -301,7 +301,7 @@ class SQLDataHolder(DataHolder):
             for job_name, job_name_group in groupby(
                 job_name_event_generator, key=lambda x: x.job_name
             ):
-                # For each job_name, create a generator of generator of 
+                # For each job_name, create a generator of generator of
                 # OtelEvents grouped by job_id
                 otel_event_gen = (
                     (event for event in job_id_group)
