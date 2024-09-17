@@ -1,10 +1,12 @@
 """DataHolder subclasses for SQL databases and finding unique OTel trees"""
+
 from types import TracebackType
 from typing import Any, Generator, TypeVar, Iterable
+from itertools import groupby
 import logging
 
 import sqlalchemy as sa
-from sqlalchemy import create_engine, insert
+from sqlalchemy import create_engine, insert, or_
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError, IntegrityError
 from sqlalchemy.orm.exc import DetachedInstanceError
@@ -142,9 +144,7 @@ class SQLDataHolder(DataHolder):
                 )
 
     @staticmethod
-    def convert_otel_event_to_node_model(
-        otel_event: OTelEvent
-    ) -> NodeModel:
+    def convert_otel_event_to_node_model(otel_event: OTelEvent) -> NodeModel:
         """Method to convert an OTelEvent object to a NodeModel object.
 
         :param otel_event: An OTelEvent object
@@ -182,9 +182,7 @@ class SQLDataHolder(DataHolder):
                 end_timestamp=node.end_timestamp,
                 application_name=node.application_name,
                 parent_event_id=node.parent_event_id,
-                child_event_ids=[
-                    child.event_id for child in node.children
-                ],
+                child_event_ids=[child.event_id for child in node.children],
             )
         except DetachedInstanceError:
             logging.error(
@@ -219,9 +217,7 @@ class SQLDataHolder(DataHolder):
                         yield output
                     output = {}
                     current_job_id = str(node.job_id)
-                output[str(node.event_id)] = self.node_to_otel_event(
-                    node
-                )
+                output[str(node.event_id)] = self.node_to_otel_event(node)
             yield output
 
     def find_unique_graphs(self) -> dict[str, set[str]]:
@@ -230,11 +226,90 @@ class SQLDataHolder(DataHolder):
         :return: A dictionary mapping job names to a set of unique job_ids
         :rtype: `dict`[`str`, `set`[`str`]]
         """
-        return find_unique_graphs(
-            self.time_buffer,
-            self.batch_size,
-            self
+        return find_unique_graphs(self.time_buffer, self.batch_size, self)
+
+    def stream_job_name_batches(
+        self,
+        session: Session,
+        job_name_to_job_ids_map: dict[str, set[str]] | None = None,
+        filter_job_names: set[str] | None = None,
+    ) -> Generator[OTelEvent, None, None]:
+        """
+        Stream OTelEvents from the database.
+
+        :param session: SQLAlchemy Session object.
+        :type session: :class: `sqlalchemy.orm.Session`
+        :param job_name_to_job_ids_map: Optional mapping of job names to job
+        IDs to filter. Defaults to None.
+        :type job_name_to_job_ids_map: `Optional`[`dict`[`str`, `set`[`str`]]]
+        :param filter_job_names: Optional set of job names to filter. Defaults
+        to None.
+        :type filter_job_names: `Optional`[`set`[`str`]]
+        :return: Generator yielding OtelEvent objects
+        :rtype: `Generator`[:class:`OTelEvent`, `None`, `None`]
+        """
+        query = session.query(NodeModel)
+        # Apply filters
+        if filter_job_names:
+            query = query.filter(NodeModel.job_name.in_(filter_job_names))
+        if job_name_to_job_ids_map:
+            job_filters = [
+                (NodeModel.job_name == job_name)
+                & (NodeModel.job_id.in_(job_ids))
+                for job_name, job_ids in job_name_to_job_ids_map.items()
+            ]
+            query = query.filter(or_(*job_filters))
+
+        # Order by job_name and job_id to use groupby later on.
+        # Limit query object to batch_size
+        query = query.order_by(NodeModel.job_name, NodeModel.job_id).yield_per(
+            self.batch_size
         )
+
+        for node in query:
+            yield self.node_to_otel_event(node)
+
+    def stream_data(
+        self,
+        job_name_to_job_ids_map: dict[str, set[str]] | None = None,
+        filter_job_names: set[str] | None = None,
+    ) -> Generator[
+        tuple[str, Generator[Generator[OTelEvent, None, None], None, None]],
+        None,
+        None,
+    ]:
+        """
+        Stream data grouped by job_name from the SQL data holder.
+
+        :param job_name_to_job_ids_map: Optional mapping of job names to job
+        IDs to filter. Defaults to None.
+        :type job_name_to_job_ids_map: `Optional`[`dict`[`str`, `set`[`str`]]]
+        :param filter_job_names: Optional set of job names to filter. Defaults
+        to None.
+        :type filter_job_names: `Optional`[`set`[`str`]]
+        :return: Generator yielding tuples of (job_name, generator of
+        generators of OtelEvents grouped by job_id).
+        :rtype: `Generator`[`tuple`[`str`, `Generator`[`Generator`
+        [:class:`OTelEvent`, `None`, `None`]], `None`, `None`],`None`,
+        `None`]
+        """
+        with self.session as session:
+            job_name_event_generator = self.stream_job_name_batches(
+                session, job_name_to_job_ids_map, filter_job_names
+            )
+
+            for job_name, job_name_group in groupby(
+                job_name_event_generator, key=lambda x: x.job_name
+            ):
+                # For each job_name, create a generator of generator of
+                # OtelEvents grouped by job_id
+                otel_event_gen = (
+                    (event for event in job_id_group)
+                    for _, job_id_group in groupby(
+                        job_name_group, key=lambda x: x.job_id
+                    )
+                )
+                yield job_name, otel_event_gen
 
 
 def intialise_temp_table_for_root_nodes(
@@ -297,7 +372,8 @@ def create_temp_table_of_root_nodes_in_time_window(
         stmt = (
             session.query(NodeModel.event_id)
             .join(stmt, NodeModel.job_id == stmt.c.job_id)
-            .where(NodeModel.parent_event_id.is_(None)).subquery()
+            .where(NodeModel.parent_event_id.is_(None))
+            .subquery()
         )
         session.execute(temp_table.insert().from_select(["event_id"], stmt))
         session.commit()
@@ -306,8 +382,10 @@ def create_temp_table_of_root_nodes_in_time_window(
 
 
 def get_root_nodes(
-    start_row: int, batch_size: int,
-    temp_table: sa.Table, data_holder: SQLDataHolder
+    start_row: int,
+    batch_size: int,
+    temp_table: sa.Table,
+    data_holder: SQLDataHolder,
 ) -> list[NodeModel]:
     """Get the root nodes from the temporary table.
 
@@ -328,9 +406,11 @@ def get_root_nodes(
     if batch_size < 0:
         raise ValueError("The batch size must be greater than or equal to 0.")
     with data_holder.session:
-        stmt = data_holder.session.query(temp_table.c.event_id).slice(
-            start_row, start_row + batch_size
-        ).subquery()
+        stmt = (
+            data_holder.session.query(temp_table.c.event_id)
+            .slice(start_row, start_row + batch_size)
+            .subquery()
+        )
         root_nodes = (
             data_holder.session.query(NodeModel)
             .join(stmt, NodeModel.event_id == stmt.c.event_id)
@@ -362,7 +442,7 @@ def get_sql_batch_nodes(
 
 
 def create_event_id_to_child_nodes_map(
-    nodes: Iterable[NodeModel]
+    nodes: Iterable[NodeModel],
 ) -> dict[str, list[NodeModel]]:
     """Create a map of event IDs to their child nodes.
 
@@ -421,9 +501,11 @@ def compute_graph_hashes_from_root_nodes(
     :rtype: `list`[:class:`JobHash`]
     """
     return [
-        JobHash(job_id=node.job_id, job_hash=compute_graph_hash_from_event_ids(
-            node, node_to_children
-        ), job_name=node.job_name)
+        JobHash(
+            job_id=node.job_id,
+            job_hash=compute_graph_hash_from_event_ids(node, node_to_children),
+            job_name=node.job_name,
+        )
         for node in root_nodes
     ]
 
@@ -462,7 +544,7 @@ def compute_graph_hashes_for_batch(
 
 
 def get_unique_graph_job_ids_per_job_name(
-    sql_data_holder: SQLDataHolder
+    sql_data_holder: SQLDataHolder,
 ) -> dict[str, set[str]]:
     """Get the unique graphs per job name.
 
@@ -474,9 +556,8 @@ def get_unique_graph_job_ids_per_job_name(
     """
     job_name_to_job_ids: dict[str, set[str]] = {}
     with sql_data_holder.session as session:
-        stmt = (
-            sa.select(JobHash.job_name, JobHash.job_hash)
-            .group_by(JobHash.job_name, JobHash.job_hash)
+        stmt = sa.select(JobHash.job_name, JobHash.job_hash).group_by(
+            JobHash.job_name, JobHash.job_hash
         )
         job_hashes = session.execute(stmt).fetchall()
         for job_name, job_id in job_hashes:
