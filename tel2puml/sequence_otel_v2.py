@@ -292,8 +292,6 @@ def sequence_otel_job_id_streams(
                 event_id_map[otel_event.event_id] = otel_event
             yield event_id_map
 
-    yield sequence_otel_jobs(
-        job_ids_to_eventid_to_otelevent_map(
-            job_id_streams, async_flag, event_to_async_group_map
-        )
+    yield from sequence_otel_jobs(
+        job_ids_to_eventid_to_otelevent_map(job_id_streams), async_flag, event_to_async_group_map
     )
