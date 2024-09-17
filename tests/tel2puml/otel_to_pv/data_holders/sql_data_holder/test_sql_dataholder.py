@@ -830,7 +830,7 @@ def test_stream_job_name_batches(
         all_events = list(otel_event_gen)
 
     assert len(all_events) == 4
-    job_id_count: dict[str, int] = {}
+    job_id_count = {}
     expected_event_ids = ["0_0", "0_1", "1_0", "1_1"]
     for otel_event in all_events:
         job_id_count.setdefault(otel_event.job_id, 0)
