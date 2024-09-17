@@ -4,7 +4,7 @@ from typing import Any, Generator
 
 import jq  # type: ignore[import-not-found]
 
-from tel2puml.otel_to_pv.config import FieldSpec
+from tel2puml.otel_to_pv.config import JQFieldSpec
 
 
 class JQVariableTree:
@@ -137,12 +137,12 @@ def get_updated_path_from_key_path_key_value_and_root_var_tree(
 
 
 def update_field_spec_with_variables(
-    field_spec: FieldSpec, root_var_tree: JQVariableTree, var_num: int = 0
+    field_spec: JQFieldSpec, root_var_tree: JQVariableTree, var_num: int = 0
 ) -> int:
     """Update the field spec with variables.
 
     :param field_spec: The field spec to update
-    :type field_spec: :class:`FieldSpec`
+    :type field_spec: :class:`JQFieldSpec`
     :param root_var_tree: The root variable tree
     :type root_var_tree: :class:`JQVariableTree`
     :param var_num: The current variable number, defaults to 0
@@ -150,32 +150,33 @@ def update_field_spec_with_variables(
     :return: The updated variable number
     :rtype: `int`
     """
-    updated_key_paths: list[str] = []
-    for key_path, key_value in zip(
+    updated_key_paths: list[tuple[str, ...]] = []
+    for priority_key_paths, priority_key_values in zip(
         field_spec["key_paths"],
-        (
-            field_spec["key_value"]
-            if field_spec["key_value"] is not None
-            else [None] * len(field_spec["key_paths"])
-        ),
+        field_spec["key_value"],
     ):
-        updated_key_path, var_num = (
-            get_updated_path_from_key_path_key_value_and_root_var_tree(
-                key_path, key_value, root_var_tree, var_num
+        updated_priority_key_paths: list[str] = []
+        for key_path, key_value in zip(
+            priority_key_paths, priority_key_values
+        ):
+            updated_key_path, var_num = (
+                get_updated_path_from_key_path_key_value_and_root_var_tree(
+                    key_path, key_value, root_var_tree, var_num
+                )
             )
-        )
-        updated_key_paths.append(updated_key_path)
+            updated_priority_key_paths.append(updated_key_path)
+        updated_key_paths.append(tuple(updated_priority_key_paths))
     field_spec["key_paths"] = updated_key_paths
     return var_num
 
 
 def update_field_specs_with_variables(
-    field_mapping: dict[str, FieldSpec],
+    field_mapping: dict[str, JQFieldSpec],
 ) -> JQVariableTree:
     """Update the field specs with variables.
 
     :param field_mapping: The field mapping to update
-    :type field_mapping: `dict`[:class:`str`, :class:`FieldSpec`]
+    :type field_mapping: `dict`[:class:`str`, :class:`JQFieldSpec`]
     :return: The root variable tree
     :rtype: :class:`JQVariableTree`
     """
@@ -208,7 +209,10 @@ def build_base_variable_jq_query(
         jq_query = ". as " + str(var_tree)
     else:
         insert = path if path == "" else path + "."
-        jq_query = f"{str(parent_var_tree)}.{insert}[] as {str(var_tree)}"
+        jq_query = (
+            f"(try {str(parent_var_tree)}.{insert}[] catch null) "
+            f"as {str(var_tree)}"
+        )
     for key_path, child_var_tree in var_tree:
         child_query = build_base_variable_jq_query(
             child_var_tree, var_tree, key_path
@@ -217,65 +221,71 @@ def build_base_variable_jq_query(
     return jq_query
 
 
-def get_jq_for_field_spec(field_spec: FieldSpec, out_var: str) -> str:
+def get_jq_for_field_spec(field_spec: JQFieldSpec, out_var: str) -> str:
     """Get the jq query for the field spec.
 
     :param field_spec: The field spec
-    :type field_spec: :class:`FieldSpec`
+    :type field_spec: :class:`JQFieldSpec`
     :param out_var: The output variable
     :type out_var: `str`
     :return: The jq query
     :rtype: `str`
     """
     jq_query = ""
-    variables: list[str] = []
-    for i, key_path, key_value, value_path in zip(
+    variables: list[list[str]] = []
+    for (
+        i, priority_key_paths, priority_key_values, priority_value_paths
+    ) in zip(
         range(len(field_spec["key_paths"])),
         field_spec["key_paths"],
-        (
-            field_spec["key_value"]
-            if field_spec["key_value"] is not None
-            else [None] * len(field_spec["key_paths"])
-        ),
-        (
-            field_spec["value_paths"]
-            if field_spec["value_paths"] is not None
-            else [None] * len(field_spec["key_paths"])
-        ),
+        field_spec["key_value"],
+        field_spec["value_paths"],
     ):
-        variable = f"{out_var}concat{i}"
-        variables.append(variable)
-        if key_value is not None:
-            split_on_array = key_path.split(".[].")
-            if len(split_on_array) != 2:
-                raise ValueError(
-                    "Expecting a single array in the key_path if key_value is"
-                    " not None."
+        priority_variables: list[str] = []
+        for j, key_path, key_value, value_path in zip(
+            range(len(priority_key_paths)),
+            priority_key_paths, priority_key_values, priority_value_paths
+        ):
+            variable = f"{out_var}concat{i}{j}"
+            priority_variables.append(variable)
+            if key_value is not None:
+                split_on_array = key_path.split(".[].")
+                if len(split_on_array) != 2:
+                    raise ValueError(
+                        "Expecting a single array in the key_path if key_value"
+                        " is"
+                        " not None."
+                    )
+                if "$" not in split_on_array[0]:
+                    raise ValueError(
+                        "Expecting a variable in the first part of the "
+                        "key_path."
+                    )
+                if any("$" in part for part in split_on_array[1:]):
+                    raise ValueError(
+                        "Expecting no variables in the rest of the key_path "
+                        "after "
+                        "the first variable "
+                    )
+                jq_query += (
+                    f" | ({split_on_array[0]}.[]"
+                    + f" | select(.{'.'.join(split_on_array[1:])} "
+                    + f'== "{key_value}")).{value_path} as {variable}'
                 )
-            if "$" not in split_on_array[0]:
-                raise ValueError(
-                    "Expecting a variable in the first part of the key_path."
-                )
-            if any("$" in part for part in split_on_array[1:]):
-                raise ValueError(
-                    "Expecting no variables in the rest of the key_path after "
-                    "the first variable "
-                )
-            jq_query += (
-                f" | ({split_on_array[0]}.[]"
-                + f" | select(.{'.'.join(split_on_array[1:])} "
-                + f'== "{key_value}")).{value_path} as {variable}'
-            )
-        else:
-            jq_query += f" | {key_path} as {variable}"
+            else:
+                jq_query += f" | {key_path} as {variable}"
+        variables.append(priority_variables)
     joined_variables = ' + "_" + '.join(
-        f"({variable} | tostring)" for variable in variables
+        "(" + " // ".join(
+            f'{variable}' for variable in priority_variables
+        ) + " | tostring)"
+        for priority_variables in variables
     )
     jq_query += f" | ({joined_variables}) as {out_var}"
     return jq_query
 
 
-def get_jq_using_field_mapping(field_mapping: dict[str, FieldSpec]) -> str:
+def get_jq_using_field_mapping(field_mapping: dict[str, JQFieldSpec]) -> str:
     """Get the jq query using the field mapping.
 
     :param field_mapping: The field mapping
@@ -302,7 +312,7 @@ def get_jq_using_field_mapping(field_mapping: dict[str, FieldSpec]) -> str:
 
 
 def get_jq_query_from_field_mapping_with_variables_and_var_tree(
-    field_mapping: dict[str, FieldSpec],
+    field_mapping: dict[str, JQFieldSpec],
     var_tree: JQVariableTree,
 ) -> str:
     """Get the jq query from the field mapping with variables and variable
@@ -320,7 +330,7 @@ def get_jq_query_from_field_mapping_with_variables_and_var_tree(
     return f"[{jq_query}]"
 
 
-def field_mapping_to_jq_query(field_mapping: dict[str, FieldSpec]) -> str:
+def field_mapping_to_jq_query(field_mapping: dict[str, JQFieldSpec]) -> str:
     """Convert the field mapping to a jq query.
 
     :param field_mapping: The field mapping
@@ -334,7 +344,7 @@ def field_mapping_to_jq_query(field_mapping: dict[str, FieldSpec]) -> str:
     )
 
 
-def field_mapping_to_compiled_jq(field_mapping: dict[str, FieldSpec]) -> Any:
+def field_mapping_to_compiled_jq(field_mapping: dict[str, JQFieldSpec]) -> Any:
     """Convert the field mapping to a compiled jq query.
 
     :param field_mapping: The field mapping

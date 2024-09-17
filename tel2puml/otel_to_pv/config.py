@@ -32,6 +32,15 @@ class FieldSpec(TypedDict):
     value_type: Union[str, int]
 
 
+class JQFieldSpec(TypedDict):
+    """Typed dict for JQFieldSpec."""
+
+    key_paths: list[tuple[str, ...]]
+    key_value: list[tuple[str | None, ...]]
+    value_paths: list[tuple[str | None, ...]]
+    value_type: Union[str, int]
+
+
 class JSONDataSourceConfig(TypedDict):
     """Typed dict for JSONDataSourceConfig."""
 
