@@ -1,54 +1,70 @@
 """Configuration for tests in json data source."""
 import pytest
 
-from tel2puml.otel_to_pv.config import FieldSpec
+from tel2puml.otel_to_pv.config import JQFieldSpec
 from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter \
     import JQVariableTree
 
 
 @pytest.fixture
-def field_spec_1() -> FieldSpec:
-    """Fixture for FieldSpec object."""
-    return FieldSpec(
+def field_spec_1() -> JQFieldSpec:
+    """Fixture for JQFieldSpec object."""
+    return JQFieldSpec(
         key_paths=[
-            "first.[].second_1.second_2.[].third_1.third_2",
-            "first.[].second_1.second_2.[].third_1.third_2",
+            ("first.[].second_1.second_2.[].third_1.third_2",),
+            ("first.[].second_1.second_2.[].third_1.third_2",),
         ],
-        key_value=["value", None],
-        value_paths=["value_path.next", None],
+        key_value=[("value",), (None,)],
+        value_paths=[("value_path.next",), (None,)],
         value_type="string",
     )
 
 
 @pytest.fixture
-def field_spec_2() -> FieldSpec:
-    """Fixture for FieldSpec object."""
-    return FieldSpec(
-        key_paths=["first.second.third", "first.second.third"],
-        key_value=[None, None],
-        value_paths=[None, None],
+def field_spec_2() -> JQFieldSpec:
+    """Fixture for JQFieldSpec object."""
+    return JQFieldSpec(
+        key_paths=[("first.second.third",), ("first.second.third",)],
+        key_value=[(None,), (None,)],
+        value_paths=[(None,), (None,)],
         value_type="string",
     )
 
 
 @pytest.fixture
-def field_spec_3() -> FieldSpec:
-    """Fixture for FieldSpec object."""
-    return FieldSpec(
+def field_spec_3() -> JQFieldSpec:
+    """Fixture for JQFieldSpec object."""
+    return JQFieldSpec(
         key_paths=[
-            "fourth.[].fifth",
-            "fourth.[].fifth",
+            ("fourth.[].fifth",),
+            ("fourth.[].fifth",),
         ],
-        key_value=[None, None],
-        value_paths=[None, None],
+        key_value=[(None,), (None,)],
+        value_paths=[(None,), (None,)],
+        value_type="string",
+    )
+
+
+@pytest.fixture
+def field_spec_4() -> JQFieldSpec:
+    """Fixture for JQFieldSpec object."""
+    return JQFieldSpec(
+        key_paths=[
+            tuple([
+                "first.[].second_1.second_2.[].third_1.third_2"
+            ] * 2)
+            ],
+        key_value=[("value", None)],
+        value_paths=[("value_path.next", None)],
         value_type="string",
     )
 
 
 @pytest.fixture
 def field_mapping(
-    field_spec_1: FieldSpec, field_spec_2: FieldSpec, field_spec_3: FieldSpec
-) -> dict[str, FieldSpec]:
+    field_spec_1: JQFieldSpec, field_spec_2: JQFieldSpec,
+    field_spec_3: JQFieldSpec
+) -> dict[str, JQFieldSpec]:
     """Fixture for field mapping using previous fiedl specs"""
     return {
         "field_1": field_spec_1,
@@ -58,50 +74,69 @@ def field_mapping(
 
 
 @pytest.fixture
-def field_spec_with_variables_1() -> FieldSpec:
-    """Fixture for 1st FieldSpec object with variables added"""
-    return FieldSpec(
+def field_spec_with_variables_1() -> JQFieldSpec:
+    """Fixture for 1st JQFieldSpec object with variables added"""
+    return JQFieldSpec(
         key_paths=[
-            "$var1.second_1.second_2.[].third_1.third_2",
-            "$var2.third_1.third_2",
+            ("$var1.second_1.second_2.[].third_1.third_2",),
+            ("$var2.third_1.third_2",),
         ],
-        key_value=["value", None],
-        value_paths=["value_path.next", None],
+        key_value=[("value",), (None,)],
+        value_paths=[("value_path.next",), (None,)],
         value_type="string",
     )
 
 
 @pytest.fixture
-def field_spec_with_variables_2() -> FieldSpec:
-    """Fixture for 2nd FieldSpec object with variables added"""
-    return FieldSpec(
-        key_paths=["$var0.first.second.third", "$var0.first.second.third"],
-        key_value=[None, None],
-        value_paths=[None, None],
+def field_spec_with_variables_2() -> JQFieldSpec:
+    """Fixture for 2nd JQFieldSpec object with variables added"""
+    return JQFieldSpec(
+        key_paths=[
+            ("$var0.first.second.third",),
+            ("$var0.first.second.third",)
+        ],
+        key_value=[(None,), (None,)],
+        value_paths=[(None,), (None,)],
         value_type="string",
     )
 
 
 @pytest.fixture
-def field_spec_with_variables_3() -> FieldSpec:
-    """Fixture for 3rd FieldSpec object with variables added"""
-    return FieldSpec(
+def field_spec_with_variables_3() -> JQFieldSpec:
+    """Fixture for 3rd JQFieldSpec object with variables added"""
+    return JQFieldSpec(
         key_paths=[
-            "$var3.fifth",
-            "$var3.fifth",
+            ("$var3.fifth",),
+            ("$var3.fifth",),
         ],
-        key_value=[None, None],
-        value_paths=[None, None],
+        key_value=[(None,), (None,)],
+        value_paths=[(None,), (None,)],
+        value_type="string",
+    )
+
+
+@pytest.fixture
+def field_spec_with_variables_4() -> JQFieldSpec:
+    """Fixture for 4th JQFieldSpec object with variables added"""
+    return JQFieldSpec(
+        key_paths=[
+            (
+                "$var1.second_1.second_2.[].third_1.third_2",
+                "$var2.third_1.third_2"
+            ),
+            ],
+        key_value=[("value", None)],
+        value_paths=[("value_path.next", None)],
         value_type="string",
     )
 
 
 @pytest.fixture
 def field_mapping_with_variables(
-    field_spec_with_variables_1: FieldSpec,
-    field_spec_with_variables_2: FieldSpec,
-    field_spec_with_variables_3: FieldSpec,
-) -> dict[str, FieldSpec]:
+    field_spec_with_variables_1: JQFieldSpec,
+    field_spec_with_variables_2: JQFieldSpec,
+    field_spec_with_variables_3: JQFieldSpec,
+) -> dict[str, JQFieldSpec]:
     """Fixture for field mapping using previous field specs with variables
     added"""
     return {
@@ -117,9 +152,10 @@ def field_spec_with_variables_1_expected_jq() -> str:
     return (
         ' | ($var1.second_1.second_2.[] | select(.third_1.third_2 == "value"))'
         '.value_path.next as'
-        " $out0concat0"
-        " | $var2.third_1.third_2 as $out0concat1"
-        ' | (($out0concat0 | tostring) + "_" + ($out0concat1 | tostring)) as'
+        " $out0concat00"
+        " | $var2.third_1.third_2 as $out0concat10"
+        ' | (($out0concat00 | tostring) + "_" + ($out0concat10 | tostring))'
+        ' as'
         " $out0"
     )
 
@@ -128,9 +164,10 @@ def field_spec_with_variables_1_expected_jq() -> str:
 def field_spec_with_variables_2_expected_jq() -> str:
     """Expected JQ query for field_spec_with_variables_2"""
     return (
-        " | $var0.first.second.third as $out1concat0"
-        " | $var0.first.second.third as $out1concat1"
-        ' | (($out1concat0 | tostring) + "_" + ($out1concat1 | tostring)) as'
+        " | $var0.first.second.third as $out1concat00"
+        " | $var0.first.second.third as $out1concat10"
+        ' | (($out1concat00 | tostring) + "_" + ($out1concat10 | tostring))'
+        ' as'
         " $out1"
     )
 
@@ -139,10 +176,25 @@ def field_spec_with_variables_2_expected_jq() -> str:
 def field_spec_with_variables_3_expected_jq() -> str:
     """Expected JQ query for field_spec_with_variables_3"""
     return (
-        " | $var3.fifth as $out2concat0"
-        " | $var3.fifth as $out2concat1"
-        ' | (($out2concat0 | tostring) + "_" + ($out2concat1 | tostring)) as'
+        " | $var3.fifth as $out2concat00"
+        " | $var3.fifth as $out2concat10"
+        ' | (($out2concat00 | tostring) + "_" + ($out2concat10 | tostring))'
+        ' as'
         " $out2"
+    )
+
+
+@pytest.fixture
+def field_spec_with_variables_4_expected_jq() -> str:
+    """Expected JQ query for field_spec_with_variables_4"""
+    return (
+        ' | ($var1.second_1.second_2.[] | select(.third_1.third_2 == "value"))'
+        ".value_path.next as"
+        " $out3concat00"
+        " | $var2.third_1.third_2 as $out3concat01"
+        ' | (($out3concat00 // $out3concat01 | tostring))'
+        ' as'
+        " $out3"
     )
 
 
@@ -181,43 +233,71 @@ def expected_full_query(
     """Expected full JQ query"""
     return (
         "["
-        + ". as $var0 | $var0.first.[] as $var1 | $var1.second_1.second_2.[] "
+        + ". as $var0 | (try $var0.first.[] catch null) as $var1 "
+        "| (try $var1.second_1.second_2.[] catch null) "
         "as"
         " $var2 "
-        "| $var0.fourth.[] as $var3" + f"{expected_field_mapping_query}" + "]"
+        "| (try $var0.fourth.[] catch null) as $var3"
+        + f"{expected_field_mapping_query}" + "]"
     )
 
 
 @pytest.fixture
-def field_mapping_for_fixture_data() -> dict[str, FieldSpec]:
+def field_mapping_for_fixture_data() -> dict[str, JQFieldSpec]:
     """Fixture for field mapping using previous field specs with variables
     added"""
     return {
-        "field_1": FieldSpec(
+        "field_1": JQFieldSpec(
             key_paths=[
-                "resource_spans.[].resource.attributes.[].key",
-                "resource_spans.[].scope_spans.[].scope.name",
+                ("resource_spans.[].resource.attributes.[].key",),
+                ("resource_spans.[].scope_spans.[].scope.name",)
             ],
-            key_value=["service.name", None],
-            value_paths=["value.Value.StringValue", None],
+            key_value=[("service.name",), (None,)],
+            value_paths=[("value.Value.StringValue",), (None,)],
             value_type="string",
         ),
-        "field_2": FieldSpec(
+        "field_2": JQFieldSpec(
             key_paths=[
-                "resource_spans.[].scope_spans.[].spans.[].attributes.[].key",
-                "resource_spans.[].scope_spans.[].spans.[].attributes.[].key",
+                (
+                    "resource_spans.[].scope_spans.[].spans.[].attributes.[]"
+                    ".key",
+                ),
+                (
+                    "resource_spans.[].scope_spans.[].spans.[].attributes.[]"
+                    ".key",
+                ),
             ],
-            key_value=["coral.operation", "http.status_code"],
-            value_paths=["value.Value.StringValue", "value.Value.IntValue"],
+            key_value=[("coral.operation",), ("http.status_code",)],
+            value_paths=[
+                ("value.Value.StringValue",),
+                ("value.Value.IntValue",)
+            ],
             value_type="string",
         ),
-        "field_3": FieldSpec(
+        "field_3": JQFieldSpec(
             key_paths=[
-                "resource_spans.[].scope_spans.[].spans.[]."
-                "start_time_unix_nano",
+                (
+                    "resource_spans.[].scope_spans.[].spans.[]."
+                    "start_time_unix_nano",
+                ),
             ],
-            key_value=None,
-            value_paths=None,
+            key_value=[(None,)],
+            value_paths=[(None,)],
+            value_type="string",
+        ),
+        "field_4": JQFieldSpec(
+            key_paths=[
+                (
+                    "resource_spans.[].scope_spans.[].spans.[]."
+                    "does_not_exist",
+                    "resource_spans.[].does_not_exist.[].spans.[]."
+                    "end_time_unix_nano",
+                    "resource_spans.[].scope_spans.[].spans.[]."
+                    "end_time_unix_nano",
+                ),
+            ],
+            key_value=[(None, None, None)],
+            value_paths=[(None, None, None)],
             value_type="string",
         ),
     }
@@ -231,20 +311,24 @@ def expected_mapped_json() -> list[dict[str, str]]:
             "field_1": "Frontend_TestJob",
             "field_2": "jCWhAvRzcM_500",
             "field_3": "1723544132228102912",
+            "field_4": "1723544132228219285",
         },
         {
             "field_1": "Frontend_TestJob",
             "field_2": "cVh8nOperation_401",
             "field_3": "1723544132228288000",
+            "field_4": "1723544132229038947",
         },
         {
             "field_1": "Backend_TestJob",
             "field_2": "2lAmnOperation_201",
             "field_3": "1723544154817766912",
+            "field_4": "1723544154818599863",
         },
         {
             "field_1": "Backend_TestJob",
             "field_2": "81DznOperation_201",
             "field_3": "1723544154817793024",
+            "field_4": "1723544154818380443",
         },
     ]

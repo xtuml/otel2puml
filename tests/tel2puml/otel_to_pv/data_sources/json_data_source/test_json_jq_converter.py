@@ -2,7 +2,7 @@
 from typing import Any
 import pytest
 
-from tel2puml.otel_to_pv.config import FieldSpec
+from tel2puml.otel_to_pv.config import JQFieldSpec
 from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter \
     import (
         JQVariableTree,
@@ -180,7 +180,8 @@ class TestFieldMappingToCompiledJQ:
             )
 
     def test_update_field_spec_with_variables(
-        self, field_spec_1: FieldSpec, field_spec_2: FieldSpec
+        self, field_spec_1: JQFieldSpec, field_spec_2: JQFieldSpec,
+        field_spec_4: JQFieldSpec
     ) -> None:
         """Test the update_field_spec_with_variables function."""
         field_spec = field_spec_1
@@ -188,8 +189,8 @@ class TestFieldMappingToCompiledJQ:
         var_num = update_field_spec_with_variables(field_spec, root_var_tree)
         assert var_num == 2
         assert field_spec["key_paths"] == [
-            "$var1.second_1.second_2.[].third_1.third_2",
-            "$var2.third_1.third_2",
+            ("$var1.second_1.second_2.[].third_1.third_2",),
+            ("$var2.third_1.third_2",),
         ]
         self.check_root_var_tree(root_var_tree, second_child=True)
         field_spec = field_spec_2
@@ -197,15 +198,27 @@ class TestFieldMappingToCompiledJQ:
         var_num = update_field_spec_with_variables(field_spec, root_var_tree)
         assert var_num == 0
         assert field_spec["key_paths"] == [
-            "$var0.first.second.third",
-            "$var0.first.second.third",
+            ("$var0.first.second.third",),
+            ("$var0.first.second.third",),
         ]
         self.check_root_var_tree_for_no_arrays(root_var_tree)
+        # check case with tuples containing multiple values
+        field_spec = field_spec_4
+        root_var_tree = JQVariableTree()
+        var_num = update_field_spec_with_variables(field_spec, root_var_tree)
+        assert var_num == 2
+        assert field_spec["key_paths"] == [
+            (
+                "$var1.second_1.second_2.[].third_1.third_2",
+                "$var2.third_1.third_2",
+            ),
+        ]
+        self.check_root_var_tree(root_var_tree, second_child=True)
 
     def test_update_field_specs_with_variables(
         self,
-        field_mapping: dict[str, FieldSpec],
-        field_mapping_with_variables: dict[str, FieldSpec],
+        field_mapping: dict[str, JQFieldSpec],
+        field_mapping_with_variables: dict[str, JQFieldSpec],
     ) -> None:
         """Test the update_field_specs_with_variables function."""
         root_var_tree = update_field_specs_with_variables(field_mapping)
@@ -233,45 +246,51 @@ class TestFieldMappingToCompiledJQ:
         root_var_tree = JQVariableTree()
         first_child = root_var_tree.add_child("first", 1)
         assert build_base_variable_jq_query(root_var_tree) == (
-            ". as $var0 | $var0.first.[] as $var1"
+            ". as $var0 | (try $var0.first.[] catch null) as $var1"
         )
         # test case with grandchild
         grand_child = first_child.add_child("grand_child", 2)
         assert build_base_variable_jq_query(root_var_tree) == (
-            ". as $var0 | $var0.first.[] as $var1 | $var1.grand_child.[] as"
+            ". as $var0 | (try $var0.first.[] catch null) as $var1 "
+            "| (try $var1.grand_child.[] catch null) as"
             " $var2"
         )
         # test case with great grandchild
         grand_child.add_child("great_grand_child", 3)
         assert build_base_variable_jq_query(root_var_tree) == (
-            ". as $var0 | $var0.first.[] as $var1 | $var1.grand_child.[] as"
+            ". as $var0 | (try $var0.first.[] catch null) as $var1 "
+            "| (try $var1.grand_child.[] catch null) as"
             " $var2 "
-            "| $var2.great_grand_child.[] as $var3"
+            "| (try $var2.great_grand_child.[] catch null) as $var3"
         )
         # test case with a sibling of the first child
         root_var_tree.add_child("second", 4)
         assert build_base_variable_jq_query(root_var_tree) == (
-            ". as $var0 | $var0.first.[] as $var1 | $var1.grand_child.[] as"
+            ". as $var0 | (try $var0.first.[] catch null) as $var1 "
+            "| (try $var1.grand_child.[] catch null) as"
             " $var2 "
-            "| $var2.great_grand_child.[] as $var3"
-            " | $var0.second.[] as $var4"
+            "| (try $var2.great_grand_child.[] catch null) as $var3"
+            " | (try $var0.second.[] catch null) as $var4"
         )
         # test case with a sibling of the first child grandchild
         first_child.add_child("grand_child_2", 5)
         assert build_base_variable_jq_query(root_var_tree) == (
-            ". as $var0 | $var0.first.[] as $var1 | $var1.grand_child.[] as"
+            ". as $var0 | (try $var0.first.[] catch null) as $var1 "
+            "| (try $var1.grand_child.[] catch null) as"
             " $var2 "
-            "| $var2.great_grand_child.[] as $var3"
-            " | $var1.grand_child_2.[] as $var5"
-            " | $var0.second.[] as $var4"
+            "| (try $var2.great_grand_child.[] catch null) as $var3"
+            " | (try $var1.grand_child_2.[] catch null) as $var5"
+            " | (try $var0.second.[] catch null) as $var4"
         )
 
     @staticmethod
     def test_get_jq_for_field_spec(
-        field_spec_with_variables_1: FieldSpec,
-        field_spec_with_variables_2: FieldSpec,
+        field_spec_with_variables_1: JQFieldSpec,
+        field_spec_with_variables_2: JQFieldSpec,
+        field_spec_with_variables_4: JQFieldSpec,
         field_spec_with_variables_1_expected_jq: str,
         field_spec_with_variables_2_expected_jq: str,
+        field_spec_with_variables_4_expected_jq: str,
     ) -> None:
         """Test the get_jq_for_field_spec function."""
         field_spec = field_spec_with_variables_1
@@ -283,49 +302,56 @@ class TestFieldMappingToCompiledJQ:
             field_spec_with_variables_2_expected_jq
         )
         # check case with variable not in the first part of the key path
-        field_spec = FieldSpec(
-            key_paths=["first.[].second.third", "first.second.third"],
-            key_value=["value", None],
-            value_paths=["value_path.next", None],
+        field_spec = JQFieldSpec(
+            key_paths=[("first.[].second.third",), ("first.second.third",)],
+            key_value=[("value",), (None,)],
+            value_paths=[("value_path.next",), (None,)],
             value_type="string",
         )
         with pytest.raises(ValueError):
             get_jq_for_field_spec(field_spec, "$out0")
         # check case with variable in the first part of the key path and
         # variable in the rest of the key path
-        field_spec = FieldSpec(
+        field_spec = JQFieldSpec(
             key_paths=[
-                "$var0.[].$var1.second.third",
-                "$var0.first.second.third",
+                ("$var0.[].$var1.second.third",),
+                ("$var0.first.second.third",),
             ],
-            key_value=["value", None],
-            value_paths=["value_path.next", None],
+            key_value=[("value",), (None,)],
+            value_paths=[("value_path.next",), (None,)],
             value_type="string",
         )
         with pytest.raises(ValueError):
             get_jq_for_field_spec(field_spec, "$out0")
         # check case with no arrays in the key path
-        field_spec = FieldSpec(
-            key_paths=["first.second.third", "first.second.third"],
-            key_value=["value", None],
-            value_paths=["value_path.next", None],
+        field_spec = JQFieldSpec(
+            key_paths=[("first.second.third",), ("first.second.third",)],
+            key_value=[("value",), (None,)],
+            value_paths=[("value_path.next",), (None,)],
             value_type="string",
         )
         with pytest.raises(ValueError):
             get_jq_for_field_spec(field_spec, "$out0")
         # check case with more than one array in the key path
-        field_spec = FieldSpec(
-            key_paths=["first.[].second.[].third", "first.[].second.third"],
-            key_value=["value", None],
-            value_paths=["value_path.next", None],
+        field_spec = JQFieldSpec(
+            key_paths=[
+                ("first.[].second.[].third",), ("first.[].second.third",)
+            ],
+            key_value=[("value",), (None,)],
+            value_paths=[("value_path.next",), (None,)],
             value_type="string",
         )
         with pytest.raises(ValueError):
             get_jq_for_field_spec(field_spec, "$out0")
+        # check case with multiple values in a single key path signifying
+        # priority order
+        assert get_jq_for_field_spec(
+            field_spec_with_variables_4, "$out3"
+        ) == field_spec_with_variables_4_expected_jq
 
     @staticmethod
     def test_get_jq_using_field_mapping(
-        field_mapping_with_variables: dict[str, FieldSpec],
+        field_mapping_with_variables: dict[str, JQFieldSpec],
         expected_field_mapping_query: str,
     ) -> None:
         """Test the get_jq_using_field_mapping function."""
@@ -336,7 +362,7 @@ class TestFieldMappingToCompiledJQ:
 
     @staticmethod
     def test_get_jq_query_from_field_mapping_with_variables_and_var_tree(
-        field_mapping_with_variables: dict[str, FieldSpec],
+        field_mapping_with_variables: dict[str, JQFieldSpec],
         var_tree: JQVariableTree,
         expected_full_query: str,
     ) -> None:
@@ -349,7 +375,7 @@ class TestFieldMappingToCompiledJQ:
 
     @staticmethod
     def test_field_mapping_to_jq_query(
-        field_mapping: dict[str, FieldSpec],
+        field_mapping: dict[str, JQFieldSpec],
         expected_full_query: str,
     ) -> None:
         """Test the field_mapping_to_jq_query function."""
@@ -358,7 +384,7 @@ class TestFieldMappingToCompiledJQ:
 
     @staticmethod
     def test_field_mapping_to_compiled_jq(
-        field_mapping_for_fixture_data: dict[str, FieldSpec],
+        field_mapping_for_fixture_data: dict[str, JQFieldSpec],
         mock_json_data: dict[str, Any],
         expected_mapped_json: list[dict[str, str]],
     ) -> None:
