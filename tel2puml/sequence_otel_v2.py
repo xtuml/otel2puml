@@ -76,8 +76,7 @@ def group_events_using_async_information(
     if not events:
         return []
     async_groups: dict[str, list[OTelEvent]] = {
-        group_id: []
-        for group_id in async_event_types.values()
+        group_id: [] for group_id in async_event_types.values()
     }
     non_async_groups: list[list[OTelEvent]] = []
     for event in events:
@@ -133,8 +132,7 @@ def sequence_otel_event_ancestors(
             f"is empty. Event ID: {event.event_id}"
         )
     child_events = [
-        event_id_to_event_map[event_id]
-        for event_id in event.child_event_ids
+        event_id_to_event_map[event_id] for event_id in event.child_event_ids
     ]
     # group the child events using async information
     event_groups = group_events_using_async_information(
@@ -257,3 +255,45 @@ def sequence_otel_jobs(
         yield sequence_otel_event_job(
             job, async_flag, event_to_async_group_map
         )
+
+
+def sequence_otel_job_id_streams(
+    job_id_streams: Generator[Generator[OTelEvent, Any, None], Any, None],
+    async_flag: bool = False,
+    event_to_async_group_map: dict[str, dict[str, str]] | None = None,
+) -> Generator[Generator[PVEvent, Any, None], Any, None]:
+    """
+    Sequence OTel events in multiple jobs.
+
+    :param job_id_streams: A generator of generators, where each inner generator yields OTelEvent objects grouped by job ID.
+    :type job_id_streams: `Generator`[`Generator`[:class:`OTelEvent`, `Any`, `None`], `Any`, `None`]
+    :param async_flag: A flag indicating whether to sequence event groups asynchronously or not, defaults to False.
+    :type async_flag: `bool`
+    :param event_to_async_group_map: A dictionary mapping event types to groups of events that occur asynchronously, defaults to None.
+    :type event_to_async_group_map: `dict`[`str`, `dict`[`str`, `str`]] | `None`
+    :return: A generator of jobs (generators) of PVEvents.
+    :rtype: `Generator`[`Generator`[:class:`PVEvent`, `Any`, `None`], `Any`, `None`]
+    """
+
+    def job_ids_to_eventid_to_otelevent_map(
+        job_id_streams: Generator[Generator[OTelEvent, Any, None], Any, None],
+    ) -> Generator[dict[str, OTelEvent], Any, None]:
+        """
+        Creates a mapping from event IDs to OTelEvent objects for each job.
+
+        :param job_id_streams: A generator of generators, where each inner generator yields OTelEvent objects grouped by job ID.
+        :type job_id_streams: `Generator`[`Generator`[:class:`OTelEvent`, `Any`, `None`], `Any`, `None`]
+        :return: A generator of dictionaries mapping event IDs to OTelEvent objects for each job.
+        :rtype: `Generator`[`dict`[`str`, :class:`OTelEvent`], `Any`, `None`]
+        """
+        for job_group in job_id_streams:
+            event_id_map = {}
+            for otel_event in job_group:
+                event_id_map[otel_event.event_id] = otel_event
+            yield event_id_map
+
+    yield sequence_otel_jobs(
+        job_ids_to_eventid_to_otelevent_map(
+            job_id_streams, async_flag, event_to_async_group_map
+        )
+    )
