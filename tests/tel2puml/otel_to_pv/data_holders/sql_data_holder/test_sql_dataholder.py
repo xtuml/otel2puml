@@ -807,6 +807,18 @@ def test_stream_job_name_batches(
     assert all(otel_event.job_name == "test_name" for otel_event in all_events)
     assert len(all_events) == 10
 
+    expected_job_ids = [f"test_id_{i}" for i in range(5)]
+    expected_event_ids = [f"{i}_{j}" for i in range(5) for j in range(2)]
+    job_id_count: dict[str, int] = {}
+    for event in all_events:
+        job_id_count.setdefault(event.job_id, 0)
+        job_id_count[event.job_id] += 1
+        assert event.job_id in expected_job_ids
+        assert event.event_id in expected_event_ids
+        expected_event_ids.remove(event.event_id)
+    assert all(value == 2 for value in job_id_count.values())
+    assert len(expected_event_ids) == 0
+
     # Test 3: Stream data, filtered using map
     with sql_data_holder.session as session:
         otel_event_gen = sql_data_holder.stream_job_name_batches(
