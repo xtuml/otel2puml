@@ -273,7 +273,11 @@ class SQLDataHolder(DataHolder):
         self,
         job_name_to_job_ids_map: dict[str, set[str]] | None = None,
         filter_job_names: set[str] | None = None,
-    ) -> Generator[tuple[str, Generator[OTelEvent, None, None]], None, None]:
+    ) -> Generator[
+        tuple[str, Generator[Generator[OTelEvent, None, None], None, None]],
+        None,
+        None,
+    ]:
         """
         Stream data grouped by job_name from the SQL data holder.
 
@@ -283,20 +287,28 @@ class SQLDataHolder(DataHolder):
         :param filter_job_names: Optional set of job names to filter. Defaults
         to None.
         :type filter_job_names: `Optional`[`set`[`str`]]
-        :return: Generator yielding tuples of (job_name, OTelEvent generator).
-        :rtype: `Generator`[`tuple`[`str`, `Generator`[:class:`OTelEvent`,
-        `None`, `None`]], `None`, `None`]
+        :return: Generator yielding tuples of (job_name, generator of
+        generators of OtelEvents grouped by job_id).
+        :rtype: `Generator`[`tuple`[`str`, `Generator`[`Generator`
+        [:class:`OTelEvent`, `None`, `None`]], `None`, `None`],`None`,
+        `None`]
         """
         with self.session as session:
             job_name_event_generator = self.stream_job_name_batches(
                 session, job_name_to_job_ids_map, filter_job_names
             )
-            grouped = groupby(
+
+            for job_name, job_name_group in groupby(
                 job_name_event_generator, key=lambda x: x.job_name
-            )
-            for job_name, group in grouped:
-                # Create a generator of OTelEvent objects
-                otel_event_gen = (event for event in group)
+            ):
+                # For each job_name, group events by job_id and create a
+                # generator of OtelEvents
+                otel_event_gen = (
+                    (event for event in job_id_group)
+                    for _, job_id_group in groupby(
+                        job_name_group, key=lambda x: x.job_id
+                    )
+                )
                 yield job_name, otel_event_gen
 
 

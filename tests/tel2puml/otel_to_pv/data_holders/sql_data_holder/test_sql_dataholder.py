@@ -715,9 +715,10 @@ def test_stream_data(
     # Stream data and collect events
     result = sql_data_holder.stream_data()
     streamed_events = {}
-    for job_name, otel_event_gen in result:
-        for otel_event in otel_event_gen:
-            streamed_events[otel_event.event_id] = otel_event
+    for job_name, job_id_gen in result:
+        for otel_event_gen in job_id_gen:
+            for otel_event in otel_event_gen:
+                streamed_events[otel_event.event_id] = otel_event
 
     # Compare the expected and streamed data
     assert len(expected_events) == len(streamed_events)
@@ -737,9 +738,10 @@ def test_stream_data(
         result = empty_sql_data_holder.stream_data()
 
         all_events = []
-        for job_name, otel_event_gen in result:
-            for otel_event in otel_event_gen:
-                all_events.append(otel_event)
+        for job_name, job_id_gen in result:
+            for otel_event_gen in job_id_gen:
+                for otel_event in otel_event_gen:
+                    all_events.append(otel_event)
 
         assert len(all_events) == 0
 
@@ -775,12 +777,13 @@ def test_stream_data(
     total_events_streamed = 0
     with large_sql_data_holder:
         result = large_sql_data_holder.stream_data()
-        for job_name, otel_event_gen in result:
-            event_count = 0
-            for otel_event in otel_event_gen:
-                event_count += 1
-            assert event_count == events_per_job
-            total_events_streamed += event_count
+        for job_name, job_id_gen in result:
+            for otel_event_gen in job_id_gen:
+                event_count = 0
+                for otel_event in otel_event_gen:
+                    event_count += 1
+                assert event_count == events_per_job
+                total_events_streamed += event_count
 
     assert total_events_streamed == num_jobs * events_per_job
 
