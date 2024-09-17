@@ -239,11 +239,12 @@ class SQLDataHolder(DataHolder):
 
         :param session: SQLAlchemy Session object.
         :type session: :class: `sqlalchemy.orm.Session`
-        :param job_name_to_job_ids_map: Optional mapping of job names to
-        job IDs to filter.
-        :type job_name_to_job_ids_map: `dict`[`str`, `set`[`str`]] | `None`
-        :param filter_job_names: Optional set of job names to filter.
-        :type filter_job_names: `set`[`str`] | `None`
+        :param job_name_to_job_ids_map: Optional mapping of job names to job
+        IDs to filter. Defaults to None.
+        :type job_name_to_job_ids_map: `Optional`[`dict`[`str`, `set`[`str`]]]
+        :param filter_job_names: Optional set of job names to filter. Defaults
+        to None.
+        :type filter_job_names: `Optional`[`set`[`str`]]
         :return: Generator yielding OtelEvent objects
         :rtype: `Generator`[:class:`OTelEvent`, `None`, `None`]
         """
@@ -277,10 +278,11 @@ class SQLDataHolder(DataHolder):
         Stream data grouped by job_name from the SQL data holder.
 
         :param job_name_to_job_ids_map: Optional mapping of job names to job
-        IDs to filter.
-        :type job_name_to_job_ids_map: `dict`[`str`, `set`[`str`]] | `None`
-        :param filter_job_names: Optional set of job names to filter.
-        :type filter_job_names: `set`[`str`] | `None`
+        IDs to filter. Defaults to None.
+        :type job_name_to_job_ids_map: `Optional`[`dict`[`str`, `set`[`str`]]]
+        :param filter_job_names: Optional set of job names to filter. Defaults
+        to None.
+        :type filter_job_names: `Optional`[`set`[`str`]]
         :return: Generator yielding tuples of (job_name, OTelEvent generator).
         :rtype: `Generator`[`tuple`[`str`, `Generator`[:class:`OTelEvent`,
         `None`, `None`]], `None`, `None`]

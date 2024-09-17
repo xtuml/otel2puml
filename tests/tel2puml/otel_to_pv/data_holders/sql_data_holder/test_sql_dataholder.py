@@ -811,21 +811,34 @@ def test_stream_job_name_batches(
     with sql_data_holder.session as session:
         otel_event_gen = sql_data_holder.stream_job_name_batches(
             session,
-            job_name_to_job_ids_map={"test_name": {"test_id_0", "test_id_1"}},
+            job_name_to_job_ids_map={
+                "test_name": {"test_id_0", "test_id_1"},
+            },
         )
         all_events = list(otel_event_gen)
 
     assert len(all_events) == 4
+    job_id_count = {}
+    expected_event_ids = ["0_0", "0_1", "1_0", "1_1"]
     for otel_event in all_events:
+        job_id_count.setdefault(otel_event.job_id, 0)
+        job_id_count[otel_event.job_id] += 1
         assert otel_event.job_name == "test_name"
         assert otel_event.job_id in {
             "test_id_0",
             "test_id_1",
         }
+        assert otel_event.event_id in expected_event_ids
+        expected_event_ids.remove(otel_event.event_id)
+    assert all(value == 2 for value in job_id_count.values())
+    assert len(expected_event_ids) == 0
 
     # Test 4: Stream data, filtering with name and map
-    filter_job_names = {"test_name"}
-    job_name_to_job_ids_map = {"test_name": {"test_id_0", "test_id_1"}}
+    filter_job_names = {"test_name", "test_name_1"}
+    job_name_to_job_ids_map = {
+        "test_name": {"test_id_0", "test_id_1"},
+        "test_name_1": {"test_id_5"},
+    }
 
     with sql_data_holder.session as session:
         otel_event_gen = sql_data_holder.stream_job_name_batches(
@@ -835,12 +848,17 @@ def test_stream_job_name_batches(
         )
         all_events = list(otel_event_gen)
 
-    assert len(all_events) == 4
+    assert len(all_events) == 6
 
-    valid_job_ids = {"test_id_0", "test_id_1"}
+    valid_job_ids = {"test_id_0", "test_id_1", "test_id_5"}
+    valid_job_names = {"test_name", "test_name_1"}
+    job_id_count = {}
     for otel_event in all_events:
-        assert otel_event.job_name == "test_name"
+        job_id_count.setdefault(otel_event.job_id, 0)
+        job_id_count[otel_event.job_id] += 1
+        assert otel_event.job_name in valid_job_names
         assert otel_event.job_id in valid_job_ids
+    assert all(value == 2 for value in job_id_count.values())
 
     # Test 5: Stream data with non-existant job name
     with sql_data_holder.session as session:
