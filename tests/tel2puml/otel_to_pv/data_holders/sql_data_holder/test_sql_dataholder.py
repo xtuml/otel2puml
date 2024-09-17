@@ -799,6 +799,15 @@ def test_stream_job_name_batches(
         all_events = list(otel_event_gen)
 
     assert len(all_events) == 20
+    # Test that jobs are streamed in the correct order
+    assert all(
+        event.job_name == expected_job_name and event.job_id == expected_job_id
+        for event, expected_job_name, expected_job_id in zip(
+            all_events,
+            ["test_name"] * 10 + ["test_name_1"] * 10,
+            [f"test_id_{i}" for i in range(10) for _ in range(2)],
+        )
+    )
 
     # Test 2: Stream data, filtered by job name
     with sql_data_holder.session as session:
