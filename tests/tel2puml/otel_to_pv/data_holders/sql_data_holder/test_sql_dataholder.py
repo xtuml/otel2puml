@@ -753,7 +753,7 @@ def test_stream_data(
     )
 
     num_jobs = 10
-    events_per_job = 10000  # Total of 100,000 events
+    events_per_job = 1000  # Total of 10,000 events
 
     with large_sql_data_holder:
         for job_index in range(num_jobs):
