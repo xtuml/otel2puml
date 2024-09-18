@@ -382,27 +382,56 @@ class TestSeqeunceOTelJobs:
         """Tests for the function sequence_otel_job_id_streams"""
 
         # Test 1: Default parameters
-        events = self.events_with_root()
-
         def job_id_streams() -> (
             Generator[Generator[OTelEvent, None, None], None, None]
         ):
-            job_group = [
-                events["root"],
-                events["00"],
-                events["01"],
-                events["10"],
-                events["11"],
-                events["20"],
-                events["21"],
-            ]
-            yield (event for event in job_group)
+            """Create a generator of generators of OTelEvents"""
+            event_group = [event for event in events.values()]
+            yield (event for event in event_group)
+
+        events = self.events_with_root()
 
         expected_pv_events = self.pv_events(
             self.synchronous_previous_event_ids(), events
         )
 
         pv_event_generators = sequence_otel_job_id_streams(job_id_streams())
+
+        actual_pv_events = []
+        for pv_event_gen in pv_event_generators:
+            actual_pv_events.extend(list(pv_event_gen))
+
+        assert self.sort_pv_events(actual_pv_events) == self.sort_pv_events(
+            expected_pv_events
+        )
+
+        # Test 2: async_flag = True
+        expected_pv_events = []
+        expected_pv_events.extend(
+            self.pv_events(self.async_previous_event_ids(), events)
+        )
+
+        pv_event_generators = sequence_otel_job_id_streams(
+            job_id_streams(), async_flag=True
+        )
+        actual_pv_events = []
+        for pv_event_gen in pv_event_generators:
+            actual_pv_events.extend(list(pv_event_gen))
+
+        assert self.sort_pv_events(actual_pv_events) == self.sort_pv_events(
+            expected_pv_events
+        )
+
+        # Test 3: event_to_async_group_map provided
+        expected_pv_events = []
+        expected_pv_events.extend(
+            self.pv_events(self.prior_async_information_event_ids(), events)
+        )
+
+        event_to_async_group_map = self.event_to_async_group_map()
+        pv_event_generators = sequence_otel_job_id_streams(
+            job_id_streams(), event_to_async_group_map=event_to_async_group_map
+        )
 
         actual_pv_events = []
         for pv_event_gen in pv_event_generators:
