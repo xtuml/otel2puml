@@ -4,7 +4,7 @@ from typing import Iterable, Generator
 
 import pytest
 
-from tel2puml.sequence_otel_v2 import (
+from tel2puml.otel_to_pv.sequence_otel_v2 import (
     order_groups_by_start_timestamp,
     sequence_groups_of_otel_events_asynchronously,
     group_events_using_async_information,
