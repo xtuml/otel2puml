@@ -1,5 +1,6 @@
 """Test the tel2puml.sequence_otel_v2 module."""
-from typing import Iterable
+
+from typing import Iterable, Generator
 
 import pytest
 
@@ -10,7 +11,9 @@ from tel2puml.sequence_otel_v2 import (
     sequence_otel_event_ancestors,
     get_root_event_from_event_id_to_event_map,
     sequence_otel_event_job,
-    sequence_otel_jobs
+    sequence_otel_jobs,
+    sequence_otel_job_id_streams,
+    job_ids_to_eventid_to_otelevent_map,
 )
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 from tel2puml.tel2puml_types import PVEvent
@@ -19,6 +22,7 @@ from tel2puml.utils import unix_nano_to_pv_string
 
 class TestSeqeunceOTelJobs:
     """Test the sequence_otel_v2 module."""
+
     @staticmethod
     def events() -> dict[str, OTelEvent]:
         """Return a dictionary of OTelEvents."""
@@ -32,9 +36,9 @@ class TestSeqeunceOTelJobs:
                 end_timestamp=i * 2 + j + 1,
                 application_name="application_name",
                 parent_event_id="root" if i == 0 else f"{i - 1}{0}",
-                child_event_ids=[] if i == 2 or j == 1 else [
-                    f"{i + 1}0", f"{i + 1}1"
-                ],
+                child_event_ids=(
+                    [] if i == 2 or j == 1 else [f"{i + 1}0", f"{i + 1}1"]
+                ),
             )
             for i in range(3)
             for j in range(2)
@@ -65,23 +69,14 @@ class TestSeqeunceOTelJobs:
         """Return groups of OTelEvents in reverse order."""
         events = self.events()
         return [
-            [
-                events[f"{i}{j}"]
-                for j in reversed(range(2))
-            ]
+            [events[f"{i}{j}"] for j in reversed(range(2))]
             for i in reversed(range(3))
         ]
 
     def correct_order_groups(self) -> list[list[OTelEvent]]:
         """Return a list of groups of OTelEvents in the correct order."""
         events = self.events()
-        return [
-            [
-                events[f"{i}{j}"]
-                for j in range(2)
-            ]
-            for i in range(3)
-        ]
+        return [[events[f"{i}{j}"] for j in range(2)] for i in range(3)]
 
     def synchronous_previous_event_ids(self) -> dict[str, list[str]]:
         """Return a dictionary mapping event ids to a list of previous event
@@ -123,8 +118,7 @@ class TestSeqeunceOTelJobs:
         }
 
     def event_to_async_group_map(self) -> dict[str, dict[str, str]]:
-        """Return a dictionary mapping event types to async groups.
-        """
+        """Return a dictionary mapping event types to async groups."""
         return {
             "root_event": {
                 "event_type_00": "group_0",
@@ -150,8 +144,7 @@ class TestSeqeunceOTelJobs:
         previous_event_ids: dict[str, list[str]],
         events: dict[str, OTelEvent],
     ) -> list[PVEvent]:
-        """Return a list of PVEvents.
-        """
+        """Return a list of PVEvents."""
         return self.sort_pv_events(
             [
                 PVEvent(
@@ -269,23 +262,32 @@ class TestSeqeunceOTelJobs:
             == self.synchronous_previous_event_ids()
         )
         # async flag set to True
-        assert sequence_otel_event_ancestors(
-            events["root"], events, async_flag=True
-        ) == self.async_previous_event_ids()
+        assert (
+            sequence_otel_event_ancestors(
+                events["root"], events, async_flag=True
+            )
+            == self.async_previous_event_ids()
+        )
         # async information is provided
         event_to_async_group_map = self.event_to_async_group_map()
-        assert sequence_otel_event_ancestors(
-            events["root"],
-            events,
-            event_to_async_group_map=event_to_async_group_map,
-        ) == self.prior_async_information_event_ids()
+        assert (
+            sequence_otel_event_ancestors(
+                events["root"],
+                events,
+                event_to_async_group_map=event_to_async_group_map,
+            )
+            == self.prior_async_information_event_ids()
+        )
         # async information is provided and async flag is set to True
-        assert sequence_otel_event_ancestors(
-            events["root"],
-            events,
-            event_to_async_group_map=event_to_async_group_map,
-            async_flag=True,
-        ) == self.async_previous_event_ids()
+        assert (
+            sequence_otel_event_ancestors(
+                events["root"],
+                events,
+                event_to_async_group_map=event_to_async_group_map,
+                async_flag=True,
+            )
+            == self.async_previous_event_ids()
+        )
         # raise error if child event ids has not been set
         with pytest.raises(ValueError):
             sequence_otel_event_ancestors(
@@ -376,3 +378,89 @@ class TestSeqeunceOTelJobs:
             assert self.sort_pv_events(pv_events) == self.pv_events(
                 self.async_previous_event_ids(), events
             )
+
+    def test_sequence_otel_job_id_streams(self) -> None:
+        """Tests for the function sequence_otel_job_id_streams"""
+
+        # Test 1: Default parameters
+        def job_id_streams() -> (
+            Generator[Generator[OTelEvent, None, None], None, None]
+        ):
+            """Create a generator of generators of OTelEvents"""
+            event_group = [event for event in events.values()]
+            yield (event for event in event_group)
+
+        events = self.events_with_root()
+
+        expected_pv_events = self.pv_events(
+            self.synchronous_previous_event_ids(), events
+        )
+
+        pv_event_generators = sequence_otel_job_id_streams(job_id_streams())
+
+        actual_pv_events = []
+        for pv_event_gen in pv_event_generators:
+            actual_pv_events.extend(list(pv_event_gen))
+
+        assert self.sort_pv_events(actual_pv_events) == self.sort_pv_events(
+            expected_pv_events
+        )
+
+        # Test 2: async_flag = True
+        expected_pv_events = []
+        expected_pv_events.extend(
+            self.pv_events(self.async_previous_event_ids(), events)
+        )
+
+        pv_event_generators = sequence_otel_job_id_streams(
+            job_id_streams(), async_flag=True
+        )
+        actual_pv_events = []
+        for pv_event_gen in pv_event_generators:
+            actual_pv_events.extend(list(pv_event_gen))
+
+        assert self.sort_pv_events(actual_pv_events) == self.sort_pv_events(
+            expected_pv_events
+        )
+
+        # Test 3: event_to_async_group_map provided
+        expected_pv_events = []
+        expected_pv_events.extend(
+            self.pv_events(self.prior_async_information_event_ids(), events)
+        )
+
+        event_to_async_group_map = self.event_to_async_group_map()
+        pv_event_generators = sequence_otel_job_id_streams(
+            job_id_streams(), event_to_async_group_map=event_to_async_group_map
+        )
+
+        actual_pv_events = []
+        for pv_event_gen in pv_event_generators:
+            actual_pv_events.extend(list(pv_event_gen))
+
+        assert self.sort_pv_events(actual_pv_events) == self.sort_pv_events(
+            expected_pv_events
+        )
+
+    def test_job_ids_to_eventid_to_otelevent_map(self) -> None:
+        """Tests for the function job_ids_to_eventid_to_otelevent_map"""
+
+        def job_id_streams() -> (
+            Generator[Generator[OTelEvent, None, None], None, None]
+        ):
+            """Create a generator of generators of OTelEvents"""
+            event_group = [event for event in events.values()]
+            yield (event for event in event_group)
+
+        events = self.events_with_root()
+
+        expected_mappings = []
+        expected_mappings.append(
+            {event.event_id: event for event in events.values()}
+        )
+
+        event_dict_gen = job_ids_to_eventid_to_otelevent_map(job_id_streams())
+        actual_mappings = list(event_dict_gen)
+
+        assert len(actual_mappings) == len(expected_mappings)
+        assert actual_mappings == expected_mappings
