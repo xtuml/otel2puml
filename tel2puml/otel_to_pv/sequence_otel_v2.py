@@ -4,6 +4,12 @@ from typing import Any, Generator, Iterable
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 from tel2puml.tel2puml_types import PVEvent
 from tel2puml.utils import unix_nano_to_pv_string
+from tel2puml.otel_to_pv.ingest_otel_data import (
+    fetch_data_holder,
+    ingest_data_into_dataholder,
+)
+from tel2puml.otel_to_pv.config import IngestDataConfig
+from tel2puml.otel_to_pv.data_holders.base import DataHolder
 
 
 def order_groups_by_start_timestamp(
@@ -303,3 +309,40 @@ def job_ids_to_eventid_to_otelevent_map(
     """
     for job_group in job_id_streams:
         yield {otel_event.event_id: otel_event for otel_event in job_group}
+
+
+def config_to_otel_job_name_group_streams(
+    config: IngestDataConfig,
+    ingest_data: bool = False,
+    find_unique_graphs: bool = False,
+) -> Generator[
+    tuple[str, Generator[Generator[OTelEvent, Any, None], Any, None]]
+]:
+    """
+    Stream data from data holder. Optional parameters to ingest data as well
+    as find unique graphs within the data set.
+
+    :param config: The config
+    :type config: :class: `IngestDataConfig`
+    :param ingest_data: Flag to indicate whether to load data into data holder.
+    Defaults to False.
+    :type ingest_data: `bool`
+    :param find_unique_graphs: Flag to indicate whether to find unique graphs
+    within the data holder object. Defaults to False
+    :type find_unique_graphs: `bool`
+    :return: Generator of tuples of job_name to generator of generators of
+    OTelEvents grouped by job_name, then job_id
+    :rtype: `Generator`[`tuple`[`str`, `Generator`[`Generator`[:class:
+    `OTelEvent`, `Any`, `None`], `Any`, `None`]]]
+    """
+
+    if ingest_data:
+        data_holder: DataHolder = ingest_data_into_dataholder(config)
+    else:
+        data_holder = fetch_data_holder(config)
+
+    if find_unique_graphs:
+        job_name_to_job_ids_map = data_holder.find_unique_graphs()
+        yield from data_holder.stream_data(job_name_to_job_ids_map)
+    else:
+        yield from data_holder.stream_data()
