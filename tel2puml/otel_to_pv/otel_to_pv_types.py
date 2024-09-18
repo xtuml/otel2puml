@@ -1,8 +1,10 @@
 """This module contains types required for otel_to_pv package."""
-from typing import NamedTuple, Optional
+from typing import Optional
+
+from pydantic import BaseModel
 
 
-class OTelEvent(NamedTuple):
+class OTelEvent(BaseModel):
     """Named tuple for OTel event.
 
     :param job_name: The name of the job.
