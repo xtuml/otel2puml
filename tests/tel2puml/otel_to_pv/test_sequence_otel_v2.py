@@ -1,8 +1,9 @@
 """Test the tel2puml.sequence_otel_v2 module."""
 
-from typing import Iterable, Generator
+from typing import Iterable, Generator, Any
 
 import pytest
+from pytest import MonkeyPatch
 
 from tel2puml.otel_to_pv.sequence_otel_v2 import (
     order_groups_by_start_timestamp,
@@ -14,10 +15,15 @@ from tel2puml.otel_to_pv.sequence_otel_v2 import (
     sequence_otel_jobs,
     sequence_otel_job_id_streams,
     job_ids_to_eventid_to_otelevent_map,
+    config_to_otel_job_name_group_streams,
 )
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 from tel2puml.tel2puml_types import PVEvent
 from tel2puml.utils import unix_nano_to_pv_string
+from tel2puml.otel_to_pv.data_holders.sql_data_holder.sql_dataholder import (
+    SQLDataHolder,
+)
+from tel2puml.otel_to_pv.config import IngestDataConfig, IngestTypes
 
 
 class TestSeqeunceOTelJobs:
@@ -464,3 +470,48 @@ class TestSeqeunceOTelJobs:
 
         assert len(actual_mappings) == len(expected_mappings)
         assert actual_mappings == expected_mappings
+
+    def test_config_to_otel_job_name_group_streams(
+        self,
+        monkeypatch: MonkeyPatch,
+        mock_yaml_config_dict: dict[str, Any],
+        sql_data_holder_with_otel_jobs: SQLDataHolder,
+    ):
+        """Tests for the function config_to_otel_job_name_group_streams"""
+        # Test 1: Default parameters
+        def mock_fetch_data_holder(config: IngestDataConfig):
+            return sql_data_holder_with_otel_jobs
+
+        ingest_data_config = IngestDataConfig(
+            data_sources=mock_yaml_config_dict["data_sources"],
+            data_holders=mock_yaml_config_dict["data_holders"],
+            ingest_data=IngestTypes(**mock_yaml_config_dict["ingest_data"]),
+        )
+        monkeypatch.setattr(
+            "tel2puml.otel_to_pv.sequence_otel_v2.fetch_data_holder",
+            mock_fetch_data_holder,
+        )
+        result = config_to_otel_job_name_group_streams(ingest_data_config)
+
+        assert result
+        events = []
+        valid_job_names = {"test_name"}
+        valid_event_ids = [f"{i}_{j}" for i in range(5) for j in range(2)]
+        job_id_count: dict[str, int] = {}
+        for job_name, job_generator in result:
+            assert job_name in valid_job_names
+            for otel_event_generator in job_generator:
+                for otel_event in otel_event_generator:
+                    job_id_count.setdefault(otel_event.job_id, 0)
+                    job_id_count[otel_event.job_id] += 1
+                    events.append(otel_event)
+                    assert isinstance(otel_event, OTelEvent)
+                    assert otel_event.event_id in valid_event_ids
+                    valid_event_ids.remove(otel_event.event_id)
+
+        assert len(events) == 10
+        assert all(isinstance(event, OTelEvent) for event in events)
+        assert all(count == 2 for count in job_id_count.values())
+        assert len(valid_event_ids) == 0
+
+        # Test 2: ingest_data = True

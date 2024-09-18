@@ -316,7 +316,9 @@ def config_to_otel_job_name_group_streams(
     ingest_data: bool = False,
     find_unique_graphs: bool = False,
 ) -> Generator[
-    tuple[str, Generator[Generator[OTelEvent, Any, None], Any, None]]
+    tuple[str, Generator[Generator[OTelEvent, Any, None], Any, None]],
+    Any,
+    None,
 ]:
     """
     Stream data from data holder. Optional parameters to ingest data as well
