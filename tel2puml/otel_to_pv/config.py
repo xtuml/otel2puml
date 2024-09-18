@@ -26,9 +26,9 @@ class SpanSpec(TypedDict):
 class FieldSpec(TypedDict):
     """Typed dict for FieldSpec."""
 
-    key_paths: list[str]
-    key_value: Optional[list[Optional[str]]]
-    value_paths: Optional[list[Optional[str]]]
+    key_paths: list[str | tuple[str, ...]]
+    key_value: Optional[list[Optional[Union[str, tuple[str | None, ...]]]]]
+    value_paths: Optional[list[Optional[Union[str, tuple[str | None, ...]]]]]
     value_type: Union[str, int]
 
 
