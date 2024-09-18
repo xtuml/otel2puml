@@ -13,6 +13,7 @@ from tel2puml.sequence_otel_v2 import (
     sequence_otel_event_job,
     sequence_otel_jobs,
     sequence_otel_job_id_streams,
+    job_ids_to_eventid_to_otelevent_map,
 )
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 from tel2puml.tel2puml_types import PVEvent
@@ -440,3 +441,26 @@ class TestSeqeunceOTelJobs:
         assert self.sort_pv_events(actual_pv_events) == self.sort_pv_events(
             expected_pv_events
         )
+
+    def test_job_ids_to_eventid_to_otelevent_map(self) -> None:
+        """Tests for the function job_ids_to_eventid_to_otelevent_map"""
+
+        def job_id_streams() -> (
+            Generator[Generator[OTelEvent, None, None], None, None]
+        ):
+            """Create a generator of generators of OTelEvents"""
+            event_group = [event for event in events.values()]
+            yield (event for event in event_group)
+
+        events = self.events_with_root()
+
+        expected_mappings = []
+        expected_mappings.append(
+            {event.event_id: event for event in events.values()}
+        )
+
+        event_dict_gen = job_ids_to_eventid_to_otelevent_map(job_id_streams())
+        actual_mappings = list(event_dict_gen)
+
+        assert len(actual_mappings) == len(expected_mappings)
+        assert actual_mappings == expected_mappings
