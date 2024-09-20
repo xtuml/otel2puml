@@ -325,15 +325,15 @@ def config_to_otel_job_name_group_streams(
     as find unique graphs within the data set.
 
     :param config: The config
-    :type config: :class: `IngestDataConfig`
+    :type config: :class:`IngestDataConfig`
     :param ingest_data: Flag to indicate whether to load data into data holder.
     Defaults to False.
     :type ingest_data: `bool`
     :param find_unique_graphs: Flag to indicate whether to find unique graphs
-    within the data holder object. Defaults to False
+    within the data holder object. Defaults to False.
     :type find_unique_graphs: `bool`
     :return: Generator of tuples of job_name to generator of generators of
-    OTelEvents grouped by job_name, then job_id
+    OTelEvents grouped by job_name, then job_id.
     :rtype: `Generator`[`tuple`[`str`, `Generator`[`Generator`[:class:
     `OTelEvent`, `Any`, `None`], `Any`, `None`]]]
     """
