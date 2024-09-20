@@ -40,7 +40,7 @@ def fetch_data_source(config: IngestDataConfig) -> OTELDataSource:
     """Returns the subclass of OTelDataSource based on the config.
 
     :param config: The config
-    :type config: `Any`
+    :type config: :class: `IngestDataConfig`
     :return: The subclass of OTelDataSource
     :rtype: :class: `OTelDataSource`
     """
@@ -56,7 +56,7 @@ def fetch_data_holder(config: IngestDataConfig) -> DataHolder:
     """Returns the subclass of DataHolder based on the config.
 
     :param config: The config
-    :type config: `Any`
+    :type config: :class: `IngestDataConfig`
     :return: The subclass of DataHolder
     :rtype: :class: `DataHolder`
     """

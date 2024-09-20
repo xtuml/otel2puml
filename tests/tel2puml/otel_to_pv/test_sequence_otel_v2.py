@@ -1,10 +1,13 @@
 """Test the tel2puml.sequence_otel_v2 module."""
 
-from typing import Iterable, Generator
+from typing import Iterable, Generator, Any
 
 import pytest
+import yaml
+from pytest import MonkeyPatch
+from pathlib import Path
 
-from tel2puml.sequence_otel_v2 import (
+from tel2puml.otel_to_pv.sequence_otel_v2 import (
     order_groups_by_start_timestamp,
     sequence_groups_of_otel_events_asynchronously,
     group_events_using_async_information,
@@ -14,10 +17,15 @@ from tel2puml.sequence_otel_v2 import (
     sequence_otel_jobs,
     sequence_otel_job_id_streams,
     job_ids_to_eventid_to_otelevent_map,
+    config_to_otel_job_name_group_streams,
 )
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 from tel2puml.tel2puml_types import PVEvent
 from tel2puml.utils import unix_nano_to_pv_string
+from tel2puml.otel_to_pv.data_holders.sql_data_holder.sql_dataholder import (
+    SQLDataHolder,
+)
+from tel2puml.otel_to_pv.config import IngestDataConfig, IngestTypes
 
 
 class TestSeqeunceOTelJobs:
@@ -161,6 +169,21 @@ class TestSeqeunceOTelJobs:
                 for event in events.values()
             ]
         )
+
+    def get_ingest_config(
+        self, config_yaml: str, new_dirpath: Path
+    ) -> IngestDataConfig:
+        """Updates the dirpath in the config yaml string."""
+        update_config_yaml_string = config_yaml.replace(
+            "dirpath: /path/to/json/directory", f"dirpath: {new_dirpath}"
+        ).replace("filepath: /path/to/json/file.json", "filepath: null")
+        config_dict: dict[str, Any] = yaml.safe_load(update_config_yaml_string)
+        config = IngestDataConfig(
+            data_sources=config_dict["data_sources"],
+            data_holders=config_dict["data_holders"],
+            ingest_data=IngestTypes(**config_dict["ingest_data"]),
+        )
+        return config
 
     def test_order_groups_by_start_timestamp(self) -> None:
         """Test order_groups_by_start_timestamp."""
@@ -464,3 +487,118 @@ class TestSeqeunceOTelJobs:
 
         assert len(actual_mappings) == len(expected_mappings)
         assert actual_mappings == expected_mappings
+
+    def test_config_to_otel_job_name_group_streams(
+        self,
+        monkeypatch: MonkeyPatch,
+        mock_yaml_config_dict: dict[str, Any],
+        sql_data_holder_with_otel_jobs: SQLDataHolder,
+        mock_yaml_config_string: str,
+        mock_temp_dir_with_json_files: Path,
+    ) -> None:
+        """Tests for the function config_to_otel_job_name_group_streams"""
+
+        # Test 1: Default parameters
+        def mock_fetch_data_holder(config: IngestDataConfig) -> SQLDataHolder:
+            return sql_data_holder_with_otel_jobs
+
+        ingest_data_config = IngestDataConfig(
+            data_sources=mock_yaml_config_dict["data_sources"],
+            data_holders=mock_yaml_config_dict["data_holders"],
+            ingest_data=IngestTypes(**mock_yaml_config_dict["ingest_data"]),
+        )
+        monkeypatch.setattr(
+            "tel2puml.otel_to_pv.sequence_otel_v2.fetch_data_holder",
+            mock_fetch_data_holder,
+        )
+        result = config_to_otel_job_name_group_streams(ingest_data_config)
+
+        assert result
+        events = []
+        valid_job_names = {"test_name"}
+        valid_event_ids = [f"{i}_{j}" for i in range(5) for j in range(2)]
+        valid_job_ids = {f"test_id_{i}" for i in range(5)}
+        job_id_count: dict[str, int] = {}
+        for job_name, job_generator in result:
+            assert job_name in valid_job_names
+            for otel_event_generator in job_generator:
+                for otel_event in otel_event_generator:
+                    job_id_count.setdefault(otel_event.job_id, 0)
+                    job_id_count[otel_event.job_id] += 1
+                    events.append(otel_event)
+                    assert isinstance(otel_event, OTelEvent)
+                    assert otel_event.event_id in valid_event_ids
+                    assert otel_event.job_id in valid_job_ids
+                    valid_event_ids.remove(otel_event.event_id)
+
+        assert len(events) == 10
+        assert all(isinstance(event, OTelEvent) for event in events)
+        assert all(count == 2 for count in job_id_count.values())
+        assert len(valid_event_ids) == 0
+
+        # Test 2: ingest_data = True
+        config = self.get_ingest_config(
+            mock_yaml_config_string, mock_temp_dir_with_json_files
+        )
+        result = config_to_otel_job_name_group_streams(
+            config, ingest_data=True
+        )
+        events = []
+        valid_job_names = {"Backend TestJob", "Frontend TestJob"}
+        valid_job_ids = {
+            "0_trace_id_1 4.8",
+            "1_trace_id_1 4.8",
+            "0_trace_id_0 4.8",
+            "1_trace_id_0 4.8",
+        }
+        valid_event_ids = [
+            f"{i}_span_{j}_{k}"
+            for i in range(2)
+            for j in range(2)
+            for k in range(2)
+        ]
+        job_id_count = {}
+        for job_name, job_generator in result:
+            for otel_event_generator in job_generator:
+                for otel_event in otel_event_generator:
+                    job_id_count.setdefault(otel_event.job_id, 0)
+                    job_id_count[otel_event.job_id] += 1
+                    events.append(otel_event)
+                    assert isinstance(otel_event, OTelEvent)
+                    assert otel_event.event_id in valid_event_ids
+                    assert otel_event.job_id in valid_job_ids
+                    valid_event_ids.remove(otel_event.event_id)
+        assert len(events) == 8
+        assert all(isinstance(event, OTelEvent) for event in events)
+        assert all(count == 2 for count in job_id_count.values())
+        assert len(valid_event_ids) == 0
+
+        # Test 3: find_unique_graphs = True
+        result = config_to_otel_job_name_group_streams(
+            ingest_data_config, find_unique_graphs=True
+        )
+
+        assert result
+        events = []
+        valid_job_names = {"test_name"}
+        # job id test_id_0 is outside the config time buffer window, therefore
+        # it is not included, reducing total events streamed to 8
+        valid_event_ids = [f"{i}_{j}" for i in range(1, 5) for j in range(2)]
+        valid_job_ids = {f"test_id_{i}" for i in range(1, 5)}
+        job_id_count = {}
+        for job_name, job_generator in result:
+            assert job_name in valid_job_names
+            for otel_event_generator in job_generator:
+                for otel_event in otel_event_generator:
+                    job_id_count.setdefault(otel_event.job_id, 0)
+                    job_id_count[otel_event.job_id] += 1
+                    events.append(otel_event)
+                    assert isinstance(otel_event, OTelEvent)
+                    assert otel_event.event_id in valid_event_ids
+                    assert otel_event.job_id in valid_job_ids
+                    valid_event_ids.remove(otel_event.event_id)
+
+        assert len(events) == 8
+        assert all(isinstance(event, OTelEvent) for event in events)
+        assert all(count == 2 for count in job_id_count.values())
+        assert len(valid_event_ids) == 0
