@@ -152,8 +152,8 @@ def update_field_spec_with_variables(
     """
     updated_key_paths: list[tuple[str, ...]] = []
     for priority_key_paths, priority_key_values in zip(
-        field_spec["key_paths"],
-        field_spec["key_value"],
+        field_spec.key_paths,
+        field_spec.key_values,
     ):
         updated_priority_key_paths: list[str] = []
         for key_path, key_value in zip(
@@ -166,7 +166,7 @@ def update_field_spec_with_variables(
             )
             updated_priority_key_paths.append(updated_key_path)
         updated_key_paths.append(tuple(updated_priority_key_paths))
-    field_spec["key_paths"] = updated_key_paths
+    field_spec.key_paths = updated_key_paths
     return var_num
 
 
@@ -236,10 +236,10 @@ def get_jq_for_field_spec(field_spec: JQFieldSpec, out_var: str) -> str:
     for (
         i, priority_key_paths, priority_key_values, priority_value_paths
     ) in zip(
-        range(len(field_spec["key_paths"])),
-        field_spec["key_paths"],
-        field_spec["key_value"],
-        field_spec["value_paths"],
+        range(len(field_spec.key_paths)),
+        field_spec.key_paths,
+        field_spec.key_values,
+        field_spec.value_paths,
     ):
         priority_variables: list[str] = []
         for j, key_path, key_value, value_path in zip(
