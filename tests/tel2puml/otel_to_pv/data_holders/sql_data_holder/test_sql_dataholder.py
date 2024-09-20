@@ -413,10 +413,11 @@ class TestSQLDataHolder:
         unique_job_ids_per_job_name = (
             sql_data_holder_extended.find_unique_graphs()
         )
-        assert list(unique_job_ids_per_job_name.keys()) == [
-            "test_name_2",
-            "test_name",
-        ]
+        expected_job_ids = ["test_name", "test_name_2"]
+        for job_id in unique_job_ids_per_job_name.keys():
+            assert job_id in expected_job_ids
+            expected_job_ids.remove(job_id)
+        assert len(expected_job_ids) == 0
         assert unique_job_ids_per_job_name["test_name"] == {
             "test_id_1",
             "test_id_2",
