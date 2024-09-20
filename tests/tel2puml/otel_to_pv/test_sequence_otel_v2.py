@@ -501,11 +501,11 @@ class TestSeqeunceOTelJobs:
         sql_data_holder_with_otel_jobs: SQLDataHolder,
         mock_yaml_config_string: str,
         mock_temp_dir_with_json_files: Path,
-    ):
+    ) -> None:
         """Tests for the function config_to_otel_job_name_group_streams"""
 
         # Test 1: Default parameters
-        def mock_fetch_data_holder(config: IngestDataConfig):
+        def mock_fetch_data_holder(config: IngestDataConfig) -> SQLDataHolder:
             return sql_data_holder_with_otel_jobs
 
         ingest_data_config = IngestDataConfig(
@@ -563,7 +563,7 @@ class TestSeqeunceOTelJobs:
             for j in range(2)
             for k in range(2)
         ]
-        job_id_count: dict[str, int] = {}
+        job_id_count = {}
         for job_name, job_generator in result:
             for otel_event_generator in job_generator:
                 for otel_event in otel_event_generator:
@@ -591,7 +591,7 @@ class TestSeqeunceOTelJobs:
         # it is not included, reducing total events streamed to 8
         valid_event_ids = [f"{i}_{j}" for i in range(1,5) for j in range(2)]
         valid_job_ids = {f"test_id_{i}" for i in range(1,5)}
-        job_id_count: dict[str, int] = {}
+        job_id_count = {}
         for job_name, job_generator in result:
             assert job_name in valid_job_names
             for otel_event_generator in job_generator:
