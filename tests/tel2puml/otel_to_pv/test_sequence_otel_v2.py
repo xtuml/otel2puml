@@ -25,13 +25,7 @@ from tel2puml.utils import unix_nano_to_pv_string
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.sql_dataholder import (
     SQLDataHolder,
 )
-from tel2puml.otel_to_pv.data_sources.json_data_source.json_datasource import (
-    JSONDataSource,
-)
 from tel2puml.otel_to_pv.config import IngestDataConfig, IngestTypes
-from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
-    NodeModel,
-)
 
 
 class TestSeqeunceOTelJobs:
@@ -589,8 +583,8 @@ class TestSeqeunceOTelJobs:
         valid_job_names = {"test_name"}
         # job id test_id_0 is outside the config time buffer window, therefore
         # it is not included, reducing total events streamed to 8
-        valid_event_ids = [f"{i}_{j}" for i in range(1,5) for j in range(2)]
-        valid_job_ids = {f"test_id_{i}" for i in range(1,5)}
+        valid_event_ids = [f"{i}_{j}" for i in range(1, 5) for j in range(2)]
+        valid_job_ids = {f"test_id_{i}" for i in range(1, 5)}
         job_id_count = {}
         for job_name, job_generator in result:
             assert job_name in valid_job_names

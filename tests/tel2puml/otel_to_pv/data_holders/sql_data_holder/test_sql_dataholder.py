@@ -414,14 +414,17 @@ class TestSQLDataHolder:
             sql_data_holder_extended.find_unique_graphs()
         )
         assert list(unique_job_ids_per_job_name.keys()) == [
-            "test_name",
             "test_name_2",
+            "test_name",
         ]
         assert unique_job_ids_per_job_name["test_name"] == {
-            "event_type_0event_type_1"
+            "test_id_1",
+            "test_id_2",
+            "test_id_4",
+            "test_id_3",
         }
         assert unique_job_ids_per_job_name["test_name_2"] == {
-            str(i) for i in range(5)
+            str(f"{i}{j}") for i in range(5) for j in range(2)
         }
 
 
@@ -671,7 +674,12 @@ def test_get_unique_graph_job_ids_per_job_name(
         "test_name_0",
         "test_name_1",
     ]
-    assert unique_job_ids_per_job_name["test_name_0"] == {"test_id_03", "test_id_02", "test_id_00", "test_id_01"}
+    assert unique_job_ids_per_job_name["test_name_0"] == {
+        "test_id_03",
+        "test_id_02",
+        "test_id_00",
+        "test_id_01",
+    }
     assert unique_job_ids_per_job_name["test_name_1"] == {
         "test_id_11",
         "test_id_12",
