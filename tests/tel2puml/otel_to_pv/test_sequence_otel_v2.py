@@ -710,3 +710,48 @@ class TestSeqeunceOTelJobs:
         assert len(events) == 8
         assert all(count == 2 for count in job_id_count.values())
         assert len(valid_event_ids) == 0
+
+        # Test 4: async_flag = True
+        result = otel_to_pv(ingest_data_config, async_flag=True)
+        events = []
+        valid_event_ids = [f"{i}_{j}" for i in range(5) for j in range(2)]
+        valid_job_ids = {f"test_id_{i}" for i in range(5)}
+        job_id_count = {}
+        for job_name, pv_event_streams in result:
+            assert job_name in valid_job_names
+            for pv_event_gen in pv_event_streams:
+                for pv_event in pv_event_gen:
+                    job_id_count.setdefault(pv_event["jobId"], 0)
+                    job_id_count[pv_event["jobId"]] += 1
+                    events.append(pv_event)
+                    assert pv_event["eventId"] in valid_event_ids
+                    assert pv_event["jobId"] in valid_job_ids
+                    valid_event_ids.remove(pv_event["eventId"])
+
+        assert len(events) == 10
+        assert all(count == 2 for count in job_id_count.values())
+        assert len(valid_event_ids) == 0
+
+        # Test 5: event_to_async_group_map provided
+        event_to_async_group_map = self.event_to_async_group_map()
+        result = otel_to_pv(
+            ingest_data_config,
+            event_to_async_group_map=event_to_async_group_map,
+        )
+        events = []
+        valid_event_ids = [f"{i}_{j}" for i in range(5) for j in range(2)]
+        valid_job_ids = {f"test_id_{i}" for i in range(5)}
+        job_id_count = {}
+        for job_name, pv_event_streams in result:
+            for pv_event_gen in pv_event_streams:
+                for pv_event in pv_event_gen:
+                    job_id_count.setdefault(pv_event["jobId"], 0)
+                    job_id_count[pv_event["jobId"]] += 1
+                    events.append(pv_event)
+                    assert pv_event["eventId"] in valid_event_ids
+                    assert pv_event["jobId"] in valid_job_ids
+                    valid_event_ids.remove(pv_event["eventId"])
+
+        assert len(events) == 10
+        assert all(count == 2 for count in job_id_count.values())
+        assert len(valid_event_ids) == 0
