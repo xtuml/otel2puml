@@ -671,8 +671,13 @@ def test_get_unique_graph_job_ids_per_job_name(
         "test_name_0",
         "test_name_1",
     ]
-    assert unique_job_ids_per_job_name["test_name_0"] == {"0", "1"}
-    assert unique_job_ids_per_job_name["test_name_1"] == {"0", "1"}
+    assert unique_job_ids_per_job_name["test_name_0"] == {"test_id_03", "test_id_02", "test_id_00", "test_id_01"}
+    assert unique_job_ids_per_job_name["test_name_1"] == {
+        "test_id_11",
+        "test_id_12",
+        "test_id_10",
+        "test_id_13",
+    }
 
 
 def test_find_unique_graphs(
