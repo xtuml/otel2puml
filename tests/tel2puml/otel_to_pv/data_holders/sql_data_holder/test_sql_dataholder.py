@@ -413,9 +413,9 @@ class TestSQLDataHolder:
         unique_job_ids_per_job_name = (
             sql_data_holder_extended.find_unique_graphs()
         )
-        assert sorted(list(unique_job_ids_per_job_name.keys())) == [
-            "test_name",
+        assert list(unique_job_ids_per_job_name.keys()) == [
             "test_name_2",
+            "test_name",
         ]
         assert unique_job_ids_per_job_name["test_name"] == {
             "test_id_1",
