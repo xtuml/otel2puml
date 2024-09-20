@@ -565,7 +565,6 @@ class TestSeqeunceOTelJobs:
         ]
         job_id_count: dict[str, int] = {}
         for job_name, job_generator in result:
-            # assert job_name in valid_job_names
             for otel_event_generator in job_generator:
                 for otel_event in otel_event_generator:
                     job_id_count.setdefault(otel_event.job_id, 0)
@@ -588,8 +587,10 @@ class TestSeqeunceOTelJobs:
         assert result
         events = []
         valid_job_names = {"test_name"}
-        valid_event_ids = [f"{i}_{j}" for i in range(5) for j in range(2)]
-        valid_job_ids = {f"test_id_{i}" for i in range(5)}
+        # job id test_id_0 is outside the config time buffer window, therefore
+        # it is not included, reducing total events streamed to 8
+        valid_event_ids = [f"{i}_{j}" for i in range(1,5) for j in range(2)]
+        valid_job_ids = {f"test_id_{i}" for i in range(1,5)}
         job_id_count: dict[str, int] = {}
         for job_name, job_generator in result:
             assert job_name in valid_job_names
@@ -603,7 +604,7 @@ class TestSeqeunceOTelJobs:
                     assert otel_event.job_id in valid_job_ids
                     valid_event_ids.remove(otel_event.event_id)
 
-        assert len(events) == 10
+        assert len(events) == 8
         assert all(isinstance(event, OTelEvent) for event in events)
         assert all(count == 2 for count in job_id_count.values())
         assert len(valid_event_ids) == 0
