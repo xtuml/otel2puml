@@ -421,13 +421,8 @@ def pv_streams_to_puml_files(
     :type file_directory: `str`
     """
     for job_name, job_event_gen in pv_streams:
-        event_groups = []
-        for pv_event_gen in job_event_gen:
-            event_group = list(pv_event_gen)
-            event_groups.append(event_group)
-
         puml_file_path = os.path.join(file_directory, f"{job_name}.puml")
         pv_to_puml_file(
-            event_groups,
+            job_event_gen,
             puml_file_path=puml_file_path,
         )
