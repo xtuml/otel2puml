@@ -417,7 +417,8 @@ def pv_streams_to_puml_files(
     generators of PVEvents grouped by job_name, then job_id.
     :type pv_streams: `Generator`[`tuple`[`str`, `Generator`[`Generator`
     [:class:`PVEvent`, `Any`, `None`], `Any`, `None`]], `Any`, `None`]
-    :param file_directory: The file directory to store puml files. Defaults to "."
+    :param file_directory: The file directory to store puml files. Defaults to
+    "."
     :type file_directory: `str`
     """
     for job_name, job_event_gen in pv_streams:
