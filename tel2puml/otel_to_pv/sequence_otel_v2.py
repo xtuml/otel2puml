@@ -397,3 +397,21 @@ def otel_to_pv(
             event_to_async_group_map=event_to_async_group_map,
         )
         yield (job_name, pv_event_streams)
+
+
+def pv_streams_to_puml_files(
+    pv_streams: Generator[
+        tuple[str, Generator[Generator[PVEvent, Any, None], Any, None]],
+        Any,
+        None,
+    ],
+) -> None:
+    """
+    Function to convert and save stream of PVEvents to puml files.
+
+    :param pv_streams:Generator of tuples of job_name to generator of
+    generators of PVEvents grouped by job_name, then job_id.
+    :type pv_streams: `Generator`[`tuple`[`str`, `Generator`[`Generator`
+    [:class:`PVEvent`, `Any`, `None`], `Any`, `None`]], `Any`, `None`]
+    """
+    pass
