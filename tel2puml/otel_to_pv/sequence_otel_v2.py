@@ -1,5 +1,7 @@
 """Module to sequence OTel data from grouped OTelEvents"""
 
+import os
+
 from typing import Any, Generator, Iterable
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 from tel2puml.tel2puml_types import PVEvent
@@ -10,6 +12,7 @@ from tel2puml.otel_to_pv.ingest_otel_data import (
 )
 from tel2puml.otel_to_pv.config import IngestDataConfig
 from tel2puml.otel_to_pv.data_holders.base import DataHolder
+from tel2puml.pv_to_puml import pv_to_puml_file
 
 
 def order_groups_by_start_timestamp(
@@ -405,13 +408,26 @@ def pv_streams_to_puml_files(
         Any,
         None,
     ],
+    file_directory: str = ".",
 ) -> None:
     """
-    Function to convert and save stream of PVEvents to puml files.
+    Function to convert and save a stream of PVEvents to puml files.
 
-    :param pv_streams:Generator of tuples of job_name to generator of
+    :param pv_streams: Generator of tuples of job_name to generator of
     generators of PVEvents grouped by job_name, then job_id.
     :type pv_streams: `Generator`[`tuple`[`str`, `Generator`[`Generator`
     [:class:`PVEvent`, `Any`, `None`], `Any`, `None`]], `Any`, `None`]
+    :param file_directory: The file directory to store puml files. Defaults to "."
+    :type file_directory: `str`
     """
-    pass
+    for job_name, job_event_gen in pv_streams:
+        event_groups = []
+        for pv_event_gen in job_event_gen:
+            event_group = list(pv_event_gen)
+            event_groups.append(event_group)
+
+        puml_file_path = os.path.join(file_directory, f"{job_name}.puml")
+        pv_to_puml_file(
+            event_groups,
+            puml_file_path=puml_file_path,
+        )
