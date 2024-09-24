@@ -516,12 +516,11 @@ class TestSeqeunceOTelJobs:
 
         assert result
         events = []
-        valid_job_names = {"test_name"}
         valid_event_ids = [f"{i}_{j}" for i in range(5) for j in range(2)]
         valid_job_ids = {f"test_id_{i}" for i in range(5)}
         job_id_count: dict[str, int] = {}
         for job_name, job_generator in result:
-            assert job_name in valid_job_names
+            assert job_name == "test_name"
             for otel_event_generator in job_generator:
                 for otel_event in otel_event_generator:
                     job_id_count.setdefault(otel_event.job_id, 0)
@@ -534,7 +533,7 @@ class TestSeqeunceOTelJobs:
 
         assert len(events) == 10
         assert all(isinstance(event, OTelEvent) for event in events)
-        assert all(count == 2 for count in job_id_count.values())
+        assert all(job_id_count[job_id] == 2 for job_id in valid_job_ids)
         assert len(valid_event_ids) == 0
 
         # Test 2: ingest_data = True
@@ -545,7 +544,7 @@ class TestSeqeunceOTelJobs:
             config, ingest_data=True
         )
         events = []
-        valid_job_names = {"Backend TestJob", "Frontend TestJob"}
+        valid_job_names = ["Backend TestJob", "Frontend TestJob"]
         valid_job_ids = {
             "0_trace_id_1 4.8",
             "1_trace_id_1 4.8",
@@ -559,7 +558,8 @@ class TestSeqeunceOTelJobs:
             for k in range(2)
         ]
         job_id_count = {}
-        for job_name, job_generator in result:
+        for i, (job_name, job_generator) in enumerate(result):
+            assert job_name == valid_job_names[i]
             for otel_event_generator in job_generator:
                 for otel_event in otel_event_generator:
                     job_id_count.setdefault(otel_event.job_id, 0)
@@ -571,7 +571,7 @@ class TestSeqeunceOTelJobs:
                     valid_event_ids.remove(otel_event.event_id)
         assert len(events) == 8
         assert all(isinstance(event, OTelEvent) for event in events)
-        assert all(count == 2 for count in job_id_count.values())
+        assert all(job_id_count[job_id] == 2 for job_id in valid_job_ids)
         assert len(valid_event_ids) == 0
 
         # Test 3: find_unique_graphs = True
@@ -581,14 +581,13 @@ class TestSeqeunceOTelJobs:
 
         assert result
         events = []
-        valid_job_names = {"test_name"}
         # job id test_id_0 is outside the config time buffer window, therefore
         # it is not included, reducing total events streamed to 8
         valid_event_ids = [f"{i}_{j}" for i in range(1, 5) for j in range(2)]
         valid_job_ids = {f"test_id_{i}" for i in range(1, 5)}
         job_id_count = {}
         for job_name, job_generator in result:
-            assert job_name in valid_job_names
+            assert job_name == "test_name"
             for otel_event_generator in job_generator:
                 for otel_event in otel_event_generator:
                     job_id_count.setdefault(otel_event.job_id, 0)
@@ -601,7 +600,7 @@ class TestSeqeunceOTelJobs:
 
         assert len(events) == 8
         assert all(isinstance(event, OTelEvent) for event in events)
-        assert all(count == 2 for count in job_id_count.values())
+        assert all(job_id_count[job_id] == 2 for job_id in valid_job_ids)
         assert len(valid_event_ids) == 0
 
     def test_otel_to_pv(
@@ -631,12 +630,11 @@ class TestSeqeunceOTelJobs:
         result = otel_to_pv(ingest_data_config)
 
         events = []
-        valid_job_names = {"test_name"}
         valid_event_ids = [f"{i}_{j}" for i in range(5) for j in range(2)]
         valid_job_ids = {f"test_id_{i}" for i in range(5)}
         job_id_count: dict[str, int] = {}
         for job_name, pv_event_streams in result:
-            assert job_name in valid_job_names
+            assert job_name == "test_name"
             for pv_event_gen in pv_event_streams:
                 for pv_event in pv_event_gen:
                     job_id_count.setdefault(pv_event["jobId"], 0)
@@ -647,7 +645,7 @@ class TestSeqeunceOTelJobs:
                     valid_event_ids.remove(pv_event["eventId"])
 
         assert len(events) == 10
-        assert all(count == 2 for count in job_id_count.values())
+        assert all(job_id_count[job_id] == 2 for job_id in valid_job_ids)
         assert len(valid_event_ids) == 0
 
         # Test 2: ingest_data = True
@@ -657,7 +655,7 @@ class TestSeqeunceOTelJobs:
         result = otel_to_pv(config, ingest_data=True)
 
         events = []
-        valid_job_names = {"Backend TestJob", "Frontend TestJob"}
+        valid_job_names = ["Backend TestJob", "Frontend TestJob"]
         valid_job_ids = {
             "0_trace_id_1 4.8",
             "1_trace_id_1 4.8",
@@ -671,8 +669,8 @@ class TestSeqeunceOTelJobs:
             for k in range(2)
         ]
         job_id_count = {}
-        for job_name, pv_event_streams in result:
-            assert job_name in valid_job_names
+        for i, (job_name, pv_event_streams) in enumerate(result):
+            assert job_name == valid_job_names[i]
             for pv_event_gen in pv_event_streams:
                 for pv_event in pv_event_gen:
                     job_id_count.setdefault(pv_event["jobId"], 0)
@@ -683,21 +681,20 @@ class TestSeqeunceOTelJobs:
                     valid_event_ids.remove(pv_event["eventId"])
 
         assert len(events) == 8
-        assert all(count == 2 for count in job_id_count.values())
+        assert all(job_id_count[job_id] == 2 for job_id in valid_job_ids)
         assert len(valid_event_ids) == 0
 
         # Test 3: find_unique_graphs = True
         result = otel_to_pv(ingest_data_config, find_unique_graphs=True)
 
         events = []
-        valid_job_names = {"test_name"}
         # job id test_id_0 is outside the config time buffer window, therefore
         # it is not included, reducing total events streamed to 8
         valid_event_ids = [f"{i}_{j}" for i in range(1, 5) for j in range(2)]
         valid_job_ids = {f"test_id_{i}" for i in range(1, 5)}
         job_id_count = {}
         for job_name, pv_event_streams in result:
-            assert job_name in valid_job_names
+            assert job_name == "test_name"
             for pv_event_gen in pv_event_streams:
                 for pv_event in pv_event_gen:
                     job_id_count.setdefault(pv_event["jobId"], 0)
@@ -708,7 +705,7 @@ class TestSeqeunceOTelJobs:
                     valid_event_ids.remove(pv_event["eventId"])
 
         assert len(events) == 8
-        assert all(count == 2 for count in job_id_count.values())
+        assert all(job_id_count[job_id] == 2 for job_id in valid_job_ids)
         assert len(valid_event_ids) == 0
 
         # Test 4: async_flag = True
@@ -718,7 +715,7 @@ class TestSeqeunceOTelJobs:
         valid_job_ids = {f"test_id_{i}" for i in range(5)}
         job_id_count = {}
         for job_name, pv_event_streams in result:
-            assert job_name in valid_job_names
+            assert job_name == "test_name"
             for pv_event_gen in pv_event_streams:
                 for pv_event in pv_event_gen:
                     job_id_count.setdefault(pv_event["jobId"], 0)
@@ -729,7 +726,7 @@ class TestSeqeunceOTelJobs:
                     valid_event_ids.remove(pv_event["eventId"])
 
         assert len(events) == 10
-        assert all(count == 2 for count in job_id_count.values())
+        assert all(job_id_count[job_id] == 2 for job_id in valid_job_ids)
         assert len(valid_event_ids) == 0
 
         # Test 5: event_to_async_group_map provided
@@ -743,6 +740,7 @@ class TestSeqeunceOTelJobs:
         valid_job_ids = {f"test_id_{i}" for i in range(5)}
         job_id_count = {}
         for job_name, pv_event_streams in result:
+            assert job_name == "test_name"
             for pv_event_gen in pv_event_streams:
                 for pv_event in pv_event_gen:
                     job_id_count.setdefault(pv_event["jobId"], 0)
@@ -753,5 +751,5 @@ class TestSeqeunceOTelJobs:
                     valid_event_ids.remove(pv_event["eventId"])
 
         assert len(events) == 10
-        assert all(count == 2 for count in job_id_count.values())
+        assert all(job_id_count[job_id] == 2 for job_id in valid_job_ids)
         assert len(valid_event_ids) == 0
