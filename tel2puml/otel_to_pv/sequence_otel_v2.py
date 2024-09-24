@@ -12,7 +12,6 @@ from tel2puml.otel_to_pv.ingest_otel_data import (
 )
 from tel2puml.otel_to_pv.config import IngestDataConfig
 from tel2puml.otel_to_pv.data_holders.base import DataHolder
-from tel2puml.pv_to_puml import pv_to_puml_file
 
 
 def order_groups_by_start_timestamp(
@@ -400,30 +399,3 @@ def otel_to_pv(
             event_to_async_group_map=event_to_async_group_map,
         )
         yield (job_name, pv_event_streams)
-
-
-def pv_streams_to_puml_files(
-    pv_streams: Generator[
-        tuple[str, Generator[Generator[PVEvent, Any, None], Any, None]],
-        Any,
-        None,
-    ],
-    file_directory: str = ".",
-) -> None:
-    """
-    Function to convert and save a stream of PVEvents to puml files.
-
-    :param pv_streams: Generator of tuples of job_name to generator of
-    generators of PVEvents grouped by job_name, then job_id.
-    :type pv_streams: `Generator`[`tuple`[`str`, `Generator`[`Generator`
-    [:class:`PVEvent`, `Any`, `None`], `Any`, `None`]], `Any`, `None`]
-    :param file_directory: The file directory to store puml files. Defaults to
-    "."
-    :type file_directory: `str`
-    """
-    for job_name, job_event_gen in pv_streams:
-        puml_file_path = os.path.join(file_directory, f"{job_name}.puml")
-        pv_to_puml_file(
-            job_event_gen,
-            puml_file_path=puml_file_path,
-        )

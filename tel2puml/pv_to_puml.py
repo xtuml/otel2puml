@@ -9,32 +9,24 @@ import os
 from tel2puml.tel2puml_types import PVEvent
 from tel2puml.data_pipelines.data_ingestion import (
     cluster_events_by_job_id,
-    update_and_create_events_from_clustered_pvevents
+    update_and_create_events_from_clustered_pvevents,
 )
-from tel2puml.data_pipelines.data_creation import (
-    transform_dict_into_pv_event
-)
-from tel2puml.events import (
-    create_graph_from_events
-)
-from tel2puml.walk_puml_graph.walk_puml_logic_graph import (
-    walk_nested_graph
-)
+from tel2puml.data_pipelines.data_creation import transform_dict_into_pv_event
+from tel2puml.events import create_graph_from_events
+from tel2puml.walk_puml_graph.walk_puml_logic_graph import walk_nested_graph
 from tel2puml.walk_puml_graph.node_update import (
-    update_nested_node_graph_with_break_points
+    update_nested_node_graph_with_break_points,
 )
-from tel2puml.loop_detection.detect_loops import (
-    detect_loops
-)
+from tel2puml.loop_detection.detect_loops import detect_loops
 from tel2puml.walk_puml_graph.create_node_graph_from_event_graph import (
-    create_node_graph_from_event_graph
+    create_node_graph_from_event_graph,
 )
 from tel2puml.walk_puml_graph.find_and_add_loop_kill_paths import (
     find_and_add_loop_kill_paths_to_nested_graphs,
 )
 from tel2puml.puml_graph.graph import (
     remove_dummy_start_and_end_events_from_nested_graphs,
-    update_nested_sub_graphs_for_dummy_break_event_nodes
+    update_nested_sub_graphs_for_dummy_break_event_nodes,
 )
 
 
@@ -140,7 +132,7 @@ def pv_job_file_to_event_sequence(
 
 
 def pv_events_from_folder_to_event_stream(
-    folder_path: str
+    folder_path: str,
 ) -> Generator[PVEvent, Any, None]:
     """Reads a folder of PV event json files and yields the events when
     iterated over
@@ -259,3 +251,30 @@ def pv_events_from_folder_to_puml_file(
         puml_file_path=puml_file_path,
         puml_name=puml_name,
     )
+
+
+def pv_streams_to_puml_files(
+    pv_streams: Generator[
+        tuple[str, Generator[Generator[PVEvent, Any, None], Any, None]],
+        Any,
+        None,
+    ],
+    file_directory: str = ".",
+) -> None:
+    """
+    Function to convert and save a stream of PVEvents to puml files.
+
+    :param pv_streams: Generator of tuples of job_name to generator of
+    generators of PVEvents grouped by job_name, then job_id.
+    :type pv_streams: `Generator`[`tuple`[`str`, `Generator`[`Generator`
+    [:class:`PVEvent`, `Any`, `None`], `Any`, `None`]], `Any`, `None`]
+    :param file_directory: The file directory to store puml files. Defaults to
+    "."
+    :type file_directory: `str`
+    """
+    for job_name, job_event_gen in pv_streams:
+        puml_file_path = os.path.join(file_directory, f"{job_name}.puml")
+        pv_to_puml_file(
+            job_event_gen,
+            puml_file_path=puml_file_path,
+        )

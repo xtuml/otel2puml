@@ -6,7 +6,6 @@ import copy
 from pathlib import Path
 from unittest.mock import patch
 from typing import Generator, Any
-from datetime import datetime, timedelta
 
 import pytest
 from sqlalchemy.sql.schema import Table
@@ -16,7 +15,6 @@ from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
     NodeModel,
 )
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
-from tel2puml.tel2puml_types import PVEvent
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.sql_dataholder import (
     SQLDataHolder,
     intialise_temp_table_for_root_nodes,
@@ -1280,85 +1278,3 @@ def otel_simple_linked_nodes_and_nodes() -> (
         "1_0": [nodes["1_1"]],
     }
     return linked_nodes, nodes
-
-
-def generate_pv_event(
-    job_name: str,
-    job_id: str,
-    event_id: str,
-    event_type: str,
-    timestamp: str,
-    previousEventIds: str | list[str],
-) -> PVEvent:
-    """Helper function to generate PVEvent."""
-    return PVEvent(
-        jobId=job_id,
-        eventId=event_id,
-        timestamp=timestamp,
-        previousEventIds=previousEventIds,
-        applicationName="app-name",
-        jobName=job_name,
-        eventType=event_type,
-    )
-
-
-def event_generator(
-    job_name: str,
-    job_id: str,
-    base_timestamp: datetime,
-    event_types: list[str],
-) -> Generator[PVEvent, Any, None]:
-    """Function to stream PVEvents."""
-    current_timestamp = base_timestamp
-    prev_event_id = None
-    for i in range(4):
-        event_id = f"event_{i}_{job_id}"
-        previousEventId: str | None = prev_event_id
-        yield generate_pv_event(
-            job_name,
-            job_id,
-            event_id,
-            event_types[i % len(event_types)],
-            current_timestamp.isoformat(),
-            previousEventIds=previousEventId if previousEventId else [],
-        )
-        prev_event_id = event_id
-        current_timestamp += timedelta(minutes=5)
-
-
-def job_id_generator(
-    job_name: str, event_types: list[str]
-) -> Generator[Generator[PVEvent, Any, None], Any, None]:
-    """Function to stream groups of PVEvents, grouped by job_id."""
-    job_ids = [
-        f"job_1_{job_name}",
-        f"job_2_{job_name}",
-    ]
-    base_timestamp = datetime.now()
-    for job_id in job_ids:
-        yield event_generator(job_name, job_id, base_timestamp, event_types)
-        base_timestamp += timedelta(minutes=10)
-
-
-@pytest.fixture
-def pv_streams() -> Generator[
-    tuple[str, Generator[Generator[PVEvent, Any, None], Any, None]],
-    None,
-    None,
-]:
-    """Fixture to return a generator that streams 2 jobs, each with
-    2 job ids consisting of 4 PVEvents."""
-    event_types = ["A", "B", "C", "D"]
-    job_names = ["Job_A", "Job_B"]
-
-    def generator() -> Generator[
-        tuple[str, Generator[Generator[PVEvent, Any, None], Any, None]],
-        None,
-        None,
-    ]:
-        """Creates a generator of tuples of job names to a generator of
-        generators of PVEvents grouped by job name then job id."""
-        for job_name in job_names:
-            yield (job_name, job_id_generator(job_name, event_types))
-
-    return generator()

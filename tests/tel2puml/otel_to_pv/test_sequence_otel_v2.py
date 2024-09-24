@@ -1,6 +1,5 @@
 """Test the tel2puml.sequence_otel_v2 module."""
 
-import os
 import yaml
 import pytest
 from typing import Iterable, Generator, Any
@@ -19,7 +18,6 @@ from tel2puml.otel_to_pv.sequence_otel_v2 import (
     job_ids_to_eventid_to_otelevent_map,
     config_to_otel_job_name_group_streams,
     otel_to_pv,
-    pv_streams_to_puml_files,
 )
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 from tel2puml.tel2puml_types import PVEvent
@@ -755,41 +753,3 @@ class TestSeqeunceOTelJobs:
         assert len(events) == 10
         assert all(count == 2 for count in job_id_count.values())
         assert len(valid_event_ids) == 0
-
-    def test_pv_streams_to_puml_files(
-        self,
-        pv_streams: Generator[
-            tuple[str, Generator[Generator[PVEvent, Any, None], Any, None]],
-            Any,
-            None,
-        ],
-        tmp_path: Path,
-    ) -> None:
-        """Tests the function pv_streams_to_puml_files"""
-        # Create temp directory for puml files
-        temp_dir = os.path.join(str(tmp_path), "temp_dir")
-        os.makedirs(temp_dir)
-        pv_streams_to_puml_files(pv_streams, file_directory=temp_dir)
-        # Check that the expected files are created in temp_dir
-        expected_files = ["Job_A.puml", "Job_B.puml"]
-        for expected_file in expected_files:
-            file_path = os.path.join(temp_dir, expected_file)
-            assert os.path.exists(file_path)
-
-            expected_content = (
-                "@startuml\n"
-                '    partition "default_name" {\n'
-                '        group "default_name"\n'
-                "            :A;\n"
-                "            :B;\n"
-                "            :C;\n"
-                "            :D;\n"
-                "        end group\n"
-                "    }\n"
-                "@enduml"
-            )
-            with open(file_path, "r") as f:
-                content = f.read()
-                content = content.strip()
-                expected_content = expected_content.strip()
-                assert content == expected_content
