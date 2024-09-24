@@ -37,18 +37,20 @@ class FieldSpec(TypedDict):
 
 
 class JQFieldSpec:
-    """Typed dict for JQFieldSpec.
+    """Class that provides the validation and conversion from FieldSpec to
+    concrete types that can be used for pulling out information from JSON files
+    using `jq`.
 
     :param key_paths: The key paths
-    :type key_paths: :class:`Sequence`[`tuple`[`str`, ...]]
+    :type key_paths: `Sequence`[`tuple`[`str`, ...]]
     :param key_values: The key values
-    :type key_values: :class:`Sequence`[`tuple`[`str` |
-    :class:`None`, ...]]
+    :type key_values: `Sequence`[`tuple`[`str` |
+    `None`, ...]]
     :param value_paths: The value paths
-    :type value_paths: :class:`Sequence`[`tuple`[`str` |
-    :class:`None`, ...]]
+    :type value_paths: `Sequence`[`tuple`[`str` |
+    `None`, ...]]
     :param value_type: The value type
-    :type value_type: :class:`Union`[`str`, `int`]
+    :type value_type: `Union`[`str`, `int`]
     """
 
     def __init__(
@@ -74,10 +76,10 @@ class JQFieldSpec:
         """Validates key values with key paths.
 
         :param key_values: The key values
-        :type key_values: :class:`Sequence`[`tuple`[`str` |
-        :class:`None`, ...]]
+        :type key_values: `Sequence`[`tuple`[`str` |
+        `None`, ...]]
         :param key_paths: The key paths
-        :type key_paths: :class:`Sequence`[`tuple`[`str`, ...]]
+        :type key_paths: `Sequence`[`tuple`[`str`, ...]]
         """
         if len(key_values) != len(key_paths):
             raise ValueError(
@@ -103,11 +105,11 @@ class JQFieldSpec:
         """Validates value paths with key values.
 
         :param value_paths: The value paths
-        :type value_paths: :class:`Sequence`[`tuple`[`str` |
-        :class:`None`, ...]]
+        :type value_paths: `Sequence`[`tuple`[`str` |
+        `None`, ...]]
         :param key_values: The key values
-        :type key_values: :class:`Sequence`[`tuple`[`str` |
-        :class:`None`, ...]]
+        :type key_values: `Sequence`[`tuple`[`str` |
+        `None`, ...]]
         """
         if len(value_paths) != len(key_values):
             raise ValueError(
@@ -150,13 +152,13 @@ class JQFieldSpec:
             priority_key_path = tuple(iter(key_path))
             for key in priority_key_path:
                 if not isinstance(key, str):
-                    raise ValueError(
+                    raise TypeError(
                         "Priority key path, within an iterable, must be a "
                         "string"
                     )
             return priority_key_path
         except TypeError:
-            raise ValueError("Key path must be iterable or a string")
+            raise TypeError("Key path must be iterable or a string")
 
     @staticmethod
     def field_spec_key_paths_to_jq_field_spec_key_paths(
@@ -200,13 +202,13 @@ class JQFieldSpec:
                 priority_optional_list = tuple(iter(optional_list_value))
                 for key in priority_optional_list:
                     if not isinstance(key, str) and key is not None:
-                        raise ValueError(
+                        raise TypeError(
                             "Priority key value, within an iterable, must be "
                             "a string or None"
                         )
                 return tuple(priority_optional_list)
             except TypeError:
-                raise ValueError(
+                raise TypeError(
                     "Key value must be iterable or a string"
                 )
 

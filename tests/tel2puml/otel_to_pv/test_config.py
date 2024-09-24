@@ -172,14 +172,14 @@ class TestJQFieldSpec:
         )
         # test case in which key path is not a string or an iterable
         field_spec_key_path_3 = 1
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             JQFieldSpec.field_spec_key_path_to_jq_key_path(
                 field_spec_key_path_3  # type: ignore[arg-type]
             )
         # test case with an iterable in which one of the elements is not a
         # string
         field_spec_key_path_4 = ["key1", 1]
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             JQFieldSpec.field_spec_key_path_to_jq_key_path(
                 field_spec_key_path_4  # type: ignore[arg-type]
             )
@@ -224,7 +224,7 @@ class TestJQFieldSpec:
         # test case where key value not a string, None or an iterable
         optional_list_value_3 = 1
         jq_key_path_3 = ("key1",)
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(TypeError) as e:
             JQFieldSpec.optional_list_value_to_jq_optional_list_value(
                 optional_list_value_3, jq_key_path_3  # type: ignore[arg-type]
             )
@@ -242,7 +242,7 @@ class TestJQFieldSpec:
         # not a string or None
         optional_list_value_5 = ["value1", 1]
         jq_key_path_5 = ("key1",)
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(TypeError) as e:
             JQFieldSpec.optional_list_value_to_jq_optional_list_value(
                 optional_list_value_5, jq_key_path_5  # type: ignore[arg-type]
             )
@@ -274,7 +274,7 @@ class TestJQFieldSpec:
         # test case where key value is not a string or an iterable
         optional_list_3 = [1]
         jq_key_paths = [("key1",)]
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             JQFieldSpec.optional_list_to_jq_optional_list(
                 optional_list_3, jq_key_paths  # type: ignore[arg-type]
             )
@@ -282,7 +282,7 @@ class TestJQFieldSpec:
         # not a string
         optional_list_4 = [["value1", 1]]
         jq_key_paths = [("key1",)]
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             JQFieldSpec.optional_list_to_jq_optional_list(
                 optional_list_4, jq_key_paths  # type: ignore[arg-type]
             )
