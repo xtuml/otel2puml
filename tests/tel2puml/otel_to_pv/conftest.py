@@ -1346,10 +1346,9 @@ def pv_streams() -> Generator[
     None,
     None,
 ]:
-    """Fixture to return a generator function that generates 2 jobs, each with
+    """Fixture to return a generator that streams 2 jobs, each with
     2 job ids consisting of 4 PVEvents."""
     event_types = ["A", "B", "C", "D"]
-    # Yield a generator that produces tuples of (job_name, job_id_generator)
     job_names = ["Job_A", "Job_B"]
 
     def generator() -> Generator[
@@ -1357,7 +1356,7 @@ def pv_streams() -> Generator[
         None,
         None,
     ]:
-        """Helper function to create generator object."""
+        """Creates generator function"""
         for job_name in job_names:
             yield (job_name, job_id_generator(job_name, event_types))
 
