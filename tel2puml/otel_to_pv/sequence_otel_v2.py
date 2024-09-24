@@ -348,3 +348,52 @@ def config_to_otel_job_name_group_streams(
         yield from data_holder.stream_data(job_name_to_job_ids_map)
     else:
         yield from data_holder.stream_data()
+
+
+def otel_to_pv(
+    config: IngestDataConfig,
+    ingest_data: bool = False,
+    find_unique_graphs: bool = False,
+    async_flag: bool = False,
+    event_to_async_group_map: dict[str, dict[str, str]] | None = None,
+) -> Generator[
+    tuple[str, Generator[Generator[PVEvent, Any, None], Any, None]], Any, None
+]:
+    """
+    Stream data from data holder and convert to PVEvents. Optional parameters
+    to ingest data as well as find unique graphs within the data set.
+
+    :param config: The configuration for data ingestion and processing.
+    :type config: :class:`IngestDataConfig`
+    :param ingest_data: Flag to indicate whether to load data into the data
+    holder. Defaults to False.
+    :type ingest_data: `bool`, optional
+    :param find_unique_graphs: Flag to indicate whether to find unique graphs
+    within the data holder object. Defaults to False.
+    :type find_unique_graphs: `bool`, optional
+    :param async_flag: A flag indicating whether to sequence event groups
+    asynchronously or not. Defaults to False.
+    :type async_flag: `bool`, optional
+    :param event_to_async_group_map: A dictionary mapping event types to
+    groups of events that occur asynchronously. Defaults to None.
+    :type event_to_async_group_map: `dict`[`str`, `dict`[`str`, `str`]],
+    optional
+    :return: Generator of tuples of job_name to generator of generators of
+    PVEvents grouped by job_name, then job_id.
+    :rtype: `Generator`[`tuple`[`str`, `Generator`[`Generator`[:class:
+    `PVEvent`, `Any`, `None`], `Any`, `None`]], `Any`, `None`]
+
+    """
+    job_name_group_streams = config_to_otel_job_name_group_streams(
+        config,
+        ingest_data=ingest_data,
+        find_unique_graphs=find_unique_graphs,
+    )
+
+    for job_name, job_id_streams in job_name_group_streams:
+        pv_event_streams = sequence_otel_job_id_streams(
+            job_id_streams,
+            async_flag=async_flag,
+            event_to_async_group_map=event_to_async_group_map,
+        )
+        yield (job_name, pv_event_streams)
