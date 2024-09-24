@@ -777,7 +777,7 @@ class TestSeqeunceOTelJobs:
             file_path = os.path.join(temp_dir, expected_file)
             assert os.path.exists(file_path)
 
-            expected_content = expected_content = (
+            expected_content = (
                 "@startuml\n"
                 '    partition "default_name" {\n'
                 '        group "default_name"\n'
