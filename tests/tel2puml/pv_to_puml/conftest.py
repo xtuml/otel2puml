@@ -1,8 +1,9 @@
 """Fixtures for testing pv_to_puml module"""
 
-import pytest
-from datetime import datetime, timedelta
 from typing import Generator, Any
+from datetime import datetime, timedelta
+
+import pytest
 
 from tel2puml.tel2puml_types import PVEvent
 
