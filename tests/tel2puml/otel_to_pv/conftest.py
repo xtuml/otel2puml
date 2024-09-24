@@ -1356,7 +1356,8 @@ def pv_streams() -> Generator[
         None,
         None,
     ]:
-        """Creates generator function"""
+        """Creates a generator of tuples of job names to a generator of
+        generators of PVEvents grouped by job name then job id."""
         for job_name in job_names:
             yield (job_name, job_id_generator(job_name, event_types))
 
