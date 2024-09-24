@@ -14,7 +14,7 @@ def field_spec_1() -> JQFieldSpec:
             ("first.[].second_1.second_2.[].third_1.third_2",),
             ("first.[].second_1.second_2.[].third_1.third_2",),
         ],
-        key_value=[("value",), (None,)],
+        key_values=[("value",), (None,)],
         value_paths=[("value_path.next",), (None,)],
         value_type="string",
     )
@@ -25,7 +25,7 @@ def field_spec_2() -> JQFieldSpec:
     """Fixture for JQFieldSpec object."""
     return JQFieldSpec(
         key_paths=[("first.second.third",), ("first.second.third",)],
-        key_value=[(None,), (None,)],
+        key_values=[(None,), (None,)],
         value_paths=[(None,), (None,)],
         value_type="string",
     )
@@ -39,7 +39,7 @@ def field_spec_3() -> JQFieldSpec:
             ("fourth.[].fifth",),
             ("fourth.[].fifth",),
         ],
-        key_value=[(None,), (None,)],
+        key_values=[(None,), (None,)],
         value_paths=[(None,), (None,)],
         value_type="string",
     )
@@ -54,7 +54,7 @@ def field_spec_4() -> JQFieldSpec:
                 "first.[].second_1.second_2.[].third_1.third_2"
             ] * 2)
             ],
-        key_value=[("value", None)],
+        key_values=[("value", None)],
         value_paths=[("value_path.next", None)],
         value_type="string",
     )
@@ -81,7 +81,7 @@ def field_spec_with_variables_1() -> JQFieldSpec:
             ("$var1.second_1.second_2.[].third_1.third_2",),
             ("$var2.third_1.third_2",),
         ],
-        key_value=[("value",), (None,)],
+        key_values=[("value",), (None,)],
         value_paths=[("value_path.next",), (None,)],
         value_type="string",
     )
@@ -95,7 +95,7 @@ def field_spec_with_variables_2() -> JQFieldSpec:
             ("$var0.first.second.third",),
             ("$var0.first.second.third",)
         ],
-        key_value=[(None,), (None,)],
+        key_values=[(None,), (None,)],
         value_paths=[(None,), (None,)],
         value_type="string",
     )
@@ -109,7 +109,7 @@ def field_spec_with_variables_3() -> JQFieldSpec:
             ("$var3.fifth",),
             ("$var3.fifth",),
         ],
-        key_value=[(None,), (None,)],
+        key_values=[(None,), (None,)],
         value_paths=[(None,), (None,)],
         value_type="string",
     )
@@ -125,7 +125,7 @@ def field_spec_with_variables_4() -> JQFieldSpec:
                 "$var2.third_1.third_2"
             ),
             ],
-        key_value=[("value", None)],
+        key_values=[("value", None)],
         value_paths=[("value_path.next", None)],
         value_type="string",
     )
@@ -252,7 +252,7 @@ def field_mapping_for_fixture_data() -> dict[str, JQFieldSpec]:
                 ("resource_spans.[].resource.attributes.[].key",),
                 ("resource_spans.[].scope_spans.[].scope.name",)
             ],
-            key_value=[("service.name",), (None,)],
+            key_values=[("service.name",), (None,)],
             value_paths=[("value.Value.StringValue",), (None,)],
             value_type="string",
         ),
@@ -267,7 +267,7 @@ def field_mapping_for_fixture_data() -> dict[str, JQFieldSpec]:
                     ".key",
                 ),
             ],
-            key_value=[("coral.operation",), ("http.status_code",)],
+            key_values=[("coral.operation",), ("http.status_code",)],
             value_paths=[
                 ("value.Value.StringValue",),
                 ("value.Value.IntValue",)
@@ -281,7 +281,7 @@ def field_mapping_for_fixture_data() -> dict[str, JQFieldSpec]:
                     "start_time_unix_nano",
                 ),
             ],
-            key_value=[(None,)],
+            key_values=[(None,)],
             value_paths=[(None,)],
             value_type="string",
         ),
@@ -296,7 +296,7 @@ def field_mapping_for_fixture_data() -> dict[str, JQFieldSpec]:
                     "end_time_unix_nano",
                 ),
             ],
-            key_value=[(None, None, None)],
+            key_values=[(None, None, None)],
             value_paths=[(None, None, None)],
             value_type="string",
         ),

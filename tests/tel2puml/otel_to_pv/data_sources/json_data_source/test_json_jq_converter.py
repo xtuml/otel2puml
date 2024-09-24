@@ -188,7 +188,7 @@ class TestFieldMappingToCompiledJQ:
         root_var_tree = JQVariableTree()
         var_num = update_field_spec_with_variables(field_spec, root_var_tree)
         assert var_num == 2
-        assert field_spec["key_paths"] == [
+        assert field_spec.key_paths == [
             ("$var1.second_1.second_2.[].third_1.third_2",),
             ("$var2.third_1.third_2",),
         ]
@@ -197,7 +197,7 @@ class TestFieldMappingToCompiledJQ:
         root_var_tree = JQVariableTree()
         var_num = update_field_spec_with_variables(field_spec, root_var_tree)
         assert var_num == 0
-        assert field_spec["key_paths"] == [
+        assert field_spec.key_paths == [
             ("$var0.first.second.third",),
             ("$var0.first.second.third",),
         ]
@@ -207,7 +207,7 @@ class TestFieldMappingToCompiledJQ:
         root_var_tree = JQVariableTree()
         var_num = update_field_spec_with_variables(field_spec, root_var_tree)
         assert var_num == 2
-        assert field_spec["key_paths"] == [
+        assert field_spec.key_paths == [
             (
                 "$var1.second_1.second_2.[].third_1.third_2",
                 "$var2.third_1.third_2",
@@ -304,7 +304,7 @@ class TestFieldMappingToCompiledJQ:
         # check case with variable not in the first part of the key path
         field_spec = JQFieldSpec(
             key_paths=[("first.[].second.third",), ("first.second.third",)],
-            key_value=[("value",), (None,)],
+            key_values=[("value",), (None,)],
             value_paths=[("value_path.next",), (None,)],
             value_type="string",
         )
@@ -317,7 +317,7 @@ class TestFieldMappingToCompiledJQ:
                 ("$var0.[].$var1.second.third",),
                 ("$var0.first.second.third",),
             ],
-            key_value=[("value",), (None,)],
+            key_values=[("value",), (None,)],
             value_paths=[("value_path.next",), (None,)],
             value_type="string",
         )
@@ -326,7 +326,7 @@ class TestFieldMappingToCompiledJQ:
         # check case with no arrays in the key path
         field_spec = JQFieldSpec(
             key_paths=[("first.second.third",), ("first.second.third",)],
-            key_value=[("value",), (None,)],
+            key_values=[("value",), (None,)],
             value_paths=[("value_path.next",), (None,)],
             value_type="string",
         )
@@ -337,7 +337,7 @@ class TestFieldMappingToCompiledJQ:
             key_paths=[
                 ("first.[].second.[].third",), ("first.[].second.third",)
             ],
-            key_value=[("value",), (None,)],
+            key_values=[("value",), (None,)],
             value_paths=[("value_path.next",), (None,)],
             value_type="string",
         )
