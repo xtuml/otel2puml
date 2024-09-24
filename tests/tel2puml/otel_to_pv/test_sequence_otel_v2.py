@@ -1,11 +1,11 @@
 """Test the tel2puml.sequence_otel_v2 module."""
 
+from pathlib import Path
 from typing import Iterable, Generator, Any
 
-import pytest
 import yaml
+import pytest
 from pytest import MonkeyPatch
-from pathlib import Path
 
 from tel2puml.otel_to_pv.sequence_otel_v2 import (
     order_groups_by_start_timestamp,
