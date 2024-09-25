@@ -38,63 +38,79 @@ def mock_yaml_config_string() -> str:
                 json:
                     dirpath: /path/to/json/directory
                     filepath: /path/to/json/file.json
-                    data_location: resource_spans
-                    header:
-                        paths: [resource:attributes, scope_spans::scope:name]
-                    span_mapping:
-                        spans:
-                            key_paths: [scope_spans::spans]
+                    json_per_line: false
                     field_mapping:
                         job_name:
-                            key_paths: [HEADER:resource:attributes::key,
-                            HEADER:scope_spans::scope:name]
-                            key_value: [service.name, null]
-                            value_paths: [value:Value:StringValue, null]
+                            key_paths: [
+                            "resource_spans.[].resource.attributes.[].key",
+                            "resource_spans.[].scope_spans.[].scope.name"]
+                            key_value: ["service.name", null]
+                            value_paths: ["value.Value.StringValue", null]
                             value_type: string
                         job_id:
                             key_paths: [
-                            trace_id,
-                            resource:attributes::key:other_key]
+                            "resource_spans.[].scope_spans.[].spans.[].trace_id",
+                            "resource_spans.[].scope_spans.[].spans.[].resource.attributes.[].key.other_key"]
                             key_value: [null, test_string]
-                            value_paths: [null, value:Value:StringValue]
+                            value_paths: [null, value.Value.StringValue]
                             value_type: string
                         event_type:
-                            key_paths: [attributes::key, attributes::key]
+                            key_paths: [
+                            "resource_spans.[].scope_spans.[].spans.[].attributes.[].key",
+                            "resource_spans.[].scope_spans.[].spans.[].attributes.[].key"]
                             key_value: [coral.namespace, http.status_code]
                             value_paths: [
-                            value:Value:StringValue,
-                            value:Value:IntValue]
+                            value.Value.StringValue,
+                            value.Value.IntValue]
                             value_type: string
                         event_id:
-                            key_paths: [span_id]
+                            key_paths: [
+                                "resource_spans.[].scope_spans.[].spans.[].span_id"
+                            ]
                             value_type: string
                         start_timestamp:
-                            key_paths: [start_time_unix_nano]
-                            value_type: unix_nano
+                            key_paths: [
+                            "resource_spans.[].scope_spans.[].spans.[].start_time_unix_nano"]
+                            value_type: string
                         end_timestamp:
-                            key_paths: [end_time_unix_nano]
-                            value_type: unix_nano
+                            key_paths: [
+                            "resource_spans.[].scope_spans.[].spans.[].end_time_unix_nano"]
+                            value_type: string
                         application_name:
                             key_paths: [
-                            attributes::key,
-                            HEADER:resource:attributes::key]
+                            "resource_spans.[].scope_spans.[].spans.[].attributes.[].key",
+                            "resource_spans.[].resource.attributes.[].key"]
                             key_value: [coral.service, service.version]
                             value_paths: [
-                            value:Value:StringValue,
-                            value:Value:StringValue]
+                            value.Value.StringValue,
+                            value.Value.StringValue]
                             value_type: string
                         parent_event_id:
-                            key_paths: [parent_span_id]
+                            key_paths: [
+                            "resource_spans.[].scope_spans.[].spans.[].parent_span_id"]
                             value_type: string
                         child_event_ids:
-                            key_paths: [child_span_ids]
-                            value_type: string
+                            key_paths: [
+                            "resource_spans.[].scope_spans.[].spans.[].child_span_ids"]
+                            value_type: array
             """
 
 
 @pytest.fixture
 def mock_yaml_config_dict(mock_yaml_config_string: str) -> dict[str, Any]:
     """Mocks a dict when reading the yaml config."""
+    config_dict: dict[str, Any] = yaml.safe_load(mock_yaml_config_string)
+    return config_dict
+
+
+@pytest.fixture
+def mock_yaml_config_dict_without_list(
+    mock_yaml_config_string: str,
+) -> dict[str, Any]:
+    """Mocks a dict when reading the yaml config without list."""
+    mock_yaml_config_string = mock_yaml_config_string.replace(
+        "resource_spans.[].", "resource_spans."
+    )
     config_dict: dict[str, Any] = yaml.safe_load(mock_yaml_config_string)
     return config_dict
 
@@ -441,7 +457,6 @@ def mock_json_data() -> dict[str, Any]:
                                 "trace_id": "trace004",
                                 "span_id": "span004",
                                 "parent_span_id": "span003",
-                                "child_span_ids": ["child5"],
                                 "flags": 517,
                                 "name": "/read",
                                 "kind": 3,

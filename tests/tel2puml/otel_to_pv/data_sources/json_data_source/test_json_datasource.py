@@ -37,9 +37,7 @@ class TestJSONDataSource:
         expected_keys = {
             "dirpath",
             "filepath",
-            "data_location",
-            "header",
-            "span_mapping",
+            "json_per_line",
             "field_mapping",
         }
         assert set(config.keys()) == expected_keys
@@ -47,7 +45,7 @@ class TestJSONDataSource:
         # Check string values
         assert config["dirpath"] == "/path/to/json/directory"
         assert config["filepath"] == "/path/to/json/file.json"
-        assert config["data_location"] == "resource_spans"
+        assert not config["json_per_line"]
 
         # Check expected field mapping keys
         expected_field_mapping_keys = {
@@ -193,21 +191,25 @@ class TestJSONDataSource:
     @staticmethod
     @pytest.mark.usefixtures("mock_path_exists", "mock_filepath_in_dir")
     @pytest.mark.parametrize(
-        "mock_data",
+        "mock_data, mock_yaml_config",
         [
-            "mock_json_data",
-            "mock_json_data_without_list",
+            ("mock_json_data", "mock_yaml_config_dict"),
+            (
+                "mock_json_data_without_list",
+                "mock_yaml_config_dict_without_list",
+            ),
         ],
     )
     def test_end_to_end_json_parsing(
         mock_data: str,
-        mock_yaml_config_dict: IngestDataConfig,
+        mock_yaml_config: str,
         request: FixtureRequest,
     ) -> None:
         """Tests parsing a json file for both json data that has spans
         within a list and as a dictionary.
         """
         mock_file_content = json.dumps(request.getfixturevalue(mock_data))
+        mock_yaml_config_dict = request.getfixturevalue(mock_yaml_config)
 
         with patch(
             "builtins.open", mock_open(read_data=mock_file_content)
@@ -226,22 +228,22 @@ class TestJSONDataSource:
                 otel_events.append(data)
 
         otel_event = otel_events[0]
-        assert otel_event.job_name == "Frontend TestJob"
-        assert otel_event.job_id == "trace001 4.8"
+        assert otel_event.job_name == "Frontend_TestJob"
+        assert otel_event.job_id == "trace001_4.8"
         assert otel_event.event_id == "span001"
-        assert otel_event.event_type == "com.T2h.366Yx 500"
-        assert otel_event.application_name == "Processor 1.0"
+        assert otel_event.event_type == "com.T2h.366Yx_500"
+        assert otel_event.application_name == "Processor_1.0"
         assert otel_event.start_timestamp == 1723544132228102912
         assert otel_event.end_timestamp == 1723544132228219285
         assert otel_event.parent_event_id is None
         assert otel_event.child_event_ids == ["child1", "child2"]
 
         otel_event2 = otel_events[1]
-        assert otel_event2.job_name == "Frontend TestJob"
-        assert otel_event2.job_id == "trace002 2.0"
+        assert otel_event2.job_name == "Frontend_TestJob"
+        assert otel_event2.job_id == "trace002_2.0"
         assert otel_event2.event_id == "span002"
-        assert otel_event2.event_type == "com.C36.9ETRp 401"
-        assert otel_event2.application_name == "Handler 1.0"
+        assert otel_event2.event_type == "com.C36.9ETRp_401"
+        assert otel_event2.application_name == "Handler_1.0"
         assert otel_event2.start_timestamp == 1723544132228288000
         assert otel_event2.end_timestamp == 1723544132229038947
         assert otel_event2.parent_event_id == "span001"
@@ -253,23 +255,23 @@ class TestJSONDataSource:
             assert len(otel_events) == 4
 
             otel_event3 = otel_events[2]
-            assert otel_event3.job_name == "Backend TestJob"
-            assert otel_event3.job_id == "trace003 2.7"
+            assert otel_event3.job_name == "Backend_TestJob"
+            assert otel_event3.job_id == "trace003_2.7"
             assert otel_event3.event_id == "span003"
-            assert otel_event3.event_type == "com.a58.GFkzZ 201"
-            assert otel_event3.application_name == "Processor 1.2"
+            assert otel_event3.event_type == "com.a58.GFkzZ_201"
+            assert otel_event3.application_name == "Processor_1.2"
             assert otel_event3.start_timestamp == 1723544154817766912
             assert otel_event3.end_timestamp == 1723544154818599863
             assert otel_event3.parent_event_id is None
-            assert otel_event3.child_event_ids is None
+            assert otel_event3.child_event_ids == []
 
             otel_event4 = otel_events[3]
-            assert otel_event4.job_name == "Backend TestJob"
-            assert otel_event4.job_id == "trace004 1.3"
+            assert otel_event4.job_name == "Backend_TestJob"
+            assert otel_event4.job_id == "trace004_1.3"
             assert otel_event4.event_id == "span004"
-            assert otel_event4.event_type == "com.67Q.AS8pJ 201"
-            assert otel_event4.application_name == "Processor 1.2"
+            assert otel_event4.event_type == "com.67Q.AS8pJ_201"
+            assert otel_event4.application_name == "Processor_1.2"
             assert otel_event4.start_timestamp == 1723544154817793024
             assert otel_event4.end_timestamp == 1723544154818380443
             assert otel_event4.parent_event_id == "span003"
-            assert otel_event4.child_event_ids == ["child5"]
+            assert otel_event4.child_event_ids is None
