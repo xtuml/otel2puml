@@ -11,6 +11,9 @@ import pytest
 from tel2puml.otel_to_puml import otel_to_puml
 from tel2puml.tel2puml_types import OtelPumlOptions, PVPumlOptions
 from tel2puml.otel_to_pv.config import load_config_from_dict
+from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
+    NodeModel,
+)
 
 
 class TestOtelToPuml:
@@ -135,3 +138,55 @@ class TestOtelToPuml:
             content = content.strip()
             expected_content = expected_content.strip()
             assert content == expected_content
+
+    def test_successful_otel_to_puml_components_ingest_only(
+        self,
+        tmp_path: Path,
+        mock_json_data: dict[str, Any],
+        mock_yaml_config_dict: dict[str, Any],
+    ) -> None:
+        """Test successful execution when components='otel_to_puml' and ingest
+        data is set True."""
+        input_dir = tmp_path / "json_input"
+
+        # Create the input directory
+        input_dir.mkdir(parents=True, exist_ok=True)
+
+        # Write mock_json_data to data.json in input_dir
+        data_file = input_dir / "data.json"
+        data_file.write_text(json.dumps(mock_json_data))
+
+        # Configure config
+        config = load_config_from_dict(mock_yaml_config_dict)
+        config["data_sources"]["json"]["filepath"] = None
+        config["data_sources"]["json"]["dirpath"] = str(input_dir)
+
+        otel_options: OtelPumlOptions = {
+            "config": load_config_from_dict(mock_yaml_config_dict),
+            "ingest_data": True,
+        }
+        # Run function
+        data_holder = otel_to_puml(
+            otel_to_puml_options=otel_options,
+            components="otel_to_puml",
+        )
+        with data_holder.session as session:
+            nodes = session.query(NodeModel).all()
+
+        assert len(nodes) == 2
+        assert all(isinstance(node, NodeModel) for node in nodes)
+        node1 = nodes[0]
+        assert node1.application_name == "Processor 1.0"
+        assert node1.event_id == "span001"
+        assert node1.event_type == 'com.T2h.366Yx 500'
+        assert node1.job_id == "job_A"
+        assert node1.job_name == "Frontend TestJob"
+        assert node1.parent_event_id is None
+
+        node2 = nodes[1]
+        assert node2.application_name == "Handler 1.0"
+        assert node2.event_id == "span002"
+        assert node2.event_type == "com.C36.9ETRp 401"
+        assert node2.job_id == "job_A"
+        assert node2.job_name == "Frontend TestJob"
+        assert node2.parent_event_id == "span001"
