@@ -4,7 +4,7 @@ ingest_data:
 
 data_holders:
   sql:
-    db_uri: 'sqlite:///:memory:'
+    db_uri: 'sqlite:///otel_db.db'
     batch_size: 5
     time_buffer: 30
 
