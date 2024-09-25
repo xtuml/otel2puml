@@ -31,8 +31,12 @@ class FieldSpec(TypedDict):
     """Typed dict for FieldSpec."""
 
     key_paths: list[str | Iterable[str]]
-    key_value: Optional[list[Optional[Union[str, Iterable[str | None]]]]]
-    value_paths: Optional[list[Optional[Union[str, Iterable[str | None]]]]]
+    key_value: NotRequired[
+        Optional[list[Optional[Union[str, Iterable[str | None]]]]]
+    ]
+    value_paths: NotRequired[
+        Optional[list[Optional[Union[str, Iterable[str | None]]]]]
+    ]
     value_type: Union[str, int]
 
 
@@ -259,12 +263,16 @@ class JQFieldSpec:
         )
         jq_field_spec_key_values = (
             cls.optional_list_to_jq_optional_list(
-                field_spec["key_value"], jq_field_spec_key_paths
+                field_spec["key_value"]
+                if "key_value" in field_spec else None,
+                jq_field_spec_key_paths
             )
         )
         jq_field_spec_value_paths = (
             cls.optional_list_to_jq_optional_list(
-                field_spec["value_paths"], jq_field_spec_key_paths
+                field_spec["value_paths"]
+                if "value_paths" in field_spec else None,
+                jq_field_spec_key_paths
             )
         )
         return cls(
@@ -292,14 +300,28 @@ class JQFieldSpec:
         )
 
 
+def field_spec_mapping_to_jq_field_spec_mapping(
+    field_mapping: dict[str, FieldSpec],
+) -> dict[str, JQFieldSpec]:
+    """Converts field mapping to jq field mapping.
+
+    :param field_mapping: The field mapping
+    :type field_mapping: `dict`[`str`, `FieldSpec`]
+    :return: The jq field mapping
+    :rtype: `dict`[`str`, `JQFieldSpec`]
+    """
+    return {
+        key: JQFieldSpec.from_field_spec(value)
+        for key, value in field_mapping.items()
+    }
+
+
 class JSONDataSourceConfig(TypedDict):
     """Typed dict for JSONDataSourceConfig."""
 
     filepath: str
     dirpath: str
-    data_location: str
-    header: dict[str, HeaderSpec]
-    span_mapping: dict[str, SpanSpec]
+    json_per_line: bool
     field_mapping: dict[str, FieldSpec]
 
 
