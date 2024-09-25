@@ -259,7 +259,7 @@ def pv_streams_to_puml_files(
         Any,
         None,
     ],
-    file_directory: str = ".",
+    output_file_directory: str = ".",
 ) -> None:
     """
     Function to convert and save a stream of PVEvents to puml files.
@@ -268,12 +268,15 @@ def pv_streams_to_puml_files(
     generators of PVEvents grouped by job_name, then job_id.
     :type pv_streams: `Generator`[`tuple`[`str`, `Generator`[`Generator`
     [:class:`PVEvent`, `Any`, `None`], `Any`, `None`]], `Any`, `None`]
-    :param file_directory: The file directory to store puml files. Defaults to
+    :param output_file_directory: The file directory to store puml files. Defaults to
     "."
-    :type file_directory: `str`
+    :type output_file_directory: `str`
     """
     for job_name, job_event_gen in pv_streams:
-        puml_file_path = os.path.join(file_directory, f"{job_name}.puml")
+        job_name = job_name.replace(" ", "_")
+        puml_file_path = os.path.join(
+            output_file_directory, f"{job_name}.puml"
+        )
         pv_to_puml_file(
             job_event_gen,
             puml_file_path=puml_file_path,
