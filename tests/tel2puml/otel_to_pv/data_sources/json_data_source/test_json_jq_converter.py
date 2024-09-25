@@ -2,6 +2,8 @@
 from typing import Any
 import pytest
 
+import jq  # type: ignore[import-not-found]
+
 from tel2puml.otel_to_pv.config import JQFieldSpec
 from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter \
     import (
@@ -13,8 +15,10 @@ from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter \
         get_jq_for_field_spec,
         get_jq_using_field_mapping,
         get_jq_query_from_field_mapping_with_variables_and_var_tree,
-        field_mapping_to_jq_query,
+        jq_field_mapping_to_jq_query,
+        jq_field_mapping_to_compiled_jq,
         field_mapping_to_compiled_jq,
+        generate_records_from_compiled_jq
     )
 
 
@@ -374,13 +378,26 @@ class TestFieldMappingToCompiledJQ:
         assert jq_query == (expected_full_query)
 
     @staticmethod
-    def test_field_mapping_to_jq_query(
+    def test_jq_field_mapping_to_jq_query(
         field_mapping: dict[str, JQFieldSpec],
         expected_full_query: str,
     ) -> None:
         """Test the field_mapping_to_jq_query function."""
-        jq_query = field_mapping_to_jq_query(field_mapping)
+        jq_query = jq_field_mapping_to_jq_query(field_mapping)
         assert jq_query == (expected_full_query)
+
+    @staticmethod
+    def test_jq_field_mapping_to_compiled_jq(
+        jq_field_mapping_for_fixture_data: dict[str, JQFieldSpec],
+        mock_json_data: dict[str, Any],
+        expected_mapped_json: list[dict[str, str]],
+    ) -> None:
+        """Test the field_mapping_to_compiled_jq function."""
+        compiled_jq = jq_field_mapping_to_compiled_jq(
+            jq_field_mapping_for_fixture_data
+        )
+        output = list(iter(compiled_jq.input_value(mock_json_data)))
+        assert output == expected_mapped_json
 
     @staticmethod
     def test_field_mapping_to_compiled_jq(
@@ -392,5 +409,29 @@ class TestFieldMappingToCompiledJQ:
         compiled_jq = field_mapping_to_compiled_jq(
             field_mapping_for_fixture_data
         )
-        output = compiled_jq.input_value(mock_json_data).first()
+        output = list(iter(compiled_jq.input_value(mock_json_data)))
         assert output == expected_mapped_json
+
+    @staticmethod
+    def test_generate_records_from_compiled_jq() -> None:
+        """Test the generate_records_from_compiled_jq function."""
+        # test case with multiple records
+        data = {
+            "records": [
+                {"first": "value1", "second": "value2"},
+                {"first": "value3", "second": "value4"},
+            ]
+        }
+        compiled_jq = jq.compile(".records[]")
+        output = list(generate_records_from_compiled_jq(data, compiled_jq))
+        assert output == [
+            {"first": "value1", "second": "value2"},
+            {"first": "value3", "second": "value4"},
+        ]
+        # test case where the record is a list
+        compiled_jq = jq.compile("[.records[]]")
+        output = list(generate_records_from_compiled_jq(data, compiled_jq))
+        assert output == [
+            {"first": "value1", "second": "value2"},
+            {"first": "value3", "second": "value4"},
+        ]
