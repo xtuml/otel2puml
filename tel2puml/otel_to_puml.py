@@ -8,6 +8,7 @@ from tel2puml.tel2puml_types import OtelPumlOptions, PVPumlOptions
 from tel2puml.otel_to_pv.sequence_otel_v2 import otel_to_pv
 from tel2puml.pv_to_puml import pv_streams_to_puml_files
 from tel2puml.otel_to_pv.config import load_config_from_yaml
+from tel2puml.otel_to_pv.ingest_otel_data import ingest_data_into_dataholder
 
 
 def otel_to_puml(
@@ -50,11 +51,20 @@ def otel_to_puml(
     if components == "all":
         pv_streams = otel_to_pv(
             config=otel_to_puml_options["config"],
-            ingest_data=otel_to_puml_options["ingest_data"],
+            ingest_data=True,
         )
         pv_streams_to_puml_files(pv_streams, output_file_directory)
     elif components == "otel_to_puml":
-        pass
+        # if we just want to ingest data, ingest_data = True
+        # if ingest_data = False, stream from data_holder
+        if otel_to_puml_options["ingest_data"]:
+            ingest_data_into_dataholder(otel_to_puml_options["config"])
+        else:
+            pv_streams = otel_to_pv(
+                config=otel_to_puml_options["config"],
+                ingest_data=False,
+            )
+            pv_streams_to_puml_files(pv_streams, output_file_directory)
     elif components == "pv_to_puml":
         pass
     else:
@@ -66,6 +76,8 @@ def otel_to_puml(
 if __name__ == "__main__":
     otel_to_puml_options = {
         "config": load_config_from_yaml("tel2puml/otel_to_pv/config.yaml"),
-        "ingest_data": True,
+        "ingest_data": False,
     }
-    otel_to_puml(otel_to_puml_options=otel_to_puml_options, components="all")
+    otel_to_puml(
+        otel_to_puml_options=otel_to_puml_options, components="otel_to_puml"
+    )
