@@ -13,12 +13,12 @@ from typing import (
 class FieldSpec(TypedDict):
     """Typed dict for FieldSpec."""
 
-    key_paths: list[str | Iterable[str]]
+    key_paths: Sequence[str | Iterable[str]]
     key_value: NotRequired[
-        Optional[list[Optional[Union[str, Iterable[str | None]]]]]
+        Optional[Sequence[Optional[Union[str, Iterable[str | None]]]]]
     ]
     value_paths: NotRequired[
-        Optional[list[Optional[Union[str, Iterable[str | None]]]]]
+        Optional[Sequence[Optional[Union[str, Iterable[str | None]]]]]
     ]
     value_type: Union[str, int]
 

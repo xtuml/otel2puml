@@ -5,7 +5,7 @@ import pytest
 import jq  # type: ignore[import-not-found]
 
 from tel2puml.otel_to_pv.data_sources.json_data_source.json_config \
-    import JQFieldSpec
+    import JQFieldSpec, FieldSpec
 from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter \
     import (
         JQVariableTree,
@@ -402,7 +402,7 @@ class TestFieldMappingToCompiledJQ:
 
     @staticmethod
     def test_field_mapping_to_compiled_jq(
-        field_mapping_for_fixture_data: dict[str, JQFieldSpec],
+        field_mapping_for_fixture_data: dict[str, FieldSpec],
         mock_json_data: dict[str, Any],
         expected_mapped_json: list[dict[str, str]],
     ) -> None:

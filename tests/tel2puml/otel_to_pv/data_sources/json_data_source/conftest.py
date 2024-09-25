@@ -317,7 +317,7 @@ def jq_field_mapping_for_fixture_data() -> dict[str, JQFieldSpec]:
 @pytest.fixture
 def field_mapping_for_fixture_data(
     jq_field_mapping_for_fixture_data: dict[str, JQFieldSpec],
-) -> dict[str, JQFieldSpec]:
+) -> dict[str, FieldSpec]:
     """Fixture for field mapping using previous field specs with variables
     added"""
     return {
