@@ -1,0 +1,32 @@
+[
+    {
+        "eventId": "evt-6005",
+        "eventType": "START",
+        "jobId": "job-1009",
+        "timestamp": "2024-09-01T07:45:00Z",
+        "applicationName": "AppName",
+        "jobName": "DeleteFiles"
+    },
+    {
+        "eventId": "evt-6006",
+        "eventType": "MIDDLE",
+        "jobId": "job-1009",
+        "timestamp": "2024-09-01T08:15:00Z",
+        "applicationName": "AppName",
+        "jobName": "DeleteFiles",
+        "previousEventIds": [
+            "evt-6005"
+        ]
+    },
+    {
+        "eventId": "evt-6007",
+        "eventType": "END",
+        "jobId": "job-1009",
+        "timestamp": "2024-09-02T09:00:00Z",
+        "applicationName": "AppName",
+        "jobName": "DeleteFiles",
+        "previousEventIds": [
+            "evt-6006"
+        ]
+    }
+]
