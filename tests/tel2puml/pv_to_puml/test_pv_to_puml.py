@@ -69,7 +69,7 @@ def test_pv_streams_to_puml_files(
     # Create temp directory for puml files
     temp_dir = os.path.join(str(tmp_path), "temp_dir")
     os.makedirs(temp_dir)
-    pv_streams_to_puml_files(pv_streams, file_directory=temp_dir)
+    pv_streams_to_puml_files(pv_streams, output_file_directory=temp_dir)
     # Check that the expected files are created in temp_dir
     expected_files = ["Job_A.puml", "Job_B.puml"]
     for expected_file in expected_files:
