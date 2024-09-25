@@ -4,7 +4,8 @@ import pytest
 
 import jq  # type: ignore[import-not-found]
 
-from tel2puml.otel_to_pv.config import JQFieldSpec
+from tel2puml.otel_to_pv.data_sources.json_data_source.json_config \
+    import JQFieldSpec
 from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter \
     import (
         JQVariableTree,

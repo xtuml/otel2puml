@@ -2,11 +2,12 @@
 
 import pytest
 
-from tel2puml.otel_to_pv.config import JQFieldSpec, FieldSpec
+from tel2puml.otel_to_pv.data_sources.json_data_source.json_config import (
+    JQFieldSpec,
+    FieldSpec,
+)
 from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter \
-    import (
-        JQVariableTree,
-    )
+    import JQVariableTree
 
 
 @pytest.fixture
@@ -152,14 +153,14 @@ def field_mapping_with_variables(
 def field_spec_with_variables_1_expected_jq() -> str:
     """Expected JQ query for field_spec_with_variables_1"""
     return (
-        ' | ($var1.second_1.second_2.[] | select((try .third_1.third_2 catch '
+        " | ($var1.second_1.second_2.[] | select((try .third_1.third_2 catch "
         'null) == "value"))'
         ".value_path.next as"
         " $out0concat00"
         " | (try $var2.third_1.third_2 catch null) as $out0concat10"
-        ' | (($out0concat00 | (if . == null then null else (. | tostring) '
+        " | (($out0concat00 | (if . == null then null else (. | tostring) "
         'end)) + "_" + ($out0concat10 | (if . == null then null else (. | '
-        'tostring) end)))'
+        "tostring) end)))"
         " as"
         " $out0"
     )
@@ -171,9 +172,9 @@ def field_spec_with_variables_2_expected_jq() -> str:
     return (
         " | (try $var0.first.second.third catch null) as $out1concat00"
         " | (try $var0.first.second.third catch null) as $out1concat10"
-        ' | (($out1concat00 | (if . == null then null else (. | tostring) '
+        " | (($out1concat00 | (if . == null then null else (. | tostring) "
         'end)) + "_" + ($out1concat10 | (if . == null then null else (. | '
-        'tostring) end)))'
+        "tostring) end)))"
         " as"
         " $out1"
     )
@@ -185,9 +186,9 @@ def field_spec_with_variables_3_expected_jq() -> str:
     return (
         " | (try $var3.fifth catch null) as $out2concat00"
         " | (try $var3.fifth catch null) as $out2concat10"
-        ' | (($out2concat00 | (if . == null then null else (. | tostring) '
+        " | (($out2concat00 | (if . == null then null else (. | tostring) "
         'end)) + "_" + ($out2concat10 | (if . == null then null else (. | '
-        'tostring) end)))'
+        "tostring) end)))"
         " as"
         " $out2"
     )
@@ -197,7 +198,7 @@ def field_spec_with_variables_3_expected_jq() -> str:
 def field_spec_with_variables_4_expected_jq() -> str:
     """Expected JQ query for field_spec_with_variables_4"""
     return (
-        ' | ($var1.second_1.second_2.[] | select((try .third_1.third_2 catch '
+        " | ($var1.second_1.second_2.[] | select((try .third_1.third_2 catch "
         'null) == "value"))'
         ".value_path.next as"
         " $out3concat00"

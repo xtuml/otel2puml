@@ -10,7 +10,7 @@ from .json_jq_converter import (
     generate_records_from_compiled_jq,
     field_mapping_to_compiled_jq,
 )
-from tel2puml.otel_to_pv.config import JSONDataSourceConfig
+from .json_config import JSONDataSourceConfig
 
 
 class JSONDataSource(OTELDataSource):

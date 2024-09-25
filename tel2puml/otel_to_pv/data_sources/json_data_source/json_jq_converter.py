@@ -5,7 +5,7 @@ from typing import Any, Generator
 
 import jq  # type: ignore[import-not-found]
 
-from tel2puml.otel_to_pv.config import (
+from .json_config import (
     JQFieldSpec,
     field_spec_mapping_to_jq_field_spec_mapping,
     FieldSpec,
