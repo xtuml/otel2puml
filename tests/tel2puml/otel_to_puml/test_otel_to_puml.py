@@ -9,10 +9,13 @@ from pathlib import Path
 import pytest
 
 from tel2puml.otel_to_puml import otel_to_puml
-from tel2puml.tel2puml_types import OtelPumlOptions, PVPumlOptions
+from tel2puml.tel2puml_types import OtelPumlOptions
 from tel2puml.otel_to_pv.config import load_config_from_dict
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
     NodeModel,
+)
+from tel2puml.otel_to_pv.data_holders.sql_data_holder.sql_dataholder import (
+    SQLDataHolder,
 )
 
 
@@ -28,6 +31,13 @@ class TestOtelToPuml:
     def mock_isdir(self) -> Generator[MagicMock, None, None]:
         with patch("tel2puml.otel_to_puml.os.path.isdir") as isdir_mock:
             yield isdir_mock
+
+    @pytest.fixture
+    def mock_fetch_data_holder(self) -> Generator[MagicMock, None, None]:
+        with patch(
+            "tel2puml.otel_to_pv.sequence_otel_v2.fetch_data_holder"
+        ) as fetch_data_hoder_mock:
+            yield fetch_data_hoder_mock
 
     def test_invalid_options_all_components_missing_otel_options(
         self, mock_isdir: MagicMock
@@ -178,7 +188,7 @@ class TestOtelToPuml:
         node1 = nodes[0]
         assert node1.application_name == "Processor 1.0"
         assert node1.event_id == "span001"
-        assert node1.event_type == 'com.T2h.366Yx 500'
+        assert node1.event_type == "com.T2h.366Yx 500"
         assert node1.job_id == "job_A"
         assert node1.job_name == "Frontend TestJob"
         assert node1.parent_event_id is None
@@ -190,3 +200,49 @@ class TestOtelToPuml:
         assert node2.job_id == "job_A"
         assert node2.job_name == "Frontend TestJob"
         assert node2.parent_event_id == "span001"
+
+    def test_successful_otel_to_puml_components_stream_data(
+        self,
+        tmp_path: Path,
+        sql_data_holder_with_otel_jobs: SQLDataHolder,
+        mock_fetch_data_holder: MagicMock,
+        mock_yaml_config_dict: dict[str, Any],
+    ) -> None:
+        """Test successful execution when components='otel_to_puml' and ingest
+        data is set False. This tests streaming data from the data holder
+        and generating puml files.
+        """
+        mock_fetch_data_holder.return_value = sql_data_holder_with_otel_jobs
+
+        output_dir = tmp_path / "puml_output"
+
+        otel_options: OtelPumlOptions = {
+            "config": load_config_from_dict(mock_yaml_config_dict),
+            "ingest_data": False,
+        }
+        # Run function
+        otel_to_puml(
+            otel_to_puml_options=otel_options,
+            components="otel_to_puml",
+            output_file_directory=str(output_dir),
+        )
+
+        assert output_dir.exists()
+        assert os.listdir(output_dir) == ["test_name.puml"]
+        puml_file_path = output_dir / "test_name.puml"
+
+        expected_content = (
+            "@startuml\n"
+            '    partition "default_name" {\n'
+            '        group "default_name"\n'
+            "            :event_type_1;\n"
+            "            :event_type_0;\n"
+            "        end group\n"
+            "    }\n"
+            "@enduml"
+        )
+        with open(puml_file_path, "r") as f:
+            content = f.read()
+            content = content.strip()
+            expected_content = expected_content.strip()
+            assert content == expected_content
