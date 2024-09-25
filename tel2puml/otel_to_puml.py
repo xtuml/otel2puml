@@ -12,6 +12,9 @@ from tel2puml.pv_to_puml import (
 )
 from tel2puml.otel_to_pv.config import load_config_from_yaml
 from tel2puml.otel_to_pv.ingest_otel_data import ingest_data_into_dataholder
+from tel2puml.otel_to_pv.data_holders import (
+    DataHolder,
+)
 
 
 def otel_to_puml(
@@ -19,7 +22,7 @@ def otel_to_puml(
     pv_to_puml_options: Optional[PVPumlOptions] = None,
     output_file_directory: str = "puml_output",
     components: Literal["all", "otel_to_puml", "pv_to_puml"] = "all",
-) -> None:
+) -> DataHolder | None:
     """Creates puml files from otel data. Takes optional parameters to handle
     separate parts of the process individually.
 
@@ -33,6 +36,8 @@ def otel_to_puml(
     :param components: The parts of the process that are required. Defaults to
     "all".
     :type components: `Literal`["all", "otel_to_puml", "pv_to_puml"]
+    :return: DataHolder object or None
+    :rtype: :class:`DataHolder` | `None`
     """
     # Create output directory if non-existent
     if not os.path.isdir(output_file_directory):
@@ -55,8 +60,8 @@ def otel_to_puml(
                 " is required."
             )
         if otel_to_puml_options["ingest_data"]:
-            ingest_data_into_dataholder(otel_to_puml_options["config"])
-            return
+            data_holder = ingest_data_into_dataholder(otel_to_puml_options["config"])
+            return data_holder
         else:
             pv_streams = otel_to_pv(
                 config=otel_to_puml_options["config"],
