@@ -287,7 +287,7 @@ def pv_files_to_pv_streams(
     file_directory: Optional[str] = None,
     file_list: Optional[list[str]] = None,
     job_name: str = "default.puml",
-    group_by_job_id: bool = False,
+    group_by_job_id: Optional[bool] = False,
 ) -> Generator[
     tuple[str, Generator[Generator[PVEvent, Any, None], Any, None]],
     Any,
@@ -317,18 +317,28 @@ def pv_files_to_pv_streams(
     `Any`, `None`], `Any`, `None`]],`Any`,`None`]
     """
     if file_directory:
-        file_list: list[str] = [
+        file_paths: list[str] = [
             file_directory + "/" + file
             for file in os.listdir(file_directory)
             if file.endswith(".json")
         ]
+    elif file_list:
+        file_paths = file_list
     else:
-        file_list = file_list
+        raise ValueError("file_directory or file_list has to be specified.")
 
-    pv_stream_sequence = pv_job_files_to_event_sequence_streams(file_list)
+    pv_stream_sequence = pv_job_files_to_event_sequence_streams(file_paths)
 
     if group_by_job_id:
-        events_by_job_id = cluster_events_by_job_id(pv_stream_sequence)
+        events_by_job_id: dict[str, list[PVEvent]] = {}
+        for pv_stream in pv_stream_sequence:
+            events_by_job_id = cluster_events_by_job_id(pv_stream)
+            for job_id, events in events_by_job_id.items():
+                if job_id in events_by_job_id:
+                    events_by_job_id[job_id].extend(events)
+                else:
+                    events_by_job_id[job_id] = events
+
         pv_stream_sequence = (events for events in events_by_job_id.values())
 
     pv_stream_gen = event_sequence_to_gen(pv_stream_sequence)
