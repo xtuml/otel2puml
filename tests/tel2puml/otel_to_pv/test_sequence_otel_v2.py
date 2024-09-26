@@ -544,12 +544,12 @@ class TestSeqeunceOTelJobs:
             config, ingest_data=True
         )
         events = []
-        valid_job_names = ["Backend TestJob", "Frontend TestJob"]
+        valid_job_names = ["Backend_TestJob", "Frontend_TestJob"]
         valid_job_ids = {
-            "0_trace_id_1 4.8",
-            "1_trace_id_1 4.8",
-            "0_trace_id_0 4.8",
-            "1_trace_id_0 4.8",
+            "0_trace_id_1_4.8",
+            "1_trace_id_1_4.8",
+            "0_trace_id_0_4.8",
+            "1_trace_id_0_4.8",
         }
         valid_event_ids = [
             f"{i}_span_{j}_{k}"
@@ -655,12 +655,12 @@ class TestSeqeunceOTelJobs:
         result = otel_to_pv(config, ingest_data=True)
 
         events = []
-        valid_job_names = ["Backend TestJob", "Frontend TestJob"]
+        valid_job_names = ["Backend_TestJob", "Frontend_TestJob"]
         valid_job_ids = {
-            "0_trace_id_1 4.8",
-            "1_trace_id_1 4.8",
-            "0_trace_id_0 4.8",
-            "1_trace_id_0 4.8",
+            "0_trace_id_1_4.8",
+            "1_trace_id_1_4.8",
+            "0_trace_id_0_4.8",
+            "1_trace_id_0_4.8",
         }
         valid_event_ids = [
             f"{i}_span_{j}_{k}"

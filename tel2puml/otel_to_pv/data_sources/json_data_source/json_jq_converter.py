@@ -1,10 +1,15 @@
 """Module to transform input JSON to a format that can be ingested into a
 DataHolder."""
+
 from typing import Any, Generator
 
 import jq  # type: ignore[import-not-found]
 
-from tel2puml.otel_to_pv.config import JQFieldSpec
+from .json_config import (
+    JQFieldSpec,
+    field_spec_mapping_to_jq_field_spec_mapping,
+    FieldSpec,
+)
 
 
 class JQVariableTree:
@@ -15,6 +20,7 @@ class JQVariableTree:
     :param var_prefix: The prefix for the variable, defaults to "var"
     :type var_prefix: `str`, optional
     """
+
     def __init__(self, var_num: int = 0, var_prefix: str = "var") -> None:
         """Constructor method."""
         self.var_num: int = var_num
@@ -51,9 +57,7 @@ class JQVariableTree:
         )
         return self.child_var_dict[key_path]
 
-    def get_child(
-        self, key_path: str
-    ) -> "JQVariableTree":
+    def get_child(self, key_path: str) -> "JQVariableTree":
         """Get the variable tree for the given key path. Raise a ValueError if
         the key path does not exist in the variable tree.
 
@@ -100,7 +104,7 @@ def get_updated_path_from_key_path_key_value_and_root_var_tree(
     :param var_num: The current variable number
     :type var_num: `int`
     :return: The updated path and the updated variable number
-    :rtype: `tuple`[:class:`str`, `int`]
+    :rtype: `tuple`[`str`, `int`]
     """
 
     split_on_array = key_path.split(".[].")
@@ -176,7 +180,7 @@ def update_field_specs_with_variables(
     """Update the field specs with variables.
 
     :param field_mapping: The field mapping to update
-    :type field_mapping: `dict`[:class:`str`, :class:`JQFieldSpec`]
+    :type field_mapping: `dict`[`str`, :class:`JQFieldSpec`]
     :return: The root variable tree
     :rtype: :class:`JQVariableTree`
     """
@@ -199,7 +203,7 @@ def build_base_variable_jq_query(
     :param var_tree: The variable tree
     :type var_tree: :class:`JQVariable`
     :param parent_var_tree: The parent variable tree, defaults to None
-    :type parent_var_tree: :class:`JQVariableTree` | None, optional
+    :type parent_var_tree: :class:`JQVariableTree` | `None`, optional
     :param path: The path, defaults to ""
     :type path: `str`, optional
     :return: The base variable jq query
@@ -221,7 +225,81 @@ def build_base_variable_jq_query(
     return jq_query
 
 
-def get_jq_for_field_spec(field_spec: JQFieldSpec, out_var: str) -> str:
+def handle_string_joined_variables_jq_query(
+    variables: list[list[str]],
+) -> str:
+    """Handle the string joined variables.
+
+    :param variables: The variables
+    :type variables: `list`[`list`[`str`]]
+    :return: The joined variable jq query
+    :rtype: `str`
+    :raises ValueError: If there are no priority variables in one of the nested
+    lists
+    """
+    join_variables_output: list[str] = []
+    for priority_variables in variables:
+        if len(priority_variables) == 0:
+            raise ValueError("Expecting at least one priority variable.")
+        join_variables_output.append(
+            "("
+            + " // ".join(priority_variables)
+            + " | (if . == null then null else (. | tostring) end))"
+        )
+    return ' + "_" + '.join(join_variables_output)
+
+
+def handle_array_joined_variables_jq_query(
+    variables: list[list[str]],
+) -> str:
+    """Handle the array joined variables.
+
+    :param variables: The variables
+    :type variables: `list`[`list`[`str`]]
+    :return: The joined variable jq query
+    :rtype: `str`
+    """
+    if len(variables) == 0:
+        return ""
+    join_variables_output: list[str] = []
+    for priority_variables in variables:
+        if len(priority_variables) == 0:
+            raise ValueError("Expecting at least one priority variable.")
+        join_variables_output.append(f"[{'//'.join(priority_variables)}]")
+    return (
+        "("
+        + " + ".join(join_variables_output)
+        + ") | flatten | (if (. | all(. == null)) and . != [] then null else "
+        ". end)"
+    )
+
+
+def handle_value_type_joined_variables_jq_query(
+    variables: list[list[str]], value_type: str
+) -> str:
+    """Handle the value type joined variables.
+
+    :param variables: The variables
+    :type variables: `list`[`list`[`str`]]
+    :param value_type: The value type
+    :type value_type: :class:`Literal`["string", "array"]
+    :return: The joined variable jq query
+    :rtype: `str`
+    :raises ValueError: If the value type is not string or array
+    """
+    match value_type:
+        case "string":
+            return handle_string_joined_variables_jq_query(variables)
+        case "array":
+            return handle_array_joined_variables_jq_query(variables)
+        case _:
+            raise ValueError(f"Invalid value_type: {value_type}")
+
+
+def get_jq_for_field_spec(
+    field_spec: JQFieldSpec,
+    out_var: str,
+) -> str:
     """Get the jq query for the field spec.
 
     :param field_spec: The field spec
@@ -234,7 +312,10 @@ def get_jq_for_field_spec(field_spec: JQFieldSpec, out_var: str) -> str:
     jq_query = ""
     variables: list[list[str]] = []
     for (
-        i, priority_key_paths, priority_key_values, priority_value_paths
+        i,
+        priority_key_paths,
+        priority_key_values,
+        priority_value_paths,
     ) in zip(
         range(len(field_spec.key_paths)),
         field_spec.key_paths,
@@ -244,7 +325,9 @@ def get_jq_for_field_spec(field_spec: JQFieldSpec, out_var: str) -> str:
         priority_variables: list[str] = []
         for j, key_path, key_value, value_path in zip(
             range(len(priority_key_paths)),
-            priority_key_paths, priority_key_values, priority_value_paths
+            priority_key_paths,
+            priority_key_values,
+            priority_value_paths,
         ):
             variable = f"{out_var}concat{i}{j}"
             priority_variables.append(variable)
@@ -269,17 +352,15 @@ def get_jq_for_field_spec(field_spec: JQFieldSpec, out_var: str) -> str:
                     )
                 jq_query += (
                     f" | ({split_on_array[0]}.[]"
-                    + f" | select(.{'.'.join(split_on_array[1:])} "
+                    + f" | select((try .{'.'.join(split_on_array[1:])} catch "
+                    "null) "
                     + f'== "{key_value}")).{value_path} as {variable}'
                 )
             else:
-                jq_query += f" | {key_path} as {variable}"
+                jq_query += f" | (try {key_path} catch null) as {variable}"
         variables.append(priority_variables)
-    joined_variables = ' + "_" + '.join(
-        "(" + " // ".join(
-            f'{variable}' for variable in priority_variables
-        ) + " | tostring)"
-        for priority_variables in variables
+    joined_variables = handle_value_type_joined_variables_jq_query(
+        variables, field_spec.value_type
     )
     jq_query += f" | ({joined_variables}) as {out_var}"
     return jq_query
@@ -289,7 +370,7 @@ def get_jq_using_field_mapping(field_mapping: dict[str, JQFieldSpec]) -> str:
     """Get the jq query using the field mapping.
 
     :param field_mapping: The field mapping
-    :type field_mapping: `dict`[:class:`str`, :class:`FieldSpec`]
+    :type field_mapping: `dict`[`str`, :class:`FieldSpec`]
     :return: The jq query
     :rtype: `str`
     """
@@ -319,7 +400,7 @@ def get_jq_query_from_field_mapping_with_variables_and_var_tree(
     tree.
 
     :param field_mapping: The field mapping
-    :type field_mapping: `dict`[:class:`str`, :class:`FieldSpec`]
+    :type field_mapping: `dict`[`str`, :class:`FieldSpec`]
     :param var_tree: The variable tree
     :type var_tree: :class:`JQVariable`
     :return: The jq query
@@ -327,14 +408,14 @@ def get_jq_query_from_field_mapping_with_variables_and_var_tree(
     """
     jq_query = build_base_variable_jq_query(var_tree)
     jq_query += get_jq_using_field_mapping(field_mapping)
-    return f"[{jq_query}]"
+    return f"{jq_query}"
 
 
-def field_mapping_to_jq_query(field_mapping: dict[str, JQFieldSpec]) -> str:
+def jq_field_mapping_to_jq_query(field_mapping: dict[str, JQFieldSpec]) -> str:
     """Convert the field mapping to a jq query.
 
     :param field_mapping: The field mapping
-    :type field_mapping: `dict`[:class:`str`, :class:`FieldSpec`]
+    :type field_mapping: `dict`[`str`, :class:`FieldSpec`]
     :return: The jq query
     :rtype: `str`
     """
@@ -344,13 +425,49 @@ def field_mapping_to_jq_query(field_mapping: dict[str, JQFieldSpec]) -> str:
     )
 
 
-def field_mapping_to_compiled_jq(field_mapping: dict[str, JQFieldSpec]) -> Any:
+def jq_field_mapping_to_compiled_jq(
+    field_mapping: dict[str, JQFieldSpec],
+) -> Any:
     """Convert the field mapping to a compiled jq query.
 
     :param field_mapping: The field mapping
-    :type field_mapping: `dict`[:class:`str`, :class:`FieldSpec`]
+    :type field_mapping: `dict`[`str`, :class:`FieldSpec`]
     :return: The compiled jq query
     :rtype: `Any`
     """
-    jq_query = field_mapping_to_jq_query(field_mapping)
+    jq_query = jq_field_mapping_to_jq_query(field_mapping)
     return jq.compile(jq_query)
+
+
+def field_mapping_to_compiled_jq(field_mapping: dict[str, FieldSpec]) -> Any:
+    """Convert the field mapping to a compiled jq query.
+
+    :param field_mapping: The field mapping
+    :type field_mapping: `dict`[`str`, :class:`FieldSpec`]
+    :return: The compiled jq query
+    :rtype: `Any`
+    """
+    jq_field_mapping = field_spec_mapping_to_jq_field_spec_mapping(
+        field_mapping
+    )
+    return jq_field_mapping_to_compiled_jq(jq_field_mapping)
+
+
+def generate_records_from_compiled_jq(
+    input_data: Any, compiled_jq: Any
+) -> Generator[Any, None, None]:
+    """Generate records from compiled jq.
+
+    :param input_data: The input data
+    :type input_data: `Any`
+    :param compiled_jq: The compiled jq query
+    :type compiled_jq: `Any`
+    :return: A generator of records
+    :rtype: `Generator`[`Any`, `None`, `None`]
+    """
+    records = iter(compiled_jq.input_value(input_data))
+    for record in records:
+        if isinstance(record, list):
+            yield from record
+        else:
+            yield record

@@ -1,13 +1,16 @@
 """Module containing DataSource sub class responsible for JSON ingestion."""
-import os
-from typing import Any, Iterator
 
-import ijson
+import os
+from typing import Iterator
+import json
 
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 from ..base import OTELDataSource
-from . import json_data_converter
-from tel2puml.otel_to_pv.config import JSONDataSourceConfig
+from .json_jq_converter import (
+    generate_records_from_compiled_jq,
+    field_mapping_to_compiled_jq,
+)
+from .json_config import JSONDataSourceConfig
 
 
 class JSONDataSource(OTELDataSource):
@@ -28,6 +31,9 @@ class JSONDataSource(OTELDataSource):
                 """No directory or files found. Please check yaml config."""
             )
         self.file_list = self.get_file_list()
+        self.compiled_jq = field_mapping_to_compiled_jq(
+            self.config["field_mapping"]
+        )
 
     def set_dirpath(self) -> str | None:
         """Set the directory path.
@@ -77,27 +83,6 @@ class JSONDataSource(OTELDataSource):
             return [self.filepath]
         raise ValueError("Directory/Filepath not set.")
 
-    def process_record(self, record: dict[str, Any]) -> Iterator[OTelEvent]:
-        """Process a single record and yield OTelEvent objects.
-
-        :param record: The record to process
-        :type record: `dict`[`str`,`Any`]
-        :return: An iterator of tuples containing OTelEvent and header
-        :rtype: `Iterator`[:class: `OTelEvent`]
-        """
-        header_dict: dict[str, Any] = json_data_converter.process_header(
-            self.config, record
-        )
-        spans = json_data_converter.process_spans(self.config, record)
-        for span in spans:
-            if isinstance(span, dict):
-                processed_json = json_data_converter.flatten_and_map_data(
-                    self.config, span, header_dict
-                )
-                yield (self.create_otel_object(processed_json))
-            else:
-                raise TypeError("json is not of type dict.")
-
     def parse_json_stream(self, filepath: str) -> Iterator[OTelEvent]:
         """Function that parses a json file, maps the json to the application
         structure through the config specified in the config.yaml file.
@@ -108,32 +93,16 @@ class JSONDataSource(OTELDataSource):
         :return: An iterator of tuples containing OTelEvent and header
         :rtype: `Iterator`[:class:`OTelEvent`]
         """
-        with open(filepath, "rb") as file:
-            data = ijson.items(file, self.config["data_location"])
-            for records in data:
-                if isinstance(records, dict):
-                    yield from self.process_record(records)
-                elif isinstance(records, list):
-                    for record_data in records:
-                        yield from self.process_record(record_data)
-
-    def create_otel_object(self, record: dict[str, Any]) -> OTelEvent:
-        """Creates an OTelEvent object from a JSON record.
-
-        :return: OTelEvent object
-        :rtype: :class:`OTelEvent`
-        """
-        return OTelEvent(
-            job_name=record["job_name"],
-            job_id=record["job_id"],
-            event_type=record["event_type"],
-            event_id=record["event_id"],
-            start_timestamp=record["start_timestamp"],
-            end_timestamp=record["end_timestamp"],
-            application_name=record["application_name"],
-            parent_event_id=record.get("parent_event_id", None),
-            child_event_ids=record.get("child_event_ids", None),
-        )
+        with open(filepath, "r", encoding="utf-8") as file:
+            if self.config["json_per_line"]:
+                jsons = (json.loads(line) for line in file)
+            else:
+                jsons = (data for data in [json.load(file)])
+            for data in jsons:
+                for record in generate_records_from_compiled_jq(
+                    data, self.compiled_jq
+                ):
+                    yield OTelEvent(**record)
 
     def __next__(self) -> OTelEvent:
         """Returns the next OTelEvent in the sequence

@@ -2,7 +2,11 @@
 from typing import Any
 import pytest
 
-from tel2puml.otel_to_pv.config import JQFieldSpec
+import jq  # type: ignore[import-not-found]
+from pytest import MonkeyPatch
+
+from tel2puml.otel_to_pv.data_sources.json_data_source.json_config \
+    import JQFieldSpec, FieldSpec
 from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter \
     import (
         JQVariableTree,
@@ -10,11 +14,16 @@ from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter \
         update_field_spec_with_variables,
         update_field_specs_with_variables,
         build_base_variable_jq_query,
+        handle_string_joined_variables_jq_query,
+        handle_array_joined_variables_jq_query,
+        handle_value_type_joined_variables_jq_query,
         get_jq_for_field_spec,
         get_jq_using_field_mapping,
         get_jq_query_from_field_mapping_with_variables_and_var_tree,
-        field_mapping_to_jq_query,
+        jq_field_mapping_to_jq_query,
+        jq_field_mapping_to_compiled_jq,
         field_mapping_to_compiled_jq,
+        generate_records_from_compiled_jq
     )
 
 
@@ -284,6 +293,82 @@ class TestFieldMappingToCompiledJQ:
         )
 
     @staticmethod
+    def test_handle_string_joined_variable_jq_query() -> None:
+        """Test the handle_string_joined_variable_jq_query function."""
+        # test case with empty list
+        assert handle_string_joined_variables_jq_query([]) == ""
+        # test case with one of priority variable lists empty
+        with pytest.raises(ValueError):
+            handle_string_joined_variables_jq_query([["x", "y"], []])
+        # test case with one variable
+        assert handle_string_joined_variables_jq_query(
+            [["x"]]
+        ) == "(x | (if . == null then null else (. | tostring) end))"
+        # test case with multiple variables with single and multiple priority
+        # variables
+        assert handle_string_joined_variables_jq_query(
+            [["x", "y"], ["z"]]
+        ) == (
+            '(x // y | (if . == null then null else (. | tostring) end))'
+            ' + "_" + '
+            '(z | (if . == null then null else (. | tostring) end))'
+        )
+
+    @staticmethod
+    def test_handle_array_joined_variables_jq_query() -> None:
+        """Test the handle_array_joined_variables_jq_query function."""
+        # test case with empty list
+        assert handle_array_joined_variables_jq_query([]) == ""
+        # test case with one of priority variable lists empty
+        with pytest.raises(ValueError):
+            handle_array_joined_variables_jq_query([["x", "y"], []])
+        # test case with one variable
+        assert handle_array_joined_variables_jq_query(
+            [["x"]]
+        ) == (
+            "([x]) | flatten | (if (. | all(. == null)) and . != [] then null "
+            "else . end)"
+        )
+        # test case with multiple variables with single and multiple priority
+        # variables
+        assert handle_array_joined_variables_jq_query(
+            [["x", "y"], ["z"]]
+        ) == (
+            "([x//y] + [z]) | flatten | (if (. | all(. == null)) and . != [] "
+            "then null else . end)"
+        )
+
+    @staticmethod
+    def test_handle_value_type_joined_variables_jq_query(
+        monkeypatch: MonkeyPatch
+    ) -> None:
+        """Test the handle_value_type_joined_variables_jq_query function."""
+        target_module = (
+            "tel2puml.otel_to_pv.data_sources.json_data_source"
+            ".json_jq_converter"
+        )
+        monkeypatch.setattr(
+            target_module + ".handle_string_joined_variables_jq_query",
+            lambda *_: "string"
+        )
+        monkeypatch.setattr(
+            target_module + ".handle_array_joined_variables_jq_query",
+            lambda *_: "array"
+        )
+        # test case with string value type
+        assert handle_value_type_joined_variables_jq_query(
+            [], "string"
+        ) == "string"
+        # test case with array value type
+        assert handle_value_type_joined_variables_jq_query(
+            [], "array"
+        ) == "array"
+        with pytest.raises(ValueError):
+            handle_value_type_joined_variables_jq_query(
+                [], "incorrect"
+            )
+
+    @staticmethod
     def test_get_jq_for_field_spec(
         field_spec_with_variables_1: JQFieldSpec,
         field_spec_with_variables_2: JQFieldSpec,
@@ -374,17 +459,30 @@ class TestFieldMappingToCompiledJQ:
         assert jq_query == (expected_full_query)
 
     @staticmethod
-    def test_field_mapping_to_jq_query(
+    def test_jq_field_mapping_to_jq_query(
         field_mapping: dict[str, JQFieldSpec],
         expected_full_query: str,
     ) -> None:
         """Test the field_mapping_to_jq_query function."""
-        jq_query = field_mapping_to_jq_query(field_mapping)
+        jq_query = jq_field_mapping_to_jq_query(field_mapping)
         assert jq_query == (expected_full_query)
 
     @staticmethod
+    def test_jq_field_mapping_to_compiled_jq(
+        jq_field_mapping_for_fixture_data: dict[str, JQFieldSpec],
+        mock_json_data: dict[str, Any],
+        expected_mapped_json: list[dict[str, str]],
+    ) -> None:
+        """Test the field_mapping_to_compiled_jq function."""
+        compiled_jq = jq_field_mapping_to_compiled_jq(
+            jq_field_mapping_for_fixture_data
+        )
+        output = list(iter(compiled_jq.input_value(mock_json_data)))
+        assert output == expected_mapped_json
+
+    @staticmethod
     def test_field_mapping_to_compiled_jq(
-        field_mapping_for_fixture_data: dict[str, JQFieldSpec],
+        field_mapping_for_fixture_data: dict[str, FieldSpec],
         mock_json_data: dict[str, Any],
         expected_mapped_json: list[dict[str, str]],
     ) -> None:
@@ -392,5 +490,29 @@ class TestFieldMappingToCompiledJQ:
         compiled_jq = field_mapping_to_compiled_jq(
             field_mapping_for_fixture_data
         )
-        output = compiled_jq.input_value(mock_json_data).first()
+        output = list(iter(compiled_jq.input_value(mock_json_data)))
         assert output == expected_mapped_json
+
+    @staticmethod
+    def test_generate_records_from_compiled_jq() -> None:
+        """Test the generate_records_from_compiled_jq function."""
+        # test case with multiple records
+        data = {
+            "records": [
+                {"first": "value1", "second": "value2"},
+                {"first": "value3", "second": "value4"},
+            ]
+        }
+        compiled_jq = jq.compile(".records[]")
+        output = list(generate_records_from_compiled_jq(data, compiled_jq))
+        assert output == [
+            {"first": "value1", "second": "value2"},
+            {"first": "value3", "second": "value4"},
+        ]
+        # test case where the record is a list
+        compiled_jq = jq.compile("[.records[]]")
+        output = list(generate_records_from_compiled_jq(data, compiled_jq))
+        assert output == [
+            {"first": "value1", "second": "value2"},
+            {"first": "value3", "second": "value4"},
+        ]
