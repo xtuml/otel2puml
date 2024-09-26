@@ -2,9 +2,9 @@
 
 import os
 import json
-from unittest.mock import patch, MagicMock
-from typing import Generator, Any
 from pathlib import Path
+from typing import Generator, Any
+from unittest.mock import patch, MagicMock
 
 import pytest
 
@@ -38,7 +38,8 @@ class TestOtelToPuml:
     def test_invalid_options_all_components_missing_otel_options(
         mock_isdir: MagicMock,
     ) -> None:
-        """Test that ValueError is raised when 'all' is selected but otel_to_puml_options is None."""
+        """Test that ValueError is raised when 'all' is selected but
+        otel_to_puml_options is None."""
         mock_isdir.return_value = True  # Assume directory exists
 
         with pytest.raises(ValueError) as exc_info:
@@ -52,7 +53,8 @@ class TestOtelToPuml:
     def test_invalid_options_otel_to_puml_components_missing_otel_options(
         mock_isdir: MagicMock,
     ) -> None:
-        """Test that ValueError is raised when 'otel_to_puml' is selected but otel_to_puml_options is None."""
+        """Test that ValueError is raised when 'otel_to_puml' is selected
+        but otel_to_puml_options is None."""
         mock_isdir.return_value = True
 
         with pytest.raises(ValueError) as exc_info:
@@ -118,7 +120,7 @@ class TestOtelToPuml:
             "config": load_config_from_dict(mock_yaml_config_dict),
             "ingest_data": True,
         }
-        # Run function
+
         otel_to_puml(
             otel_to_puml_options=otel_options,
             components="all",
