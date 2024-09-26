@@ -150,14 +150,14 @@ def pv_events_from_folder_to_event_stream(
 
 def pv_job_files_to_event_sequence_streams(
     file_paths: list[str],
-) -> Generator[list[PVEvent], Any, None]:
+) -> Generator[Iterable[PVEvent], Any, None]:
     """Reads a list of PV job json array files and yields the event sequences
     when iterated over
 
     :param file_paths: The paths to the PV job json files
     :type file_paths: `list`[`str`]
     :return: A generator of event sequences
-    :rtype: `Generator`[`list`[:class:`PVEvent`], Any, None]
+    :rtype: `Generator`[`Iterable`[:class:`PVEvent`], Any, None]
     """
     for file_path in file_paths:
         yield pv_job_file_to_event_sequence(file_path)
@@ -341,35 +341,4 @@ def pv_files_to_pv_streams(
 
         pv_stream_sequence = (events for events in events_by_job_id.values())
 
-    pv_stream_gen = event_sequence_to_gen(pv_stream_sequence)
-
-    yield (job_name, pv_stream_gen)
-
-
-def event_sequence_to_gen(
-    pv_stream_sequence: Generator[list[PVEvent], Any, None],
-) -> Generator[Generator[PVEvent, Any, None], Any, None]:
-    """Creates a generator of generators of PVEvents from a generator of lists
-    of PVEvents.
-
-    :param pv_stream_sequence: Generator of lists of PVEvents
-    :type pv_stream_sequence: `Generator`[`list`[:class:`PVEvent`], `Any`,
-    `None`]
-    :return: Generator of generators of PVEvents.
-    :rtype: `Generator`[`Generator`[:class:`PVEvent`, `Any`, `None`], `Any`,
-    `None`]
-    """
-    for pv_event_list in pv_stream_sequence:
-        yield event_list_to_gen(pv_event_list)
-
-
-def event_list_to_gen(events: list[PVEvent]) -> Generator[PVEvent, Any, None]:
-    """Creates a generator of PVEvents from a list of PVEvents.
-
-    :param events: List of PVEvents
-    :type events: `list`[:class: `PVEvent`]
-    :return: A generator of PVEvents
-    :rtype: `Generator`[:class:`PVEvent`, `Any`, `None`]
-    """
-    for event in events:
-        yield event
+    yield (job_name, pv_stream_sequence)
