@@ -142,8 +142,8 @@ class TestOtelToPuml:
             "@startuml\n"
             '    partition "default_name" {\n'
             '        group "default_name"\n'
-            "            :com.C36.9ETRp 401;\n"
-            "            :com.T2h.366Yx 500;\n"
+            "            :com.C36.9ETRp_401;\n"
+            "            :com.T2h.366Yx_500;\n"
             "        end group\n"
             "    }\n"
             "@enduml"
@@ -192,19 +192,19 @@ class TestOtelToPuml:
         assert len(nodes) == 2
         assert all(isinstance(node, NodeModel) for node in nodes)
         node1 = nodes[0]
-        assert node1.application_name == "Processor 1.0"
+        assert node1.application_name == "Processor_1.0"
         assert node1.event_id == "span001"
-        assert node1.event_type == "com.T2h.366Yx 500"
+        assert node1.event_type == "com.T2h.366Yx_500"
         assert node1.job_id == "job_A"
-        assert node1.job_name == "Frontend TestJob"
+        assert node1.job_name == "Frontend_TestJob"
         assert node1.parent_event_id is None
 
         node2 = nodes[1]
-        assert node2.application_name == "Handler 1.0"
+        assert node2.application_name == "Handler_1.0"
         assert node2.event_id == "span002"
-        assert node2.event_type == "com.C36.9ETRp 401"
+        assert node2.event_type == "com.C36.9ETRp_401"
         assert node2.job_id == "job_A"
-        assert node2.job_name == "Frontend TestJob"
+        assert node2.job_name == "Frontend_TestJob"
         assert node2.parent_event_id == "span001"
 
     @staticmethod
