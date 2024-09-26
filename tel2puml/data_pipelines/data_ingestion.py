@@ -134,11 +134,11 @@ def get_graph_solutions_from_events(
 
 def cluster_events_by_job_id(
     events: Iterable[PVEvent],
-) -> dict[str, list[PVEvent]]:
+) -> dict[str, Iterable[PVEvent]]:
     """This function clusters PV events into jobs.
 
     :param events: A sequence of PV events.
-    :type events: `list`[:class:`dict`]
+    :type events: `Iterable`[:class:`dict`]
     """
     events_by_job_id: dict[str, list[PVEvent]] = {}
     for event in events:

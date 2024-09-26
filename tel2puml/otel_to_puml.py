@@ -2,6 +2,7 @@
 files."""
 
 import os
+from logging import getLogger
 from typing import Optional, Literal
 
 from tel2puml.tel2puml_types import OtelPumlOptions, PVPumlOptions
@@ -39,9 +40,16 @@ def otel_to_puml(
     :return: DataHolder object or None
     :rtype: :class:`DataHolder` | `None`
     """
-    # Create output directory if non-existent
+    # Create output directory if non-existent. Handles nested cases as well.
     if not os.path.isdir(output_file_directory):
-        os.mkdir(output_file_directory)
+        try:
+            os.makedirs(output_file_directory, exist_ok=True)
+        except PermissionError:
+            getLogger(__name__).error(
+                "Permission denied: cannot create directory."
+            )
+        except OSError as e:
+            getLogger(__name__).error(f"Error creating directory.{e}")
 
     # Handle different components
     if components == "all":
