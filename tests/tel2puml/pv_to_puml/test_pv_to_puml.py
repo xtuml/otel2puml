@@ -104,7 +104,9 @@ def test_pv_streams_to_puml_files(
 
 @pytest.mark.parametrize("group_by_job_id", [True, False])
 def test_pv_files_to_pv_streams(
-    mock_job_json_file: list[dict[str, Any]], tmp_path: Path, group_by_job_id: bool
+    mock_job_json_file: list[dict[str, Any]],
+    tmp_path: Path,
+    group_by_job_id: bool,
 ) -> None:
     """Tests the function pv_files_to_pv_streams"""
 

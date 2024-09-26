@@ -375,6 +375,7 @@ def sql_data_holder_with_otel_jobs(
             session.execute(sa.text("DROP TABLE temp_root_nodes"))
     sql_data_holder.base.metadata._remove_table("temp_root_nodes", None)
 
+
 @pytest.fixture
 def mock_job_json_file() -> list[dict[str, Any]]:
     """Fixture to mock job json file."""
