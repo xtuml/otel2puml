@@ -357,7 +357,7 @@ def otel_to_pv(
     async_flag: bool = False,
     event_to_async_group_map: dict[str, dict[str, str]] | None = None,
 ) -> Generator[
-    tuple[str, Generator[Generator[PVEvent, Any, None], Any, None]], Any, None
+    tuple[str, Generator[Iterable[PVEvent], Any, None]], Any, None
 ]:
     """
     Stream data from data holder and convert to PVEvents. Optional parameters
@@ -380,8 +380,8 @@ def otel_to_pv(
     optional
     :return: Generator of tuples of job_name to generator of generators of
     PVEvents grouped by job_name, then job_id.
-    :rtype: `Generator`[`tuple`[`str`, `Generator`[`Generator`[:class:
-    `PVEvent`, `Any`, `None`], `Any`, `None`]], `Any`, `None`]
+    :rtype: `Generator`[`tuple`[`str`, `Generator`[`Iterable`[:class:
+    `PVEvent`], `Any`, `None`]], `Any`, `None`]
 
     """
     job_name_group_streams = config_to_otel_job_name_group_streams(

@@ -150,14 +150,14 @@ def pv_events_from_folder_to_event_stream(
 
 def pv_job_files_to_event_sequence_streams(
     file_paths: list[str],
-) -> Generator[Iterable[PVEvent], Any, None]:
+) -> Generator[list[PVEvent], Any, None]:
     """Reads a list of PV job json array files and yields the event sequences
     when iterated over
 
     :param file_paths: The paths to the PV job json files
     :type file_paths: `list`[`str`]
     :return: A generator of event sequences
-    :rtype: `Generator`[`Iterable`[:class:`PVEvent`], Any, None]
+    :rtype: `Generator`[`list`[:class:`PVEvent`], Any, None]
     """
     for file_path in file_paths:
         yield pv_job_file_to_event_sequence(file_path)
@@ -255,7 +255,7 @@ def pv_events_from_folder_to_puml_file(
 
 def pv_streams_to_puml_files(
     pv_streams: Generator[
-        tuple[str, Generator[Generator[PVEvent, Any, None], Any, None]],
+        tuple[str, Generator[Iterable[PVEvent], Any, None]],
         Any,
         None,
     ],
@@ -266,8 +266,8 @@ def pv_streams_to_puml_files(
 
     :param pv_streams: Generator of tuples of job_name to generator of
     generators of PVEvents grouped by job_name, then job_id.
-    :type pv_streams: `Generator`[`tuple`[`str`, `Generator`[`Generator`
-    [:class:`PVEvent`, `Any`, `None`], `Any`, `None`]], `Any`, `None`]
+    :type pv_streams: `Generator`[`tuple`[`str`, `Generator`
+    [`Iterable`[:class`PVEvent`], `Any`, `None`]], `Any`, `None`]
     :param output_file_directory: The file directory to store puml files. Defaults to
     "."
     :type output_file_directory: `str`
@@ -289,7 +289,7 @@ def pv_files_to_pv_streams(
     job_name: str = "default.puml",
     group_by_job_id: Optional[bool] = False,
 ) -> Generator[
-    tuple[str, Generator[Generator[PVEvent, Any, None], Any, None]],
+    tuple[str, Generator[list[PVEvent], Any, None]],
     Any,
     None,
 ]:
