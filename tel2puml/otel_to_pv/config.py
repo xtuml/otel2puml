@@ -6,7 +6,6 @@ from typing import (
     Any,
 )
 
-import yaml
 from pydantic import BaseModel, ConfigDict as PYDConfigDict
 
 from .data_sources.data_sources_config import DataSources

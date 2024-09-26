@@ -1,6 +1,6 @@
 """TypedDicts for tel2puml"""
 
-from typing import TypedDict, NotRequired, Any, Optional
+from typing import TypedDict, NotRequired, Any
 from enum import Enum
 
 from tel2puml.otel_to_pv.config import IngestDataConfig
