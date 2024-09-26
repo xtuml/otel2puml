@@ -60,7 +60,9 @@ def otel_to_puml(
                 " is required."
             )
         if otel_to_puml_options["ingest_data"]:
-            data_holder = ingest_data_into_dataholder(otel_to_puml_options["config"])
+            data_holder: DataHolder = ingest_data_into_dataholder(
+                otel_to_puml_options["config"]
+            )
             return data_holder
         else:
             pv_streams = otel_to_pv(
@@ -92,9 +94,7 @@ if __name__ == "__main__":
         "config": load_config_from_yaml("tel2puml/otel_to_pv/config.yaml"),
         "ingest_data": True,
     }
-    otel_to_puml(
-        otel_to_puml_options=otel_to_puml_options, components="all"
-    )
+    otel_to_puml(otel_to_puml_options=otel_to_puml_options, components="all")
     # pv_to_puml_options: PVPumlOptions = {
     #     "file_directory": "puml_input",
     #     "job_name": "Test Name",

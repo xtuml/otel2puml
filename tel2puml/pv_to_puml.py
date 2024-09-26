@@ -332,8 +332,8 @@ def pv_files_to_pv_streams(
     if group_by_job_id:
         events_by_job_id: dict[str, list[PVEvent]] = {}
         for pv_stream in pv_stream_sequence:
-            events_by_job_id = cluster_events_by_job_id(pv_stream)
-            for job_id, events in events_by_job_id.items():
+            clustered_events = cluster_events_by_job_id(pv_stream)
+            for job_id, events in clustered_events.items():
                 if job_id in events_by_job_id:
                     events_by_job_id[job_id].extend(events)
                 else:
