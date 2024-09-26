@@ -104,7 +104,7 @@ def get_updated_path_from_key_path_key_value_and_root_var_tree(
     :param var_num: The current variable number
     :type var_num: `int`
     :return: The updated path and the updated variable number
-    :rtype: `tuple`[:class:`str`, `int`]
+    :rtype: `tuple`[`str`, `int`]
     """
 
     split_on_array = key_path.split(".[].")
@@ -180,7 +180,7 @@ def update_field_specs_with_variables(
     """Update the field specs with variables.
 
     :param field_mapping: The field mapping to update
-    :type field_mapping: `dict`[:class:`str`, :class:`JQFieldSpec`]
+    :type field_mapping: `dict`[`str`, :class:`JQFieldSpec`]
     :return: The root variable tree
     :rtype: :class:`JQVariableTree`
     """
@@ -203,7 +203,7 @@ def build_base_variable_jq_query(
     :param var_tree: The variable tree
     :type var_tree: :class:`JQVariable`
     :param parent_var_tree: The parent variable tree, defaults to None
-    :type parent_var_tree: :class:`JQVariableTree` | None, optional
+    :type parent_var_tree: :class:`JQVariableTree` | `None`, optional
     :param path: The path, defaults to ""
     :type path: `str`, optional
     :return: The base variable jq query
@@ -370,7 +370,7 @@ def get_jq_using_field_mapping(field_mapping: dict[str, JQFieldSpec]) -> str:
     """Get the jq query using the field mapping.
 
     :param field_mapping: The field mapping
-    :type field_mapping: `dict`[:class:`str`, :class:`FieldSpec`]
+    :type field_mapping: `dict`[`str`, :class:`FieldSpec`]
     :return: The jq query
     :rtype: `str`
     """
@@ -400,7 +400,7 @@ def get_jq_query_from_field_mapping_with_variables_and_var_tree(
     tree.
 
     :param field_mapping: The field mapping
-    :type field_mapping: `dict`[:class:`str`, :class:`FieldSpec`]
+    :type field_mapping: `dict`[`str`, :class:`FieldSpec`]
     :param var_tree: The variable tree
     :type var_tree: :class:`JQVariable`
     :return: The jq query
@@ -415,7 +415,7 @@ def jq_field_mapping_to_jq_query(field_mapping: dict[str, JQFieldSpec]) -> str:
     """Convert the field mapping to a jq query.
 
     :param field_mapping: The field mapping
-    :type field_mapping: `dict`[:class:`str`, :class:`FieldSpec`]
+    :type field_mapping: `dict`[`str`, :class:`FieldSpec`]
     :return: The jq query
     :rtype: `str`
     """
@@ -431,7 +431,7 @@ def jq_field_mapping_to_compiled_jq(
     """Convert the field mapping to a compiled jq query.
 
     :param field_mapping: The field mapping
-    :type field_mapping: `dict`[:class:`str`, :class:`FieldSpec`]
+    :type field_mapping: `dict`[`str`, :class:`FieldSpec`]
     :return: The compiled jq query
     :rtype: `Any`
     """
@@ -443,7 +443,7 @@ def field_mapping_to_compiled_jq(field_mapping: dict[str, FieldSpec]) -> Any:
     """Convert the field mapping to a compiled jq query.
 
     :param field_mapping: The field mapping
-    :type field_mapping: `dict`[:class:`str`, :class:`FieldSpec`]
+    :type field_mapping: `dict`[`str`, :class:`FieldSpec`]
     :return: The compiled jq query
     :rtype: `Any`
     """
@@ -458,8 +458,8 @@ def generate_records_from_compiled_jq(
 ) -> Generator[Any, None, None]:
     """Generate records from compiled jq.
 
-    :param input: The input data
-    :type input: `Any`
+    :param input_data: The input data
+    :type input_data: `Any`
     :param compiled_jq: The compiled jq query
     :type compiled_jq: `Any`
     :return: A generator of records

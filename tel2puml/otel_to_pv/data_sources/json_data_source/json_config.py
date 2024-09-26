@@ -289,9 +289,9 @@ def field_spec_mapping_to_jq_field_spec_mapping(
     """Converts field mapping to jq field mapping.
 
     :param field_mapping: The field mapping
-    :type field_mapping: `dict`[`str`, `FieldSpec`]
+    :type field_mapping: `dict`[`str`, :class:`FieldSpec`]
     :return: The jq field mapping
-    :rtype: `dict`[`str`, `JQFieldSpec`]
+    :rtype: `dict`[`str`, :class:`JQFieldSpec`]
     """
     return {
         key: JQFieldSpec.from_field_spec(value)
