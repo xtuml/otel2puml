@@ -116,6 +116,16 @@ def mock_yaml_config_dict_without_list(
 
 
 @pytest.fixture
+def mock_yaml_config_dict_json_per_line(
+    mock_yaml_config_string: str,
+) -> dict[str, Any]:
+    """Mocks a dict when reading the yaml config with json per line."""
+    config_dict: dict[str, Any] = yaml.safe_load(mock_yaml_config_string)
+    config_dict["data_sources"]["json"]["json_per_line"] = True
+    return config_dict
+
+
+@pytest.fixture
 def mock_path_exists() -> Generator[None, None, None]:
     """Mocks os.path.isdir and os.path.isfile functions, returning True for
     both."""

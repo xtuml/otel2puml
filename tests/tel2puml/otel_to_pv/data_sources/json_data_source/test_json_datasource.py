@@ -2,6 +2,7 @@
 import json
 import os
 import shutil
+from typing import Literal
 
 import yaml
 import pytest
@@ -198,6 +199,7 @@ class TestJSONDataSource:
                 "mock_json_data_without_list",
                 "mock_yaml_config_dict_without_list",
             ),
+            ("mock_json_data", "mock_yaml_config_dict_json_per_line"),
         ],
     )
     def test_end_to_end_json_parsing(
@@ -210,6 +212,8 @@ class TestJSONDataSource:
         """
         mock_file_content = json.dumps(request.getfixturevalue(mock_data))
         mock_yaml_config_dict = request.getfixturevalue(mock_yaml_config)
+        if mock_yaml_config_dict["data_sources"]["json"]["json_per_line"]:
+            mock_file_content = mock_file_content + "\n" + mock_file_content
 
         with patch(
             "builtins.open", mock_open(read_data=mock_file_content)
@@ -227,33 +231,35 @@ class TestJSONDataSource:
             for data in json_data_source:
                 otel_events.append(data)
 
-        otel_event = otel_events[0]
-        assert otel_event.job_name == "Frontend_TestJob"
-        assert otel_event.job_id == "trace001_4.8"
-        assert otel_event.event_id == "span001"
-        assert otel_event.event_type == "com.T2h.366Yx_500"
-        assert otel_event.application_name == "Processor_1.0"
-        assert otel_event.start_timestamp == 1723544132228102912
-        assert otel_event.end_timestamp == 1723544132228219285
-        assert otel_event.parent_event_id is None
-        assert otel_event.child_event_ids == ["child1", "child2"]
+        def check_otel_events(
+            otel_events: list[OTelEvent],
+            n_check: Literal[2, 4]
+        ) -> None:
+            """Check the otel events."""
+            otel_event = otel_events[0]
+            assert otel_event.job_name == "Frontend_TestJob"
+            assert otel_event.job_id == "trace001_4.8"
+            assert otel_event.event_id == "span001"
+            assert otel_event.event_type == "com.T2h.366Yx_500"
+            assert otel_event.application_name == "Processor_1.0"
+            assert otel_event.start_timestamp == 1723544132228102912
+            assert otel_event.end_timestamp == 1723544132228219285
+            assert otel_event.parent_event_id is None
+            assert otel_event.child_event_ids == ["child1", "child2"]
 
-        otel_event2 = otel_events[1]
-        assert otel_event2.job_name == "Frontend_TestJob"
-        assert otel_event2.job_id == "trace002_2.0"
-        assert otel_event2.event_id == "span002"
-        assert otel_event2.event_type == "com.C36.9ETRp_401"
-        assert otel_event2.application_name == "Handler_1.0"
-        assert otel_event2.start_timestamp == 1723544132228288000
-        assert otel_event2.end_timestamp == 1723544132229038947
-        assert otel_event2.parent_event_id == "span001"
-        assert otel_event2.child_event_ids == ["child3"]
+            otel_event2 = otel_events[1]
+            assert otel_event2.job_name == "Frontend_TestJob"
+            assert otel_event2.job_id == "trace002_2.0"
+            assert otel_event2.event_id == "span002"
+            assert otel_event2.event_type == "com.C36.9ETRp_401"
+            assert otel_event2.application_name == "Handler_1.0"
+            assert otel_event2.start_timestamp == 1723544132228288000
+            assert otel_event2.end_timestamp == 1723544132229038947
+            assert otel_event2.parent_event_id == "span001"
+            assert otel_event2.child_event_ids == ["child3"]
 
-        if mock_data == "mock_json_data_without_list":
-            assert len(otel_events) == 2
-        else:
-            assert len(otel_events) == 4
-
+            if n_check == 2:
+                return
             otel_event3 = otel_events[2]
             assert otel_event3.job_name == "Backend_TestJob"
             assert otel_event3.job_id == "trace003_2.7"
@@ -275,3 +281,17 @@ class TestJSONDataSource:
             assert otel_event4.end_timestamp == 1723544154818380443
             assert otel_event4.parent_event_id == "span003"
             assert otel_event4.child_event_ids is None
+
+        # without list
+        if mock_yaml_config == "mock_yaml_config_dict_without_list":
+            assert len(otel_events) == 2
+            check_otel_events(otel_events, 2)
+        # json on each line of file
+        elif mock_yaml_config == "mock_yaml_config_dict_json_per_line":
+            assert len(otel_events) == 8
+            check_otel_events(otel_events[:4], 4)
+            check_otel_events(otel_events[4:], 4)
+        # with list
+        else:
+            assert len(otel_events) == 4
+            check_otel_events(otel_events, 4)
