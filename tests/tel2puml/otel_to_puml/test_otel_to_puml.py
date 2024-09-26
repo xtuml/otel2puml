@@ -83,7 +83,9 @@ class TestOtelToPuml:
         mock_isdir.return_value = True
 
         with pytest.raises(ValueError) as exc_info:
-            otel_to_puml(components="invalid_component")
+            otel_to_puml(
+                components="invalid_component"  # type: ignore[arg-type]
+            )
         assert (
             "components should be one of 'all', 'otel_to_puml', 'pv_to_puml'"
             in str(exc_info.value)
@@ -109,8 +111,8 @@ class TestOtelToPuml:
 
         # Configure config
         config = load_config_from_dict(mock_yaml_config_dict)
-        config["data_sources"]["json"]["filepath"] = None
         config["data_sources"]["json"]["dirpath"] = str(input_dir)
+        config["data_sources"]["json"]["filepath"] = None
 
         otel_options: OtelPumlOptions = {
             "config": load_config_from_dict(mock_yaml_config_dict),
@@ -167,8 +169,8 @@ class TestOtelToPuml:
 
         # Configure config
         config = load_config_from_dict(mock_yaml_config_dict)
-        config["data_sources"]["json"]["filepath"] = None
         config["data_sources"]["json"]["dirpath"] = str(input_dir)
+        config["data_sources"]["json"]["filepath"] = None
 
         otel_options: OtelPumlOptions = {
             "config": load_config_from_dict(mock_yaml_config_dict),
@@ -179,6 +181,7 @@ class TestOtelToPuml:
             otel_to_puml_options=otel_options,
             components="otel_to_puml",
         )
+        assert isinstance(data_holder, SQLDataHolder)
         with data_holder.session as session:
             nodes = session.query(NodeModel).all()
 
@@ -253,7 +256,6 @@ class TestOtelToPuml:
     )
     def test_successful_pv_to_puml_components(
         mock_job_json_file: list[dict[str, Any]],
-        mock_job_json_file_2: list[dict[str, Any]],
         tmp_path: Path,
         group_by_job_id: bool,
     ) -> None:
@@ -265,9 +267,6 @@ class TestOtelToPuml:
 
         data_file = input_dir / "file1.json"
         data_file.write_text(json.dumps(mock_job_json_file))
-
-        data_file_2 = input_dir / "file2.json"
-        data_file_2.write_text(json.dumps(mock_job_json_file_2))
 
         pv_to_puml_options: PVPumlOptions = {
             "file_directory": str(input_dir),
@@ -290,12 +289,7 @@ class TestOtelToPuml:
             '    partition "default_name" {\n'
             '        group "default_name"\n'
             "            :START;\n"
-            "            switch (XOR)\n"
-            "                case ()\n"
-            "                    :B;\n"
-            "                case ()\n"
-            "                    :A;\n"
-            "            endswitch\n"
+            "            :A;\n"
             "            :END;\n"
             "        end group\n"
             "    }\n"

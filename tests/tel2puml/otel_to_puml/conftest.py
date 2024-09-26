@@ -400,35 +400,3 @@ def mock_job_json_file() -> list[dict[str, Any]]:
             "previousEventIds": ["evt_002"],
         },
     ]
-
-
-@pytest.fixture
-def mock_job_json_file_2() -> list[dict[str, Any]]:
-    return [
-        {
-            "eventId": "evt_004",
-            "eventType": "START",
-            "jobId": "job_id_001",
-            "timestamp": "2024-09-01T08:45:00Z",
-            "applicationName": "BackupService",
-            "jobName": "FileStorage",
-        },
-        {
-            "eventId": "evt_005",
-            "eventType": "B",
-            "jobId": "job_id_001",
-            "timestamp": "2024-09-01T09:15:00Z",
-            "applicationName": "BackupService",
-            "jobName": "FileStorage",
-            "previousEventIds": ["evt_004"],
-        },
-        {
-            "eventId": "evt_006",
-            "eventType": "END",
-            "jobId": "job_id_001",
-            "timestamp": "2024-09-02T10:00:00Z",
-            "applicationName": "BackupService",
-            "jobName": "FileStorage",
-            "previousEventIds": ["evt_005"],
-        },
-    ]

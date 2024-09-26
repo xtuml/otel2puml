@@ -87,18 +87,4 @@ def otel_to_puml(
         )
     # Convert streams to puml files
     pv_streams_to_puml_files(pv_streams, output_file_directory)
-
-
-if __name__ == "__main__":
-    otel_to_puml_options = {
-        "config": load_config_from_yaml("tel2puml/otel_to_pv/config.yaml"),
-        "ingest_data": True,
-    }
-    otel_to_puml(otel_to_puml_options=otel_to_puml_options, components="all")
-    # pv_to_puml_options: PVPumlOptions = {
-    #     "file_directory": "puml_input",
-    #     "job_name": "Test Name",
-    # }
-    # otel_to_puml(
-    #     pv_to_puml_options=pv_to_puml_options, components="pv_to_puml"
-    # )
+    return None
