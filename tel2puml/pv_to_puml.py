@@ -312,9 +312,9 @@ def pv_files_to_pv_streams(
     their `job_id`. Defaults to `False`
     :type group_by_job_id: `bool`
     :return: A generator that yields tuples. Each tuple contains the job name
-    and a generator of generators of `PVEvent` instances.
-    :rtype: `Generator`[`tuple`[`str`,`Generator`[`Generator`[:class:`PVEvent`,
-    `Any`, `None`], `Any`, `None`]],`Any`,`None`]
+    and a generator of lists of PVEvents.
+    :rtype: `Generator`[`tuple`[`str`,`Generator`[list[PVEvent]], `Any`,
+    `None`]],`Any`,`None`]
     """
     if file_directory:
         file_paths: list[str] = [
