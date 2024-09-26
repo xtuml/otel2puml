@@ -254,20 +254,16 @@ def pv_events_from_folder_to_puml_file(
 
 
 def pv_streams_to_puml_files(
-    pv_streams: Generator[
-        tuple[str, Generator[Iterable[PVEvent], Any, None]],
-        Any,
-        None,
-    ],
+    pv_streams: Iterable[tuple[str, Iterable[Iterable[PVEvent]]]],
     output_file_directory: str = ".",
 ) -> None:
     """
     Function to convert and save a stream of PVEvents to puml files.
 
-    :param pv_streams: Generator of tuples of job_name to generator of
-    generators of PVEvents grouped by job_name, then job_id.
-    :type pv_streams: `Generator`[`tuple`[`str`, `Generator`
-    [`Iterable`[:class`PVEvent`], `Any`, `None`]], `Any`, `None`]
+    :param pv_streams: Iterable of tuples of job_name to iterable of
+    iterables of PVEvents grouped by job_name, then job_id.
+    :type pv_streams: `Iterable`[`tuple`[`str`, `Iterable`[`Iterable`
+    [:class:`PVEvent`]]]]
     :param output_file_directory: The file directory to store puml files.
     Defaults to "."
     :type output_file_directory: `str`
@@ -284,8 +280,7 @@ def pv_streams_to_puml_files(
 
 
 def pv_files_to_pv_streams(
-    file_directory: Optional[str] = None,
-    file_list: Optional[list[str]] = None,
+    file_list: list[str] = None,
     job_name: str = "default.puml",
     group_by_job_id: Optional[bool] = False,
 ) -> Generator[
@@ -299,9 +294,6 @@ def pv_files_to_pv_streams(
     Each tuple consists of the job name and a generator of generators, where
     each inner generator yields `PVEvent` objects.
 
-    :param file_directory: The directory containing PV job JSON files. Defaults
-    to `None`.
-    :type file_directory: `Optional`[`str`]
     :param file_list: A list of file paths to PV job JSON files. Defaults
     to `None`.
     :type file_list: `Optional`[`list`[`str`]]
@@ -316,18 +308,8 @@ def pv_files_to_pv_streams(
     :rtype: `Generator`[`tuple`[`str`,`Generator`[list[PVEvent]], `Any`,
     `None`]],`Any`,`None`]
     """
-    if file_directory:
-        file_paths: list[str] = [
-            file_directory + "/" + file
-            for file in os.listdir(file_directory)
-            if file.endswith(".json")
-        ]
-    elif file_list:
-        file_paths = file_list
-    else:
-        raise ValueError("file_directory or file_list has to be specified.")
 
-    pv_stream_sequence = pv_job_files_to_event_sequence_streams(file_paths)
+    pv_stream_sequence = pv_job_files_to_event_sequence_streams(file_list)
 
     if group_by_job_id:
         events_by_job_id: dict[str, list[PVEvent]] = {}

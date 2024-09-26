@@ -129,7 +129,6 @@ class OtelPumlOptions(TypedDict):
 class PVPumlOptions(TypedDict, total=False):
     """Typed dict for options for pv_to_puml"""
 
-    file_directory: str
     file_list: list[str]
     job_name: str
     group_by_job_id: bool

@@ -22,7 +22,7 @@ def otel_to_puml(
     pv_to_puml_options: Optional[PVPumlOptions] = None,
     output_file_directory: str = "puml_output",
     components: Literal["all", "otel_to_puml", "pv_to_puml"] = "all",
-) -> DataHolder | None:
+) -> None:
     """Creates puml files from otel data. Takes optional parameters to handle
     separate parts of the process individually.
 
@@ -36,19 +36,19 @@ def otel_to_puml(
     :param components: The parts of the process that are required. Defaults to
     "all".
     :type components: `Literal`["all", "otel_to_puml", "pv_to_puml"]
-    :return: DataHolder object or None
-    :rtype: :class:`DataHolder` | `None`
     """
-    # Create output directory if non-existant. Handles nested cases as well.
+    # Create output directory if non-existant.
     if not os.path.isdir(output_file_directory):
         try:
-            os.makedirs(output_file_directory, exist_ok=True)
+            os.mkdir(output_file_directory)
         except PermissionError:
             getLogger(__name__).error(
                 "Permission denied: cannot create directory."
             )
+            return
         except OSError as e:
             getLogger(__name__).error(f"Error creating directory.{e}")
+            return
 
     match components:
         case "all" | "otel_to_puml":
@@ -57,14 +57,12 @@ def otel_to_puml(
                     f"'{components}' has been selected, 'otel_to_puml_options'"
                     " is required."
                 )
+            pv_streams = otel_to_pv(**otel_to_puml_options)
             if (
                 otel_to_puml_options["ingest_data"]
                 and components == "otel_to_puml"
             ):
-                return ingest_data_into_dataholder(
-                    otel_to_puml_options["config"]
-                )
-            pv_streams = otel_to_pv(**otel_to_puml_options)
+                return
         case "pv_to_puml":
             if pv_to_puml_options is None:
                 raise ValueError(
@@ -79,4 +77,3 @@ def otel_to_puml(
             )
     # Convert streams to puml files
     pv_streams_to_puml_files(pv_streams, output_file_directory)
-    return None

@@ -150,16 +150,6 @@ def test_pv_files_to_pv_streams(
         data_file.write_text(json.dumps(data))
         return data_file
 
-    # Test 1: Test with directory path
-    input_dir = tmp_path / "job_json"
-    create_json_file(input_dir, "file1.json", mock_job_json_file)
-
-    pv_stream = pv_files_to_pv_streams(
-        file_directory=str(input_dir), group_by_job_id=group_by_job_id
-    )
-    verify_pv_events(pv_stream)
-
-    # Test 2: Test with file list
     input_dir = tmp_path / "job_json"
     data_file = create_json_file(input_dir, "file1.json", mock_job_json_file)
 

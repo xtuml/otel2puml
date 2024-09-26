@@ -17,6 +17,7 @@ from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.sql_dataholder import (
     SQLDataHolder,
 )
+from tel2puml.otel_to_pv.ingest_otel_data import fetch_data_holder
 
 
 class TestOtelToPuml:
@@ -183,10 +184,11 @@ class TestOtelToPuml:
             "ingest_data": True,
         }
         # Run function
-        data_holder = otel_to_puml(
+        otel_to_puml(
             otel_to_puml_options=otel_options,
             components="otel_to_puml",
         )
+        data_holder = fetch_data_holder(config)
         assert isinstance(data_holder, SQLDataHolder)
         with data_holder.session as session:
             nodes = session.query(NodeModel).all()
@@ -275,7 +277,7 @@ class TestOtelToPuml:
         data_file.write_text(json.dumps(mock_job_json_file))
 
         pv_to_puml_options: PVPumlOptions = {
-            "file_directory": str(input_dir),
+            "file_list": [str(data_file)],
             "job_name": "TestName",
             "group_by_job_id": group_by_job_id,
         }
