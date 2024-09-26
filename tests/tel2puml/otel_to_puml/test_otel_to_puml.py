@@ -60,7 +60,8 @@ class TestOtelToPuml:
         with pytest.raises(ValueError) as exc_info:
             otel_to_puml(otel_to_puml_options=None, components="otel_to_puml")
         assert (
-            "'otel_to_puml' has been selected, 'otel_to_puml_options' is required."
+            "'otel_to_puml' has been selected, 'otel_to_puml_options' is"
+            " required."
             in str(exc_info.value)
         )
 
@@ -68,7 +69,8 @@ class TestOtelToPuml:
     def test_invalid_options_pv_to_puml_components_missing_pv_options(
         mock_isdir: MagicMock,
     ) -> None:
-        """Test that ValueError is raised when 'pv_to_puml' is selected but pv_to_puml_options is None."""
+        """Test that ValueError is raised when 'pv_to_puml' is
+        selected but pv_to_puml_options is None."""
         mock_isdir.return_value = True
 
         with pytest.raises(ValueError) as exc_info:
