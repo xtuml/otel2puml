@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from tel2puml.otel_to_puml import otel_to_puml
-from tel2puml.tel2puml_types import OtelPumlOptions
+from tel2puml.tel2puml_types import OtelPumlOptions, PVPumlOptions
 from tel2puml.otel_to_pv.config import load_config_from_dict
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
     NodeModel,
@@ -23,11 +23,6 @@ class TestOtelToPuml:
     """Tests for the otel_to_puml function"""
 
     @pytest.fixture
-    def mock_mkdir(self) -> Generator[MagicMock, None, None]:
-        with patch("tel2puml.otel_to_puml.os.mkdir") as mkdir_mock:
-            yield mkdir_mock
-
-    @pytest.fixture
     def mock_isdir(self) -> Generator[MagicMock, None, None]:
         with patch("tel2puml.otel_to_puml.os.path.isdir") as isdir_mock:
             yield isdir_mock
@@ -39,8 +34,9 @@ class TestOtelToPuml:
         ) as fetch_data_hoder_mock:
             yield fetch_data_hoder_mock
 
+    @staticmethod
     def test_invalid_options_all_components_missing_otel_options(
-        self, mock_isdir: MagicMock
+        mock_isdir: MagicMock,
     ) -> None:
         """Test that ValueError is raised when 'all' is selected but otel_to_puml_options is None."""
         mock_isdir.return_value = True  # Assume directory exists
@@ -52,8 +48,9 @@ class TestOtelToPuml:
             in str(exc_info.value)
         )
 
+    @staticmethod
     def test_invalid_options_otel_to_puml_components_missing_otel_options(
-        self, mock_isdir: MagicMock
+        mock_isdir: MagicMock,
     ) -> None:
         """Test that ValueError is raised when 'otel_to_puml' is selected but otel_to_puml_options is None."""
         mock_isdir.return_value = True
@@ -65,8 +62,9 @@ class TestOtelToPuml:
             in str(exc_info.value)
         )
 
+    @staticmethod
     def test_invalid_options_pv_to_puml_components_missing_pv_options(
-        self, mock_isdir: MagicMock
+        mock_isdir: MagicMock,
     ) -> None:
         """Test that ValueError is raised when 'pv_to_puml' is selected but pv_to_puml_options is None."""
         mock_isdir.return_value = True
@@ -78,7 +76,8 @@ class TestOtelToPuml:
             in str(exc_info.value)
         )
 
-    def test_invalid_components_value(self, mock_isdir: MagicMock) -> None:
+    @staticmethod
+    def test_invalid_components_value(mock_isdir: MagicMock) -> None:
         """Test that ValueError is raised when an invalid component is
         selected."""
         mock_isdir.return_value = True
@@ -90,8 +89,8 @@ class TestOtelToPuml:
             in str(exc_info.value)
         )
 
+    @staticmethod
     def test_successful_all_components(
-        self,
         tmp_path: Path,
         mock_yaml_config_dict: dict[str, Any],
         mock_json_data: dict[str, Any],
@@ -149,8 +148,8 @@ class TestOtelToPuml:
             expected_content = expected_content.strip()
             assert content == expected_content
 
+    @staticmethod
     def test_successful_otel_to_puml_components_ingest_only(
-        self,
         tmp_path: Path,
         mock_json_data: dict[str, Any],
         mock_yaml_config_dict: dict[str, Any],
@@ -201,8 +200,8 @@ class TestOtelToPuml:
         assert node2.job_name == "Frontend TestJob"
         assert node2.parent_event_id == "span001"
 
+    @staticmethod
     def test_successful_otel_to_puml_components_stream_data(
-        self,
         tmp_path: Path,
         sql_data_holder_with_otel_jobs: SQLDataHolder,
         mock_fetch_data_holder: MagicMock,
@@ -237,6 +236,67 @@ class TestOtelToPuml:
             '        group "default_name"\n'
             "            :event_type_1;\n"
             "            :event_type_0;\n"
+            "        end group\n"
+            "    }\n"
+            "@enduml"
+        )
+        with open(puml_file_path, "r") as f:
+            content = f.read()
+            content = content.strip()
+            expected_content = expected_content.strip()
+            assert content == expected_content
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "group_by_job_id",
+        [False, True],
+    )
+    def test_successful_pv_to_puml_components(
+        mock_job_json_file: list[dict[str, Any]],
+        mock_job_json_file_2: list[dict[str, Any]],
+        tmp_path: Path,
+        group_by_job_id: bool,
+    ) -> None:
+        """Test successful execution when components='pv_to_puml'"""
+        output_dir = tmp_path / "puml_output"
+        input_dir = tmp_path / "job_json"
+
+        input_dir.mkdir(parents=True, exist_ok=True)
+
+        data_file = input_dir / "file1.json"
+        data_file.write_text(json.dumps(mock_job_json_file))
+
+        data_file_2 = input_dir / "file2.json"
+        data_file_2.write_text(json.dumps(mock_job_json_file_2))
+
+        pv_to_puml_options: PVPumlOptions = {
+            "file_directory": str(input_dir),
+            "job_name": "TestName",
+            "group_by_job_id": group_by_job_id,
+        }
+
+        otel_to_puml(
+            pv_to_puml_options=pv_to_puml_options,
+            components="pv_to_puml",
+            output_file_directory=str(output_dir),
+        )
+
+        assert output_dir.exists()
+        assert os.listdir(output_dir) == ["TestName.puml"]
+        puml_file_path = output_dir / "TestName.puml"
+
+        expected_content = (
+            "@startuml\n"
+            '    partition "default_name" {\n'
+            '        group "default_name"\n'
+            "            :START;\n"
+            "            switch (XOR)\n"
+            "                case ()\n"
+            "                    :B;\n"
+            "                case ()\n"
+            "                    :A;\n"
+            "            endswitch\n"
+            "            :END;\n"
             "        end group\n"
             "    }\n"
             "@enduml"

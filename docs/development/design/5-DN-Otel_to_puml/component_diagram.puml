@@ -1,0 +1,20 @@
+@startuml
+component "otel to puml" as oteltopuml {
+    interface "job streams" as JobStreams
+    component "pv to puml" as pvtopuml
+    component "folder to pv" as foldertopv
+    component "otel to pv" as oteltopv
+    pvtopuml -up-( JobStreams
+    oteltopv -down- JobStreams
+    foldertopv -left- JobStreams
+}
+interface "save puml\nfiles" as SavePUMLFiles
+pvtopuml -left- SavePUMLFiles
+interface "otel to pv\noptions" as oteltopvops
+interface "pv to puml\noptions" as pvtopumlops
+interface "otel to puml\noptions" as oteltopumlops
+oteltopvops )-left- oteltopv
+pvtopumlops )-left- foldertopv
+oteltopumlops )-down- oteltopuml
+
+@enduml

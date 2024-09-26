@@ -369,3 +369,66 @@ def sql_data_holder_with_otel_jobs(
         if sa.inspect(sql_data_holder.engine).has_table("temp_root_nodes"):
             session.execute(sa.text("DROP TABLE temp_root_nodes"))
     sql_data_holder.base.metadata._remove_table("temp_root_nodes", None)
+
+@pytest.fixture
+def mock_job_json_file() -> list[dict[str, Any]]:
+    return [
+        {
+            "eventId": "evt_001",
+            "eventType": "START",
+            "jobId": "job_id_001",
+            "timestamp": "2024-09-01T07:45:00Z",
+            "applicationName": "BackupService",
+            "jobName": "TempFilesCleanup",
+        },
+        {
+            "eventId": "evt_002",
+            "eventType": "A",
+            "jobId": "job_id_001",
+            "timestamp": "2024-09-01T08:15:00Z",
+            "applicationName": "BackupService",
+            "jobName": "TempFilesCleanup",
+            "previousEventIds": ["evt_001"],
+        },
+        {
+            "eventId": "evt_003",
+            "eventType": "END",
+            "jobId": "job_id_001",
+            "timestamp": "2024-09-02T09:00:00Z",
+            "applicationName": "CleanupService",
+            "jobName": "TempFilesCleanup",
+            "previousEventIds": ["evt_002"],
+        },
+    ]
+
+
+@pytest.fixture
+def mock_job_json_file_2() -> list[dict[str, Any]]:
+    return [
+        {
+            "eventId": "evt_004",
+            "eventType": "START",
+            "jobId": "job_id_001",
+            "timestamp": "2024-09-01T08:45:00Z",
+            "applicationName": "BackupService",
+            "jobName": "FileStorage",
+        },
+        {
+            "eventId": "evt_005",
+            "eventType": "B",
+            "jobId": "job_id_001",
+            "timestamp": "2024-09-01T09:15:00Z",
+            "applicationName": "BackupService",
+            "jobName": "FileStorage",
+            "previousEventIds": ["evt_004"],
+        },
+        {
+            "eventId": "evt_006",
+            "eventType": "END",
+            "jobId": "job_id_001",
+            "timestamp": "2024-09-02T10:00:00Z",
+            "applicationName": "BackupService",
+            "jobName": "FileStorage",
+            "previousEventIds": ["evt_005"],
+        },
+    ]
