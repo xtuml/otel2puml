@@ -69,3 +69,35 @@ def pv_streams() -> Generator[
             yield (job_name, job_id_generator(job_name, event_types))
 
     return generator()
+
+
+@pytest.fixture
+def mock_job_json_file() -> list[dict[str, Any]]:
+    return [
+        {
+            "eventId": "evt_001",
+            "eventType": "START",
+            "jobId": "job_id_001",
+            "timestamp": "2024-09-01T07:45:00Z",
+            "applicationName": "BackupService",
+            "jobName": "TempFilesCleanup",
+        },
+        {
+            "eventId": "evt_002",
+            "eventType": "A",
+            "jobId": "job_id_001",
+            "timestamp": "2024-09-01T08:15:00Z",
+            "applicationName": "BackupService",
+            "jobName": "TempFilesCleanup",
+            "previousEventIds": ["evt_001"],
+        },
+        {
+            "eventId": "evt_003",
+            "eventType": "END",
+            "jobId": "job_id_001",
+            "timestamp": "2024-09-02T09:00:00Z",
+            "applicationName": "BackupService",
+            "jobName": "TempFilesCleanup",
+            "previousEventIds": ["evt_002"],
+        },
+    ]
