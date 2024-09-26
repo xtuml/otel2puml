@@ -24,11 +24,13 @@ class TestOtelToPuml:
 
     @pytest.fixture
     def mock_isdir(self) -> Generator[MagicMock, None, None]:
+        """Fixture to mock isdir."""
         with patch("tel2puml.otel_to_puml.os.path.isdir") as isdir_mock:
             yield isdir_mock
 
     @pytest.fixture
     def mock_fetch_data_holder(self) -> Generator[MagicMock, None, None]:
+        """Fixture to mock fetch_data_holder."""
         with patch(
             "tel2puml.otel_to_pv.sequence_otel_v2.fetch_data_holder"
         ) as fetch_data_hoder_mock:

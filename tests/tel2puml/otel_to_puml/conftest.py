@@ -377,6 +377,7 @@ def sql_data_holder_with_otel_jobs(
 
 @pytest.fixture
 def mock_job_json_file() -> list[dict[str, Any]]:
+    """Fixture to mock job json file."""
     return [
         {
             "eventId": "evt_001",
