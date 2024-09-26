@@ -3,6 +3,7 @@ from typing import Any
 import pytest
 
 import jq  # type: ignore[import-not-found]
+from pytest import MonkeyPatch
 
 from tel2puml.otel_to_pv.data_sources.json_data_source.json_config \
     import JQFieldSpec, FieldSpec
@@ -13,6 +14,9 @@ from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter \
         update_field_spec_with_variables,
         update_field_specs_with_variables,
         build_base_variable_jq_query,
+        handle_string_joined_variables_jq_query,
+        handle_array_joined_variables_jq_query,
+        handle_value_type_joined_variables_jq_query,
         get_jq_for_field_spec,
         get_jq_using_field_mapping,
         get_jq_query_from_field_mapping_with_variables_and_var_tree,
@@ -287,6 +291,82 @@ class TestFieldMappingToCompiledJQ:
             " | (try $var1.grand_child_2.[] catch null) as $var5"
             " | (try $var0.second.[] catch null) as $var4"
         )
+
+    @staticmethod
+    def test_handle_string_joined_variable_jq_query() -> None:
+        """Test the handle_string_joined_variable_jq_query function."""
+        # test case with empty list
+        assert handle_string_joined_variables_jq_query([]) == ""
+        # test case with one of priority variable lists empty
+        with pytest.raises(ValueError):
+            handle_string_joined_variables_jq_query([["x", "y"], []])
+        # test case with one variable
+        assert handle_string_joined_variables_jq_query(
+            [["x"]]
+        ) == "(x | (if . == null then null else (. | tostring) end))"
+        # test case with multiple variables with single and multiple priority
+        # variables
+        assert handle_string_joined_variables_jq_query(
+            [["x", "y"], ["z"]]
+        ) == (
+            '(x // y | (if . == null then null else (. | tostring) end))'
+            ' + "_" + '
+            '(z | (if . == null then null else (. | tostring) end))'
+        )
+
+    @staticmethod
+    def test_handle_array_joined_variables_jq_query() -> None:
+        """Test the handle_array_joined_variables_jq_query function."""
+        # test case with empty list
+        assert handle_array_joined_variables_jq_query([]) == ""
+        # test case with one of priority variable lists empty
+        with pytest.raises(ValueError):
+            handle_array_joined_variables_jq_query([["x", "y"], []])
+        # test case with one variable
+        assert handle_array_joined_variables_jq_query(
+            [["x"]]
+        ) == (
+            "([x]) | flatten | (if (. | all(. == null)) and . != [] then null "
+            "else . end)"
+        )
+        # test case with multiple variables with single and multiple priority
+        # variables
+        assert handle_array_joined_variables_jq_query(
+            [["x", "y"], ["z"]]
+        ) == (
+            "([x//y] + [z]) | flatten | (if (. | all(. == null)) and . != [] "
+            "then null else . end)"
+        )
+
+    @staticmethod
+    def test_handle_value_type_joined_variables_jq_query(
+        monkeypatch: MonkeyPatch
+    ) -> None:
+        """Test the handle_value_type_joined_variables_jq_query function."""
+        target_module = (
+            "tel2puml.otel_to_pv.data_sources.json_data_source"
+            ".json_jq_converter"
+        )
+        monkeypatch.setattr(
+            target_module + ".handle_string_joined_variables_jq_query",
+            lambda *_: "string"
+        )
+        monkeypatch.setattr(
+            target_module + ".handle_array_joined_variables_jq_query",
+            lambda *_: "array"
+        )
+        # test case with string value type
+        assert handle_value_type_joined_variables_jq_query(
+            [], "string"
+        ) == "string"
+        # test case with array value type
+        assert handle_value_type_joined_variables_jq_query(
+            [], "array"
+        ) == "array"
+        with pytest.raises(ValueError):
+            handle_value_type_joined_variables_jq_query(
+                [], "incorrect"
+            )
 
     @staticmethod
     def test_get_jq_for_field_spec(

@@ -225,6 +225,77 @@ def build_base_variable_jq_query(
     return jq_query
 
 
+def handle_string_joined_variables_jq_query(
+    variables: list[list[str]],
+) -> str:
+    """Handle the string joined variables.
+
+    :param variables: The variables
+    :type variables: `list`[`list`[`str`]]
+    :return: The joined variable jq query
+    :rtype: `str`
+    :raises ValueError: If there are no priority variables in one of the nested
+    lists
+    """
+    join_variables_output: list[str] = []
+    for priority_variables in variables:
+        if len(priority_variables) == 0:
+            raise ValueError("Expecting at least one priority variable.")
+        join_variables_output.append(
+            "("
+            + " // ".join(priority_variables)
+            + " | (if . == null then null else (. | tostring) end))"
+        )
+    return ' + "_" + '.join(join_variables_output)
+
+
+def handle_array_joined_variables_jq_query(
+    variables: list[list[str]],
+) -> str:
+    """Handle the array joined variables.
+
+    :param variables: The variables
+    :type variables: `list`[`list`[`str`]]
+    :return: The joined variable jq query
+    :rtype: `str`
+    """
+    if len(variables) == 0:
+        return ""
+    join_variables_output: list[str] = []
+    for priority_variables in variables:
+        if len(priority_variables) == 0:
+            raise ValueError("Expecting at least one priority variable.")
+        join_variables_output.append(f"[{'//'.join(priority_variables)}]")
+    return (
+        "("
+        + " + ".join(join_variables_output)
+        + ") | flatten | (if (. | all(. == null)) and . != [] then null else "
+        ". end)"
+    )
+
+
+def handle_value_type_joined_variables_jq_query(
+    variables: list[list[str]], value_type: str
+) -> str:
+    """Handle the value type joined variables.
+
+    :param variables: The variables
+    :type variables: `list`[`list`[`str`]]
+    :param value_type: The value type
+    :type value_type: :class:`Literal`["string", "array"]
+    :return: The joined variable jq query
+    :rtype: `str`
+    :raises ValueError: If the value type is not string or array
+    """
+    match value_type:
+        case "string":
+            return handle_string_joined_variables_jq_query(variables)
+        case "array":
+            return handle_array_joined_variables_jq_query(variables)
+        case _:
+            raise ValueError(f"Invalid value_type: {value_type}")
+
+
 def get_jq_for_field_spec(
     field_spec: JQFieldSpec,
     out_var: str,
@@ -288,25 +359,9 @@ def get_jq_for_field_spec(
             else:
                 jq_query += f" | (try {key_path} catch null) as {variable}"
         variables.append(priority_variables)
-    if field_spec.value_type == "string":
-        joined_variables = ' + "_" + '.join(
-            "("
-            + " // ".join(f"{variable}" for variable in priority_variables)
-            + " | (if . == null then null else (. | tostring) end))"
-            for priority_variables in variables
-        )
-    elif field_spec.value_type == "array":
-        joined_variables = (
-            "("
-            + " + ".join(
-                f"[{'//'.join(priority_variables)}]"
-                for priority_variables in variables
-            )
-            + ") | flatten | (if (. | all(. == null)) and . != [] then null "
-            "else . end)"
-        )
-    else:
-        raise ValueError(f"Invalid value_type: {field_spec.value_type}")
+    joined_variables = handle_value_type_joined_variables_jq_query(
+        variables, field_spec.value_type
+    )
     jq_query += f" | ({joined_variables}) as {out_var}"
     return jq_query
 

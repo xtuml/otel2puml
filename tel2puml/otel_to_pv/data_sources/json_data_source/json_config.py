@@ -20,7 +20,7 @@ class FieldSpec(TypedDict):
     value_paths: NotRequired[
         Optional[Sequence[Optional[Union[str, Iterable[str | None]]]]]
     ]
-    value_type: Union[str, int]
+    value_type: str
 
 
 class JQFieldSpec:
@@ -37,7 +37,7 @@ class JQFieldSpec:
     :type value_paths: `Sequence`[`tuple`[`str` |
     `None`, ...]]
     :param value_type: The value type
-    :type value_type: `Union`[`str`, `int`]
+    :type value_type: `str`
     """
 
     def __init__(
@@ -45,7 +45,7 @@ class JQFieldSpec:
         key_paths: Sequence[tuple[str, ...]],
         key_values: Sequence[tuple[str | None, ...]],
         value_paths: Sequence[tuple[str | None, ...]],
-        value_type: Union[str, int],
+        value_type: str,
     ) -> None:
         """Constructor method."""
         self.validate_key_values_with_key_paths(key_values, key_paths)
