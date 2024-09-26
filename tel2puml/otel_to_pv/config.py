@@ -58,15 +58,3 @@ def load_config_from_dict(config: dict[str, Any]) -> IngestDataConfig:
         data_holders=config["data_holders"],
         ingest_data=IngestTypes(**config["ingest_data"]),
     )
-
-
-def load_config_from_yaml(file_path: str) -> IngestDataConfig:
-    """Loads config from yaml file.
-
-    :param file_path: File path to config.yaml
-    :type file_path: `str`
-    :return: The config
-    :rtype: :class:`IngestDataConfig`
-    """
-    with open(file_path, 'r') as file:
-        return load_config_from_dict(yaml.safe_load(file))
