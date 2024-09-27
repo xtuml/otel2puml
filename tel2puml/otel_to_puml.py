@@ -3,17 +3,13 @@ files."""
 
 import os
 from logging import getLogger
-from typing import Optional, Literal
+from typing import Generator, Optional, Literal, Any, Union
 
-from tel2puml.tel2puml_types import OtelPumlOptions, PVPumlOptions
+from tel2puml.tel2puml_types import OtelPumlOptions, PVEvent, PVPumlOptions
 from tel2puml.otel_to_pv.sequence_otel_v2 import otel_to_pv
 from tel2puml.pv_to_puml import (
     pv_streams_to_puml_files,
     pv_files_to_pv_streams,
-)
-from tel2puml.otel_to_pv.ingest_otel_data import ingest_data_into_dataholder
-from tel2puml.otel_to_pv.data_holders import (
-    DataHolder,
 )
 
 
@@ -57,11 +53,22 @@ def otel_to_puml(
                     f"'{components}' has been selected, 'otel_to_puml_options'"
                     " is required."
                 )
-            pv_streams = otel_to_pv(**otel_to_puml_options)
-            if (
-                otel_to_puml_options["ingest_data"]
-                and components == "otel_to_puml"
-            ):
+            pv_streams: Union[
+                Generator[
+                    tuple[
+                        str,
+                        Generator[Generator[PVEvent, Any, None], Any, None],
+                    ],
+                    Any,
+                    None,
+                ],
+                Generator[
+                    tuple[str, Generator[list[PVEvent], Any, None]],
+                    Any,
+                    None,
+                ],
+            ] = otel_to_pv(**otel_to_puml_options)
+            if components == "otel_to_puml":
                 return
         case "pv_to_puml":
             if pv_to_puml_options is None:

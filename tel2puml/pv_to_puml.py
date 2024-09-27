@@ -280,7 +280,7 @@ def pv_streams_to_puml_files(
 
 
 def pv_files_to_pv_streams(
-    file_list: list[str] = None,
+    file_list: list[str] | None = None,
     job_name: str = "default.puml",
     group_by_job_id: Optional[bool] = False,
 ) -> Generator[
@@ -308,7 +308,8 @@ def pv_files_to_pv_streams(
     :rtype: `Generator`[`tuple`[`str`,`Generator`[list[PVEvent]], `Any`,
     `None`]],`Any`,`None`]
     """
-
+    if file_list is None:
+        file_list = []
     pv_stream_sequence = pv_job_files_to_event_sequence_streams(file_list)
 
     if group_by_job_id:
