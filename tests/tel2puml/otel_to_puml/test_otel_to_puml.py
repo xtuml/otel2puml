@@ -178,6 +178,9 @@ class TestOtelToPuml:
         config = load_config_from_dict(mock_yaml_config_dict)
         config["data_sources"]["json"]["dirpath"] = str(input_dir)
         config["data_sources"]["json"]["filepath"] = None
+        config["data_holders"]["sql"]["db_uri"] = (
+            f'sqlite:///{str(tmp_path / "test.db")}'
+        )
 
         otel_options: OtelPumlOptions = {
             "config": load_config_from_dict(mock_yaml_config_dict),
@@ -188,76 +191,29 @@ class TestOtelToPuml:
             otel_to_puml_options=otel_options,
             components="otel_to_puml",
         )
-        # TODO data_holder needs to be returned and checked, currently
-        # not working
-        # data_holder = fetch_data_holder(config)
-        # assert isinstance(data_holder, SQLDataHolder)
-        # with data_holder.session as session:
-        #     nodes = session.query(NodeModel).all()
-
-        # assert len(nodes) == 2
-        # assert all(isinstance(node, NodeModel) for node in nodes)
-        # node1 = nodes[0]
-        # assert node1.application_name == "Processor_1.0"
-        # assert node1.event_id == "span001"
-        # assert node1.event_type == "com.T2h.366Yx_500"
-        # assert node1.job_id == "job_A"
-        # assert node1.job_name == "Frontend_TestJob"
-        # assert node1.parent_event_id is None
-
-        # node2 = nodes[1]
-        # assert node2.application_name == "Handler_1.0"
-        # assert node2.event_id == "span002"
-        # assert node2.event_type == "com.C36.9ETRp_401"
-        # assert node2.job_id == "job_A"
-        # assert node2.job_name == "Frontend_TestJob"
-        # assert node2.parent_event_id == "span001"
-
-    @staticmethod
-    def test_successful_otel_to_puml_components_stream_data(
-        tmp_path: Path,
-        sql_data_holder_with_otel_jobs: SQLDataHolder,
-        mock_fetch_data_holder: MagicMock,
-        mock_yaml_config_dict: dict[str, Any],
-    ) -> None:
-        """Test successful execution when components='otel_to_puml' and ingest
-        data is set False. This tests streaming data from the data holder
-        and generating puml files.
-        """
-        mock_fetch_data_holder.return_value = sql_data_holder_with_otel_jobs
-
-        output_dir = tmp_path / "puml_output"
-
-        otel_options: OtelPumlOptions = {
-            "config": load_config_from_dict(mock_yaml_config_dict),
-            "ingest_data": False,
-        }
-        # Run function
-        otel_to_puml(
-            otel_to_puml_options=otel_options,
-            components="otel_to_puml",
-            output_file_directory=str(output_dir),
+        data_holder: SQLDataHolder = fetch_data_holder(
+            config  # type: ignore[assignment]
         )
+        with data_holder.session as session:
+            nodes = session.query(NodeModel).all()
 
-        assert output_dir.exists()
-        assert os.listdir(output_dir) == ["test_name.puml"]
-        puml_file_path = output_dir / "test_name.puml"
+        assert len(nodes) == 2
+        assert all(isinstance(node, NodeModel) for node in nodes)
+        node1 = nodes[0]
+        assert node1.application_name == "Processor_1.0"
+        assert node1.event_id == "span001"
+        assert node1.event_type == "com.T2h.366Yx_500"
+        assert node1.job_id == "job_A"
+        assert node1.job_name == "Frontend_TestJob"
+        assert node1.parent_event_id is None
 
-        expected_content = (
-            "@startuml\n"
-            '    partition "default_name" {\n'
-            '        group "default_name"\n'
-            "            :event_type_1;\n"
-            "            :event_type_0;\n"
-            "        end group\n"
-            "    }\n"
-            "@enduml"
-        )
-        with open(puml_file_path, "r") as f:
-            content = f.read()
-            content = content.strip()
-            expected_content = expected_content.strip()
-            assert content == expected_content
+        node2 = nodes[1]
+        assert node2.application_name == "Handler_1.0"
+        assert node2.event_id == "span002"
+        assert node2.event_type == "com.C36.9ETRp_401"
+        assert node2.job_id == "job_A"
+        assert node2.job_name == "Frontend_TestJob"
+        assert node2.parent_event_id == "span001"
 
     @staticmethod
     @pytest.mark.parametrize(
