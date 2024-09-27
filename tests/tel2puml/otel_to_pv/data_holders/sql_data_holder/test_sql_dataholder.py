@@ -427,6 +427,39 @@ class TestSQLDataHolder:
             str(f"{i}{j}") for i in range(5) for j in range(2)
         }
 
+    @staticmethod
+    def test_update_job_names_by_root_span(
+        sql_data_holder_otel_jobs_with_job_names_on_root: SQLDataHolder
+    ) -> None:
+        """Tests update_job_names_by_root_span method."""
+        expected_event_id_to_job_name_and_job_id = {
+            f"{i}_{j}": (f"test_name_{i}0", f"test_id_{i}")
+            for i in range(5)
+            for j in range(3)
+        }
+        (
+            sql_data_holder_otel_jobs_with_job_names_on_root
+            .update_job_names_by_root_span()
+        )
+        with sql_data_holder_otel_jobs_with_job_names_on_root.session as (
+            session
+        ):
+            nodes = session.query(NodeModel).all()
+            assert len(nodes) == 15
+            for node in nodes:
+                assert (
+                    node.job_name
+                    == expected_event_id_to_job_name_and_job_id[node.event_id][
+                        0
+                    ]
+                )
+                assert (
+                    node.job_id
+                    == expected_event_id_to_job_name_and_job_id[node.event_id][
+                        1
+                    ]
+                )
+
 
 def test_initialise_temp_table_for_root_nodes(
     sql_data_holder_with_otel_jobs: SQLDataHolder,
