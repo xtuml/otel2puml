@@ -316,17 +316,17 @@ class SQLDataHolder(DataHolder):
         root span.
         """
         with self.session as session:
-            stmt = session.query(NodeModel.job_id, NodeModel.job_name).filter(
+            stmt_1 = sa.select(NodeModel.job_id, NodeModel.job_name).filter(
                 NodeModel.parent_event_id.is_(None)
-            ).subquery()
-            stmt = sa.select(stmt.c.job_name).where(
-                stmt.c.job_id == NodeModel.job_id
             )
-            stmt = sa.update(NodeModel).values(
-                job_name=stmt
+            stmt_2 = sa.select(stmt_1.c.job_name).where(
+                stmt_1.c.job_id == NodeModel.job_id
+            )
+            stmt_3 = sa.update(NodeModel).values(
+                job_name=stmt_2
             )
             session.execute(
-                stmt
+                stmt_3
             )
             session.commit()
 
