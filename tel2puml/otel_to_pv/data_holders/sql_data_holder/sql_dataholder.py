@@ -311,6 +311,25 @@ class SQLDataHolder(DataHolder):
                 )
                 yield job_name, otel_event_gen
 
+    def update_job_names_by_root_span(self) -> None:
+        """Method to update job names for job ids using the job name of the
+        root span.
+        """
+        with self.session as session:
+            stmt = session.query(NodeModel.job_id, NodeModel.job_name).filter(
+                NodeModel.parent_event_id.is_(None)
+            ).subquery()
+            stmt = sa.select(stmt.c.job_name).where(
+                stmt.c.job_id == NodeModel.job_id
+            )
+            stmt = sa.update(NodeModel).values(
+                job_name=stmt
+            )
+            session.execute(
+                stmt
+            )
+            session.commit()
+
 
 def intialise_temp_table_for_root_nodes(
     sql_data_holder: SQLDataHolder,

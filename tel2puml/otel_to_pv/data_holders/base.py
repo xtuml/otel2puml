@@ -124,6 +124,12 @@ class DataHolder(ABC):
         """
         pass
 
+    @abstractmethod
+    def update_job_names_by_root_span(self) -> None:
+        """Abstract method to update job names for job ids using the job name
+        of the root span.
+        """
+
 
 def get_time_window(
     time_buffer: int, data_holder: DataHolder
