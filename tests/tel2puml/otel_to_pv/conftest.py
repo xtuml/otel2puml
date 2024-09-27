@@ -1084,6 +1084,32 @@ def otel_jobs_multiple_job_names(
 
 
 @pytest.fixture
+def otel_jobs_with_job_names_on_root() -> dict[str, list[OTelEvent]]:
+    """Adds an extra set of 5 OTelEvents lists to otel_jobs with a job_name
+    of test_name_1.
+    """
+
+    otel_jobs: dict[str, list[OTelEvent]] = {}
+    for i in range(5):
+        otel_jobs[f"{i}"] = []
+        for j in range(3):
+            otel_jobs[f"{i}"].append(
+                OTelEvent(
+                    job_name=f"test_name_{i}{j}",
+                    job_id=f"test_id_{i}",
+                    event_type=f"event_type_{j}",
+                    event_id=f"{i}_{j}",
+                    start_timestamp=1723544132228102912,
+                    end_timestamp=1723544132228219285,
+                    application_name="test_application_name",
+                    parent_event_id=f"{i}_{j-1}" if j > 0 else None,
+                    child_event_ids=[f"{i}_{j+1}"] if j < 1 else [],
+                )
+            )
+    return otel_jobs
+
+
+@pytest.fixture
 def otel_nodes_from_otel_jobs(
     otel_jobs: dict[str, list[OTelEvent]],
 ) -> dict[str, NodeModel]:
@@ -1184,6 +1210,30 @@ def sql_data_holder_with_shuffled_otel_events(
             sql_data_holder.save_data(
                 otel_jobs[shuffled_tuple[0]][shuffled_tuple[1]]
             )
+    yield sql_data_holder
+    with sql_data_holder.session as session:
+        if sa.inspect(sql_data_holder.engine).has_table("temp_root_nodes"):
+            session.execute(sa.text("DROP TABLE temp_root_nodes"))
+    sql_data_holder.base.metadata._remove_table("temp_root_nodes", None)
+
+
+@pytest.fixture
+def sql_data_holder_otel_jobs_with_job_names_on_root(
+    otel_jobs_with_job_names_on_root: dict[str, list[OTelEvent]],
+    mock_sql_config: SQLDataHolderConfig,
+) -> Generator[SQLDataHolder, Any, None]:
+    """Creates a SQLDataHolder object with 5 jobs, each with 2 events."""
+    mock_sql_config["time_buffer"] = 1
+    mock_sql_config["batch_size"] = 2
+    sql_data_holder = SQLDataHolder(
+        config=mock_sql_config,
+    )
+    sql_data_holder.min_timestamp = 10**12
+    sql_data_holder.max_timestamp = 2 * 10**12
+    with sql_data_holder:
+        for otel_events in otel_jobs_with_job_names_on_root.values():
+            for otel_event in otel_events:
+                sql_data_holder.save_data(otel_event)
     yield sql_data_holder
     with sql_data_holder.session as session:
         if sa.inspect(sql_data_holder.engine).has_table("temp_root_nodes"):
