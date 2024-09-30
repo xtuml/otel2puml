@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from tel2puml.pv_to_puml import (
+from tel2puml.pv_to_puml.pv_to_puml import (
     pv_to_puml_string,
     pv_streams_to_puml_files,
     pv_files_to_pv_streams,
