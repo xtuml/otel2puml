@@ -18,7 +18,7 @@ from tel2puml.legacy_loop_detection.events import (
 from tel2puml.legacy_loop_detection.walk_puml_graph.node import (
     merge_markov_without_loops_and_logic_detection_analysis,
 )
-from tel2puml.walk_puml_graph.walk_puml_logic_graph import (
+from tel2puml.pv_to_puml.walk_puml_graph.walk_puml_logic_graph import (
     create_puml_graph_from_node_class_graph,
 )
 from tel2puml.legacy_loop_detection.detect_loops import (
@@ -29,7 +29,7 @@ from tel2puml.legacy_loop_detection.detect_loops import (
 from tel2puml.legacy_loop_detection.puml_graph.graph_loop_insert import (
     insert_loops
 )
-from tel2puml.walk_puml_graph.node_update import (
+from tel2puml.pv_to_puml.walk_puml_graph.node_update import (
     get_node_to_node_map_from_edges,
     add_loop_kill_paths_for_nodes,
 )

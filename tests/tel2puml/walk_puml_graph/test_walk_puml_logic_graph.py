@@ -2,11 +2,11 @@
 
 import networkx as nx
 
-from tel2puml.walk_puml_graph.node import Node
+from tel2puml.pv_to_puml.walk_puml_graph.node import Node
 from tel2puml.legacy_loop_detection.walk_puml_graph.node import (
     merge_markov_without_loops_and_logic_detection_analysis
 )
-from tel2puml.walk_puml_graph.walk_puml_logic_graph import (
+from tel2puml.pv_to_puml.walk_puml_graph.walk_puml_logic_graph import (
     create_puml_graph_from_node_class_graph,
     check_is_merge_node_for_logic_block,
     LogicBlockHolder,

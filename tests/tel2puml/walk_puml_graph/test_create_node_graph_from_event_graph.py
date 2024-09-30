@@ -4,8 +4,8 @@ import pytest
 from networkx import DiGraph
 from pm4py import ProcessTree
 
-from tel2puml.walk_puml_graph.node import NodeTuple, Node, SubGraphNode
-from tel2puml.walk_puml_graph.create_node_graph_from_event_graph import (
+from tel2puml.pv_to_puml.walk_puml_graph.node import NodeTuple, Node, SubGraphNode
+from tel2puml.pv_to_puml.walk_puml_graph.create_node_graph_from_event_graph import (
     update_graph_with_node_tuple,
     update_outgoing_logic_nodes,
     create_node_from_event,

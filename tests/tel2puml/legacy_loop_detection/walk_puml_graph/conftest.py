@@ -7,7 +7,7 @@ from pm4py import ProcessTree
 from pm4py.objects.process_tree.obj import Operator
 
 from tel2puml.events import Event
-from tel2puml.walk_puml_graph.node import Node
+from tel2puml.pv_to_puml.walk_puml_graph.node import Node
 
 
 @pytest.fixture
