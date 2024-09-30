@@ -1,6 +1,6 @@
 """Test cases for pv_to_puml module"""
 from tel2puml.legacy_loop_detection.pv_to_puml import pv_to_puml_string
-from tel2puml.data_pipelines.data_creation import (
+from tel2puml.data_creation import (
     generate_test_data_event_sequences_from_puml
 )
 from tel2puml.check_puml_equiv import check_puml_equivalence

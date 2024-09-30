@@ -12,7 +12,7 @@ from tel2puml.pv_to_puml import (
     pv_streams_to_puml_files,
     pv_files_to_pv_streams,
 )
-from tel2puml.data_pipelines.data_creation import (
+from tel2puml.data_creation import (
     generate_test_data_event_sequences_from_puml,
 )
 from tel2puml.check_puml_equiv import check_puml_equivalence

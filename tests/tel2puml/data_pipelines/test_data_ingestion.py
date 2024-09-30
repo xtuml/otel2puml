@@ -1,6 +1,6 @@
 """Tests for data ingestion pipeline"""
 from tel2puml.events import EventSet
-from tel2puml.data_pipelines.data_creation import (
+from tel2puml.data_creation import (
     generate_test_data,
     generate_test_data_event_sequences_from_puml,
 )

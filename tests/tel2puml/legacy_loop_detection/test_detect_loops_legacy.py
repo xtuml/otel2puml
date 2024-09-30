@@ -30,7 +30,7 @@ from tel2puml.legacy_loop_detection.detect_loops import (
     remove_loop_data_from_graph,
     remove_loop_edges_from_graph
 )
-from tel2puml.data_pipelines.data_creation import (
+from tel2puml.data_creation import (
     generate_test_data_event_sequences_from_puml,
 )
 
