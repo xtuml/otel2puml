@@ -11,7 +11,11 @@ from tel2puml.puml_graph import (
     PUMLOperatorNode,
     PUMLNode,
 )
-from tel2puml.pv_to_puml.walk_puml_graph.node import Node, get_node_as_list, SubGraphNode
+from tel2puml.pv_to_puml.walk_puml_graph.node import (
+    Node,
+    get_node_as_list,
+    SubGraphNode,
+)
 from tel2puml.tel2puml_types import PUMLEvent
 from tel2puml.events import has_event_set_as_subset, get_reduced_event_set
 
