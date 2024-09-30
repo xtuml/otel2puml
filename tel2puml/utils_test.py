@@ -1,14 +1,9 @@
 """Utils for tests
 """
-from typing import Literal
-
 from tel2puml.pv_event_simulator import (
     generate_test_data_event_sequences_from_puml
 )
-from tel2puml.legacy_loop_detection.pv_to_puml import pv_to_puml_string
-from tel2puml.pv_to_puml.pv_to_puml import (
-    pv_to_puml_string as pv_to_puml_string_v2,
-)
+from tel2puml.pv_to_puml.pv_to_puml import pv_to_puml_string
 from tel2puml.check_puml_equiv import (
     check_puml_string_equivalence_to_puml_files
 )
@@ -20,7 +15,6 @@ def end_to_end_test(
     dummy_start_event: bool = False,
     should_pass: bool = True,
     equivalent_pumls: list[str] | None = None,
-    version: Literal["v1", "v2"] = "v2",
 ) -> None:
     """End to end test for a given puml file.
 
@@ -42,10 +36,7 @@ def end_to_end_test(
         puml_file, is_branch_puml=is_branch_puml,
         remove_dummy_start_event=dummy_start_event
     )
-    if version == "v1":
-        puml_string = pv_to_puml_string(test_data)
-    else:
-        puml_string = pv_to_puml_string_v2(test_data)
+    puml_string = pv_to_puml_string(test_data)
     assert check_puml_string_equivalence_to_puml_files(
         puml_string,
         [puml_file] + (equivalent_pumls or []),

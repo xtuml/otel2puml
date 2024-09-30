@@ -1,14 +1,26 @@
-"""This module holds the 'node' class"""
-from typing import Literal
+"""This module contains utility functions for the walk_puml_graph module."""
+from typing import Iterable, Literal
 
 from networkx import DiGraph
-
 from pm4py import ProcessTree
 
-from tel2puml.events import Event
 from tel2puml.logic_detection import Operator as Logic_operator
 from tel2puml.tel2puml_types import PUMLEvent
 from tel2puml.pv_to_puml.walk_puml_graph.node import Node
+from tel2puml.events import Event
+
+
+def get_event_reference_from_events(
+    events: Iterable[Event],
+) -> dict[str, str]:
+    """This function gets an event reference from a sequence of events.
+
+    :param events: A sequence of events.
+    :type events: `Iterable`[:class:`Event`]
+    :return: The event reference.
+    :rtype: `dict`[`str`, `str`]
+    """
+    return {event.event_type: event.event_type for event in events}
 
 
 def load_all_logic_trees_into_nodes(

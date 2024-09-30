@@ -2,11 +2,9 @@
 
 from typing import Hashable, Optional, Callable, Union
 from abc import ABC, abstractmethod
-from copy import copy
 
 from networkx import (
-    DiGraph, topological_sort, dfs_successors, weakly_connected_components,
-    dfs_predecessors
+    DiGraph, topological_sort, dfs_successors, dfs_predecessors
 )
 
 from tel2puml.tel2puml_types import (
@@ -564,93 +562,6 @@ class PUMLGraph(DiGraph):  # type: ignore[type-arg]
                     )
                 )
         return ordered_nodes
-
-    def add_graph_node_to_set_from_reference(
-        self, node_set: set[PUMLEventNode], node_ref: Hashable
-    ) -> None:
-        """Adds graph nodes to a set from a reference given that relates to the
-        parent graph.
-
-        :param node_set: The set to add the graph nodes to.
-        :type node_set: `set[:class:`PUMLEventNode`]`
-        :param node_ref: The reference to the parent graph.
-        :type node_ref: `Hashable`
-        """
-        if node_ref not in self.parent_graph_nodes_to_node_ref:
-            raise KeyError(
-                "Node not found in parent graph nodes to node ref"
-            )
-        for graph_node in self.parent_graph_nodes_to_node_ref[node_ref]:
-            if graph_node in self.nodes:
-                node_set.add(graph_node)
-
-    def replace_subgraph_node_from_start_and_end_nodes(
-        self, start_node: PUMLNode, end_node: PUMLNode, node_name: str,
-        event_types: PUMLEvent | tuple[PUMLEvent, ...] | None = None
-    ) -> PUMLEventNode:
-        """Extracts and replaces a subgraph inclusively between the start and
-        end nodes given with a new subgraph node created. The extraction
-        removes the edge into the start node and out of the end node. The
-        subgraph node contains the extracted subgraph. A name for the nodes
-        must be specified. Can add event types if required.
-
-        :param start_node: The start node of the subgraph.
-        :type start_node: :class:`PUMLNode`
-        :param end_node: The end node of the subgraph.
-        :type end_node: :class:`PUMLNode`
-        :param node_name: The name of the new subgraph node.
-        :type node_name: `str`
-        :param event_types: The event types of the new subgraph node, defaults
-        to `None`.
-        :type event_types: :class:`PUMLEvent` |
-        `tuple[:class:`PUMLEvent`, `...`]` | `None`, optional
-        :return: The new subgraph node.
-        :rtype: :class:`PUMLEventNode`
-        """
-        copy_graph = copy(self)
-        if len(self.in_edges(start_node)) > 1:
-            raise RuntimeError(
-                "Start node has more than one incoming edge"
-            )
-        if len(self.out_edges(end_node)) > 1:
-            raise RuntimeError(
-                "End node has more than one outgoing edge"
-            )
-        if (
-            len(self.in_edges(start_node)) == 0
-            and len(self.out_edges(end_node)) == 0
-        ):
-            raise RuntimeError(
-                "Start and end nodes have no incoming or outgoing edges and "
-                "there will be no subgraph to create"
-            )
-        start_node_in_edge = list(self.in_edges(start_node))
-        end_node_out_edge = list(self.out_edges(end_node))
-        copy_graph.remove_edges_from(start_node_in_edge)
-        copy_graph.remove_edges_from(end_node_out_edge)
-        connected_components = list(weakly_connected_components(copy_graph))
-        if len(connected_components) == 1:
-            raise RuntimeError(
-                "Graph is not disconnected after removing start node in edges "
-                "and end node out edges so there is no subgraph to create"
-            )
-        for nodes in connected_components:
-            nodes_to_remove = list(nodes)
-            if start_node in nodes_to_remove and end_node in nodes_to_remove:
-                self.remove_nodes_from(nodes_to_remove)
-            else:
-                copy_graph.remove_nodes_from(nodes_to_remove)
-        subgraph_node = self.create_event_node(
-            node_name,
-            sub_graph=copy_graph,
-            event_types=event_types
-        )
-        for edge in start_node_in_edge:
-            self.add_puml_edge(edge[0], subgraph_node)
-        for edge in end_node_out_edge:
-            self.add_puml_edge(subgraph_node, edge[1])
-        self.subgraph_nodes.add(subgraph_node)
-        return subgraph_node
 
     def __copy__(self) -> "PUMLGraph":
         """Creates a copy of the PlantUML graph. This is a shallow copy."""
