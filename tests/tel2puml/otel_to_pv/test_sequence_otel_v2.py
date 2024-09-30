@@ -17,7 +17,6 @@ from tel2puml.otel_to_pv.sequence_otel_v2 import (
     sequence_otel_jobs,
     sequence_otel_job_id_streams,
     job_ids_to_eventid_to_otelevent_map,
-    config_to_otel_job_name_group_streams,
     otel_to_pv,
 )
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
@@ -489,120 +488,6 @@ class TestSeqeunceOTelJobs:
         assert len(actual_mappings) == len(expected_mappings)
         assert actual_mappings == expected_mappings
 
-    def test_config_to_otel_job_name_group_streams(
-        self,
-        monkeypatch: MonkeyPatch,
-        mock_yaml_config_dict: dict[str, Any],
-        sql_data_holder_with_otel_jobs: SQLDataHolder,
-        mock_yaml_config_string: str,
-        mock_temp_dir_with_json_files: Path,
-    ) -> None:
-        """Tests for the function config_to_otel_job_name_group_streams"""
-
-        # Test 1: Default parameters
-        def mock_fetch_data_holder(config: IngestDataConfig) -> SQLDataHolder:
-            return sql_data_holder_with_otel_jobs
-
-        ingest_data_config = IngestDataConfig(
-            data_sources=mock_yaml_config_dict["data_sources"],
-            data_holders=mock_yaml_config_dict["data_holders"],
-            ingest_data=IngestTypes(**mock_yaml_config_dict["ingest_data"]),
-        )
-        monkeypatch.setattr(
-            "tel2puml.otel_to_pv.sequence_otel_v2.fetch_data_holder",
-            mock_fetch_data_holder,
-        )
-        result = config_to_otel_job_name_group_streams(ingest_data_config)
-
-        assert result
-        events = []
-        valid_event_ids = [f"{i}_{j}" for i in range(5) for j in range(2)]
-        valid_job_ids = {f"test_id_{i}" for i in range(5)}
-        job_id_count: dict[str, int] = {}
-        for job_name, job_generator in result:
-            assert job_name == "test_name"
-            for otel_event_generator in job_generator:
-                for otel_event in otel_event_generator:
-                    job_id_count.setdefault(otel_event.job_id, 0)
-                    job_id_count[otel_event.job_id] += 1
-                    events.append(otel_event)
-                    assert isinstance(otel_event, OTelEvent)
-                    assert otel_event.event_id in valid_event_ids
-                    assert otel_event.job_id in valid_job_ids
-                    valid_event_ids.remove(otel_event.event_id)
-
-        assert len(events) == 10
-        assert all(isinstance(event, OTelEvent) for event in events)
-        assert all(job_id_count[job_id] == 2 for job_id in valid_job_ids)
-        assert len(valid_event_ids) == 0
-
-        # Test 2: ingest_data = True
-        config = self.get_ingest_config(
-            mock_yaml_config_string, mock_temp_dir_with_json_files
-        )
-        result = config_to_otel_job_name_group_streams(
-            config, ingest_data=True
-        )
-        events = []
-        valid_job_names = ["Backend_TestJob", "Frontend_TestJob"]
-        valid_job_ids = {
-            "0_trace_id_1_4.8",
-            "1_trace_id_1_4.8",
-            "0_trace_id_0_4.8",
-            "1_trace_id_0_4.8",
-        }
-        valid_event_ids = [
-            f"{i}_span_{j}_{k}"
-            for i in range(2)
-            for j in range(2)
-            for k in range(2)
-        ]
-        job_id_count = {}
-        for i, (job_name, job_generator) in enumerate(result):
-            assert job_name == valid_job_names[i]
-            for otel_event_generator in job_generator:
-                for otel_event in otel_event_generator:
-                    job_id_count.setdefault(otel_event.job_id, 0)
-                    job_id_count[otel_event.job_id] += 1
-                    events.append(otel_event)
-                    assert isinstance(otel_event, OTelEvent)
-                    assert otel_event.event_id in valid_event_ids
-                    assert otel_event.job_id in valid_job_ids
-                    valid_event_ids.remove(otel_event.event_id)
-        assert len(events) == 8
-        assert all(isinstance(event, OTelEvent) for event in events)
-        assert all(job_id_count[job_id] == 2 for job_id in valid_job_ids)
-        assert len(valid_event_ids) == 0
-
-        # Test 3: find_unique_graphs = True
-        result = config_to_otel_job_name_group_streams(
-            ingest_data_config, find_unique_graphs=True
-        )
-
-        assert result
-        events = []
-        # job id test_id_0 is outside the config time buffer window, therefore
-        # it is not included, reducing total events streamed to 8
-        valid_event_ids = [f"{i}_{j}" for i in range(1, 5) for j in range(2)]
-        valid_job_ids = {f"test_id_{i}" for i in range(1, 5)}
-        job_id_count = {}
-        for job_name, job_generator in result:
-            assert job_name == "test_name"
-            for otel_event_generator in job_generator:
-                for otel_event in otel_event_generator:
-                    job_id_count.setdefault(otel_event.job_id, 0)
-                    job_id_count[otel_event.job_id] += 1
-                    events.append(otel_event)
-                    assert isinstance(otel_event, OTelEvent)
-                    assert otel_event.event_id in valid_event_ids
-                    assert otel_event.job_id in valid_job_ids
-                    valid_event_ids.remove(otel_event.event_id)
-
-        assert len(events) == 8
-        assert all(isinstance(event, OTelEvent) for event in events)
-        assert all(job_id_count[job_id] == 2 for job_id in valid_job_ids)
-        assert len(valid_event_ids) == 0
-
     def test_otel_to_pv(
         self,
         monkeypatch: MonkeyPatch,
@@ -687,25 +572,20 @@ class TestSeqeunceOTelJobs:
         # Test 3: find_unique_graphs = True
         result = otel_to_pv(ingest_data_config, find_unique_graphs=True)
 
-        events = []
+        num_events = 0
         # job id test_id_0 is outside the config time buffer window, therefore
         # it is not included, reducing total events streamed to 8
-        valid_event_ids = [f"{i}_{j}" for i in range(1, 5) for j in range(2)]
-        valid_job_ids = {f"test_id_{i}" for i in range(1, 5)}
-        job_id_count = {}
+        valid_event_ids = {"1_1", "1_0"}
         for job_name, pv_event_streams in result:
             assert job_name == "test_name"
             for pv_event_gen in pv_event_streams:
                 for pv_event in pv_event_gen:
-                    job_id_count.setdefault(pv_event["jobId"], 0)
-                    job_id_count[pv_event["jobId"]] += 1
-                    events.append(pv_event)
+                    assert pv_event["jobId"] == "test_id_1"
+                    num_events += 1
                     assert pv_event["eventId"] in valid_event_ids
-                    assert pv_event["jobId"] in valid_job_ids
                     valid_event_ids.remove(pv_event["eventId"])
 
-        assert len(events) == 8
-        assert all(job_id_count[job_id] == 2 for job_id in valid_job_ids)
+        assert num_events == 2
         assert len(valid_event_ids) == 0
 
         # Test 4: async_flag = True
