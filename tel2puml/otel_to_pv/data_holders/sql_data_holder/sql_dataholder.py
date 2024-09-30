@@ -557,7 +557,7 @@ def get_unique_graph_job_ids_per_job_name(
     job_name_to_job_ids: dict[str, set[str]] = {}
     with sql_data_holder.session as session:
         stmt = sa.select(JobHash.job_name, JobHash.job_id).group_by(
-            JobHash.job_name, JobHash.job_id
+            JobHash.job_name, JobHash.job_hash
         )
         job_hashes = session.execute(stmt).fetchall()
         for job_name, job_id in job_hashes:

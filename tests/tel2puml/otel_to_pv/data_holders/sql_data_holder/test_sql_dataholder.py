@@ -413,18 +413,15 @@ class TestSQLDataHolder:
         unique_job_ids_per_job_name = (
             sql_data_holder_extended.find_unique_graphs()
         )
-        assert list(unique_job_ids_per_job_name.keys()) == [
+        assert set(unique_job_ids_per_job_name.keys()) == set([
             "test_name_2",
             "test_name",
-        ]
+        ])
         assert unique_job_ids_per_job_name["test_name"] == {
             "test_id_1",
-            "test_id_2",
-            "test_id_3",
-            "test_id_4",
         }
         assert unique_job_ids_per_job_name["test_name_2"] == {
-            str(f"{i}{j}") for i in range(5) for j in range(2)
+            str(f"{i}{0}") for i in range(5)
         }
 
 
@@ -675,16 +672,12 @@ def test_get_unique_graph_job_ids_per_job_name(
         "test_name_1",
     ]
     assert unique_job_ids_per_job_name["test_name_0"] == {
-        "test_id_03",
-        "test_id_02",
         "test_id_00",
         "test_id_01",
     }
     assert unique_job_ids_per_job_name["test_name_1"] == {
         "test_id_11",
-        "test_id_12",
         "test_id_10",
-        "test_id_13",
     }
 
 
@@ -698,18 +691,15 @@ def test_find_unique_graphs(
     unique_job_ids_per_job_name = find_unique_graphs(
         1, 2, sql_data_holder_extended
     )
-    assert list(unique_job_ids_per_job_name.keys()) == [
+    assert set(unique_job_ids_per_job_name.keys()) == set([
         "test_name_2",
         "test_name",
-    ]
+    ])
     assert unique_job_ids_per_job_name["test_name"] == {
             "test_id_1",
-            "test_id_2",
-            "test_id_3",
-            "test_id_4",
         }
     assert unique_job_ids_per_job_name["test_name_2"] == {
-        str(f"{i}{j}") for i in range(5) for j in range(2)
+        str(f"{i}{0}") for i in range(5)
     }
 
 
