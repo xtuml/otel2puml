@@ -2,7 +2,7 @@
 """
 from typing import Literal
 
-from tel2puml.data_creation import (
+from tel2puml.pv_event_simulator import (
     generate_test_data_event_sequences_from_puml
 )
 from tel2puml.legacy_loop_detection.pv_to_puml import pv_to_puml_string

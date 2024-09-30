@@ -11,7 +11,7 @@ from tel2puml.data_pipelines.data_ingestion import (
     cluster_events_by_job_id,
     update_and_create_events_from_clustered_pvevents,
 )
-from tel2puml.data_creation import transform_dict_into_pv_event
+from tel2puml.pv_event_simulator import transform_dict_into_pv_event
 from tel2puml.events import create_graph_from_events
 from tel2puml.walk_puml_graph.walk_puml_logic_graph import walk_nested_graph
 from tel2puml.walk_puml_graph.node_update import (

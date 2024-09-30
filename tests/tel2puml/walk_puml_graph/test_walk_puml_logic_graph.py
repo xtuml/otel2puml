@@ -23,7 +23,7 @@ from tel2puml.events import events_to_markov_graph
 from tel2puml.legacy_loop_detection.events import (
     get_event_reference_from_events,
 )
-from tel2puml.data_creation import (
+from tel2puml.pv_event_simulator import (
     generate_test_data_event_sequences_from_puml,
 )
 from tel2puml.check_puml_equiv import (

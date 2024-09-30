@@ -5,7 +5,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-from tel2puml.data_creation import generate_test_data
+from tel2puml.pv_event_simulator import generate_test_data
 from tel2puml.data_pipelines.data_ingestion import (
     update_all_connections_from_data
 )
