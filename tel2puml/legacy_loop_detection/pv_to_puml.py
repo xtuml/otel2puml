@@ -7,7 +7,7 @@ from typing import Iterable
 import networkx as nx
 
 from tel2puml.tel2puml_types import PVEvent
-from tel2puml.data_pipelines.data_ingestion import (
+from tel2puml.pv_to_puml.data_ingestion import (
     update_all_connections_from_clustered_events,
 )
 from tel2puml.events import events_to_markov_graph

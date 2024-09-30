@@ -7,7 +7,7 @@ import json
 import os
 
 from tel2puml.tel2puml_types import PVEvent
-from tel2puml.data_pipelines.data_ingestion import (
+from tel2puml.pv_to_puml.data_ingestion import (
     cluster_events_by_job_id,
     update_and_create_events_from_clustered_pvevents,
 )

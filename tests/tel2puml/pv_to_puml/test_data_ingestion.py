@@ -4,7 +4,7 @@ from tel2puml.pv_event_simulator import (
     generate_test_data,
     generate_test_data_event_sequences_from_puml,
 )
-from tel2puml.data_pipelines.data_ingestion import (
+from tel2puml.pv_to_puml.data_ingestion import (
     update_all_connections_from_data,
     get_graph_solutions_from_clustered_events,
     update_and_create_events_from_clustered_pvevents,

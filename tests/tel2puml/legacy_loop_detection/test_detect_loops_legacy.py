@@ -4,7 +4,7 @@ import pytest
 
 from networkx import DiGraph
 
-from tel2puml.data_pipelines.data_ingestion import (
+from tel2puml.pv_to_puml.data_ingestion import (
     update_all_connections_from_clustered_events,
 )
 from tel2puml.events import events_to_markov_graph

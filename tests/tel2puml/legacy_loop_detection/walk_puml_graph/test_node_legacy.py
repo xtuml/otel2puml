@@ -14,7 +14,7 @@ from tel2puml.legacy_loop_detection.walk_puml_graph.node import (
     create_networkx_graph_of_nodes_from_markov_graph,
     merge_markov_without_loops_and_logic_detection_analysis,
 )
-from tel2puml.data_pipelines.data_ingestion import (
+from tel2puml.pv_to_puml.data_ingestion import (
     update_all_connections_from_clustered_events,
 )
 from tel2puml.events import (
