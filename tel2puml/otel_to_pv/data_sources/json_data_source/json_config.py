@@ -302,7 +302,7 @@ def field_spec_mapping_to_jq_field_spec_mapping(
 class JSONDataSourceConfig(TypedDict):
     """Typed dict for JSONDataSourceConfig."""
 
-    filepath: str
-    dirpath: str
+    filepath: Optional[str]
+    dirpath: Optional[str]
     json_per_line: bool
     field_mapping: dict[str, FieldSpec]

@@ -48,7 +48,7 @@ def load_config_from_dict(config: dict[str, Any]) -> IngestDataConfig:
     :param config_string: The config string
     :type config_string: `dict`[`str`, `Any`]
     :return: The config
-    :rtype: :class:`IngestData
+    :rtype: :class:`IngestDataConfig`
     """
     for field in ["data_sources", "data_holders", "ingest_data"]:
         assert field in config

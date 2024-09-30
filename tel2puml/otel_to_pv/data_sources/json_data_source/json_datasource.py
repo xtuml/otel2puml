@@ -41,13 +41,14 @@ class JSONDataSource(OTELDataSource):
         :return: The directory path
         :rtype: `str` | `None`
         """
-        dirpath: str = self.config["dirpath"]
 
-        if not dirpath:
+        if not self.config["dirpath"]:
             return None
-        elif not os.path.isdir(dirpath):
-            raise ValueError(f"{dirpath} directory does not exist.")
-        return dirpath
+        elif not os.path.isdir(self.config["dirpath"]):
+            raise ValueError(
+                f"{self.config['dirpath']} directory does not exist."
+                )
+        return self.config["dirpath"]
 
     def set_filepath(self) -> str | None:
         """Set the filepath.
@@ -55,15 +56,14 @@ class JSONDataSource(OTELDataSource):
         :return: The filepath
         :rtype: `str` | `None`
         """
-        filepath: str = self.config["filepath"]
 
-        if not filepath:
+        if not self.config["filepath"]:
             return None
-        elif not filepath.endswith(".json"):
+        elif not self.config["filepath"].endswith(".json"):
             raise ValueError("File provided is not .json format.")
-        elif not os.path.isfile(filepath):
-            raise ValueError(f"{filepath} does not exist.")
-        return filepath
+        elif not os.path.isfile(self.config["filepath"]):
+            raise ValueError(f"{self.config['filepath']} does not exist.")
+        return self.config["filepath"]
 
     def get_file_list(self) -> list[str]:
         """Get a list of filepaths to process.
@@ -71,17 +71,18 @@ class JSONDataSource(OTELDataSource):
         :return: A list of filepaths.
         :rtype: `list`[`str`]
         """
-        if self.dirpath:
+        if self.dirpath is not None:
             # Recursively search through directories for .json files
             return [
                 os.path.join(root, filename)
-                for root, _, filenames in os.walk(self.config["dirpath"])
+                for root, _, filenames in os.walk(self.dirpath)
                 for filename in filenames
                 if filename.endswith(".json")
             ]
-        elif self.filepath:
+        elif self.filepath is not None:
             return [self.filepath]
-        raise ValueError("Directory/Filepath not set.")
+        else:
+            raise ValueError("Directory/Filepath not set.")
 
     def parse_json_stream(self, filepath: str) -> Iterator[OTelEvent]:
         """Function that parses a json file, maps the json to the application

@@ -1,10 +1,14 @@
 """TypedDicts for tel2puml"""
+
 from typing import TypedDict, NotRequired, Any
 from enum import Enum
+
+from tel2puml.otel_to_pv.config import IngestDataConfig
 
 
 class PVEvent(TypedDict):
     """A PV event"""
+
     jobId: str
     eventId: str
     timestamp: str
@@ -16,24 +20,28 @@ class PVEvent(TypedDict):
 
 class NestedEvent(TypedDict):
     """A nested event"""
+
     eventType: str
     previousEventIds: NotRequired[dict[str, "NestedEvent"]]
 
 
 class NXNodeAttributes(TypedDict):
     """Attributes for a NetworkX node"""
+
     node_type: str
     extra_info: dict[str, str]
 
 
 class NXEdgeAttributes(TypedDict):
     """Attributes for a NetworkX edge"""
+
     start_node_attr: NXNodeAttributes
     end_node_attr: NXNodeAttributes
 
 
 class PUMLEvent(Enum):
     """PlantUML event types"""
+
     NORMAL = "NORMAL"
     BRANCH = "BRANCH"
     MERGE = "MERGE"
@@ -43,6 +51,7 @@ class PUMLEvent(Enum):
 
 class PUMLOperatorNodes(Enum):
     """PlantUML operators and a tuple of their corresponding PUML nodes"""
+
     START_XOR = ("START", "XOR")
     PATH_XOR = ("PATH", "XOR")
     END_XOR = ("END", "XOR")
@@ -58,6 +67,7 @@ class PUMLOperatorNodes(Enum):
 
 class PUMLOperator(Enum):
     """PlantUML operators with their corresponding PUML nodes"""
+
     XOR = (
         PUMLOperatorNodes.START_XOR,
         PUMLOperatorNodes.END_XOR,
@@ -78,6 +88,7 @@ class PUMLOperator(Enum):
 
 class PlantUMLEventAttributes(TypedDict):
     """Attributes for a PlantUML event"""
+
     is_branch: NotRequired[bool]
     is_break: NotRequired[bool]
     is_merge: NotRequired[bool]
@@ -92,6 +103,7 @@ DUMMY_EVENT = "|||DUMMY|||"
 
 class OtelSpan(TypedDict):
     """TypedDict for OtelSpan"""
+
     name: str
     span_id: str
     parent_span_id: NotRequired[str]
@@ -105,3 +117,18 @@ class OtelSpan(TypedDict):
     operation: NotRequired[str]
     status: NotRequired[dict[str, Any]]
     kind: NotRequired[int]
+
+
+class OtelPumlOptions(TypedDict):
+    """Typed dict for options for otel_to_puml"""
+
+    config: IngestDataConfig
+    ingest_data: bool
+
+
+class PVPumlOptions(TypedDict, total=False):
+    """Typed dict for options for pv_to_puml"""
+
+    file_list: list[str]
+    job_name: str
+    group_by_job_id: bool

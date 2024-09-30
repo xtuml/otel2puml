@@ -137,7 +137,7 @@ class TestJSONDataSource:
             f.write("Sample text")
 
         # Test 1: Directory mode
-        json_data_source.config["dirpath"] = str(temp_dir)
+        json_data_source.dirpath = str(temp_dir)
         json_data_source.filepath = None  # Ensure filepath is not set
         file_list = json_data_source.get_file_list()
 

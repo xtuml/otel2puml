@@ -1,28 +1,39 @@
+ingest_data:
+  data_source: json
+  data_holder: sql
+
+data_holders:
+  sql:
+    db_uri: 'sqlite:///otel_db.db'
+    batch_size: 5
+    time_buffer: 30
+
 data_sources:
   json:
-    # Specify the file path to the JSON data
-    dirpath: null
+    dirpath: 
     filepath: data.json
-    # Define the field mapping from the application to your JSON structure
     data_location: resource_spans
     header:
-      paths: [resource:attributes, scope_spans::scope:name] 
+      paths: [resource:attributes, scope_spans::scope:name]
     span_mapping:
       spans:
         key_paths: [scope_spans::spans]
     field_mapping:
       job_name:
-        key_paths: [HEADER:scope_spans::scope:name, HEADER:resource:attributes::key]
-        key_value: [null, service.version]
-        value_paths: [null, value:Value:StringValue]
+        key_paths: [HEADER:resource:attributes::key,
+        HEADER:scope_spans::scope:name]
+        key_value: [service.name, null]
+        value_paths: [value:Value:StringValue, null]
         value_type: string
       job_id:
-        key_paths: [trace_id]
+        key_paths: [job_id]
         value_type: string
       event_type:
-        key_paths: [attributes::key]
-        key_value: [http.method]
-        value_paths: [value:Value:StringValue]
+        key_paths: [attributes::key, attributes::key]
+        key_value: [coral.namespace, http.status_code]
+        value_paths: [
+        value:Value:StringValue,
+        value:Value:IntValue]
         value_type: string
       event_id:
         key_paths: [span_id]
@@ -34,9 +45,13 @@ data_sources:
         key_paths: [end_time_unix_nano]
         value_type: unix_nano
       application_name:
-        key_paths: [attributes::key]
-        key_value: [http.host]
-        value_paths: [value:Value:StringValue]
+        key_paths: [
+        attributes::key,
+        HEADER:resource:attributes::key]
+        key_value: [coral.service, service.version]
+        value_paths: [
+        value:Value:StringValue,
+        value:Value:StringValue]
         value_type: string
       parent_event_id:
         key_paths: [parent_span_id]
@@ -44,13 +59,3 @@ data_sources:
       child_event_ids:
         key_paths: [child_span_ids]
         value_type: string
-
-data_holders:
-  sql:
-    db_uri: sqlite:///graph_database.db
-    batch_size: 100
-    time_buffer: 15 # minutes
-
-ingest_data:
-  data_source: json
-  data_holder: sql

@@ -2,7 +2,7 @@
 diagram, inferring the logic from the PV event sequences.
 """
 
-from typing import Generator, Iterable, Any
+from typing import Generator, Iterable, Any, Optional
 import json
 import os
 
@@ -254,27 +254,74 @@ def pv_events_from_folder_to_puml_file(
 
 
 def pv_streams_to_puml_files(
-    pv_streams: Generator[
-        tuple[str, Generator[Generator[PVEvent, Any, None], Any, None]],
-        Any,
-        None,
-    ],
-    file_directory: str = ".",
+    pv_streams: Iterable[tuple[str, Iterable[Iterable[PVEvent]]]],
+    output_file_directory: str = ".",
 ) -> None:
     """
     Function to convert and save a stream of PVEvents to puml files.
 
-    :param pv_streams: Generator of tuples of job_name to generator of
-    generators of PVEvents grouped by job_name, then job_id.
-    :type pv_streams: `Generator`[`tuple`[`str`, `Generator`[`Generator`
-    [:class:`PVEvent`, `Any`, `None`], `Any`, `None`]], `Any`, `None`]
-    :param file_directory: The file directory to store puml files. Defaults to
-    "."
-    :type file_directory: `str`
+    :param pv_streams: Iterable of tuples of job_name to iterable of
+    iterables of PVEvents grouped by job_name, then job_id.
+    :type pv_streams: `Iterable`[`tuple`[`str`, `Iterable`[`Iterable`
+    [:class:`PVEvent`]]]]
+    :param output_file_directory: The file directory to store puml files.
+    Defaults to "."
+    :type output_file_directory: `str`
     """
     for job_name, job_event_gen in pv_streams:
-        puml_file_path = os.path.join(file_directory, f"{job_name}.puml")
+        job_name = job_name.replace(" ", "_")
+        puml_file_path = os.path.join(
+            output_file_directory, f"{job_name}.puml"
+        )
         pv_to_puml_file(
             job_event_gen,
             puml_file_path=puml_file_path,
         )
+
+
+def pv_files_to_pv_streams(
+    file_list: list[str] | None = None,
+    job_name: str = "default.puml",
+    group_by_job_id: Optional[bool] = False,
+) -> Generator[
+    tuple[str, Generator[list[PVEvent], Any, None]],
+    Any,
+    None,
+]:
+    """Converts PV job JSON files from a specified directory or a provided file
+    list into a generator of tuples.
+
+    Each tuple consists of the job name and a generator of generators, where
+    each inner generator yields `PVEvent` objects.
+
+    :param file_list: A list of file paths to PV job JSON files. Defaults
+    to `None`.
+    :type file_list: `Optional`[`list`[`str`]]
+    :param job_name: The name of the job associated with the PV events.
+    Defalts to `default.puml`
+    :type job_name: `str`
+    :param group_by_job_id: Flag to determine whether to group events by
+    their `job_id`. Defaults to `False`
+    :type group_by_job_id: `bool`
+    :return: A generator that yields tuples. Each tuple contains the job name
+    and a generator of lists of PVEvents.
+    :rtype: `Generator`[`tuple`[`str`,`Generator`[list[PVEvent]], `Any`,
+    `None`]],`Any`,`None`]
+    """
+    if file_list is None:
+        file_list = []
+    pv_stream_sequence = pv_job_files_to_event_sequence_streams(file_list)
+
+    if group_by_job_id:
+        events_by_job_id: dict[str, list[PVEvent]] = {}
+        for pv_stream in pv_stream_sequence:
+            clustered_events = cluster_events_by_job_id(pv_stream)
+            for job_id, events in clustered_events.items():
+                if job_id in events_by_job_id:
+                    events_by_job_id[job_id].extend(events)
+                else:
+                    events_by_job_id[job_id] = events
+
+        pv_stream_sequence = (events for events in events_by_job_id.values())
+
+    yield (job_name, pv_stream_sequence)

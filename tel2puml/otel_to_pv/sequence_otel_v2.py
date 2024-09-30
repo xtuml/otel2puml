@@ -9,7 +9,6 @@ from tel2puml.otel_to_pv.ingest_otel_data import (
     ingest_data_into_dataholder,
 )
 from tel2puml.otel_to_pv.config import IngestDataConfig
-from tel2puml.otel_to_pv.data_holders.base import DataHolder
 
 
 def order_groups_by_start_timestamp(
@@ -311,45 +310,6 @@ def job_ids_to_eventid_to_otelevent_map(
         yield {otel_event.event_id: otel_event for otel_event in job_group}
 
 
-def config_to_otel_job_name_group_streams(
-    config: IngestDataConfig,
-    ingest_data: bool = False,
-    find_unique_graphs: bool = False,
-) -> Generator[
-    tuple[str, Generator[Generator[OTelEvent, Any, None], Any, None]],
-    Any,
-    None,
-]:
-    """
-    Stream data from data holder. Optional parameters to ingest data as well
-    as find unique graphs within the data set.
-
-    :param config: The config
-    :type config: :class:`IngestDataConfig`
-    :param ingest_data: Flag to indicate whether to load data into data holder.
-    Defaults to False.
-    :type ingest_data: `bool`
-    :param find_unique_graphs: Flag to indicate whether to find unique graphs
-    within the data holder object. Defaults to False.
-    :type find_unique_graphs: `bool`
-    :return: Generator of tuples of job_name to generator of generators of
-    OTelEvents grouped by job_name, then job_id.
-    :rtype: `Generator`[`tuple`[`str`, `Generator`[`Generator`[:class:
-    `OTelEvent`, `Any`, `None`], `Any`, `None`]]]
-    """
-
-    if ingest_data:
-        data_holder: DataHolder = ingest_data_into_dataholder(config)
-    else:
-        data_holder = fetch_data_holder(config)
-
-    if find_unique_graphs:
-        job_name_to_job_ids_map = data_holder.find_unique_graphs()
-        yield from data_holder.stream_data(job_name_to_job_ids_map)
-    else:
-        yield from data_holder.stream_data()
-
-
 def otel_to_pv(
     config: IngestDataConfig,
     ingest_data: bool = False,
@@ -384,16 +344,26 @@ def otel_to_pv(
     `PVEvent`, `Any`, `None`], `Any`, `None`]], `Any`, `None`]
 
     """
-    job_name_group_streams = config_to_otel_job_name_group_streams(
-        config,
-        ingest_data=ingest_data,
-        find_unique_graphs=find_unique_graphs,
-    )
+    if ingest_data:
+        data_holder = ingest_data_into_dataholder(config)
+    else:
+        data_holder = fetch_data_holder(config)
 
-    for job_name, job_id_streams in job_name_group_streams:
-        pv_event_streams = sequence_otel_job_id_streams(
-            job_id_streams,
-            async_flag=async_flag,
-            event_to_async_group_map=event_to_async_group_map,
+    if find_unique_graphs:
+        job_name_to_job_ids_map: dict[str, set[str]] | None = (
+            data_holder.find_unique_graphs()
         )
-        yield (job_name, pv_event_streams)
+    else:
+        job_name_to_job_ids_map = None
+    job_name_group_streams = data_holder.stream_data(job_name_to_job_ids_map)
+    return (
+        (
+            job_name,
+            sequence_otel_job_id_streams(
+                job_id_streams,
+                async_flag=async_flag,
+                event_to_async_group_map=event_to_async_group_map,
+            ),
+        )
+        for job_name, job_id_streams in job_name_group_streams
+    )
