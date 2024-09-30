@@ -3,7 +3,7 @@
 import networkx as nx
 
 from tel2puml.pv_to_puml.walk_puml_graph.node import Node
-from tel2puml.legacy_loop_detection.walk_puml_graph.node import (
+from tel2puml.utils_test import (
     merge_markov_without_loops_and_logic_detection_analysis
 )
 from tel2puml.pv_to_puml.walk_puml_graph.walk_puml_logic_graph import (
@@ -20,9 +20,7 @@ from tel2puml.pv_to_puml.data_ingestion import (
     update_all_connections_from_clustered_events,
 )
 from tel2puml.events import events_to_markov_graph
-from tel2puml.legacy_loop_detection.events import (
-    get_event_reference_from_events,
-)
+from tel2puml.utils_test import get_event_reference_from_events
 from tel2puml.pv_event_simulator import (
     generate_test_data_event_sequences_from_puml,
 )
