@@ -575,7 +575,7 @@ class TestSeqeunceOTelJobs:
         num_events = 0
         # job id test_id_0 is outside the config time buffer window, therefore
         # it is not included, reducing total events streamed to 8
-        valid_event_ids = {"1_1", "1_0"}
+        valid_event_ids = ["1_1", "1_0"]
         for job_name, pv_event_streams in result:
             assert job_name == "test_name"
             for pv_event_gen in pv_event_streams:
