@@ -3,7 +3,7 @@ from typing import Hashable
 
 import pytest
 
-from tel2puml.graph import PUMLGraph, PUMLEventNode, PUMLNode
+from tel2puml.puml_graph import PUMLGraph, PUMLEventNode, PUMLNode
 from tel2puml.legacy_loop_detection.puml_graph.graph_loop_extract import (
     extract_loops_starts_and_ends_from_loop,
     get_event_nodes_from_loop,
