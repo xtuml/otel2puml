@@ -6,7 +6,7 @@ from logging import getLogger
 from typing import Generator, Optional, Literal, Any, Union
 
 from tel2puml.tel2puml_types import OtelPumlOptions, PVEvent, PVPumlOptions
-from tel2puml.otel_to_pv.sequence_otel_v2 import otel_to_pv
+from tel2puml.otel_to_pv.sequence_otel import otel_to_pv
 from tel2puml.pv_to_puml.pv_to_puml import (
     pv_streams_to_puml_files,
     pv_files_to_pv_streams,
