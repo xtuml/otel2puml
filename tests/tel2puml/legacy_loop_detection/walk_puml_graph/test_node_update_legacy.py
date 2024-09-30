@@ -3,7 +3,7 @@ from tel2puml.legacy_loop_detection.walk_puml_graph.node_update import (
     update_nodes_with_break_points,
     update_nodes_with_break_points_from_loops,
 )
-from tel2puml.walk_puml_graph.node import Node
+from tel2puml.pv_to_puml.walk_puml_graph.node import Node
 from tel2puml.legacy_loop_detection.detect_loops import Loop
 from tel2puml.tel2puml_types import PUMLEvent
 

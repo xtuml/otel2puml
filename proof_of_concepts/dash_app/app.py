@@ -10,11 +10,11 @@ from typing import Generator, Any
 
 import networkx as nx
 
-from tel2puml.pv_to_puml import (
+from tel2puml.pv_to_puml.pv_to_puml import (
     pv_jobs_from_folder_to_puml_file,
     pv_jobs_from_folder_to_event_sequence_streams,
 )
-from tel2puml.data_pipelines.data_ingestion import (
+from tel2puml.pv_to_puml.data_ingestion import (
     get_graph_solutions_from_clustered_events,
 )
 

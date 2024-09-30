@@ -5,8 +5,8 @@ from networkx import DiGraph
 from tel2puml.loop_detection.calculate_loop_components import (
     get_all_kill_edges_from_loop_nodes_and_end_points,
 )
-from tel2puml.walk_puml_graph.node import Node, SubGraphNode
-from tel2puml.walk_puml_graph.node_update import (
+from tel2puml.pv_to_puml.walk_puml_graph.node import Node, SubGraphNode
+from tel2puml.pv_to_puml.walk_puml_graph.node_update import (
     get_node_to_node_map_from_edges,
     add_loop_kill_paths_for_nodes,
 )

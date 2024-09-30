@@ -7,7 +7,7 @@ from test_event_generator.io.parse_puml import parse_raw_job_def_lines
 from tel2puml.tel2puml_types import (
     PUMLEvent, PUMLOperatorNodes, PUMLOperator, DUMMY_START_EVENT
 )
-from tel2puml.puml_graph.graph import (
+from tel2puml.puml_graph import (
     PUMLGraph,
     PUMLEventNode,
     PUMLOperatorNode,

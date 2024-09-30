@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timezone
 
 from tel2puml.tel2puml_types import PVEvent, OtelSpan
-from tel2puml.data_pipelines.data_creation import (
+from tel2puml.pv_event_simulator import (
     generate_test_data_event_sequences_from_puml,
 )
 

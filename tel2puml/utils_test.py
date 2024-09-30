@@ -2,11 +2,13 @@
 """
 from typing import Literal
 
-from tel2puml.data_pipelines.data_creation import (
+from tel2puml.pv_event_simulator import (
     generate_test_data_event_sequences_from_puml
 )
 from tel2puml.legacy_loop_detection.pv_to_puml import pv_to_puml_string
-from tel2puml.pv_to_puml import pv_to_puml_string as pv_to_puml_string_v2
+from tel2puml.pv_to_puml.pv_to_puml import (
+    pv_to_puml_string as pv_to_puml_string_v2,
+)
 from tel2puml.check_puml_equiv import (
     check_puml_string_equivalence_to_puml_files
 )

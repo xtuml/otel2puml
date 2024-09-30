@@ -4,7 +4,7 @@ import pytest
 
 from networkx import DiGraph
 
-from tel2puml.data_pipelines.data_ingestion import (
+from tel2puml.pv_to_puml.data_ingestion import (
     update_all_connections_from_clustered_events,
 )
 from tel2puml.events import events_to_markov_graph
@@ -30,7 +30,7 @@ from tel2puml.legacy_loop_detection.detect_loops import (
     remove_loop_data_from_graph,
     remove_loop_edges_from_graph
 )
-from tel2puml.data_pipelines.data_creation import (
+from tel2puml.pv_event_simulator import (
     generate_test_data_event_sequences_from_puml,
 )
 

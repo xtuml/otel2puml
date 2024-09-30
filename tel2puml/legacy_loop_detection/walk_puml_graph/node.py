@@ -8,7 +8,7 @@ from pm4py import ProcessTree
 from tel2puml.events import Event
 from tel2puml.logic_detection import Operator as Logic_operator
 from tel2puml.tel2puml_types import PUMLEvent
-from tel2puml.walk_puml_graph.node import Node
+from tel2puml.pv_to_puml.walk_puml_graph.node import Node
 
 
 def load_all_logic_trees_into_nodes(

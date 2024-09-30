@@ -7,7 +7,7 @@ from tel2puml.utils import (
     check_has_path_not_through_nodes, check_has_path_between_all_nodes
 )
 from tel2puml.legacy_loop_detection.detect_loops import Loop
-from tel2puml.puml_graph.graph import PUMLNode, PUMLEventNode, PUMLGraph
+from tel2puml.puml_graph import PUMLNode, PUMLEventNode, PUMLGraph
 
 
 class LoopNodes(TypedDict):

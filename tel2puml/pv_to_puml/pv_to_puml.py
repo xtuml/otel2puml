@@ -7,24 +7,27 @@ import json
 import os
 
 from tel2puml.tel2puml_types import PVEvent
-from tel2puml.data_pipelines.data_ingestion import (
+from tel2puml.pv_to_puml.data_ingestion import (
     cluster_events_by_job_id,
     update_and_create_events_from_clustered_pvevents,
 )
-from tel2puml.data_pipelines.data_creation import transform_dict_into_pv_event
+from tel2puml.pv_event_simulator import transform_dict_into_pv_event
 from tel2puml.events import create_graph_from_events
-from tel2puml.walk_puml_graph.walk_puml_logic_graph import walk_nested_graph
-from tel2puml.walk_puml_graph.node_update import (
+from tel2puml.pv_to_puml.walk_puml_graph.walk_puml_logic_graph import (
+    walk_nested_graph,
+)
+from tel2puml.pv_to_puml.walk_puml_graph.node_update import (
     update_nested_node_graph_with_break_points,
 )
 from tel2puml.loop_detection.detect_loops import detect_loops
-from tel2puml.walk_puml_graph.create_node_graph_from_event_graph import (
-    create_node_graph_from_event_graph,
-)
-from tel2puml.walk_puml_graph.find_and_add_loop_kill_paths import (
+from tel2puml.pv_to_puml.walk_puml_graph.create_node_graph_from_event_graph  \
+    import (
+        create_node_graph_from_event_graph,
+    )
+from tel2puml.pv_to_puml.walk_puml_graph.find_and_add_loop_kill_paths import (
     find_and_add_loop_kill_paths_to_nested_graphs,
 )
-from tel2puml.puml_graph.graph import (
+from tel2puml.puml_graph import (
     remove_dummy_start_and_end_events_from_nested_graphs,
     update_nested_sub_graphs_for_dummy_break_event_nodes,
 )

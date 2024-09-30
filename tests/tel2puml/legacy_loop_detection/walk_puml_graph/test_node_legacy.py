@@ -6,7 +6,7 @@ from typing import Literal
 from pm4py import ProcessTree
 import networkx as nx
 
-from tel2puml.walk_puml_graph.node import Node
+from tel2puml.pv_to_puml.walk_puml_graph.node import Node
 from tel2puml.legacy_loop_detection.walk_puml_graph.node import (
     load_logic_tree_into_nodes,
     load_all_logic_trees_into_nodes,
@@ -14,7 +14,7 @@ from tel2puml.legacy_loop_detection.walk_puml_graph.node import (
     create_networkx_graph_of_nodes_from_markov_graph,
     merge_markov_without_loops_and_logic_detection_analysis,
 )
-from tel2puml.data_pipelines.data_ingestion import (
+from tel2puml.pv_to_puml.data_ingestion import (
     update_all_connections_from_clustered_events,
 )
 from tel2puml.events import (
@@ -24,7 +24,7 @@ from tel2puml.events import (
 from tel2puml.legacy_loop_detection.events import (
     get_event_reference_from_events,
 )
-from tel2puml.data_pipelines.data_creation import (
+from tel2puml.pv_event_simulator import (
     generate_test_data_event_sequences_from_puml,
 )
 

@@ -2,7 +2,7 @@
 """
 import pytest
 
-from tel2puml.puml_graph.graph import (
+from tel2puml.puml_graph import (
     PUMLGraph,
     PUMLEventNode,
     PUMLOperatorNode,

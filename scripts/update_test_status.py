@@ -54,7 +54,7 @@ TEMPLATE = dedent(
 
     """
 )
-PATH = "tests/end-to-end-tests"
+PATH = "tests/tel2puml/pv_to_puml/end-to-end-tests"
 PARAMS = {
     "full": (0, PATH),
     "branch": (1, f"{PATH}/test_branch_counts.py"),

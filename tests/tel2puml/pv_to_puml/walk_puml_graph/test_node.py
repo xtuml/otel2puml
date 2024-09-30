@@ -5,7 +5,7 @@ from typing import Literal
 
 from pm4py import ProcessTree
 
-from tel2puml.walk_puml_graph.node import Node
+from tel2puml.pv_to_puml.walk_puml_graph.node import Node
 from tel2puml.tel2puml_types import PUMLEvent, PUMLOperator
 
 

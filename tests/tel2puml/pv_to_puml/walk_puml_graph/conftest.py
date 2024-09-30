@@ -9,14 +9,14 @@ from networkx import DiGraph
 
 from tel2puml.events import Event
 from tel2puml.logic_detection import Operator as Logic_operator
-from tel2puml.walk_puml_graph.node import Node, SubGraphNode
+from tel2puml.pv_to_puml.walk_puml_graph.node import Node, SubGraphNode
 from tel2puml.tel2puml_types import (
     DUMMY_END_EVENT,
     DUMMY_START_EVENT,
     PUMLEvent,
     PUMLOperator,
 )
-from tel2puml.puml_graph.graph import PUMLGraph
+from tel2puml.puml_graph import PUMLGraph
 from tel2puml.loop_detection.loop_types import LoopEvent, LOOP_EVENT_TYPE
 
 
