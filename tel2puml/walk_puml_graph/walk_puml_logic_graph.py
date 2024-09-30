@@ -5,7 +5,7 @@ from itertools import chain
 
 from networkx import DiGraph, topological_sort, has_path, all_simple_paths
 
-from tel2puml.puml_graph.graph import (
+from tel2puml.graph import (
     PUMLEventNode,
     PUMLGraph,
     PUMLOperatorNode,

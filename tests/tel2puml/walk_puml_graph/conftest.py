@@ -16,7 +16,7 @@ from tel2puml.tel2puml_types import (
     PUMLEvent,
     PUMLOperator,
 )
-from tel2puml.puml_graph.graph import PUMLGraph
+from tel2puml.graph import PUMLGraph
 from tel2puml.loop_detection.loop_types import LoopEvent, LOOP_EVENT_TYPE
 
 

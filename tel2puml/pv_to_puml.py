@@ -24,7 +24,7 @@ from tel2puml.walk_puml_graph.create_node_graph_from_event_graph import (
 from tel2puml.walk_puml_graph.find_and_add_loop_kill_paths import (
     find_and_add_loop_kill_paths_to_nested_graphs,
 )
-from tel2puml.puml_graph.graph import (
+from tel2puml.graph import (
     remove_dummy_start_and_end_events_from_nested_graphs,
     update_nested_sub_graphs_for_dummy_break_event_nodes,
 )

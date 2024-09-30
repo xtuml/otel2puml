@@ -12,7 +12,7 @@ from tel2puml.walk_puml_graph.walk_puml_logic_graph import (
     LogicBlockHolder,
     walk_nested_graph
 )
-from tel2puml.puml_graph.graph import (
+from tel2puml.graph import (
     PUMLGraph,
     PUMLOperatorNode,
 )
