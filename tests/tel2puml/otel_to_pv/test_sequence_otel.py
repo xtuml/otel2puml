@@ -7,7 +7,7 @@ import yaml
 import pytest
 from pytest import MonkeyPatch
 
-from tel2puml.otel_to_pv.sequence_otel_v2 import (
+from tel2puml.otel_to_pv.sequence_otel import (
     order_groups_by_start_timestamp,
     sequence_groups_of_otel_events_asynchronously,
     group_events_using_async_information,
@@ -508,7 +508,7 @@ class TestSeqeunceOTelJobs:
             ingest_data=IngestTypes(**mock_yaml_config_dict["ingest_data"]),
         )
         monkeypatch.setattr(
-            "tel2puml.otel_to_pv.sequence_otel_v2.fetch_data_holder",
+            "tel2puml.otel_to_pv.sequence_otel.fetch_data_holder",
             mock_fetch_data_holder,
         )
 

@@ -1,12 +1,13 @@
 """End to end tests for bunched constraint cases."""
-from tel2puml.utils_test import end_to_end_test
+
+from typing import Callable
 
 
 class TestConstraintBunchedAND:
     """End to end tests for bunched AND constraint cases."""
 
     @staticmethod
-    def test_bunched_AND_AND() -> None:
+    def test_bunched_AND_AND(end_to_end_test: Callable[..., None]) -> None:
         """Test bunched AND with AND."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/AND/"
@@ -14,7 +15,7 @@ class TestConstraintBunchedAND:
         )
 
     @staticmethod
-    def test_bunched_AND_OR() -> None:
+    def test_bunched_AND_OR(end_to_end_test: Callable[..., None]) -> None:
         """Test bunched AND with OR."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/AND/"
@@ -22,7 +23,7 @@ class TestConstraintBunchedAND:
         )
 
     @staticmethod
-    def test_bunched_AND_XOR() -> None:
+    def test_bunched_AND_XOR(end_to_end_test: Callable[..., None]) -> None:
         """Test bunched AND with XOR."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/AND/"
@@ -30,7 +31,9 @@ class TestConstraintBunchedAND:
         )
 
     @staticmethod
-    def test_bunched_merge_AND_AND() -> None:
+    def test_bunched_merge_AND_AND(
+        end_to_end_test: Callable[..., None],
+    ) -> None:
         """Test bunched merge AND with AND."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/AND/"
@@ -39,7 +42,9 @@ class TestConstraintBunchedAND:
         )
 
     @staticmethod
-    def test_bunched_merge_AND_OR() -> None:
+    def test_bunched_merge_AND_OR(
+        end_to_end_test: Callable[..., None],
+    ) -> None:
         """Test bunched merge AND with OR."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/AND/"
@@ -47,7 +52,9 @@ class TestConstraintBunchedAND:
         )
 
     @staticmethod
-    def test_bunched_merge_AND_XOR() -> None:
+    def test_bunched_merge_AND_XOR(
+        end_to_end_test: Callable[..., None],
+    ) -> None:
         """Test bunched merge AND with XOR."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/AND/"
@@ -59,7 +66,7 @@ class TestConstraintBunchedOR:
     """End to end tests for bunched OR constraint cases."""
 
     @staticmethod
-    def test_bunched_OR_AND() -> None:
+    def test_bunched_OR_AND(end_to_end_test: Callable[..., None]) -> None:
         """Test bunched OR with AND."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/OR/"
@@ -67,7 +74,7 @@ class TestConstraintBunchedOR:
         )
 
     @staticmethod
-    def test_bunched_OR_OR() -> None:
+    def test_bunched_OR_OR(end_to_end_test: Callable[..., None]) -> None:
         """Test bunched OR with OR."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/OR/"
@@ -75,7 +82,7 @@ class TestConstraintBunchedOR:
         )
 
     @staticmethod
-    def test_bunched_OR_XOR() -> None:
+    def test_bunched_OR_XOR(end_to_end_test: Callable[..., None]) -> None:
         """Test bunched OR with XOR."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/OR/"
@@ -83,7 +90,9 @@ class TestConstraintBunchedOR:
         )
 
     @staticmethod
-    def test_bunched_merge_OR_AND() -> None:
+    def test_bunched_merge_OR_AND(
+        end_to_end_test: Callable[..., None],
+    ) -> None:
         """Test bunched merge OR with AND."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/OR/"
@@ -91,7 +100,7 @@ class TestConstraintBunchedOR:
         )
 
     @staticmethod
-    def test_bunched_merge_OR_OR() -> None:
+    def test_bunched_merge_OR_OR(end_to_end_test: Callable[..., None]) -> None:
         """Test bunched merge OR with OR."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/OR/"
@@ -100,7 +109,9 @@ class TestConstraintBunchedOR:
         )
 
     @staticmethod
-    def test_bunched_merge_OR_XOR() -> None:
+    def test_bunched_merge_OR_XOR(
+        end_to_end_test: Callable[..., None],
+    ) -> None:
         """Test bunched merge OR with XOR."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/OR/"
@@ -112,7 +123,7 @@ class TestConstraintBunchedXOR:
     """End to end tests for bunched XOR constraint cases."""
 
     @staticmethod
-    def test_bunched_XOR_AND() -> None:
+    def test_bunched_XOR_AND(end_to_end_test: Callable[..., None]) -> None:
         """Test bunched XOR with AND."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/XOR/"
@@ -120,7 +131,7 @@ class TestConstraintBunchedXOR:
         )
 
     @staticmethod
-    def test_bunched_XOR_OR() -> None:
+    def test_bunched_XOR_OR(end_to_end_test: Callable[..., None]) -> None:
         """Test bunched XOR with OR."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/XOR/"
@@ -128,7 +139,7 @@ class TestConstraintBunchedXOR:
         )
 
     @staticmethod
-    def test_bunched_XOR_XOR() -> None:
+    def test_bunched_XOR_XOR(end_to_end_test: Callable[..., None]) -> None:
         """Test bunched XOR with XOR."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/XOR/"
@@ -136,7 +147,9 @@ class TestConstraintBunchedXOR:
         )
 
     @staticmethod
-    def test_bunched_merge_XOR_AND() -> None:
+    def test_bunched_merge_XOR_AND(
+        end_to_end_test: Callable[..., None],
+    ) -> None:
         """Test bunched merge XOR with AND."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/XOR/"
@@ -144,7 +157,9 @@ class TestConstraintBunchedXOR:
         )
 
     @staticmethod
-    def test_bunched_merge_XOR_OR() -> None:
+    def test_bunched_merge_XOR_OR(
+        end_to_end_test: Callable[..., None],
+    ) -> None:
         """Test bunched merge XOR with OR."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/XOR/"
@@ -152,7 +167,9 @@ class TestConstraintBunchedXOR:
         )
 
     @staticmethod
-    def test_bunched_merge_XOR_XOR() -> None:
+    def test_bunched_merge_XOR_XOR(
+        end_to_end_test: Callable[..., None],
+    ) -> None:
         """Test bunched merge XOR with XOR."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/XOR/"
@@ -165,7 +182,9 @@ class TestBunchedHard:
     """End to end tests for difficult bunched constraint cases."""
 
     @staticmethod
-    def test_bunched_three_levels_AND() -> None:
+    def test_bunched_three_levels_AND(
+        end_to_end_test: Callable[..., None],
+    ) -> None:
         """Test bunched three levels of AND."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/"
@@ -173,7 +192,9 @@ class TestBunchedHard:
         )
 
     @staticmethod
-    def test_bunched_three_levels_XOR() -> None:
+    def test_bunched_three_levels_XOR(
+        end_to_end_test: Callable[..., None],
+    ) -> None:
         """Test bunched three levels of XOR."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/"
@@ -181,7 +202,9 @@ class TestBunchedHard:
         )
 
     @staticmethod
-    def test_bunched_XOR_XOR_with_kill() -> None:
+    def test_bunched_XOR_XOR_with_kill(
+        end_to_end_test: Callable[..., None],
+    ) -> None:
         """Test bunched XOR with XOR with kill."""
         end_to_end_test(
             "end-to-end-pumls/constraints/bunched/"
