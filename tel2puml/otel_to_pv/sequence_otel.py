@@ -8,7 +8,7 @@ from tel2puml.otel_to_pv.ingest_otel_data import (
     fetch_data_holder,
     ingest_data_into_dataholder,
 )
-from tel2puml.otel_to_pv.config import IngestDataConfig
+from tel2puml.otel_to_pv.config import IngestDataConfig, SequenceModelConfig
 
 
 def order_groups_by_start_timestamp(
@@ -315,7 +315,6 @@ def otel_to_pv(
     ingest_data: bool = False,
     find_unique_graphs: bool = False,
     async_flag: bool = False,
-    event_to_async_group_map: dict[str, dict[str, str]] | None = None,
 ) -> Generator[
     tuple[str, Generator[Generator[PVEvent, Any, None], Any, None]], Any, None
 ]:
@@ -334,10 +333,6 @@ def otel_to_pv(
     :param async_flag: A flag indicating whether to sequence event groups
     asynchronously or not. Defaults to False.
     :type async_flag: `bool`, optional
-    :param event_to_async_group_map: A dictionary mapping event types to
-    groups of events that occur asynchronously. Defaults to None.
-    :type event_to_async_group_map: `dict`[`str`, `dict`[`str`, `str`]],
-    optional
     :return: Generator of tuples of job_name to generator of generators of
     PVEvents grouped by job_name, then job_id.
     :rtype: `Generator`[`tuple`[`str`, `Generator`[`Generator`[:class:
@@ -356,13 +351,22 @@ def otel_to_pv(
     else:
         job_name_to_job_ids_map = None
     job_name_group_streams = data_holder.stream_data(job_name_to_job_ids_map)
+    # get the async event groups from the config
+    job_name_to_event_to_async_group_map = config.get(
+        "sequencer", SequenceModelConfig(async_event_groups={})
+    )
     return (
         (
             job_name,
             sequence_otel_job_id_streams(
                 job_id_streams,
                 async_flag=async_flag,
-                event_to_async_group_map=event_to_async_group_map,
+                event_to_async_group_map=(
+                    job_name_to_event_to_async_group_map.
+                    async_event_groups.get(
+                        job_name, None
+                    ),
+                )
             ),
         )
         for job_name, job_id_streams in job_name_group_streams
