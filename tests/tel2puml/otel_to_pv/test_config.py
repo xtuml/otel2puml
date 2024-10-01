@@ -16,9 +16,7 @@ def test_load_config_from_dict(mock_yaml_config_dict: dict[str, Any]) -> None:
     """Test load_config_from_yaml_string."""
     otel_to_pv_config = load_config_from_dict(mock_yaml_config_dict)
     # check sequencer default is set
-    assert otel_to_pv_config["sequencer"] == SequenceModelConfig(
-        async_event_groups={}
-    )
+    assert otel_to_pv_config["sequencer"] == SequenceModelConfig()
     # check case where sequencer is provided
     temp_config = deepcopy(mock_yaml_config_dict)
     temp_config["sequencer"] = {
@@ -27,7 +25,8 @@ def test_load_config_from_dict(mock_yaml_config_dict: dict[str, Any]) -> None:
                 "event_1": {},
                 "event_2": {"event_3": "group_1"}
             }
-        }
+        },
+        "async_flag": True
     }
     otel_to_pv_config = load_config_from_dict(temp_config)
     assert otel_to_pv_config["sequencer"] == SequenceModelConfig(
@@ -36,7 +35,8 @@ def test_load_config_from_dict(mock_yaml_config_dict: dict[str, Any]) -> None:
                 "event_1": {},
                 "event_2": {"event_3": "group_1"}
             }
-        }
+        },
+        async_flag=True
     )
     # test cases in which some required fields are missing
     for field in ["data_sources", "data_holders", "ingest_data"]:
@@ -65,20 +65,36 @@ def test_load_config_from_dict(mock_yaml_config_dict: dict[str, Any]) -> None:
 
 def test_sequence_model_config() -> None:
     """Test the sequence model config."""
-    # test empy dict
-    SequenceModelConfig(
-        async_event_groups={}
+    # test defaults
+    sequence_model_config = SequenceModelConfig()
+    assert sequence_model_config.async_event_groups == {}
+    assert not sequence_model_config.async_flag
+    # test empy dict and set to true
+    sequence_model_config = SequenceModelConfig(
+        async_event_groups={},
+        async_flag=True
     )
-    # test correct usage possibilities
-    SequenceModelConfig(
+    assert sequence_model_config.async_event_groups == {}
+    assert sequence_model_config.async_flag
+    # test other correct usage possibilities
+    sequence_model_config = SequenceModelConfig(
         async_event_groups={
             "job_1": {},
             "job_2": {
                 "event_1": {},
                 "event_2": {"event_3": "group_1"}
             }
-        }
+        },
+        async_flag=False
     )
+    assert sequence_model_config.async_event_groups == {
+        "job_1": {},
+        "job_2": {
+            "event_1": {},
+            "event_2": {"event_3": "group_1"}
+        }
+    }
+    assert not sequence_model_config.async_flag
     # test incorrect usage possibilities
     with pytest.raises(ValidationError):
         SequenceModelConfig(
