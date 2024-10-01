@@ -9,7 +9,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 
 from tel2puml.otel_to_puml import otel_to_puml
-from tel2puml.tel2puml_types import OtelPumlOptions, PVPumlOptions
+from tel2puml.tel2puml_types import OtelPVOptions, PVPumlOptions
 from tel2puml.otel_to_pv.config import load_config_from_dict
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
     NodeModel,
@@ -46,9 +46,9 @@ class TestOtelToPuml:
         mock_isdir.return_value = True  # Assume directory exists
 
         with pytest.raises(ValueError) as exc_info:
-            otel_to_puml(otel_to_puml_options=None, components="all")
+            otel_to_puml(otel_to_pv_options=None, components="all")
         assert (
-            "'all' has been selected, 'otel_to_puml_options' is required."
+            "'all' has been selected, 'otel_to_pv_options' is required."
             in str(exc_info.value)
         )
 
@@ -61,9 +61,9 @@ class TestOtelToPuml:
         mock_isdir.return_value = True
 
         with pytest.raises(ValueError) as exc_info:
-            otel_to_puml(otel_to_puml_options=None, components="otel_to_puml")
+            otel_to_puml(otel_to_pv_options=None, components="otel_to_pv")
         assert (
-            "'otel_to_puml' has been selected, 'otel_to_puml_options' is"
+            "'otel_to_pv' has been selected, 'otel_to_pv_options' is"
             " required."
             in str(exc_info.value)
         )
@@ -94,7 +94,7 @@ class TestOtelToPuml:
                 components="invalid_component"  # type: ignore[arg-type]
             )
         assert (
-            "components should be one of 'all', 'otel_to_puml', 'pv_to_puml'"
+            "components should be one of 'all', 'otel_to_pv', 'pv_to_puml'"
             in str(exc_info.value)
         )
 
@@ -121,13 +121,13 @@ class TestOtelToPuml:
         config["data_sources"]["json"]["dirpath"] = str(input_dir)
         config["data_sources"]["json"]["filepath"] = None
 
-        otel_options: OtelPumlOptions = {
+        otel_options: OtelPVOptions = {
             "config": load_config_from_dict(mock_yaml_config_dict),
             "ingest_data": True,
         }
 
         otel_to_puml(
-            otel_to_puml_options=otel_options,
+            otel_to_pv_options=otel_options,
             components="all",
             output_file_directory=str(output_dir),
         )
@@ -182,14 +182,14 @@ class TestOtelToPuml:
             f'sqlite:///{str(tmp_path / "test.db")}'
         )
 
-        otel_options: OtelPumlOptions = {
+        otel_options: OtelPVOptions = {
             "config": load_config_from_dict(mock_yaml_config_dict),
             "ingest_data": True,
         }
         # Run function
         otel_to_puml(
-            otel_to_puml_options=otel_options,
-            components="otel_to_puml",
+            otel_to_pv_options=otel_options,
+            components="otel_to_pv",
         )
         data_holder: SQLDataHolder = fetch_data_holder(
             config  # type: ignore[assignment]
