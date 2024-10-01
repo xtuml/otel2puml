@@ -119,8 +119,8 @@ class OtelSpan(TypedDict):
     kind: NotRequired[int]
 
 
-class OtelPumlOptions(TypedDict):
-    """Typed dict for options for otel_to_puml"""
+class OtelPVOptions(TypedDict):
+    """Typed dict for options for otel_to_pv"""
 
     config: IngestDataConfig
     ingest_data: bool

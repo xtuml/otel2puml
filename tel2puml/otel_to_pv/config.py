@@ -1,4 +1,5 @@
 """Config schemas for otel_to_pv."""
+
 from typing import (
     TypedDict,
     NotRequired,
@@ -9,6 +10,14 @@ from typing import (
 from pydantic import BaseModel, ConfigDict as PYDConfigDict
 
 from .data_sources.data_sources_config import DataSources
+
+
+class SequenceModelConfig(BaseModel):
+    """PyDantic model for SequenceModelConfig."""
+
+    model_config = PYDConfigDict(extra="forbid")
+
+    async_event_groups: dict[str, dict[str, dict[str, str]]]
 
 
 class SQLDataHolderConfig(TypedDict):
@@ -40,6 +49,16 @@ class IngestDataConfig(TypedDict):
     data_sources: DataSources
     data_holders: DataHolders
     ingest_data: IngestTypes
+    sequencer: NotRequired[SequenceModelConfig]
+
+
+class Defaults(TypedDict):
+    """Typed dict for Defaults values in config."""
+
+    sequencer: SequenceModelConfig
+
+
+DEFAULTS = Defaults(sequencer=SequenceModelConfig(async_event_groups={}))
 
 
 def load_config_from_dict(config: dict[str, Any]) -> IngestDataConfig:
@@ -50,10 +69,21 @@ def load_config_from_dict(config: dict[str, Any]) -> IngestDataConfig:
     :return: The config
     :rtype: :class:`IngestDataConfig`
     """
-    for field in ["data_sources", "data_holders", "ingest_data"]:
-        assert field in config
-    return IngestDataConfig(
+    required_fields = ("data_sources", "data_holders", "ingest_data")
+    for required_field in required_fields:
+        assert required_field in config
+    otel_to_pv_config = IngestDataConfig(
         data_sources=config["data_sources"],
         data_holders=config["data_holders"],
         ingest_data=IngestTypes(**config["ingest_data"]),
     )
+    # unrequired fields with defaults
+    unrequired_fields: tuple[Literal["sequencer"]] = ("sequencer",)
+    for unrequired_field in unrequired_fields:
+        if unrequired_field in config:
+            otel_to_pv_config[unrequired_field] = SequenceModelConfig(
+                **config[unrequired_field]
+            )
+        else:
+            otel_to_pv_config[unrequired_field] = DEFAULTS[unrequired_field]
+    return otel_to_pv_config

@@ -25,7 +25,11 @@ from tel2puml.utils import unix_nano_to_pv_string
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.sql_dataholder import (
     SQLDataHolder,
 )
-from tel2puml.otel_to_pv.config import IngestDataConfig, IngestTypes
+from tel2puml.otel_to_pv.config import (
+    IngestDataConfig,
+    IngestTypes,
+    SequenceModelConfig,
+)
 
 
 class TestSeqeunceOTelJobs:
@@ -609,11 +613,15 @@ class TestSeqeunceOTelJobs:
         assert all(job_id_count[job_id] == 2 for job_id in valid_job_ids)
         assert len(valid_event_ids) == 0
 
-        # Test 5: event_to_async_group_map provided
+        # Test 5: event_to_async_group_map provided in config
         event_to_async_group_map = self.event_to_async_group_map()
+        ingest_data_config["sequencer"] = SequenceModelConfig(
+            async_event_groups={
+                "test_name": event_to_async_group_map,
+            }
+        )
         result = otel_to_pv(
             ingest_data_config,
-            event_to_async_group_map=event_to_async_group_map,
         )
         events = []
         valid_event_ids = [f"{i}_{j}" for i in range(5) for j in range(2)]
