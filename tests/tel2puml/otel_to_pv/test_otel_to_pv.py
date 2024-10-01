@@ -18,6 +18,7 @@ from tel2puml.otel_to_pv.config import (
 
 
 class TestOtelToPV:
+    """Tests for the otel_to_pv function."""
     def get_ingest_config(
         self, config_yaml: str, new_dirpath: Path
     ) -> IngestDataConfig:
