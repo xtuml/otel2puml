@@ -1,4 +1,5 @@
 """Config schemas for otel_to_pv."""
+
 from typing import (
     TypedDict,
     NotRequired,
@@ -12,6 +13,8 @@ from .data_sources.data_sources_config import DataSources
 
 
 class SequenceModelConfig(BaseModel):
+    """PyDantic model for SequenceModelConfig."""
+
     model_config = PYDConfigDict(extra="forbid")
 
     async_event_groups: dict[str, dict[str, dict[str, str]]]
@@ -50,14 +53,12 @@ class IngestDataConfig(TypedDict):
 
 
 class Defaults(TypedDict):
+    """Typed dict for Defaults values in config."""
+
     sequencer: SequenceModelConfig
 
 
-DEFAULTS = Defaults(
-    sequencer=SequenceModelConfig(
-        async_event_groups={}
-    )
-)
+DEFAULTS = Defaults(sequencer=SequenceModelConfig(async_event_groups={}))
 
 
 def load_config_from_dict(config: dict[str, Any]) -> IngestDataConfig:
@@ -77,7 +78,7 @@ def load_config_from_dict(config: dict[str, Any]) -> IngestDataConfig:
         ingest_data=IngestTypes(**config["ingest_data"]),
     )
     # unrequired fields with defaults
-    unrequired_fields: tuple[Literal['sequencer']] = ("sequencer",)
+    unrequired_fields: tuple[Literal["sequencer"]] = ("sequencer",)
     for unrequired_field in unrequired_fields:
         if unrequired_field in config:
             otel_to_pv_config[unrequired_field] = SequenceModelConfig(
