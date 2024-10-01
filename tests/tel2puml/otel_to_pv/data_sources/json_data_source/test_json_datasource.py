@@ -210,10 +210,16 @@ class TestJSONDataSource:
         """Tests parsing a json file for both json data that has spans
         within a list and as a dictionary.
         """
-        mock_file_content = json.dumps(request.getfixturevalue(mock_data))
+        mock_file_content = json.dumps(
+            request.getfixturevalue(mock_data)
+        ).encode("utf-8")
+        mock_file_content = (
+            mock_file_content[:1] + b'"injected_error": "\x1b", '
+            + mock_file_content[1:]
+        )
         mock_yaml_config_dict = request.getfixturevalue(mock_yaml_config)
         if mock_yaml_config_dict["data_sources"]["json"]["json_per_line"]:
-            mock_file_content = mock_file_content + "\n" + mock_file_content
+            mock_file_content = mock_file_content + b"\n" + mock_file_content
 
         with patch(
             "builtins.open", mock_open(read_data=mock_file_content)
