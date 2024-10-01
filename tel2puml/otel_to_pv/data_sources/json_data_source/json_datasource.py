@@ -96,9 +96,9 @@ class JSONDataSource(OTELDataSource):
         """
         with open(filepath, "r", encoding="utf-8") as file:
             if self.config["json_per_line"]:
-                jsons = (json.loads(line) for line in file)
+                jsons = (json.loads(line, strict=False) for line in file)
             else:
-                jsons = (data for data in [json.load(file)])
+                jsons = (data for data in [json.load(file, strict=False)])
             for data in jsons:
                 for record in generate_records_from_compiled_jq(
                     data, self.compiled_jq
