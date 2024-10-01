@@ -1353,3 +1353,18 @@ def otel_simple_linked_nodes_and_nodes() -> (
         "1_0": [nodes["1_1"]],
     }
     return linked_nodes, nodes
+
+
+@pytest.fixture
+def event_to_async_group_map() -> dict[str, dict[str, str]]:
+    """Return a dictionary mapping event types to async groups."""
+    return {
+        "root_event": {
+            "event_type_00": "group_0",
+            "event_type_01": "group_0",
+        },
+        "event_type_10": {
+            "event_type_20": "group_0",
+            "event_type_21": "group_0",
+        },
+    }
