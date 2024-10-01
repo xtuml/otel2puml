@@ -365,7 +365,7 @@ def otel_to_pv(
                     job_name_to_event_to_async_group_map.
                     async_event_groups.get(
                         job_name, None
-                    ),
+                    )
                 )
             ),
         )

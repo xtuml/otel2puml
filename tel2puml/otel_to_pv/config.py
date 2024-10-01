@@ -68,21 +68,21 @@ def load_config_from_dict(config: dict[str, Any]) -> IngestDataConfig:
     :return: The config
     :rtype: :class:`IngestDataConfig`
     """
-    for field in [
-        "data_sources", "data_holders", "ingest_data"
-    ]:
-        assert field in config
+    required_fields = ("data_sources", "data_holders", "ingest_data")
+    for required_field in required_fields:
+        assert required_field in config
     otel_to_pv_config = IngestDataConfig(
         data_sources=config["data_sources"],
         data_holders=config["data_holders"],
         ingest_data=IngestTypes(**config["ingest_data"]),
     )
     # unrequired fields with defaults
-    for field in ["sequencer"]:
-        if field in config:
-            otel_to_pv_config[field] = SequenceModelConfig(
-                **config[field]
+    unrequired_fields: tuple[Literal['sequencer']] = ("sequencer",)
+    for unrequired_field in unrequired_fields:
+        if unrequired_field in config:
+            otel_to_pv_config[unrequired_field] = SequenceModelConfig(
+                **config[unrequired_field]
             )
         else:
-            otel_to_pv_config[field] = DEFAULTS[field]
+            otel_to_pv_config[unrequired_field] = DEFAULTS[unrequired_field]
     return otel_to_pv_config
