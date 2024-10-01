@@ -11,6 +11,12 @@ from pydantic import BaseModel, ConfigDict as PYDConfigDict
 from .data_sources.data_sources_config import DataSources
 
 
+class SequenceModelConfig(BaseModel):
+    model_config = PYDConfigDict(extra="forbid")
+
+    async_event_groups: dict[str, dict[str, dict[str, str]]]
+
+
 class SQLDataHolderConfig(TypedDict):
     """Typed dict for SQLDataHolderConfig."""
 
@@ -40,6 +46,18 @@ class IngestDataConfig(TypedDict):
     data_sources: DataSources
     data_holders: DataHolders
     ingest_data: IngestTypes
+    sequencer: NotRequired[SequenceModelConfig]
+
+
+class Defaults(TypedDict):
+    sequencer: SequenceModelConfig
+
+
+DEFAULTS = Defaults(
+    sequencer=SequenceModelConfig(
+        async_event_groups={}
+    )
+)
 
 
 def load_config_from_dict(config: dict[str, Any]) -> IngestDataConfig:
@@ -50,10 +68,21 @@ def load_config_from_dict(config: dict[str, Any]) -> IngestDataConfig:
     :return: The config
     :rtype: :class:`IngestDataConfig`
     """
-    for field in ["data_sources", "data_holders", "ingest_data"]:
+    for field in [
+        "data_sources", "data_holders", "ingest_data"
+    ]:
         assert field in config
-    return IngestDataConfig(
+    otel_to_pv_config = IngestDataConfig(
         data_sources=config["data_sources"],
         data_holders=config["data_holders"],
         ingest_data=IngestTypes(**config["ingest_data"]),
     )
+    # unrequired fields with defaults
+    for field in ["sequencer"]:
+        if field in config:
+            otel_to_pv_config[field] = SequenceModelConfig(
+                **config[field]
+            )
+        else:
+            otel_to_pv_config[field] = DEFAULTS[field]
+    return otel_to_pv_config
