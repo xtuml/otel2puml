@@ -40,13 +40,16 @@ def otel_to_pv(
         data_holder = ingest_data_into_dataholder(config)
     else:
         data_holder = fetch_data_holder(config)
-
+    # make sure job names are consistent in traces
+    data_holder.update_job_names_by_root_span()
+    # find unique graphs if required
     if find_unique_graphs:
         job_name_to_job_ids_map: dict[str, set[str]] | None = (
             data_holder.find_unique_graphs()
         )
     else:
         job_name_to_job_ids_map = None
+
     job_name_group_streams = data_holder.stream_data(job_name_to_job_ids_map)
     # get the async event groups from the config
     sequencer_config = config.get("sequencer", SequenceModelConfig())
