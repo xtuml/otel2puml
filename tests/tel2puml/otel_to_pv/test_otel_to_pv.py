@@ -138,7 +138,7 @@ class TestOtelToPV:
         # Test 4: async_flag = True
         ingest_config_copy = ingest_data_config.copy()
         ingest_config_copy["sequencer"] = SequenceModelConfig(async_flag=True)
-        result = otel_to_pv(ingest_data_config)
+        result = otel_to_pv(ingest_config_copy)
         events = []
         valid_event_ids = [f"{i}_{j}" for i in range(5) for j in range(2)]
         valid_job_ids = {f"test_id_{i}" for i in range(5)}
