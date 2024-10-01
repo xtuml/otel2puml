@@ -17,7 +17,8 @@ class SequenceModelConfig(BaseModel):
 
     model_config = PYDConfigDict(extra="forbid")
 
-    async_event_groups: dict[str, dict[str, dict[str, str]]]
+    async_event_groups: dict[str, dict[str, dict[str, str]]] = {}
+    async_flag: bool = False
 
 
 class SQLDataHolderConfig(TypedDict):
@@ -58,7 +59,7 @@ class Defaults(TypedDict):
     sequencer: SequenceModelConfig
 
 
-DEFAULTS = Defaults(sequencer=SequenceModelConfig(async_event_groups={}))
+DEFAULTS = Defaults(sequencer=SequenceModelConfig())
 
 
 def load_config_from_dict(config: dict[str, Any]) -> IngestDataConfig:

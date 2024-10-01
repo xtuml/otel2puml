@@ -33,7 +33,7 @@ class TestOtelToPuml:
     def mock_fetch_data_holder(self) -> Generator[MagicMock, None, None]:
         """Fixture to mock fetch_data_holder."""
         with patch(
-            "tel2puml.otel_to_pv.sequence_otel_v2.fetch_data_holder"
+            "tel2puml.otel_to_pv.sequence_otel.fetch_data_holder"
         ) as fetch_data_hoder_mock:
             yield fetch_data_hoder_mock
 
