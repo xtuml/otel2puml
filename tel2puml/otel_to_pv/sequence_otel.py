@@ -245,6 +245,8 @@ def update_event_type_based_on_children(
     :type event_type_map_information: :class:`OTelEventTypeMap`
     :raises KeyError: If a child event ID is not found in the job.
     """
+    if otel_event.child_event_ids is None:
+        return
     for child_event_id in otel_event.child_event_ids:
         try:
             child_event = otel_events_job[child_event_id]

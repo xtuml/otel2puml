@@ -68,12 +68,12 @@ def test_otel_event() -> None:
 def test_otel_event_type_map() -> None:
     """Test OTelEventTypeMap."""
     # test that setting with correct types works does not raise an error
-    input_dict = {
+    input_dict_1 = {
         "mapped_event_type": "mapped_event_type",
         "child_event_types": ["child_event_type"],
     }
-    OTelEventTypeMap(**input_dict)
+    OTelEventTypeMap(**input_dict_1)
     # test that setting with incorrect types raises a validation error
-    input_dict = {"mapped_event_type": 1, "child_event_types": 1}
+    input_dict_2 = {"mapped_event_type": 1, "child_event_types": 1}
     with pytest.raises(ValidationError):
-        OTelEventTypeMap(**input_dict)
+        OTelEventTypeMap(**input_dict_2)
