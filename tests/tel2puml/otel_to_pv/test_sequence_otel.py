@@ -1,6 +1,7 @@
 """Test the tel2puml.sequence_otel module."""
 
 from typing import Iterable, Generator
+from copy import deepcopy
 
 import pytest
 
@@ -14,8 +15,10 @@ from tel2puml.otel_to_pv.sequence_otel import (
     sequence_otel_jobs,
     sequence_otel_job_id_streams,
     job_ids_to_eventid_to_otelevent_map,
+    update_event_type_based_on_children,
+    update_event_types_based_on_children,
 )
-from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
+from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent, OTelEventTypeMap
 from tel2puml.tel2puml_types import PVEvent
 from tel2puml.utils import unix_nano_to_pv_string
 
@@ -341,8 +344,75 @@ class TestSeqeunceOTelJobs:
         with pytest.raises(ValueError):
             list(sequence_otel_event_job({}))
 
+    @staticmethod
+    def otel_event_job(
+        otel_jobs: dict[str, list[OTelEvent]],
+    ) -> dict[str, OTelEvent]:
+        """Return an OTel event job."""
+        return {event.event_id: event for event in otel_jobs["0"]}
+
+    @staticmethod
+    def event_types_map() -> dict[str, OTelEventTypeMap]:
+        """Return a dictionary of event types."""
+        return {
+            "event_type_0": OTelEventTypeMap(
+                mapped_event_type="test_event_type",
+                child_event_types={"event_type_1"},
+            )
+        }
+
+    def test_update_event_type_based_on_children(
+        self, otel_jobs: dict[str, list[OTelEvent]]
+    ) -> None:
+        """Test update_event_type_based_on_children."""
+        # check standard case
+        otel_event_job = self.otel_event_job(otel_jobs)
+        event_type_map = self.event_types_map()["event_type_0"]
+        otel_event_job_copy = deepcopy(otel_event_job)
+        update_event_type_based_on_children(
+            otel_event_job["0_0"], otel_event_job, event_type_map
+        )
+        assert otel_event_job["0_0"].event_type == "test_event_type"
+        # check case where event has no children
+        update_event_type_based_on_children(
+            otel_event_job["0_1"], otel_event_job, event_type_map
+        )
+        assert otel_event_job["0_1"].event_type == "event_type_1"
+        # check case where child events are not in the set of child event types
+        event_type_map = OTelEventTypeMap(
+            mapped_event_type="test_event_type",
+            child_event_types={"event_type_2"},
+        )
+        update_event_type_based_on_children(
+            otel_event_job_copy["0_0"], otel_event_job_copy, event_type_map
+        )
+        assert otel_event_job_copy["0_0"].event_type == "event_type_0"
+        # check case child id is not in the otel event job
+        del otel_event_job["0_1"]
+        with pytest.raises(KeyError):
+            update_event_type_based_on_children(
+                otel_event_job["0_0"], otel_event_job, event_type_map
+            )
+
+    def test_update_event_types_based_on_children(
+        self, otel_jobs: dict[str, list[OTelEvent]]
+    ) -> None:
+        """Test update_event_types_based_on_children."""
+        otel_event_job = self.otel_event_job(otel_jobs)
+        event_types_map = self.event_types_map()
+        # check case wehre there is no information for the event type
+        update_event_types_based_on_children(otel_event_job, {})
+        assert otel_event_job["0_0"].event_type == "event_type_0"
+        assert otel_event_job["0_1"].event_type == "event_type_1"
+        # check standard case
+        update_event_types_based_on_children(otel_event_job, event_types_map)
+        assert otel_event_job["0_0"].event_type == "test_event_type"
+        assert otel_event_job["0_1"].event_type == "event_type_1"
+
     def test_sequence_otel_jobs(
-        self, event_to_async_group_map: dict[str, dict[str, str]]
+        self,
+        event_to_async_group_map: dict[str, dict[str, str]],
+        otel_jobs: dict[str, list[OTelEvent]],
     ) -> None:
         """Test sequence_otel_jobs."""
         events = self.events_with_root()
@@ -369,6 +439,18 @@ class TestSeqeunceOTelJobs:
             assert self.sort_pv_events(pv_events) == self.pv_events(
                 self.async_previous_event_ids(), events
             )
+        # test case with event_types_map_information
+        jobs = list(
+            sequence_otel_jobs(
+                [self.otel_event_job(otel_jobs)],
+                event_types_map_information=self.event_types_map(),
+            )
+        )
+        assert len(jobs) == 1
+        job = jobs[0]
+        events = {pv_event["eventId"]: pv_event for pv_event in job}
+        assert events["0_0"]["eventType"] == "test_event_type"
+        assert events["0_1"]["eventType"] == "event_type_1"
 
     def test_sequence_otel_job_id_streams(
         self, event_to_async_group_map: dict[str, dict[str, str]]
