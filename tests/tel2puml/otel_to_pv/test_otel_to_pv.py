@@ -15,6 +15,7 @@ from tel2puml.otel_to_pv.config import (
     IngestTypes,
     SequenceModelConfig,
 )
+from tel2puml.otel_to_pv.otel_to_pv_types import OTelEventTypeMap
 
 
 class TestOtelToPV:
@@ -185,3 +186,35 @@ class TestOtelToPV:
         assert len(events) == 10
         assert all(job_id_count[job_id] == 2 for job_id in valid_job_ids)
         assert len(valid_event_ids) == 0
+        # Test 6: event_name_map_information provided in config
+        ingest_data_config["sequencer"] = SequenceModelConfig(
+            event_name_map_information={
+                "test_name": {
+                    "event_type_0": OTelEventTypeMap(
+                        mapped_event_type="test_event_type",
+                        child_event_types={"event_type_1"},
+                    )
+                }
+            }
+        )
+        result = otel_to_pv(
+            ingest_data_config,
+        )
+        events = []
+        valid_event_ids = [f"{i}_{j}" for i in range(5) for j in range(2)]
+        valid_job_ids = {f"test_id_{i}" for i in range(5)}
+        job_id_count = {}
+        for job_name, pv_event_streams in result:
+            assert job_name == "test_name"
+            for pv_event_gen in pv_event_streams:
+                for pv_event in pv_event_gen:
+                    job_id_count.setdefault(pv_event["jobId"], 0)
+                    job_id_count[pv_event["jobId"]] += 1
+                    events.append(pv_event)
+                    assert pv_event["eventId"] in valid_event_ids
+                    assert pv_event["jobId"] in valid_job_ids
+                    valid_event_ids.remove(pv_event["eventId"])
+                    if pv_event["eventId"] in {f"{i}_0" for i in range(5)}:
+                        assert pv_event["eventType"] == "test_event_type"
+                    else:
+                        assert pv_event["eventType"] == "event_type_1"

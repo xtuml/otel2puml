@@ -53,6 +53,8 @@ def otel_to_pv(
     job_name_group_streams = data_holder.stream_data(job_name_to_job_ids_map)
     # get the async event groups from the config
     sequencer_config = config.get("sequencer", SequenceModelConfig())
+    async_event_groups = sequencer_config.async_event_groups
+    event_name_map_information = sequencer_config.event_name_map_information
     return (
         (
             job_name,
@@ -60,7 +62,12 @@ def otel_to_pv(
                 job_id_streams,
                 async_flag=sequencer_config.async_flag,
                 event_to_async_group_map=(
-                    sequencer_config.async_event_groups.get(job_name, None)
+                    async_event_groups.get(job_name, None)
+                ),
+                event_types_map_information=(
+                    event_name_map_information.get(
+                        job_name, None
+                    )
                 ),
             ),
         )

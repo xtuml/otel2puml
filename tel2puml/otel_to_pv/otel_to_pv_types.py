@@ -36,3 +36,9 @@ class OTelEvent(BaseModel):
     application_name: str
     parent_event_id: Optional[str]
     child_event_ids: Optional[list[str]] = None
+
+
+class OTelEventTypeMap(BaseModel):
+    """PyDantic type for OTel event type map."""
+    mapped_event_type: str
+    child_event_types: set[str]
