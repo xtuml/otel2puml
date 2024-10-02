@@ -531,14 +531,6 @@ class TestSeqeunceOTelJobs:
 
     def test_job_ids_to_eventid_to_otelevent_map(self) -> None:
         """Tests for the function job_ids_to_eventid_to_otelevent_map"""
-
-        def job_id_streams() -> (
-            Generator[Generator[OTelEvent, None, None], None, None]
-        ):
-            """Create a generator of generators of OTelEvents"""
-            event_group = [event for event in events.values()]
-            yield (event for event in event_group)
-
         events = self.events_with_root()
 
         expected_mappings = []
@@ -546,7 +538,9 @@ class TestSeqeunceOTelJobs:
             {event.event_id: event for event in events.values()}
         )
 
-        event_dict_gen = job_ids_to_eventid_to_otelevent_map(job_id_streams())
+        event_dict_gen = job_ids_to_eventid_to_otelevent_map(
+            [events.values()]
+        )
         actual_mappings = list(event_dict_gen)
 
         assert len(actual_mappings) == len(expected_mappings)
