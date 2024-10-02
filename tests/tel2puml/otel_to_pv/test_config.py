@@ -96,7 +96,8 @@ def test_sequence_model_config() -> None:
                     "mapped_event_type": "test_event_type",
                     "child_event_types": ["event_type_2"]
                 },
-            }
+            },
+            "job_2": {}
         }
     )
     assert sequence_model_config.async_event_groups == {
@@ -113,7 +114,8 @@ def test_sequence_model_config() -> None:
                     mapped_event_type="test_event_type",
                     child_event_types=["event_type_2"]
             ),
-        }
+        },
+        "job_2": {}
     }
     # test incorrect usage possibilities for async_event_groups
     with pytest.raises(ValidationError):
