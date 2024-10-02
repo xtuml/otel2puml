@@ -453,7 +453,8 @@ class TestSeqeunceOTelJobs:
         assert events["0_1"]["eventType"] == "event_type_1"
 
     def test_sequence_otel_job_id_streams(
-        self, event_to_async_group_map: dict[str, dict[str, str]]
+        self, event_to_async_group_map: dict[str, dict[str, str]],
+        otel_jobs: dict[str, list[OTelEvent]],
     ) -> None:
         """Tests for the function sequence_otel_job_id_streams"""
 
@@ -515,6 +516,18 @@ class TestSeqeunceOTelJobs:
         assert self.sort_pv_events(actual_pv_events) == self.sort_pv_events(
             expected_pv_events
         )
+        # test case with event_types_map_information
+        jobs = list(
+            sequence_otel_job_id_streams(
+                [self.otel_event_job(otel_jobs).values()],
+                event_types_map_information=self.event_types_map(),
+            )
+        )
+        assert len(jobs) == 1
+        job = jobs[0]
+        events = {pv_event["eventId"]: pv_event for pv_event in job}
+        assert events["0_0"]["eventType"] == "test_event_type"
+        assert events["0_1"]["eventType"] == "event_type_1"
 
     def test_job_ids_to_eventid_to_otelevent_map(self) -> None:
         """Tests for the function job_ids_to_eventid_to_otelevent_map"""
