@@ -10,6 +10,7 @@ from tel2puml.otel_to_pv.config import (
     load_config_from_dict,
     SequenceModelConfig,
 )
+from tel2puml.otel_to_pv.otel_to_pv_types import OTelEventTypeMap
 
 
 def test_load_config_from_dict(mock_yaml_config_dict: dict[str, Any]) -> None:
@@ -69,13 +70,16 @@ def test_sequence_model_config() -> None:
     sequence_model_config = SequenceModelConfig()
     assert sequence_model_config.async_event_groups == {}
     assert not sequence_model_config.async_flag
+    assert sequence_model_config.event_name_map_information == {}
     # test empy dict and set to true
     sequence_model_config = SequenceModelConfig(
         async_event_groups={},
-        async_flag=True
+        async_flag=True,
+        event_name_map_information={}
     )
     assert sequence_model_config.async_event_groups == {}
     assert sequence_model_config.async_flag
+    assert sequence_model_config.event_name_map_information == {}
     # test other correct usage possibilities
     sequence_model_config = SequenceModelConfig(
         async_event_groups={
@@ -85,7 +89,15 @@ def test_sequence_model_config() -> None:
                 "event_2": {"event_3": "group_1"}
             }
         },
-        async_flag=False
+        async_flag=False,
+        event_name_map_information={
+            "job_1": {
+                "event_1": {
+                    "mapped_event_type": "test_event_type",
+                    "child_event_types": ["event_type_2"]
+                },
+            }
+        }
     )
     assert sequence_model_config.async_event_groups == {
         "job_1": {},
@@ -95,7 +107,15 @@ def test_sequence_model_config() -> None:
         }
     }
     assert not sequence_model_config.async_flag
-    # test incorrect usage possibilities
+    assert sequence_model_config.event_name_map_information == {
+        "job_1": {
+            "event_1": OTelEventTypeMap(
+                    mapped_event_type="test_event_type",
+                    child_event_types=["event_type_2"]
+            ),
+        }
+    }
+    # test incorrect usage possibilities for async_event_groups
     with pytest.raises(ValidationError):
         SequenceModelConfig(
             async_event_groups={
@@ -118,5 +138,62 @@ def test_sequence_model_config() -> None:
                         "event_2": 1
                     }
                 }
+            }
+        )
+    # test event_name_map_information errors
+    with pytest.raises(ValidationError):
+        SequenceModelConfig(
+            event_name_map_information={
+                "job_1": {
+                    "event_1": {
+                        "mapped_event_type": "test_event_type",
+                    }
+                }
+            }
+        )
+    with pytest.raises(ValidationError):
+        SequenceModelConfig(
+            event_name_map_information={
+                "job_1": {
+                    "event_1": {
+                        "child_event_types": ["event_type_2"]
+                    }
+                }
+            }
+        )
+    with pytest.raises(ValidationError):
+        SequenceModelConfig(
+            event_name_map_information={
+                "job_1": {
+                    "event_1": {
+                        "mapped_event_type": "test_event_type",
+                        "child_event_types": 1
+                    }
+                }
+            }
+        )
+    with pytest.raises(ValidationError):
+        SequenceModelConfig(
+            event_name_map_information={
+                "job_1": {
+                    "event_1": {
+                        "mapped_event_type": 1,
+                        "child_event_types": ["event_type_2"]
+                    }
+                }
+            }
+        )
+    with pytest.raises(ValidationError):
+        SequenceModelConfig(
+            event_name_map_information={
+                "job_1": {
+                    "event_1": 1
+                }
+            }
+        )
+    with pytest.raises(ValidationError):
+        SequenceModelConfig(
+            event_name_map_information={
+                "job_1": 1
             }
         )

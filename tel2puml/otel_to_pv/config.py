@@ -10,6 +10,7 @@ from typing import (
 from pydantic import BaseModel, ConfigDict as PYDConfigDict
 
 from .data_sources.data_sources_config import DataSources
+from .otel_to_pv_types import OTelEventTypeMap
 
 
 class SequenceModelConfig(BaseModel):
@@ -19,6 +20,7 @@ class SequenceModelConfig(BaseModel):
 
     async_event_groups: dict[str, dict[str, dict[str, str]]] = {}
     async_flag: bool = False
+    event_name_map_information: dict[str, dict[str, OTelEventTypeMap]] = {}
 
 
 class SQLDataHolderConfig(TypedDict):
