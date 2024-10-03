@@ -181,6 +181,7 @@ class OtelToPVArgs(BaseModel):
 
     @model_validator(mode="after")
     def check_save_events(self) -> Self:
+        """Check that save events is not True when otel2puml is selected."""
         if self.command == "otel2puml" and self.save_events:
             raise ValueError(
                 "save_events must be False if otel2puml is selected."
