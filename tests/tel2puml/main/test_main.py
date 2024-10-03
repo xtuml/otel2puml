@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Literal
 
 import pytest
+from pydantic import ValidationError
 
 from tel2puml.__main__ import (
     generate_config,
@@ -109,7 +110,22 @@ def test_generate_components_options(
         assert pv_puml_options["job_name"] == "job_001"
         assert not pv_puml_options["group_by_job_id"]
 
-    # Test 4: pv2puml command, directory provided
+    # Test 4: pv2puml command, empty file_paths provided
+    command = "pv2puml"
+    args_dict = {
+        "command": "pv2puml",
+        "output_file_directory": ".",
+        "folder_path": None,
+        "file_paths": [],
+        "job_name": "job_001",
+        "group_by_job": False,
+    }
+    with pytest.raises(ValidationError):
+        otel_pv_options, pv_puml_options = generate_component_options(
+            command, args_dict
+        )
+
+    # Test 5: pv2puml command, directory provided
     nested_dir_1 = tmp_path / "dir1"
     nested_dir_1.mkdir()
 
@@ -134,7 +150,7 @@ def test_generate_components_options(
     assert pv_puml_options["job_name"] == "job_002"
     assert pv_puml_options["group_by_job_id"]
 
-    # Test 4: pv2puml command, empty directory provided
+    # Test 6: pv2puml command, empty directory provided
     nested_dir_2 = tmp_path / "dir2"
     nested_dir_2.mkdir()
 
