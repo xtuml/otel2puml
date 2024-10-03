@@ -193,7 +193,8 @@ def generate_component_options(
 
     otel_pv_options, pv_puml_options = None, None
     if command == "otel2puml" or command == "otel2pv":
-        OtelToPVArgs(**args_dict)
+        options_dict: dict[str, Any] = args_dict
+        OtelToPVArgs(**options_dict)
         otel_pv_options = OtelPVOptions(
             config=load_config_from_dict(
                 generate_config(args_dict["config_file"])
@@ -201,7 +202,8 @@ def generate_component_options(
             ingest_data=args_dict["ingest_data"],
         )
     elif command == "pv2puml":
-        PvToPumlArgs(**args_dict)
+        options_dict = args_dict
+        PvToPumlArgs(**options_dict)
         pv_puml_options = PVPumlOptions(
             file_list=(
                 args_dict["file_paths"]
