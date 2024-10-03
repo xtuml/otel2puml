@@ -9,8 +9,8 @@ from pydantic import (
     DirectoryPath,
     FilePath,
     field_validator,
-    ValidationError,
     ValidationInfo,
+    model_validator,
 )
 
 from tel2puml.otel_to_pv.config import IngestDataConfig
@@ -179,15 +179,13 @@ class OtelToPVArgs(BaseModel):
             raise ValueError(f"File path {file_path} does not end with .yaml")
         return file_path
 
-    @field_validator("save_events")
-    def check_save_events(
-        cls, save_events: bool, info: ValidationInfo
-    ) -> bool:
-        if info.data["command"] == "otel2puml" and save_events:
+    @model_validator(mode="after")
+    def check_save_events(cls, info: ValidationInfo) -> ValidationInfo:
+        if info.command == "otel2puml" and info.save_events:
             raise ValueError(
                 "save_events must be False if otel2puml is selected."
             )
-        return save_events
+        return info
 
 
 class PvToPumlArgs(BaseModel):
@@ -210,9 +208,29 @@ class PvToPumlArgs(BaseModel):
 
     @field_validator("file_paths")
     def check_file_extension(
-        cls: Type["PvToPumlArgs"], file_path: FilePath
-    ) -> FilePath:
+        cls: Type["PvToPumlArgs"], file_paths: list[FilePath]
+    ) -> list[FilePath]:
         """Check that file_path ends with .json"""
-        if file_path and not str(file_path).endswith(".json"):
-            raise ValueError(f"File path {file_path} does not end with .json")
-        return file_path
+        if file_paths:
+            for file_path in file_paths:
+                if not str(file_path).endswith(".json"):
+                    raise ValueError(
+                        f"File path {file_path} does not end with .json"
+                    )
+        return file_paths
+
+    @model_validator(mode="after")
+    def check_folder_path_file_paths(
+        cls: Type["PvToPumlArgs"], info: ValidationInfo
+    ) -> ValidationInfo:
+        """Check that folder path and file paths haven't both been set."""
+        folder_path = info.folder_path
+        file_paths = info.file_paths
+
+        if folder_path and file_paths:
+            raise ValueError(
+                "Only folder path or file paths is required, not both."
+            )
+        if not folder_path and not file_paths:
+            raise ValueError("Either folder path or file paths is required.")
+        return info
