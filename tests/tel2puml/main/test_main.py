@@ -6,6 +6,7 @@ import tempfile
 from pathlib import Path
 from typing import Literal
 
+import pytest
 
 from tel2puml.__main__ import (
     generate_config,
@@ -69,7 +70,7 @@ def test_generate_components_options(
     assert otel_pv_options
     assert otel_pv_options["config"]
     assert otel_pv_options["ingest_data"]
-    assert not pv_puml_options
+    assert pv_puml_options is None
 
     # Test 2: otel2pv command
     command = "otel2pv"
@@ -86,7 +87,7 @@ def test_generate_components_options(
     assert otel_pv_options
     assert otel_pv_options["config"]
     assert not otel_pv_options["ingest_data"]
-    assert not pv_puml_options
+    assert pv_puml_options is None
 
     # Test 3: pv2puml command, file_paths provided
     command = "pv2puml"
@@ -132,3 +133,20 @@ def test_generate_components_options(
     ]
     assert pv_puml_options["job_name"] == "job_002"
     assert pv_puml_options["group_by_job_id"]
+
+    # Test 4: pv2puml command, empty directory provided
+    nested_dir_2 = tmp_path / "dir2"
+    nested_dir_2.mkdir()
+
+    args_dict = {
+        "command": "pv2puml",
+        "output_file_directory": ".",
+        "folder_path": nested_dir_2,
+        "file_paths": None,
+        "job_name": "job_003",
+        "group_by_job": True,
+    }
+    with pytest.raises(FileNotFoundError):
+        otel_pv_options, pv_puml_options = generate_component_options(
+            command, args_dict
+        )
