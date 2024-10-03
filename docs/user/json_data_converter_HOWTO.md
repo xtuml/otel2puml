@@ -10,18 +10,16 @@
     <li><a href="#3-understanding-configuration-settings">Understanding Configuration Settings</a>
       <ol>
         <li><a href="#31-understanding-the-path-structure">Understanding the path structure</a></li>
-        <li><a href="#32-data_location">data_location</a></li>
-        <li><a href="#33-header">header</a></li>
-        <li><a href="#34-span_mapping">span_mapping</a></li>
-        <li><a href="#35-field_mapping">field_mapping</a></li>
-        <li><a href="#36-value_type-attribute">value_type attribute</a></li>
+        <li><a href="#32-field_mapping">field_mapping</a></li>
+        <li><a href="#33-value_type-attribute">value_type attribute</a></li>
       </ol>
     </li>
     <li><a href="#4-examples">Examples</a>
       <ol>
         <li><a href="#example-1-simple-field-mapping">Simple field mapping</a></li>
-        <li><a href="#example-2-referencing-a-header-attribute">Referencing a header attribute</a></li>
-        <li><a href="#example-3-complex-field-mapping">Complex field mapping</a></li>
+        <li><a href="#example-2-complex-field-mapping">Complex field mapping</a></li>
+        <li><a href="#example-3-example-with-header-data">Example with header data</a></li>
+        <li><a href="#example-4-example-for-obtaining-the-full-otelevent-schema-wihtout-child_event_ids">Example for obtaining the full OTelEvent schema (wihtout child_event_ids)</a></li>
       </ol>
     </li>
     <li><a href="#5-troubleshooting">5.0 Troubleshooting</a></li>
@@ -47,22 +45,19 @@ class OTelEvent(NamedTuple):
     child_event_ids: Optional[list[str]] = None
 ```
 
+The idea is to extract records of this type from a JSON file and map the fields to the corresponding fields in the application schema. This is done by specifying the paths to the fields in the JSON file and the data types of the fields in the application schema.
+
+The code used follows the jq language (https://jqlang.github.io/jq/) for JSON data extraction. The jq language is a lightweight and flexible command-line JSON processor. Within configuration the same pathing structure as jq to extract data from the JSON file.
 
 ## 2. Configuration File Structure
-
-The configuration for tel2puml/find_unique_graphs is defined in `config.yaml`. This file specifies how to locate and interpret JSON telemetry data. See below for the basic structure:
+Configuration is provided to the application in the form of a YAML file (see X for details on all configuration fields). 
+This file specifies how to locate and interpret JSON telemetry data as part of the `data_sources` field that is used to ingest the raw Open Telemetry files. See below for the basic structure of the `data_sources.json` section of the file:
 
 ```yaml
 data_sources:
     json:
         dirpath: path/to/json/directory
         filepath: path/to/json/file
-        data_location: 
-        header:
-            paths: [] 
-        span_mapping:
-            spans:
-                key_paths: []
         field_mapping:
             job_name:
                 key_paths: []
@@ -131,10 +126,27 @@ The following JSON data will be used within the examples below:
                                     }
                                 },
                                 {
-                                    "key": "http.host",
+                                    "key": "http.response",
                                     "value": {
                                         "Value": {
-                                            "StringValue": "Render"
+                                            "IntValue": "200"
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "trace_id": "trace002",
+                            "span_id": "span002",
+                            "name": "/put",
+                            "start_time_unix_nano": 1723544132228102912,
+                            "end_time_unix_nano": 1723544132228219285,
+                            "attributes": [
+                                {
+                                    "key": "http.method",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "PUT"
                                         }
                                     }
                                 },
@@ -157,102 +169,51 @@ The following JSON data will be used within the examples below:
 ```
 
 ### 3.1 Understanding the path structure
-Simply, a nested object is represented by a `:`, and an array is represented by a `::`.
+Simply, a nested object is represented by a `.`, and an array is represented by a `.[].`. For example `resource.attributes`, `attributes` is a key within the `resource` object.
 
-For example `resource:attributes`, `attributes` is a key within the `resource` object.
+Conversely with `scope_spans.[].scope.name`, `scope_spans` is an array, so `.[].` is used to indicate that `scope` is a key within all the objects of that array. `name` is a key within the `scope` object, so it is separated by `.`.
 
-Conversely with `scope_spans::scope:name`, `scope_spans` is an array, so `::` is used to indicate that `scope` is a key within that array. `name` is a key within the `scope` object, so it is separated by `:`.
-
-### 3.2 data_location
-The `data_location` field specifies where the main data array/object is located in the JSON structure. This is typically at the root of the telemetry data.
-
-For the [JSON example](#json-example), the main data array is located within `resource_spans`:
-```yaml
-data_location: resource_spans
-```
-
-### 3.3 header
-The header section defines paths to important metadata that applies to all spans within a group. It comprises of a list of paths:
-
-For the [JSON example](#json-example), the following config could be set:
-
-```yaml
-header:
-    paths: [resource:attributes, scope_spans::scope:name] 
-```
-* resource:attributes gives access to the following json:
+Every object within an array will be flattened and treated separately. Nested arrays are then also flattened and treated separately. For example, using the JSON example above, we could have `resource_spans.[].scope_spans.[].spans.[].attributes.[].key` to access all the keys within the `attributes` array within the `spans` array within the `scope_spans` array within the `resource_spans` array which would provide the following exploded list of keys:
 
 ```json
-{"resource": {
-        "attributes": [
-            {
-                "key": "service.name",
-                "value": {
-                    "Value": {
-                        "StringValue": "Test App"
-                    }
-                }
-            },
-            {
-                "key": "service.version",
-                "value": {
-                    "Value": {
-                        "StringValue": "1.0"
-                    }
-                }
-            }
-        ]
-    }
-}
+["http.method", "http.host", "http.response"]
 ```
 
+Many different fields will be accessed this way and as such the pathing structure is crucial to correctly access the data. Each field must be consistent with all other fields in the configuration file. Consistency primarily depends upon the nesting of arrays in the path. 
 
-* scope_spans::scope:name gives access to the following json:
+With two field paths, if one accesses an object in a path three arrays deep and another accesses an object in a path in the same array then these will be consistent and each object will be matched at the same index in the array.
+For example, the following two paths are consistent with each other, and each object in the `attributes` will then match the `key` object and the `value.Value` object:
+ * `resource_spans.[].scope_spans.[].spans.[].attributes.[].key`
+ * `resource_spans.[].scope_spans.[].spans.[].attributes.[].value.Value`
 
+This produces the following exploded lists of keys for the first and second paths, respectively:
 ```json
-{"scope_spans": [
-        {
-            "scope": {
-                "name": "Group 1"
-            }
-        }
-    ]
-}
+["http.method", "http.response", "http.method", "http.response"]
+[{"StringValue": "GET"}, {"IntValue": "200"}, {"StringValue": "PUT"}, {"IntValue": "200"}]
 ```
 
-This header information can now be referenced in the field_mapping section using the `HEADER:` prefix.
+If one field path accesses an object in a path four levels deep and another field path accesses an object in a path three levels deep then the second field will be duplicated for each object in the fourth level array.
+For example, the following two paths are consistent with each other and mean `.name` object will be duplicated across all the `.key` objects in the `attributes` array:
+ * `resource_spans.[].scope_spans.[].spans.[].attributes.[].key`
+ * `resource_spans.[].scope_spans.[].scope.name`
 
-For example, to reference "Group 1" within a field_mapping path and map it to `job_name`, specify the following
-```yaml
-job_name:
-    key_paths: [HEADER:scope_spans::scope:name]
-    value_type: string
+This produces the following exploded lists of keys for the first and second paths, respectively:
+```json
+["http.method", "http.response", "http.method", "http.response"]
+["Group 1", "Group 1", "Group 1", "Group 1"]
 ```
-
-### 3.4 span_mapping
-
-The span_mapping section defines where to find the individual span data within the JSON structure. In this configuration for the [JSON example](#json-example):
-
-```yaml
-span_mapping:
-  spans:
-    key_paths: [scope_spans::spans]
-```
-
-This indicates that the span data is located in the "spans" array within the "scope_spans" array.
-
-NB. spans must always be located within an array, or an error will be thrown.
-
-### 3.5 field_mapping
+### 3.2 field_mapping
 
 The `field_mapping` section is the core of the configuration, defining how to map fields from the input JSON to the application schema. Each field in the application schema is defined here. For example:
 
 ```yaml
 field_mapping:
     event_type:
-        key_paths: [attributes::key]
+        key_paths: [
+            resource_spans.[].scope_spans.[].spans.[].attributes.[].key
+        ]
         key_value: [http.method]
-        value_paths: [value:Value:StringValue]
+        value_paths: [value.Value.StringValue]
         value_type: string
 ```
 
@@ -263,12 +224,12 @@ This example would return `GET` from the [JSON example](#json-example).
 Required Fields:
 
     key_paths: Specifies the path to the key in the JSON.
-    value_type: Defines the data type of the value (e.g., string, unix_nano).
+    value_type: Defines the data type of the value (e.g., string, int).
 
 Optional Fields:
 
     key_value: Used when there are multiple key-value pairs.
-    value_paths: Specifies the path to the value in the JSON.
+    value_paths: Specifies the path to the value in the JSON (this must be a valid path in the object in the array).
 
 #### How It Works:
 
@@ -279,40 +240,115 @@ Optional Fields:
 
 #### JSON Structure
 
-The optional fields are required when there are multiple key-value pairs, such as:
+The optional fields are used when we want to access only one member of an array and need to identify it by a certain value e.g. below where maybe the user would like to grab the value `value.Value.StringValue` under the `key` equals `http.method`:
 
 ```json
 {
     "attributes": [
         {
             "key": "http.method",
-            "another-key":"another-value",
             "value": {
                 "Value": {
                     "StringValue": "GET"
                 }
             }
+        },
+        {
+            "key": "http.host",
+            "value": {
+                "Value": {
+                    "StringValue": "Render"
+                }
+            }
+        },
+        {
+            "key": "http.response",
+            "value": {
+                "Value": {
+                    "IntValue": "200"
+                }
+            }
         }
     ]
 }
+
 ```
-As opposed to a singular key-value pair, such as:
+So the user would specify the following in the `field_mapping`:
+```yaml
+field_mapping:
+    event_type:
+        key_paths: [attributes.[].key]
+        key_value: [http.method]
+        value_paths: [value.Value.StringValue]
+        value_type: string
+```
+As opposed to a singular key-value pair, such as below where the user may want to grabbing all the `trace_id` values of objects in the array:
 ```json
 {
     "attributes": [
         {
             "trace_id": "001",
+        },
+        {
+            "trace_id": "002",
         }
     ]
 }
 ```
+the user would specify the following in the `field_mapping`:
+```yaml
+field_mapping:
+    event_type:
+        key_paths: [attributes.[].trace_id]
+        value_type: string
+```
+#### Concatenation
 
+If the user wants to concatenate multiple values, they can specify multiple key_paths, key_values, and value_paths. For example, if the user wants to concatenate the `name` value and `http.response` values (concatenated by an underscore in the order provided) from the [JSON example](#json-example) and map it to `event_type`:
+
+```yaml
+field_mapping:
+    event_type:
+        key_paths: [
+            resource_spans.[].scope_spans.[].spans.[].name,
+            resource_spans.[].scope_spans.[].spans.[].attributes.[].key
+        ]
+        key_value: [null, http.response]
+        value_paths: [null, value.Value.IntValue]
+        value_type: string
+```
+This would return `/delete_200` from the [JSON example](#json-example).
+
+We must provide `null` in the `key_value` and `value_paths` if they are not required for that specific key_path.
+
+#### Fallback priority values
+
+In some cases, the user may want to provide a fallback value if the primary value is not found. This can be done by providing multiple key_paths (and key_values and value_paths if required) within an array (`[]`). The system will check the first key_path and if the key_value is not found, it will check the second key_path and so on. For example from the [JSON example](#json-example), if the user wishes to concatenate the `name` value with, in the first case the value of `not_here` (which doesn't exist) but fall back to `http.response` value and map it to `event_type`:
+
+```yaml
+field_mapping:
+    event_type:
+        key_paths: [
+            resource_spans.[].scope_spans.[].spans.[].name,
+            [
+                resource_spans.[].scope_spans.[].spans.[].not_here, # this is not a valid path
+                resource_spans.[].scope_spans.[].spans.[].attributes.[].key # this is the fallback path
+            ]
+        ]
+        key_value: [null, [null, http.response]]
+        value_paths: [null, [null, value.Value.IntValue]]
+        value_type: string
+```
+As can be seen above the `key_paths` are given in concatenation order. Then for when priority values are to be used an array is used to specify the fallback values in order of priority. The `key_value` and `value_paths` are also given in the same order as the `key_paths` and the `null` values are used to indicate that the value is not required for that specific key_path in each array. So for:
+* `resource_spans.[].scope_spans.[].spans.[].name` the `key_value` and `value_paths` are `null` as they are not required.
+* the next concatenated key path value the priority values are:
+    * `resource_spans.[].scope_spans.[].spans.[].not_here` the `key_value` is `null` and the `value_paths` is `null`.
+    * `resource_spans.[].scope_spans.[].spans.[].attributes.[].key` the `key_value` is `http.response` and the `value_paths` is `value.Value.IntValue`.
 
 ### 3.6 value_type attribute
-Currently the following two value types are supported:
+Currently the following single value type is supported:
 
 * string
-* unix_nano (represents date in unix nano format eg. 1723544132228102912)
 
 ## 4. Examples
 
@@ -321,97 +357,180 @@ Currently the following two value types are supported:
 To extract `trace_id` from the [JSON example](#json-example) and map it to `job_id`:
 
 ```yaml
-span_mapping:
-  spans:
-    key_paths: [scope_spans::spans]
 field_mapping:
     job_id:
-        key_paths: [trace_id]
+        key_paths: [resource_spans.[].scope_spans.[].spans.[].trace_id]
+        value_type: string
+    event_id:
+        key_paths: [resource_spans.[].scope_spans.[].spans.[].span_id]
         value_type: string
 ```
 
-Note the fields `key_value` and `value_paths` are not required as trace_id is a singular key-value pair.
-
-### Example 2: Referencing a header attribute
-
-Given a header mapping within the [JSON example](#json-example):
-
-```yaml
-header:
-    paths: [resource:attributes] 
-```
-
-The following json can now be referenced within field_mapping:
+Note the fields `key_value` and `value_paths` as a specific object from an array is not required. This would then provide the following output records for the [JSON example](#json-example):
 ```json
 {
-    "resource": {
-                "attributes": [
-                    {
-                        "key": "service.name",
-                        "value": {
-                            "Value": {
-                                "StringValue": "Test App"
-                            }
-                        }
-                    },
-                    {
-                        "key": "service.version",
-                        "value": {
-                            "Value": {
-                                "StringValue": "1.0"
-                            }
-                        }
-                    }
-                ]
-            }
+    "job_id": "trace001",
+    "event_id": "span001"
+}
+{
+    "job_id": "trace002",
+    "event_id": "span002"
 }
 ```
 
-To map `Test App` within the [JSON example](#json-example) to `application_name`:
+### Example 2: Complex field mapping
+
+For more complex scenarios, such as concatenating multiple values and having fallback values, paths and values are added to a list:
 
 ```yaml
-header:
-    paths: [resource:attributes] 
-span_mapping:
-  spans:
-    key_paths: [scope_spans::spans]
 field_mapping:
-    application_name:
-        key_paths: [HEADER:resource:attributes::key]
+    event_type:
+        key_paths: [
+            resource_spans.[].scope_spans.[].spans.name,
+            [
+                resource_spans.[].scope_spans.[].spans.not_here, # this is not a valid path
+                resource_spans.[].scope_spans.[].spans.attributes.[].key # this is the fallback path
+            ]
+        ]
+        key_value: [null, [null, http.response]]
+        value_paths: [null, [null, value.Value.IntValue]]
+        value_type: string
+    job_name:
+        key_paths: [resource_spans.[].resource.attributes.[].key]
         key_value: [service.name]
-        value_paths: [value:Value:StringValue]
+        value_paths: [value.Value.StringValue]
+        value_type: string
+    event_id:
+        key_paths: [resource_spans.[].scope_spans.[].spans.[].span_id]
+        value_type: string
+    start_timestamp:
+        key_paths: [
+            resource_spans.[].scope_spans.[].spans.[].start_time_unix_nano
+        ]
+        value_type: string
+    end_timestamp:
+        key_paths: [
+            resource_spans.[].scope_spans.[].spans.[].end_time_unix_nano
+        ]
         value_type: string
 ```
 
-### Example 3: Complex field mapping
+This will return the following output records for the [JSON example](#json-example):
+```json
+{
+    "event_type": "/delete_200"
+}
+{
+    "event_type": "/put_200"
+}
+``` 
 
-For more complex scenarios, such as concatenating multiple values, paths and values are added to a list:
+### Example 3: Example with header data
+In this example the user want to extract the field `job_name` that is a value in an array a few levels above the span records i.e. header information that will be applied to all the records extracted.
 
 ```yaml
-span_mapping:
-  spans:
-    key_paths: [scope_spans::spans]
-event_type:
-    key_paths: [attributes::key, attributes::key]
-    key_value: [http.method, http.response]
-    value_paths: [value:Value:StringValue, value:Value:IntValue]
-    value_type: string
+field_mapping:
+    job_name:
+        key_paths: [resource_spans.[].resource.attributes.[].key]
+        key_value: [service.name]
+        value_paths: [value.Value.StringValue]
+        value_type: string
+    job_id:
+        key_paths: [resource_spans.[].scope_spans.[].spans.[].trace_id]
+        value_type: string
+    event_id:
+        key_paths: [resource_spans.[].scope_spans.[].spans.[].span_id]
+        value_type: string
 ```
 
-This will return `GET 200` from the [JSON example](#json-example) and map it to `event_type`.
+This will return the following output records for the [JSON example](#json-example):
+```json
+{
+    "job_name": "Test App",
+    "job_id": "trace001",
+    "event_id": "span001"
+}
+{
+    "job_name": "Test App",
+    "job_id": "trace002",
+    "event_id": "span002"
+}
+```
 
+### Example 4: Example for obtaining the full OTelEvent schema (wihtout child_event_ids)
+In this example the user wants to extract all the fields in the OTelEvent schema except for `child_event_ids` which is not present in the JSON data.
+
+```yaml
+field_mapping:
+    job_name:
+        key_paths: [resource_spans.[].resource.attributes.[].key]
+        key_value: [service.name]
+        value_paths: [value.Value.StringValue]
+        value_type: string
+    job_id:
+        key_paths: [resource_spans.[].scope_spans.[].spans.[].trace_id]
+        value_type: string
+    event_type:
+        key_paths: [
+            resource_spans.[].scope_spans.[].spans.name,
+            [
+                resource_spans.[].scope_spans.[].spans.not_here, # this is not a valid path
+                resource_spans.[].scope_spans.[].spans.attributes.[].key # this is the fallback path
+            ]
+        ]
+        key_value: [null, [null, http.response]]
+        value_paths: [null, [null, value.Value.IntValue]]
+        value_type: string
+    event_id:
+        key_paths: [resource_spans.[].scope_spans.[].spans.[].span_id]
+        value_type: string
+    start_timestamp:
+        key_paths: [
+            resource_spans.[].scope_spans.[].spans.[].start_time_unix_nano
+        ]
+        value_type: string
+    end_timestamp:
+        key_paths: [
+            resource_spans.[].scope_spans.[].spans.[].end_time_unix_nano
+        ]
+        value_type: string
+    application_name:
+        key_paths: [resource_spans.[].scope_spans.[].scope.name]
+        value_type: string
+    parent_event_id:
+        key_paths: [resource_spans.[].scope_spans.[].spans.[].parent_span_id]
+        value_type: string
+```
+
+This will return the following output records for the [JSON example](#json-example):
+```json
+{
+    "job_name": "Test App",
+    "job_id": "trace001",
+    "event_type": "/delete_200",
+    "event_id": "span001",
+    "start_timestamp": "1723544132228102912",
+    "end_timestamp": "1723544132228219285",
+    "application_name": "Group 1",
+    "parent_event_id": null
+}
+{
+    "job_name": "Test App",
+    "job_id": "trace002",
+    "event_type": "/put_200",
+    "event_id": "span002",
+    "start_timestamp": "1723544132228102912",
+    "end_timestamp": "1723544132228219285",
+    "application_name": "Group 1",
+    "parent_event_id": null
+}
+```
 ## 5. Troubleshooting
 
 Common issues and solutions:
-
-#### Issue: Data not found at specified location. 
-Solution: Double-check the JSON structure and ensure data_location is correct.
 
 #### Issue: Field mapping not extracting expected values
 Solution: Verify the key_paths, key_value, and value_paths within field mapping.
 
 #### Issue: Incorrect data types
-Solution: Ensure value_type is set correctly (either string or unix_nano).
-
-#### Issue: Header information not accessible
-Solution: Check that header paths are correctly specified and prefixed with `HEADER:` in field mappings.
+Solution: Ensure value_type is set correctly (`string`).
