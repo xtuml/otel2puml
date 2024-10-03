@@ -153,6 +153,15 @@ class OtelArgs(BaseModel):
         " the data holder",
     )
 
+    @field_validator("config_file")
+    def check_file_extension(
+        cls: Type["OtelArgs"], file_path: FilePath
+    ) -> FilePath:
+        """Check that file_path ends with .yaml"""
+        if file_path and not str(file_path).endswith(".yaml"):
+            raise ValueError(f"File path {file_path} does not end with .yaml")
+        return file_path
+
 
 class OtelToPumlArgs(OtelArgs):
     """Pydantic model for OtelToPuml CLI arguments."""

@@ -18,11 +18,19 @@ Example:
 ```
 """
 
-from typing import Any
+import os
 import argparse
+import yaml
+from typing import Any, Literal
 
 from .otel_to_puml import otel_to_puml
-from tel2puml.tel2puml_types import OtelToPumlArgs, OtelToPvArgs, PvToPumlArgs
+from tel2puml.tel2puml_types import (
+    OtelToPumlArgs,
+    OtelToPvArgs,
+    PvToPumlArgs,
+    OtelPVOptions,
+    PVPumlOptions,
+)
 
 parser = argparse.ArgumentParser(prog="otel2puml")
 # global arguments
@@ -136,8 +144,26 @@ pv_to_puml_parser.add_argument(
 )
 
 
+def load_config(file_path: str) -> dict[str, Any]:
+    """Parse config file.
+
+    :param file_path: The filepath to the config file
+    :type file_path: `str`
+    :return: Config file represented as a dictionary
+    :rtype: `dict`[`str`, `Any`]
+    """
+    with open(file_path, "r") as file:
+        return yaml.safe_load(file)
+
+
 def validate_inputs(args: argparse.Namespace) -> dict[str, Any]:
-    """Validate CLI inputs using pydantic models."""
+    """Validate CLI inputs using pydantic models.
+
+    :param args: argparse object
+    :type args: :class:`argparse.Namespace`
+    :return: CLI arguments as a dictionary
+    :rtype: `dict`[`str`, `Any`]
+    """
 
     args_dict = vars(args)
     if args.command == "otel2puml":
@@ -147,15 +173,74 @@ def validate_inputs(args: argparse.Namespace) -> dict[str, Any]:
     elif args.command == "pv2puml":
         PvToPumlArgs(**args_dict)
     else:
-        print("No subcommand selected.")
+        raise ValueError("No subcommand selected.")
 
     return args_dict
+
+
+def find_json_files(directory: str) -> list[str]:
+    """Walk a directory path and extract .json files.
+
+    :param directory: The directory path
+    :type directory: `str`
+    :return: List of filepaths
+    :rtype: `list`[`str`]
+    """
+    json_files = []
+
+    for root, _, files in os.walk(directory):
+        for file in files:
+            if file.endswith(".json"):
+                json_files.append(os.path.join(root, file))
+
+    if not json_files:
+        raise FileNotFoundError(
+            f"No .json files were found in directory '{directory}'"
+        )
+
+    return json_files
+
+
+def generate_puml_options(
+    command: Literal["otel2puml", "otel2pv", "pv2puml"],
+    args_dict: dict[str, Any],
+) -> tuple[OtelPVOptions | None, PVPumlOptions | None]:
+    """Generate puml options objects based on CLI arguments.
+
+    :param command: The CLI command
+    :type command: `Literal`["otel2puml", "otel2pv", "pv2puml"]
+    :return: A tuple containing puml options
+    :rtype: `tuple`[:class:`OtelPVOptions` | `None`, :class:`PVPumlOptions`
+    | `None`]
+    """
+
+    otel_pv_options, pv_puml_options = None, None
+    if command == "otel2puml" or command == "otel2pv":
+        otel_pv_options = OtelPVOptions(
+            config=load_config(args_dict["config_file"]),
+            ingest_data=args_dict["ingest_data"],
+        )
+    elif command == "pv2puml":
+        pv_puml_options = PVPumlOptions(
+            file_list=(
+                args_dict["file_paths"]
+                if args_dict["file_paths"]
+                else find_json_files(args_dict["folder_path"])
+            ),
+            job_name=args_dict["job_name"],
+            group_by_job_id=args_dict["group_by_job"],
+        )
+
+    return otel_pv_options, pv_puml_options
 
 
 if __name__ == "__main__":
     args: argparse.Namespace = parser.parse_args()
     args_dict = validate_inputs(args)
-    print(args_dict)
+    otel_pv_options, pv_puml_options = generate_puml_options(
+        args.command, args_dict
+    )
+    print(otel_pv_options, pv_puml_options)
     # if args_dict["file_paths"]:
     #     args_dict.pop("folder_path")
     #     args_dict.pop("group_by_job")
