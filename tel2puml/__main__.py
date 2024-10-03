@@ -31,6 +31,7 @@ from tel2puml.tel2puml_types import (
     OtelPVOptions,
     PVPumlOptions,
 )
+from tel2puml.otel_to_pv.config import load_config_from_dict
 
 parser = argparse.ArgumentParser(prog="otel2puml")
 # global arguments
@@ -144,7 +145,7 @@ pv_to_puml_parser.add_argument(
 )
 
 
-def load_config(file_path: str) -> dict[str, Any]:
+def generate_config(file_path: str) -> Any:
     """Parse config file.
 
     :param file_path: The filepath to the config file
@@ -217,7 +218,7 @@ def generate_puml_options(
     otel_pv_options, pv_puml_options = None, None
     if command == "otel2puml" or command == "otel2pv":
         otel_pv_options = OtelPVOptions(
-            config=load_config(args_dict["config_file"]),
+            config=load_config_from_dict(generate_config(args_dict["config_file"])),
             ingest_data=args_dict["ingest_data"],
         )
     elif command == "pv2puml":
