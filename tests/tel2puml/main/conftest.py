@@ -35,8 +35,10 @@ def mock_yaml_config_file(tmp_path: Path) -> Path:
                     },
                     "job_id": {
                         "key_paths": [
-                            "resource_spans.[].scope_spans.[].spans.[].trace_id",
-                            "resource_spans.[].scope_spans.[].spans.[].resource.attributes.[].key.other_key",
+                            "resource_spans.[].scope_spans.[].spans.[]."
+                            "trace_id",
+                            "resource_spans.[].scope_spans.[].spans.[]."
+                            "resource.attributes.[].key.other_key",
                         ],
                         "key_value": [None, "test_string"],
                         "value_paths": [None, "value.Value.StringValue"],
@@ -44,8 +46,10 @@ def mock_yaml_config_file(tmp_path: Path) -> Path:
                     },
                     "event_type": {
                         "key_paths": [
-                            "resource_spans.[].scope_spans.[].spans.[].attributes.[].key",
-                            "resource_spans.[].scope_spans.[].spans.[].attributes.[].key",
+                            "resource_spans.[].scope_spans.[].spans.[]."
+                            "attributes.[].key",
+                            "resource_spans.[].scope_spans.[].spans.[]."
+                            "attributes.[].key",
                         ],
                         "key_value": ["coral.namespace", "http.status_code"],
                         "value_paths": [
@@ -62,19 +66,22 @@ def mock_yaml_config_file(tmp_path: Path) -> Path:
                     },
                     "start_timestamp": {
                         "key_paths": [
-                            "resource_spans.[].scope_spans.[].spans.[].start_time_unix_nano"
+                            "resource_spans.[].scope_spans.[].spans.[]."
+                            "start_time_unix_nano"
                         ],
                         "value_type": "string",
                     },
                     "end_timestamp": {
                         "key_paths": [
-                            "resource_spans.[].scope_spans.[].spans.[].end_time_unix_nano"
+                            "resource_spans.[].scope_spans.[].spans.[]."
+                            "end_time_unix_nano"
                         ],
                         "value_type": "string",
                     },
                     "application_name": {
                         "key_paths": [
-                            "resource_spans.[].scope_spans.[].spans.[].attributes.[].key",
+                            "resource_spans.[].scope_spans.[].spans.[]."
+                            "attributes.[].key",
                             "resource_spans.[].resource.attributes.[].key",
                         ],
                         "key_value": ["coral.service", "service.version"],
@@ -86,13 +93,15 @@ def mock_yaml_config_file(tmp_path: Path) -> Path:
                     },
                     "parent_event_id": {
                         "key_paths": [
-                            "resource_spans.[].scope_spans.[].spans.[].parent_span_id"
+                            "resource_spans.[].scope_spans.[].spans.[]."
+                            "parent_span_id"
                         ],
                         "value_type": "string",
                     },
                     "child_event_ids": {
                         "key_paths": [
-                            "resource_spans.[].scope_spans.[].spans.[].child_span_ids"
+                            "resource_spans.[].scope_spans.[].spans.[]."
+                            "child_span_ids"
                         ],
                         "value_type": "array",
                     },

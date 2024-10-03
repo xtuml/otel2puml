@@ -63,7 +63,9 @@ def test_generate_components_options(
         "ingest_data": True,
         "find_unique_graphs": False,
     }
-    otel_pv_options, pv_puml_options = generate_component_options(command, args_dict)
+    otel_pv_options, pv_puml_options = generate_component_options(
+        command, args_dict
+    )
     assert otel_pv_options
     assert otel_pv_options["config"]
     assert otel_pv_options["ingest_data"]
@@ -125,6 +127,8 @@ def test_generate_components_options(
     )
     assert not otel_pv_options
     assert pv_puml_options
-    assert pv_puml_options["file_list"] == [os.path.join(nested_dir_1, json_file_1)]
+    assert pv_puml_options["file_list"] == [
+        os.path.join(nested_dir_1, json_file_1)
+    ]
     assert pv_puml_options["job_name"] == "job_002"
     assert pv_puml_options["group_by_job_id"]
