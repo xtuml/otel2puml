@@ -1,6 +1,6 @@
 """TypedDicts for tel2puml"""
 
-from typing import TypedDict, NotRequired, Any, Optional, Type, Literal
+from typing import TypedDict, NotRequired, Any, Optional, Type, Literal, Self
 from enum import Enum
 
 from pydantic import (
@@ -171,6 +171,7 @@ class OtelToPVArgs(BaseModel):
     )
 
     @field_validator("config_file")
+    @classmethod
     def check_file_extension(
         cls: Type["OtelToPVArgs"], file_path: FilePath
     ) -> FilePath:
@@ -180,12 +181,12 @@ class OtelToPVArgs(BaseModel):
         return file_path
 
     @model_validator(mode="after")
-    def check_save_events(cls, info: ValidationInfo) -> ValidationInfo:
-        if info.command == "otel2puml" and info.save_events:
+    def check_save_events(self) -> Self:
+        if self.command == "otel2puml" and self.save_events:
             raise ValueError(
                 "save_events must be False if otel2puml is selected."
             )
-        return info
+        return self
 
 
 class PvToPumlArgs(BaseModel):
@@ -207,6 +208,7 @@ class PvToPumlArgs(BaseModel):
     )
 
     @field_validator("file_paths")
+    @classmethod
     def check_file_extension(
         cls: Type["PvToPumlArgs"], file_paths: list[FilePath]
     ) -> list[FilePath]:
@@ -220,12 +222,10 @@ class PvToPumlArgs(BaseModel):
         return file_paths
 
     @model_validator(mode="after")
-    def check_folder_path_file_paths(
-        cls: Type["PvToPumlArgs"], info: ValidationInfo
-    ) -> ValidationInfo:
+    def check_folder_path_file_paths(self) -> Self:
         """Check that folder path and file paths haven't both been set."""
-        folder_path = info.folder_path
-        file_paths = info.file_paths
+        folder_path = self.folder_path
+        file_paths = self.file_paths
 
         if folder_path and file_paths:
             raise ValueError(
@@ -233,4 +233,4 @@ class PvToPumlArgs(BaseModel):
             )
         if not folder_path and not file_paths:
             raise ValueError("Either folder path or file paths is required.")
-        return info
+        return self

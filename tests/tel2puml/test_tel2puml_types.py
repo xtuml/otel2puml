@@ -37,7 +37,7 @@ def test_otel_to_pv_args(command: str) -> None:
 
     # Test 4: Non-existant file
     with pytest.raises(ValidationError):
-        OtelToPVArgs(config_file="nonexistent.yaml")
+        OtelToPVArgs(config_file="nonexistent.yaml", command="otel2puml")
 
 
 def test_pv_to_puml_args() -> None:
@@ -49,6 +49,7 @@ def test_pv_to_puml_args() -> None:
     ) as tmp_file1, tempfile.NamedTemporaryFile(suffix=".json") as tmp_file2:
         file_paths = [tmp_file1.name, tmp_file2.name]
         args = PvToPumlArgs(file_paths=file_paths)
+        assert args.file_paths
         assert [str(filepath) for filepath in args.file_paths] == file_paths
         assert args.folder_path is None
         assert args.job_name == "default_name"
