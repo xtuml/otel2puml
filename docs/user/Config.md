@@ -1,0 +1,93 @@
+# OTel to PUML Config file
+# ========================
+
+This file details the configuration options for the ingestion and sequencing of data for the OTel to PUML converter.
+
+## Configuration File Format
+The configuration file is provided as a yaml file. The configuration file is divided into four sections: 
+* `ingest_data`
+* `data_holders`
+* `data_sources`
+* `sequencer`
+
+An example configuration file is provided below:
+
+```yaml
+
+ingest_data:
+    data_source: json
+    data_holder: sql
+data_holders:
+    sql:
+        db_uri: 'sqlite:///:memory:'
+        batch_size: 5
+        time_buffer: 30
+data_sources:
+    json:
+        dirpath: /path/to/json/directory
+        filepath: /path/to/json/file.json
+        json_per_line: false
+        field_mapping: <field mapping config>
+sequencer:
+    async: false
+    async_event_groups:
+        job_name_1:
+            event_type_1:
+                event_type_2: group_1
+                event_type_3: group_1
+            event_type_4:
+                event_type_5: group_2
+        job_name_2:
+            event_type_6:
+                event_type_7: group_3
+                event_type_8: group_3
+    event_name_map_information:
+        job_name_1:
+            event_type_1:
+                mapped_event_type: mapped_event_type_1
+                child_event_types:
+                    - child_event_type_1
+                    - child_event_type_2
+            event_type_2:
+                mapped_event_type: mapped_event_type_2
+                child_event_types:
+                    - child_event_type_3
+                    - child_event_type_4
+        job_name_2:
+            event_type_3:
+                mapped_event_type: mapped_event_type_3
+                child_event_types:
+                    - child_event_type_5
+                    - child_event_type_6
+```
+
+## Configuration Options
+
+### `ingest_data`
+This section contains the configuration for the ingestion of data. The following options are available:
+* `data_source`: The data source to use for the ingestion of data. This should be one of the keys in the `data_sources` section. Currently, only `json` is supported and any other value will result in an error.
+* `data_holder`: The data holder to use for the storage of data. This should be one of the keys in the `data_holders` section. Currently, only `sql` is supported and any other value will result in an error.
+
+### `data_holders`
+This section contains the configuration for the data holders. The following options are available:
+* `sql`: The configuration for the SQL data holder. The following options are available:
+    * `db_uri`: The URI for the database to use. This should be a valid SQLAlchemy URI. The default value is `sqlite:///:memory:`.
+    * `batch_size`: The number of events to add to the database in a single batch. The default value is `5`.
+    * `time_buffer`: The time buffer in seconds to use when processing events. The default value is `30`. This value is used to remove traces that have spans only outside within the time buffer (symetrical) i.e. if all data ingested is within the interval of 100 to 1000 seconds and the time buffer is 10 seconds, then the traces that have spans only outside the interval of 110 to 990 seconds will be removed.
+
+### `data_sources`
+This section contains the configuration for the data sources. The following options are available:
+* `json`: The configuration for the JSON data source. The following options are available:
+    * `dirpath`: The path to the directory containing the JSON files. This is required if `filepath` is not provided.
+    * `filepath`: The path to the JSON file. This is required if `dirpath` is not provided.
+    * `json_per_line`: A boolean value indicating whether each line in the JSON file is a separate JSON object. The default value is `false`.
+    * `field_mapping`: The field mapping configuration. The details of how this is used can be found in the [JSON Data Converter HOW TO](/docs/user/json_data_converter_HOWTO.md) section.
+
+### `sequencer`
+This option is not required and can be omitted if the sequencer is not being used or synchronous sequencing is being used.
+
+The following options are available:
+* `async`: A boolean value indicating whether to run the sequencer asynchronously. The default value is `false`. The details of how this is used can be found in the [Sequencer HOW TO](/docs/user/sequencer_HOWTO.md) section.
+* `async_event_groups`: A dictionary containing the event groups for the asynchronous sequencer. The details of how this is used can be found in the [Sequencer HOW TO](/docs/user/sequencer_HOWTO.md) section. This field is not required.
+* `event_name_map_information`: A dictionary containing the event name mapping information. The details of how this is used can be found in the [Sequencer HOW TO](/docs/user/sequencer_HOWTO.md) section. This field is not required.
+
