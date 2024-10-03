@@ -9,7 +9,6 @@ from pydantic import (
     DirectoryPath,
     FilePath,
     field_validator,
-    ValidationInfo,
     model_validator,
 )
 
