@@ -17,13 +17,16 @@ Example:
         -group-by-job
 ```
 """
+
+from typing import Any
 import argparse
 
 from .otel_to_puml import otel_to_puml
+from tel2puml.tel2puml_types import OtelToPumlArgs, OtelToPvArgs, PvToPumlArgs
 
 parser = argparse.ArgumentParser(prog="otel2puml")
 # global arguments
-subparsers = parser.add_subparsers(help="sub-command help")
+subparsers = parser.add_subparsers(dest="command", help="sub-command help")
 parser.add_argument(
     "-o",
     "--output-dir",
@@ -65,12 +68,14 @@ otel_parent_parser.add_argument(
 
 # otel to puml and otel to pv sub parsers
 otel_to_puml_parser = subparsers.add_parser(
-    "otel2puml", help="otel to puml help",
+    "otel2puml",
+    help="otel to puml help",
     parents=[otel_parent_parser],
 )
 
 otel_to_pv_parser = subparsers.add_parser(
-    "otel2pv", help="otel to pv help",
+    "otel2pv",
+    help="otel to pv help",
     parents=[otel_parent_parser],
 )
 
@@ -86,7 +91,8 @@ otel_to_pv_parser.add_argument(
 
 # pv to puml subparser
 pv_to_puml_parser = subparsers.add_parser(
-    "pv2puml", help="pv to puml help",
+    "pv2puml",
+    help="pv to puml help",
 )
 pv_input_paths = pv_to_puml_parser.add_argument_group(
     "Input paths",
@@ -130,9 +136,25 @@ pv_to_puml_parser.add_argument(
 )
 
 
+def validate_inputs(args: argparse.Namespace) -> dict[str, Any]:
+    """Validate CLI inputs using pydantic models."""
+
+    args_dict = vars(args)
+    if args.command == "otel2puml":
+        OtelToPumlArgs(**args_dict)
+    elif args.command == "otel2pv":
+        OtelToPvArgs(**args_dict)
+    elif args.command == "pv2puml":
+        PvToPumlArgs(**args_dict)
+    else:
+        print("No subcommand selected.")
+
+    return args_dict
+
+
 if __name__ == "__main__":
     args: argparse.Namespace = parser.parse_args()
-    args_dict = vars(args)
+    args_dict = validate_inputs(args)
     print(args_dict)
     # if args_dict["file_paths"]:
     #     args_dict.pop("folder_path")

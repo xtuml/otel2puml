@@ -1,7 +1,9 @@
 """TypedDicts for tel2puml"""
 
-from typing import TypedDict, NotRequired, Any
+from typing import TypedDict, NotRequired, Any, Optional, Type
 from enum import Enum
+
+from pydantic import BaseModel, Field, DirectoryPath, FilePath, field_validator
 
 from tel2puml.otel_to_pv.config import IngestDataConfig
 
@@ -126,9 +128,69 @@ class OtelPVOptions(TypedDict):
     ingest_data: bool
 
 
-class PVPumlOptions(TypedDict, total=False):
+class PVPumlOptions(TypedDict):
     """Typed dict for options for pv_to_puml"""
 
     file_list: list[str]
     job_name: str
     group_by_job_id: bool
+
+
+class OtelArgs(BaseModel):
+    """Pydantic model for shared CLI arguments for otel2puml and oteltopv."""
+
+    config_file: FilePath = Field(
+        ..., description="Path to configuration file"
+    )
+    ingest_data: bool = Field(
+        default=True,
+        description="Flag to indicate whether to load data into the data"
+        " holder",
+    )
+    find_unique_graphs: bool = Field(
+        default=False,
+        description="Flag to indicate whether to find unique graphs within"
+        " the data holder",
+    )
+
+
+class OtelToPumlArgs(OtelArgs):
+    """Pydantic model for OtelToPuml CLI arguments."""
+
+    pass
+
+
+class OtelToPvArgs(OtelArgs):
+    """Pydantic model for OtelToPv CLI arguments."""
+
+    save_events: bool = Field(
+        default=False,
+        description="Flag indicating whether to save events to the output directory",
+    )
+
+
+class PvToPumlArgs(BaseModel):
+    """Pydantic model for PvToPuml CLI arguments."""
+
+    folder_path: Optional[DirectoryPath] = Field(
+        None, description="Path to folder containing job json files"
+    )
+    file_paths: Optional[list[FilePath]] = Field(
+        None, description="Input .json files containing job data"
+    )
+    job_name: str = Field(
+        default="default_name",
+        description="Name given to the puml sequence diagram and prefix for the output puml file",
+    )
+    group_by_job: bool = Field(
+        default=False, description="Group events by job ID"
+    )
+
+    @field_validator("file_paths")
+    def check_file_extension(
+        cls: Type["PvToPumlArgs"], file_path: FilePath
+    ) -> FilePath:
+        """Check that file_path ends with .json"""
+        if file_path and not str(file_path).endswith(".json"):
+            raise ValueError(f"File path {file_path} does not end with .json")
+        return file_path
