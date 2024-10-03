@@ -174,7 +174,8 @@ class OtelToPvArgs(OtelArgs):
 
     save_events: bool = Field(
         default=False,
-        description="Flag indicating whether to save events to the output directory",
+        description="Flag indicating whether to save events to the output"
+        " directory",
     )
 
 
@@ -189,7 +190,8 @@ class PvToPumlArgs(BaseModel):
     )
     job_name: str = Field(
         default="default_name",
-        description="Name given to the puml sequence diagram and prefix for the output puml file",
+        description="Name given to the puml sequence diagram and prefix for "
+        "the output puml file",
     )
     group_by_job: bool = Field(
         default=False, description="Group events by job ID"
