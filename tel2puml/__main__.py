@@ -25,8 +25,7 @@ from typing import Any, Literal
 
 from .otel_to_puml import otel_to_puml
 from tel2puml.tel2puml_types import (
-    OtelToPumlArgs,
-    OtelToPvArgs,
+    OtelToPVArgs,
     PvToPumlArgs,
     OtelPVOptions,
     PVPumlOptions,
@@ -89,7 +88,6 @@ otel_to_pv_parser = subparsers.add_parser(
 )
 
 # otel to pv args
-
 otel_to_pv_parser.add_argument(
     "-se",
     "--save-events",
@@ -157,28 +155,6 @@ def generate_config(file_path: str) -> Any:
         return yaml.safe_load(file)
 
 
-def validate_inputs(args: argparse.Namespace) -> dict[str, Any]:
-    """Validate CLI inputs using pydantic models.
-
-    :param args: argparse object
-    :type args: :class:`argparse.Namespace`
-    :return: CLI arguments as a dictionary
-    :rtype: `dict`[`str`, `Any`]
-    """
-
-    args_dict = vars(args)
-    if args.command == "otel2puml":
-        OtelToPumlArgs(**args_dict)
-    elif args.command == "otel2pv":
-        OtelToPvArgs(**args_dict)
-    elif args.command == "pv2puml":
-        PvToPumlArgs(**args_dict)
-    else:
-        raise ValueError("No subcommand selected.")
-
-    return args_dict
-
-
 def find_json_files(directory: str) -> list[str]:
     """Walk a directory path and extract .json files.
 
@@ -202,7 +178,7 @@ def find_json_files(directory: str) -> list[str]:
     return json_files
 
 
-def generate_puml_options(
+def generate_component_options(
     command: Literal["otel2puml", "otel2pv", "pv2puml"],
     args_dict: dict[str, Any],
 ) -> tuple[OtelPVOptions | None, PVPumlOptions | None]:
@@ -210,18 +186,22 @@ def generate_puml_options(
 
     :param command: The CLI command
     :type command: `Literal`["otel2puml", "otel2pv", "pv2puml"]
-    :return: A tuple containing puml options
+    :return: A tuple containing component options
     :rtype: `tuple`[:class:`OtelPVOptions` | `None`, :class:`PVPumlOptions`
     | `None`]
     """
 
     otel_pv_options, pv_puml_options = None, None
     if command == "otel2puml" or command == "otel2pv":
+        OtelToPVArgs(**args_dict)
         otel_pv_options = OtelPVOptions(
-            config=load_config_from_dict(generate_config(args_dict["config_file"])),
+            config=load_config_from_dict(
+                generate_config(args_dict["config_file"])
+            ),
             ingest_data=args_dict["ingest_data"],
         )
     elif command == "pv2puml":
+        PvToPumlArgs(**args_dict)
         pv_puml_options = PVPumlOptions(
             file_list=(
                 args_dict["file_paths"]
@@ -237,11 +217,13 @@ def generate_puml_options(
 
 if __name__ == "__main__":
     args: argparse.Namespace = parser.parse_args()
-    args_dict = validate_inputs(args)
-    otel_pv_options, pv_puml_options = generate_puml_options(
+    args_dict = vars(args)
+    otel_pv_options, pv_puml_options = generate_component_options(
         args.command, args_dict
     )
     print(otel_pv_options, pv_puml_options)
+    print("~" * 50)
+    print(args_dict)
     # if args_dict["file_paths"]:
     #     args_dict.pop("folder_path")
     #     args_dict.pop("group_by_job")

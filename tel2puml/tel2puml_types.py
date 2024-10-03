@@ -1,9 +1,17 @@
 """TypedDicts for tel2puml"""
 
-from typing import TypedDict, NotRequired, Any, Optional, Type
+from typing import TypedDict, NotRequired, Any, Optional, Type, Literal
 from enum import Enum
 
-from pydantic import BaseModel, Field, DirectoryPath, FilePath, field_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    DirectoryPath,
+    FilePath,
+    field_validator,
+    ValidationError,
+    ValidationInfo,
+)
 
 from tel2puml.otel_to_pv.config import IngestDataConfig
 
@@ -136,7 +144,7 @@ class PVPumlOptions(TypedDict):
     group_by_job_id: bool
 
 
-class OtelArgs(BaseModel):
+class OtelToPVArgs(BaseModel):
     """Pydantic model for shared CLI arguments for otel2puml and oteltopv."""
 
     config_file: FilePath = Field(
@@ -152,31 +160,34 @@ class OtelArgs(BaseModel):
         description="Flag to indicate whether to find unique graphs within"
         " the data holder",
     )
-
-    @field_validator("config_file")
-    def check_file_extension(
-        cls: Type["OtelArgs"], file_path: FilePath
-    ) -> FilePath:
-        """Check that file_path ends with .yaml"""
-        if file_path and not str(file_path).endswith(".yaml"):
-            raise ValueError(f"File path {file_path} does not end with .yaml")
-        return file_path
-
-
-class OtelToPumlArgs(OtelArgs):
-    """Pydantic model for OtelToPuml CLI arguments."""
-
-    pass
-
-
-class OtelToPvArgs(OtelArgs):
-    """Pydantic model for OtelToPv CLI arguments."""
+    command: Literal["otel2puml", "otel2pv"] = Field(
+        ..., description="Command used within CLI"
+    )
 
     save_events: bool = Field(
         default=False,
         description="Flag indicating whether to save events to the output"
         " directory",
     )
+
+    @field_validator("config_file")
+    def check_file_extension(
+        cls: Type["OtelToPVArgs"], file_path: FilePath
+    ) -> FilePath:
+        """Check that file_path ends with .yaml"""
+        if file_path and not str(file_path).endswith(".yaml"):
+            raise ValueError(f"File path {file_path} does not end with .yaml")
+        return file_path
+
+    @field_validator("save_events")
+    def check_save_events(
+        cls, save_events: bool, info: ValidationInfo
+    ) -> bool:
+        if info.data["command"] == "otel2puml" and save_events:
+            raise ValueError(
+                "save_events must be False if otel2puml is selected."
+            )
+        return save_events
 
 
 class PvToPumlArgs(BaseModel):
