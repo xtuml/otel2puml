@@ -144,6 +144,7 @@ class TestJSONDataSource:
         expected_files = {
             os.path.join(temp_dir, "json_file1.json"),
             os.path.join(temp_dir, sub_temp_dir, "json_file2.json"),
+            os.path.join(temp_dir, "text_file.txt"),
         }
         assert set(file_list) == expected_files
 

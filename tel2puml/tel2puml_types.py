@@ -197,7 +197,7 @@ class PvToPumlArgs(BaseModel):
         None, description="Path to folder containing job json files"
     )
     file_paths: Optional[list[FilePath]] = Field(
-        None, description="Input .json files containing job data"
+        None, description="Input files containing job data"
     )
     job_name: str = Field(
         default="default_name",
@@ -207,20 +207,6 @@ class PvToPumlArgs(BaseModel):
     group_by_job: StrictBool = Field(
         default=False, description="Group events by job ID"
     )
-
-    @field_validator("file_paths")
-    @classmethod
-    def check_file_extension(
-        cls: Type["PvToPumlArgs"], file_paths: list[FilePath]
-    ) -> list[FilePath]:
-        """Check that file_path ends with .json"""
-        if file_paths:
-            for file_path in file_paths:
-                if not str(file_path).endswith(".json"):
-                    raise ValueError(
-                        f"File path {file_path} does not end with .json"
-                    )
-        return file_paths
 
     @model_validator(mode="after")
     def check_folder_path_file_paths(self) -> Self:

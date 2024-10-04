@@ -59,8 +59,6 @@ class JSONDataSource(OTELDataSource):
 
         if not self.config["filepath"]:
             return None
-        elif not self.config["filepath"].endswith(".json"):
-            raise ValueError("File provided is not .json format.")
         elif not os.path.isfile(self.config["filepath"]):
             raise ValueError(f"{self.config['filepath']} does not exist.")
         return self.config["filepath"]
@@ -77,7 +75,6 @@ class JSONDataSource(OTELDataSource):
                 os.path.join(root, filename)
                 for root, _, filenames in os.walk(self.dirpath)
                 for filename in filenames
-                if filename.endswith(".json")
             ]
         elif self.filepath is not None:
             return [self.filepath]
