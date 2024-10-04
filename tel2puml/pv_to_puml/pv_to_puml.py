@@ -147,8 +147,7 @@ def pv_events_from_folder_to_event_stream(
     :rtype: `Generator`[:class:`PVEvent`, Any, None]
     """
     for file_name in os.listdir(folder_path):
-        if file_name.endswith(".json"):
-            yield pv_event_file_to_event(os.path.join(folder_path, file_name))
+        yield pv_event_file_to_event(os.path.join(folder_path, file_name))
 
 
 def pv_job_files_to_event_sequence_streams(
@@ -178,10 +177,9 @@ def pv_jobs_from_folder_to_event_sequence_streams(
     :rtype: `Generator`[`list`[:class:`PVEvent`], Any, None]
     """
     for file_name in os.listdir(folder_path):
-        if file_name.endswith(".json"):
-            yield pv_job_file_to_event_sequence(
-                os.path.join(folder_path, file_name)
-            )
+        yield pv_job_file_to_event_sequence(
+            os.path.join(folder_path, file_name)
+        )
 
 
 def pv_jobs_from_folder_to_puml_file(

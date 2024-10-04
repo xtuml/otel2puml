@@ -11,7 +11,7 @@ from pydantic import ValidationError
 
 from tel2puml.__main__ import (
     generate_config,
-    find_json_files,
+    find_files,
     generate_component_options,
 )
 
@@ -29,8 +29,8 @@ def test_generate_config(tmp_path: Path) -> None:
     assert result == config_data
 
 
-def test_find_json_files_with_nested_directories(tmp_path: Path) -> None:
-    """Tests for the function find_json_files"""
+def test_find_files_with_nested_directories(tmp_path: Path) -> None:
+    """Tests for the function find_files"""
     nested_dir_1 = tmp_path / "dir1"
     nested_dir_1.mkdir()
 
@@ -46,9 +46,11 @@ def test_find_json_files_with_nested_directories(tmp_path: Path) -> None:
     txt_file = nested_dir_1 / "file.txt"
     txt_file.write_text("This is a text file")
 
-    result = find_json_files(str(tmp_path))
+    result = find_files(str(tmp_path))
 
-    assert sorted(result) == sorted([str(json_file_1), str(json_file_2)])
+    assert sorted(result) == sorted(
+        [str(json_file_1), str(json_file_2), str(txt_file)]
+    )
 
 
 def test_generate_components_options(

@@ -119,7 +119,7 @@ pv_exclusive_group.add_argument(
 pv_exclusive_group.add_argument(
     "file_paths",
     nargs="*",
-    help="Input .json files containing job data",
+    help="Input files containing job data in json format",
     default=[],
 )
 
@@ -155,27 +155,26 @@ def generate_config(file_path: str) -> Any:
         return yaml.safe_load(file)
 
 
-def find_json_files(directory: str) -> list[str]:
-    """Walk a directory path and extract .json files.
+def find_files(directory: str) -> list[str]:
+    """Walk a directory path and extract files.
 
     :param directory: The directory path
     :type directory: `str`
     :return: List of filepaths
     :rtype: `list`[`str`]
     """
-    json_files = []
+    job_files = []
 
     for root, _, files in os.walk(directory):
         for file in files:
-            if file.endswith(".json"):
-                json_files.append(os.path.join(root, file))
+            job_files.append(os.path.join(root, file))
 
-    if not json_files:
+    if not job_files:
         raise FileNotFoundError(
-            f"No .json files were found in directory '{directory}'"
+            f"No files were found in directory '{directory}'"
         )
 
-    return json_files
+    return job_files
 
 
 def generate_component_options(
@@ -207,7 +206,7 @@ def generate_component_options(
                 str(filepath) for filepath in pv_to_puml_obj.file_paths
             ]
         elif pv_to_puml_obj.folder_path:
-            file_list = find_json_files(str(pv_to_puml_obj.folder_path))
+            file_list = find_files(str(pv_to_puml_obj.folder_path))
         pv_puml_options = PVPumlOptions(
             file_list=file_list,
             job_name=pv_to_puml_obj.job_name,

@@ -59,7 +59,7 @@ def test_pv_to_puml_args() -> None:
 
     # Test 1: Valid filepaths
     with tempfile.NamedTemporaryFile(
-        suffix=".json"
+        suffix=".txt"
     ) as tmp_file1, tempfile.NamedTemporaryFile(suffix=".json") as tmp_file2:
         file_paths = [tmp_file1.name, tmp_file2.name]
         args = PvToPumlArgs(file_paths=file_paths)
@@ -69,13 +69,7 @@ def test_pv_to_puml_args() -> None:
         assert args.job_name == "default_name"
         assert args.group_by_job is False
 
-    # Test 2: Invalid file extensions
-    with tempfile.NamedTemporaryFile(suffix=".txt") as tmp_file:
-        file_paths = [tmp_file.name]
-        with pytest.raises(ValidationError):
-            PvToPumlArgs(file_paths=file_paths)
-
-    # Test 3: Valid folderpath
+    # Test 2: Valid folderpath
     with tempfile.TemporaryDirectory() as tmp_dir:
         args = PvToPumlArgs(folder_path=tmp_dir)
         assert str(args.folder_path) == tmp_dir
@@ -83,11 +77,11 @@ def test_pv_to_puml_args() -> None:
         assert args.job_name == "default_name"
         assert args.group_by_job is False
 
-    # Test 4: Invalid folderpath
+    # Test 3: Invalid folderpath
     with pytest.raises(ValidationError):
         PvToPumlArgs(folder_path="nonexistent_directory")
 
-    # Test 5: Filepath and Folderpath provided
+    # Test 4: Filepath and Folderpath provided
     with tempfile.NamedTemporaryFile(
         suffix=".json"
     ) as tmp_file1, tempfile.TemporaryDirectory() as tmp_dir:
@@ -95,18 +89,18 @@ def test_pv_to_puml_args() -> None:
         with pytest.raises(ValidationError):
             args = PvToPumlArgs(file_paths=file_paths, folder_path=tmp_dir)
 
-    # Test 6: Filepath and Folderpath not provided
+    # Test 5: Filepath and Folderpath not provided
     with pytest.raises(ValidationError):
         args = PvToPumlArgs(file_paths=None, folder_path=None)
 
-    # Test 7: Test invalid job name
+    # Test 6: Test invalid job name
     with pytest.raises(ValidationError):
         with tempfile.NamedTemporaryFile(suffix=".json") as tmp_file2:
             args = PvToPumlArgs(
                 file_paths=[tmp_file2.name], folder_path=None, job_name=123
             )
 
-    # Test 6: Test with non-boolean values
+    # Test 7: Test with non-boolean values
     with pytest.raises(ValidationError):
         with tempfile.NamedTemporaryFile(suffix=".json") as tmp_file3:
             args = PvToPumlArgs(
