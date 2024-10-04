@@ -104,7 +104,7 @@ def test_generate_components_options(
         otel_pv_options, pv_puml_options = generate_component_options(
             command, args_dict
         )
-        assert not otel_pv_options
+        assert otel_pv_options is None
         assert pv_puml_options
         assert pv_puml_options["file_list"] == [tmp_file.name]
         assert pv_puml_options["job_name"] == "job_001"
@@ -142,7 +142,7 @@ def test_generate_components_options(
     otel_pv_options, pv_puml_options = generate_component_options(
         command, args_dict
     )
-    assert not otel_pv_options
+    assert otel_pv_options is None
     assert pv_puml_options
     assert pv_puml_options["file_list"] == [
         os.path.join(nested_dir_1, json_file_1)
