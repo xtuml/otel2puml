@@ -15,6 +15,7 @@ def otel_to_pv(
     config: IngestDataConfig,
     ingest_data: bool = False,
     find_unique_graphs: bool = False,
+    save_events: bool = False,
 ) -> Generator[
     tuple[str, Generator[Generator[PVEvent, Any, None], Any, None]], Any, None
 ]:
@@ -32,6 +33,9 @@ def otel_to_pv(
     :type find_unique_graphs: `bool`, optional
     :return: Generator of tuples of job_name to generator of generators of
     PVEvents grouped by job_name, then job_id.
+    :param save_events: Flag to indicate whether to save events to file.
+    Defaults to False.
+    :type save_events: bool
     :rtype: `Generator`[`tuple`[`str`, `Generator`[`Generator`[:class:
     `PVEvent`, `Any`, `None`], `Any`, `None`]], `Any`, `None`]
 
@@ -55,6 +59,8 @@ def otel_to_pv(
     sequencer_config = config.get("sequencer", SequenceModelConfig())
     async_event_groups = sequencer_config.async_event_groups
     event_name_map_information = sequencer_config.event_name_map_information
+    if save_events:
+        pass
     return (
         (
             job_name,

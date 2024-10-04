@@ -17,7 +17,7 @@ def otel_to_puml(
     otel_to_pv_options: Optional[OtelPVOptions] = None,
     pv_to_puml_options: Optional[PVPumlOptions] = None,
     output_file_directory: str = "puml_output",
-    components: Literal["all", "otel_to_pv", "pv_to_puml"] = "all",
+    components: Literal["otel2puml", "otel2pv", "pv2puml"] = "otel2puml",
 ) -> None:
     """Creates puml files from otel data. Takes optional parameters to handle
     separate parts of the process individually.
@@ -30,8 +30,8 @@ def otel_to_puml(
     "puml_output".
     :type output_file_directory: `str`
     :param components: The parts of the process that are required. Defaults to
-    "all".
-    :type components: `Literal`["all", "otel_to_pv", "pv_to_puml"]
+    "otel2puml".
+    :type components: `Literal`["otel2puml", "otel2pv", "pv2puml"]
     """
     # Create output directory if non-existant.
     if not os.path.isdir(output_file_directory):
@@ -47,7 +47,7 @@ def otel_to_puml(
             return
 
     match components:
-        case "all" | "otel_to_pv":
+        case "otel2puml" | "otel2pv":
             if otel_to_pv_options is None:
                 raise ValueError(
                     f"'{components}' has been selected, 'otel_to_pv_options'"
@@ -68,19 +68,19 @@ def otel_to_puml(
                     None,
                 ],
             ] = otel_to_pv(**otel_to_pv_options)
-            if components == "otel_to_pv":
+            if components == "otel2pv":
                 return
-        case "pv_to_puml":
+        case "pv2puml":
             if pv_to_puml_options is None:
                 raise ValueError(
-                    "'pv_to_puml' has been selected, 'pv_to_puml_options' is"
+                    "'pv2puml' has been selected, 'pv_to_puml_options' is"
                     " required."
                 )
             pv_streams = pv_files_to_pv_streams(**pv_to_puml_options)
         case _:
             raise ValueError(
-                "components should be one of 'all', 'otel_to_pv',"
-                " 'pv_to_puml'"
+                "components should be one of 'otel2puml', 'otel2pv',"
+                " 'pv2puml'"
             )
     # Convert streams to puml files
     pv_streams_to_puml_files(pv_streams, output_file_directory)

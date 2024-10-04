@@ -41,14 +41,14 @@ class TestOtelToPuml:
     def test_invalid_options_all_components_missing_otel_options(
         mock_isdir: MagicMock,
     ) -> None:
-        """Test that ValueError is raised when 'all' is selected but
+        """Test that ValueError is raised when 'otel2puml' is selected but
         otel_to_puml_options is None."""
         mock_isdir.return_value = True  # Assume directory exists
 
         with pytest.raises(ValueError) as exc_info:
-            otel_to_puml(otel_to_pv_options=None, components="all")
+            otel_to_puml(otel_to_pv_options=None, components="otel2puml")
         assert (
-            "'all' has been selected, 'otel_to_pv_options' is required."
+            "'otel2puml' has been selected, 'otel_to_pv_options' is required."
             in str(exc_info.value)
         )
 
@@ -61,9 +61,9 @@ class TestOtelToPuml:
         mock_isdir.return_value = True
 
         with pytest.raises(ValueError) as exc_info:
-            otel_to_puml(otel_to_pv_options=None, components="otel_to_pv")
+            otel_to_puml(otel_to_pv_options=None, components="otel2pv")
         assert (
-            "'otel_to_pv' has been selected, 'otel_to_pv_options' is"
+            "'otel2pv' has been selected, 'otel_to_pv_options' is"
             " required."
             in str(exc_info.value)
         )
@@ -72,14 +72,14 @@ class TestOtelToPuml:
     def test_invalid_options_pv_to_puml_components_missing_pv_options(
         mock_isdir: MagicMock,
     ) -> None:
-        """Test that ValueError is raised when 'pv_to_puml' is
+        """Test that ValueError is raised when 'pv2puml' is
         selected but pv_to_puml_options is None."""
         mock_isdir.return_value = True
 
         with pytest.raises(ValueError) as exc_info:
-            otel_to_puml(pv_to_puml_options=None, components="pv_to_puml")
+            otel_to_puml(pv_to_puml_options=None, components="pv2puml")
         assert (
-            "'pv_to_puml' has been selected, 'pv_to_puml_options' is required."
+            "'pv2puml' has been selected, 'pv_to_puml_options' is required."
             in str(exc_info.value)
         )
 
@@ -94,7 +94,7 @@ class TestOtelToPuml:
                 components="invalid_component"  # type: ignore[arg-type]
             )
         assert (
-            "components should be one of 'all', 'otel_to_pv', 'pv_to_puml'"
+            "components should be one of 'otel2puml', 'otel2pv', 'pv2puml'"
             in str(exc_info.value)
         )
 
@@ -104,7 +104,7 @@ class TestOtelToPuml:
         mock_yaml_config_dict: dict[str, Any],
         mock_json_data: dict[str, Any],
     ) -> None:
-        """Test successful execution when components='all'."""
+        """Test successful execution when components='otel2puml'."""
 
         output_dir = tmp_path / "puml_output"
         input_dir = tmp_path / "json_input"
@@ -128,7 +128,7 @@ class TestOtelToPuml:
 
         otel_to_puml(
             otel_to_pv_options=otel_options,
-            components="all",
+            components="otel2puml",
             output_file_directory=str(output_dir),
         )
 
@@ -189,7 +189,7 @@ class TestOtelToPuml:
         # Run function
         otel_to_puml(
             otel_to_pv_options=otel_options,
-            components="otel_to_pv",
+            components="otel2pv",
         )
         data_holder: SQLDataHolder = fetch_data_holder(
             config  # type: ignore[assignment]
@@ -225,7 +225,7 @@ class TestOtelToPuml:
         tmp_path: Path,
         group_by_job_id: bool,
     ) -> None:
-        """Test successful execution when components='pv_to_puml'"""
+        """Test successful execution when components='pv2puml'"""
         output_dir = tmp_path / "puml_output"
         input_dir = tmp_path / "job_json"
 
@@ -242,7 +242,7 @@ class TestOtelToPuml:
 
         otel_to_puml(
             pv_to_puml_options=pv_to_puml_options,
-            components="pv_to_puml",
+            components="pv2puml",
             output_file_directory=str(output_dir),
         )
 
