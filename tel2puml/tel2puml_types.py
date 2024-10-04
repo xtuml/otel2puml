@@ -10,6 +10,7 @@ from pydantic import (
     FilePath,
     field_validator,
     model_validator,
+    StrictBool,
 )
 
 from tel2puml.otel_to_pv.config import IngestDataConfig
@@ -149,12 +150,12 @@ class OtelToPVArgs(BaseModel):
     config_file: FilePath = Field(
         ..., description="Path to configuration file"
     )
-    ingest_data: bool = Field(
+    ingest_data: StrictBool = Field(
         default=True,
         description="Flag to indicate whether to load data into the data"
         " holder",
     )
-    find_unique_graphs: bool = Field(
+    find_unique_graphs: StrictBool = Field(
         default=False,
         description="Flag to indicate whether to find unique graphs within"
         " the data holder",
@@ -163,7 +164,7 @@ class OtelToPVArgs(BaseModel):
         ..., description="Command used within CLI"
     )
 
-    save_events: bool = Field(
+    save_events: StrictBool = Field(
         default=False,
         description="Flag indicating whether to save events to the output"
         " directory",

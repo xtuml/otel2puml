@@ -33,6 +33,9 @@ def otel_to_pv(
     :type find_unique_graphs: `bool`, optional
     :return: Generator of tuples of job_name to generator of generators of
     PVEvents grouped by job_name, then job_id.
+    :param save_events: Flag to indicate whether to save events to file.
+    Defaults to False.
+    :type save_events: bool
     :rtype: `Generator`[`tuple`[`str`, `Generator`[`Generator`[:class:
     `PVEvent`, `Any`, `None`], `Any`, `None`]], `Any`, `None`]
 

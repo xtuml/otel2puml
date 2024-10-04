@@ -39,6 +39,20 @@ def test_otel_to_pv_args(command: str) -> None:
     with pytest.raises(ValidationError):
         OtelToPVArgs(config_file="nonexistent.yaml", command="otel2puml")
 
+    # Test 5: Test config file not a filepath
+    with pytest.raises(ValidationError):
+        OtelToPVArgs(config_file=123, command=command)
+
+    # Test 6: Test with non-boolean values
+    with pytest.raises(ValidationError):
+        with tempfile.NamedTemporaryFile(suffix=".yaml") as tmp_file:
+            args = OtelToPVArgs(
+                config_file=tmp_file.name,
+                command="otel2puml",
+                save_events=0,
+                find_unique_graphs=0,
+            )
+
 
 def test_pv_to_puml_args() -> None:
     """Tests for the pydantic model PvToPumlArgs"""
