@@ -193,25 +193,25 @@ def generate_component_options(
 
     otel_pv_options, pv_puml_options = None, None
     if command == "otel2puml" or command == "otel2pv":
-        options_dict: dict[str, Any] = args_dict
-        OtelToPVArgs(**options_dict)
+        otel_to_pv_obj = OtelToPVArgs(**args_dict)
         otel_pv_options = OtelPVOptions(
             config=load_config_from_dict(
-                generate_config(args_dict["config_file"])
+                generate_config(str(otel_to_pv_obj.config_file))
             ),
-            ingest_data=args_dict["ingest_data"],
+            ingest_data=otel_to_pv_obj.ingest_data,
         )
     elif command == "pv2puml":
-        options_dict = args_dict
-        PvToPumlArgs(**options_dict)
+        pv_to_puml_obj = PvToPumlArgs(**args_dict)
+        if pv_to_puml_obj.file_paths:
+            file_list = [
+                str(filepath) for filepath in pv_to_puml_obj.file_paths
+            ]
+        elif pv_to_puml_obj.folder_path:
+            file_list = find_json_files(str(pv_to_puml_obj.folder_path))
         pv_puml_options = PVPumlOptions(
-            file_list=(
-                args_dict["file_paths"]
-                if args_dict["file_paths"]
-                else find_json_files(args_dict["folder_path"])
-            ),
-            job_name=args_dict["job_name"],
-            group_by_job_id=args_dict["group_by_job"],
+            file_list=file_list,
+            job_name=pv_to_puml_obj.job_name,
+            group_by_job_id=pv_to_puml_obj.group_by_job,
         )
 
     return otel_pv_options, pv_puml_options
