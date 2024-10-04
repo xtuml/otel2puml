@@ -39,7 +39,7 @@ There are two ways that are used to sequence the tree of events:
 In following for full examples we use the otel tree below as an example of a call tree to be sequenced:
 
 ###### Figure 1 OTelTree
-![Caption](/docs/user/otel_tree.svg)
+![Caption](/docs/images/user/otel_tree.svg)
 
 
 ### Synchronous Sequencing
@@ -52,7 +52,7 @@ The synchronous sequencing algorithm is as follows:
 
 An example of synchronous sequencing is shown below using the tree of events shown in [OTel Tree](#figure-1-oteltree) that are then sequenced into a causal order:
 
-![](/docs/user/pv_sequence_from_otel.svg)
+![](/docs/images/user/pv_sequence_from_otel.svg)
 
 Note how `child1` becomes the previous event to `grandchild3` as `child1` occurs before `child2` starts but `grandchild3` must occur before `child2` as its parent is `child2`. Also note how `grandchild1` becomes the first event as it is the first child of `child1` which itself is the first child of `root`.
 
@@ -74,11 +74,11 @@ The procession method is as follows:
 An example of this for one event is shown below whereby the three events in Async Group 1 are occurring asynchronously and there is overlap in time windows that creates a chain - it is not required that all events in a group time windows overlap, only that there is at a minimum a chain of overlapping time windows:
 
 ###### Figure 2 OTel Sequence Async
-![](/docs/user/otel_sequence_async.svg)
+![](/docs/images/user/otel_sequence_async.svg)
 
 The full example as in figure [OTel Tree](#oteltree) would be sequenced the following way using the procession method:
 
-![](/docs/user/pv_sequence_from_otel_procession.svg)
+![](/docs/images/user/pv_sequence_from_otel_procession.svg)
 
 Notice that `child1` has previous events `grandchild1` and `grandchild2` as they form a chain of overlapping time windows which are, [11,15] and [14,19], respectively.
 
@@ -86,13 +86,13 @@ Notice that `child1` has previous events `grandchild1` and `grandchild2` as they
 The user can provide prior information in the configuration file to indicate that certain events should be sequenced asynchronously. This is done by providing a dictionary of event types that should be sequenced asynchronously and the child event types that should be grouped together. The sequencer will then group the child event types together and sequence them asynchronously. An example of this is shown below:
 
 ###### Figure 3 OTel Sequence Async Prior
-![](/docs/user/otel_sequence_async_prior.svg)
+![](/docs/images/user/otel_sequence_async_prior.svg)
 
 In this example, the user has provided prior information that the events `A`, `B` and `C` should be grouped together and sequenced asynchronously. The sequencer will then group these events together and sequence them asynchronously. The sequencer will then sequence the events into `D`.
 
 Using the full example in figure [OTel Tree](#oteltree) and setting the extra information that `child1` and `child2` should be sequenced asynchronously if they are called by `root` - but no other asynchronous sequencing other than this - the following sequence is produced:
 
-![](/docs/user/pv_sequence_from_otel_extra_info.svg)
+![](/docs/images/user/pv_sequence_from_otel_extra_info.svg)
 
 Notice that `child1` and `child2` are sequenced asynchronously as they are called by `root` and are identified in the "prior information" and that `grandchild1` and `grandchild2` are sequenced synchronously as is `grandchild3` as there is no prior information about them.
 
