@@ -119,7 +119,7 @@ pv_exclusive_group.add_argument(
 pv_exclusive_group.add_argument(
     "file_paths",
     nargs="*",
-    help="Input files containing job data",
+    help="Input files containing job data in json format",
     default=[],
 )
 

@@ -70,7 +70,7 @@ class JSONDataSource(OTELDataSource):
         :rtype: `list`[`str`]
         """
         if self.dirpath is not None:
-            # Recursively search through directories for .json files
+            # Recursively search through directories for files
             return [
                 os.path.join(root, filename)
                 for root, _, filenames in os.walk(self.dirpath)

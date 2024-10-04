@@ -197,7 +197,7 @@ class PvToPumlArgs(BaseModel):
         None, description="Path to folder containing job json files"
     )
     file_paths: Optional[list[FilePath]] = Field(
-        None, description="Input files containing job data"
+        None, description="Input files containing job data in json format"
     )
     job_name: str = Field(
         default="default_name",
