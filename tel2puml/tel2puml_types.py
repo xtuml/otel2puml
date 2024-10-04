@@ -204,7 +204,7 @@ class PvToPumlArgs(BaseModel):
         description="Name given to the puml sequence diagram and prefix for "
         "the output puml file",
     )
-    group_by_job: bool = Field(
+    group_by_job: StrictBool = Field(
         default=False, description="Group events by job ID"
     )
 
