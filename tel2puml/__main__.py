@@ -229,17 +229,3 @@ if __name__ == "__main__":
         args_dict["output_file_directory"],
         args.command,
     )
-    print(otel_pv_options, pv_puml_options)
-    print("~" * 50)
-    print(args_dict)
-    # if args_dict["file_paths"]:
-    #     args_dict.pop("folder_path")
-    #     args_dict.pop("group_by_job")
-    #     pv_jobs_from_files_to_puml_file(**args_dict)
-    # elif args_dict["group_by_job"]:
-    #     args_dict.pop("file_paths")
-    #     pv_events_from_folder_to_puml_file(**args_dict)
-    # else:
-    #     args_dict.pop("file_paths")
-    #     args_dict.pop("group_by_job")
-    #     pv_jobs_from_folder_to_puml_file(**args_dict)
