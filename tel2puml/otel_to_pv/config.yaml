@@ -4,24 +4,20 @@ ingest_data:
 
 data_holders:
   sql:
-    db_uri: 'sqlite:///otel_db.db'
+    db_uri: "sqlite:///otel_db.db"
     batch_size: 5
     time_buffer: 30
 
 data_sources:
   json:
-    dirpath: 
+    dirpath:
     filepath: data.json
-    data_location: resource_spans
     header:
       paths: [resource:attributes, scope_spans::scope:name]
-    span_mapping:
-      spans:
-        key_paths: [scope_spans::spans]
     field_mapping:
       job_name:
-        key_paths: [HEADER:resource:attributes::key,
-        HEADER:scope_spans::scope:name]
+        key_paths:
+          [resource:attributes::key, scope_spans::scope:name]
         key_value: [service.name, null]
         value_paths: [value:Value:StringValue, null]
         value_type: string
@@ -31,27 +27,21 @@ data_sources:
       event_type:
         key_paths: [attributes::key, attributes::key]
         key_value: [coral.namespace, http.status_code]
-        value_paths: [
-        value:Value:StringValue,
-        value:Value:IntValue]
+        value_paths: [value:Value:StringValue, value:Value:IntValue]
         value_type: string
       event_id:
         key_paths: [span_id]
         value_type: string
       start_timestamp:
         key_paths: [start_time_unix_nano]
-        value_type: unix_nano
+        value_type: string
       end_timestamp:
         key_paths: [end_time_unix_nano]
-        value_type: unix_nano
+        value_type: string
       application_name:
-        key_paths: [
-        attributes::key,
-        HEADER:resource:attributes::key]
+        key_paths: [attributes::key, HEADER:resource:attributes::key]
         key_value: [coral.service, service.version]
-        value_paths: [
-        value:Value:StringValue,
-        value:Value:StringValue]
+        value_paths: [value:Value:StringValue, value:Value:StringValue]
         value_type: string
       parent_event_id:
         key_paths: [parent_span_id]
@@ -59,3 +49,36 @@ data_sources:
       child_event_ids:
         key_paths: [child_span_ids]
         value_type: string
+sequencer:
+    async: false
+    async_event_groups:
+        job_name_1:
+            event_type_1:
+                A: group_1
+                B: group_1
+                C: group_1
+                D: group_2
+            event_type_4:
+                event_type_5: group_3
+        job_name_2:
+            event_type_6:
+                event_type_7: group_4
+                event_type_8: group_4
+    event_name_map_information:
+        job_name_1:
+            event_type_1:
+                mapped_event_type: mapped_event_type_1
+                child_event_types:
+                    - child_event_type_1
+                    - child_event_type_2
+            event_type_2:
+                mapped_event_type: mapped_event_type_2
+                child_event_types:
+                    - child_event_type_3
+                    - child_event_type_4
+        job_name_2:
+            event_type_3:
+                mapped_event_type: mapped_event_type_3
+                child_event_types:
+                    - child_event_type_5
+                    - child_event_type_6
