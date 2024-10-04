@@ -28,37 +28,7 @@ data_sources:
         filepath: /path/to/json/file.json
         json_per_line: false
         field_mapping: <field mapping config>
-sequencer:
-    async: false
-    async_event_groups:
-        job_name_1:
-            event_type_1:
-                event_type_2: group_1
-                event_type_3: group_1
-            event_type_4:
-                event_type_5: group_2
-        job_name_2:
-            event_type_6:
-                event_type_7: group_3
-                event_type_8: group_3
-    event_name_map_information:
-        job_name_1:
-            event_type_1:
-                mapped_event_type: mapped_event_type_1
-                child_event_types:
-                    - child_event_type_1
-                    - child_event_type_2
-            event_type_2:
-                mapped_event_type: mapped_event_type_2
-                child_event_types:
-                    - child_event_type_3
-                    - child_event_type_4
-        job_name_2:
-            event_type_3:
-                mapped_event_type: mapped_event_type_3
-                child_event_types:
-                    - child_event_type_5
-                    - child_event_type_6
+sequencer: <sequencer config>
 ```
 
 ## Configuration Options
@@ -86,8 +56,5 @@ This section contains the configuration for the data sources. The following opti
 ### `sequencer`
 This option is not required and can be omitted if the sequencer is not being used or synchronous sequencing is being used.
 
-The following options are available:
-* `async`: A boolean value indicating whether to run the sequencer asynchronously. The default value is `false`. The details of how this is used can be found in the [Sequencer HOW TO](/docs/user/sequencer_HOWTO.md) section.
-* `async_event_groups`: A dictionary containing the event groups for the asynchronous sequencer. The details of how this is used can be found in the [Sequencer HOW TO](/docs/user/sequencer_HOWTO.md) section. This field is not required.
-* `event_name_map_information`: A dictionary containing the event name mapping information. The details of how this is used can be found in the [Sequencer HOW TO](/docs/user/sequencer_HOWTO.md) section. This field is not required.
+Information on the sequencer configuration can be found in the [Sequencer HOW TO](/docs/user/sequencer_HOWTO.md) section.
 
