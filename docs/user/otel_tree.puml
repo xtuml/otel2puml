@@ -1,0 +1,36 @@
+@startuml
+digraph G {
+'   rankdir=LR;
+  node [style=rounded];
+  root [
+    shape=record,
+    label="{spanid=root | start=0 | end=100 | parent=None, | children=[\nchild1,\nchild2\n]}"
+  ];
+  child1 [
+    shape=record,
+    label="{spanid=child1 | start=10 | end=20 | parent=root, | children=[\ngrandchild1,\ngrandchild2\n]}"
+  ];
+  child2 [
+    shape=record,
+    label="{spanid=child2 | start=30 | end=40 | parent=root, | children=[\ngrandchild3\n]}"
+  ];
+    grandchild1 [
+        shape=record,
+        label="{spanid=grandchild1 | start=11 | end=15 | parent=child1, | children=[]}"
+    ];
+    grandchild2 [
+        shape=record,
+        label="{spanid=grandchild2 | start=14 | end=19 | parent=child1, | children=[]}"
+    ];
+    grandchild3 [
+        shape=record,
+        label="{spanid=grandchild3 | start=31 | end=39 | parent=child2, | children=[]}"
+    ];
+
+    root -> child1;
+    root -> child2;
+    child1 -> grandchild1;
+    child1 -> grandchild2;
+    child2 -> grandchild3;
+}
+@enduml
