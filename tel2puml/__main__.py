@@ -223,6 +223,12 @@ if __name__ == "__main__":
     otel_pv_options, pv_puml_options = generate_component_options(
         args.command, args_dict
     )
+    otel_to_puml(
+        otel_pv_options,
+        pv_puml_options,
+        args_dict["output_file_directory"],
+        args.command,
+    )
     print(otel_pv_options, pv_puml_options)
     print("~" * 50)
     print(args_dict)
