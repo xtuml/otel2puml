@@ -130,6 +130,13 @@ class DataHolder(ABC):
         of the root span.
         """
 
+    @abstractmethod
+    def remove_disconnected_spans(self) -> None:
+        """Abstract method to remove spans associated with job ids that contain
+        disconnected spans.
+        """
+        pass
+
 
 def get_time_window(
     time_buffer: int, data_holder: DataHolder
