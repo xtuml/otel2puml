@@ -122,15 +122,17 @@ class TestSQLDataHolder:
         mock_sql_config: SQLDataHolderConfig, mock_otel_event: OTelEvent
     ) -> None:
         """Tests add_node_relations method."""
-
         holder = SQLDataHolder(mock_sql_config)
         holder.add_node_relations(mock_otel_event)
-
+        assert len(holder.node_relationships_to_save) == 1
+        mock_otel_event.event_id = "876"
+        mock_otel_event.parent_event_id = "987"
+        holder.add_node_relations(mock_otel_event)
         assert len(holder.node_relationships_to_save) == 2
-        assert holder.node_relationships_to_save[0]["parent_id"] == "456"
-        assert holder.node_relationships_to_save[0]["child_id"] == "101"
-        assert holder.node_relationships_to_save[1]["parent_id"] == "456"
-        assert holder.node_relationships_to_save[1]["child_id"] == "102"
+        assert holder.node_relationships_to_save[0]["parent_id"] == "789"
+        assert holder.node_relationships_to_save[0]["child_id"] == "456"
+        assert holder.node_relationships_to_save[1]["parent_id"] == "987"
+        assert holder.node_relationships_to_save[1]["child_id"] == "876"
 
     @staticmethod
     def test_save_data(
@@ -353,8 +355,10 @@ class TestSQLDataHolder:
         # Check if relationships were saved
         relationships = holder.session.query(NODE_ASSOCIATION).all()
         assert len(relationships) == 2
-        assert relationships[0].parent_id == "456"
-        assert relationships[0].child_id in ["101", "102"]
+        assert relationships[0].parent_id == "789"
+        assert relationships[0].child_id == "456"
+        assert relationships[1].parent_id == "456"
+        assert relationships[1].child_id == "101"
 
     @staticmethod
     def test_node_to_otel_event(

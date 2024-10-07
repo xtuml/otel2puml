@@ -133,15 +133,13 @@ class SQLDataHolder(DataHolder):
         :param otel_event: An OTelEvent object
         :type otel_event: :class: `OTelEvent`
         """
-
-        if otel_event.child_event_ids:
-            for child_event_id in otel_event.child_event_ids:
-                self.node_relationships_to_save.append(
-                    {
-                        "parent_id": otel_event.event_id,
-                        "child_id": child_event_id,
-                    }
-                )
+        if otel_event.parent_event_id:
+            self.node_relationships_to_save.append(
+                {
+                    "parent_id": otel_event.parent_event_id,
+                    "child_id": otel_event.event_id,
+                }
+            )
 
     @staticmethod
     def convert_otel_event_to_node_model(otel_event: OTelEvent) -> NodeModel:
