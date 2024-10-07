@@ -434,6 +434,9 @@ class TestSQLDataHolder:
             for i in range(5)
             for j in range(3)
         }
+        expected_event_id_to_job_name_and_job_id["5_0"] = (
+            "test_name_5", "test_id_5"
+        )
         (
             sql_data_holder_otel_jobs_with_job_names_on_root
             .update_job_names_by_root_span()
@@ -442,7 +445,7 @@ class TestSQLDataHolder:
             session
         ):
             nodes = session.query(NodeModel).all()
-            assert len(nodes) == 15
+            assert len(nodes) == 16
             for node in nodes:
                 assert (
                     node.job_name

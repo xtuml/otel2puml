@@ -1106,6 +1106,19 @@ def otel_jobs_with_job_names_on_root() -> dict[str, list[OTelEvent]]:
                     child_event_ids=[f"{i}_{j+1}"] if j < 1 else [],
                 )
             )
+    otel_jobs["5"] = [
+        OTelEvent(
+            job_name="test_name_5",
+            job_id="test_id_5",
+            event_type="event_type_0",
+            event_id="5_0",
+            start_timestamp=1723544132228102912,
+            end_timestamp=1723544132228219285,
+            application_name="test_application_name",
+            parent_event_id="5_0prev",
+            child_event_ids=["5_1"],
+        ),
+    ]
     return otel_jobs
 
 
