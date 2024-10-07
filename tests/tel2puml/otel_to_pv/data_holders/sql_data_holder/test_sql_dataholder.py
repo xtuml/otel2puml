@@ -955,10 +955,10 @@ def test_stream_job_name_batches(
     assert len(all_events) == 0
 
 
-def test_remove_disconnected_spans(
-    sql_data_holder_with_otel_jobs: SQLDataHolder,
+def test_remove_inconsistent_jobs(
+    sql_data_holder_with_otel_jobs: SQLDataHolder, caplog: LogCaptureFixture
 ) -> None:
-    """Tests the method remove_disconnected_spans"""
+    """Tests the method remove_inconsistent_jobs"""
     sql_data_holder = sql_data_holder_with_otel_jobs
     with sql_data_holder.session as session:
         nodes = session.query(NodeModel).all()
@@ -972,10 +972,13 @@ def test_remove_disconnected_spans(
         session.commit()
         assert session.query(NodeModel).count() == 9
 
-    sql_data_holder.remove_disconnected_spans()
+    with caplog.at_level(logging.INFO):
+        sql_data_holder.remove_inconsistent_jobs()
 
-    with sql_data_holder.session as session:
-        nodes = session.query(NodeModel).all()
+        with sql_data_holder.session as session:
+            nodes = session.query(NodeModel).all()
 
-    assert len(nodes) == 8
-    assert "test_id_0" not in {node.job_id for node in nodes}
+        assert len(nodes) == 8
+        assert "test_id_0" not in {node.job_id for node in nodes}
+
+        assert "Number of nodes with inconsistent jobs: 1" in caplog.text

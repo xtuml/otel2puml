@@ -131,7 +131,7 @@ class DataHolder(ABC):
         """
 
     @abstractmethod
-    def remove_disconnected_spans(self) -> None:
+    def remove_inconsistent_jobs(self) -> None:
         """Abstract method to remove spans associated with job ids that contain
         disconnected spans.
         """

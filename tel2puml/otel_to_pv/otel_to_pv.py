@@ -45,7 +45,7 @@ def otel_to_pv(
     else:
         data_holder = fetch_data_holder(config)
     # validate spans
-    data_holder.remove_disconnected_spans()
+    data_holder.remove_inconsistent_jobs()
     # make sure job names are consistent in traces
     data_holder.update_job_names_by_root_span()
     # find unique graphs if required

@@ -325,7 +325,7 @@ class SQLDataHolder(DataHolder):
             session.execute(stmt_2)
             session.commit()
 
-    def remove_disconnected_spans(self) -> None:
+    def remove_inconsistent_jobs(self) -> None:
         """Method to remove spans associated with job ids that contain
         disconnected spans.
         """
@@ -355,8 +355,11 @@ class SQLDataHolder(DataHolder):
                 .distinct()
             )
             stmt_3 = sa.delete(NodeModel).where(NodeModel.job_id.in_(stmt_2))
-            session.execute(stmt_3)
+            res = session.execute(stmt_3)
             session.commit()
+            logging.getLogger().info(
+                f"Number of nodes with inconsistent jobs: {res.rowcount}"
+            )
 
 
 def intialise_temp_table_for_root_nodes(
