@@ -479,6 +479,41 @@ class TestFieldMappingToCompiledJQ:
         )
         output = list(iter(compiled_jq.input_value(mock_json_data)))
         assert output == expected_mapped_json
+        # test negative case for using key path value path and key value
+        # in which the key value is not present and we should fall back to
+        # another key path
+
+        # test records
+        test_records = {
+            "records": [
+                {"first": "value1", "second": "value2", "array": [
+                    {"key": "a_value", "value": "value3"},
+                ]},
+                {"first": "value4", "second": "value5", "array": [
+                    {"key": "not_a_value", "value": "value6"},
+                ]},
+            ]
+        }
+        jq_field_spec = JQFieldSpec(
+            key_paths=[("records.[].array.[].key", "records.[].first")],
+            key_values=[("a_value", None)],
+            value_paths=[("value", None)],
+            value_type="string",
+        )
+        jq_field_mapping = {"extracted_value": jq_field_spec}
+        compiled_jq = jq_field_mapping_to_compiled_jq(jq_field_mapping)
+        output = list(iter(compiled_jq.input_value(test_records)))
+        assert output == [
+            {"extracted_value": "value3"},
+            {"extracted_value": "value4"},
+        ]
+        # test case where the referenced array doesn't exist
+        output = list(iter(compiled_jq.input_value(
+            {"records": {"first": "value7", "second": "value8"}}))
+        )
+        assert output == [
+            {"extracted_value": "value7"},
+        ]
 
     @staticmethod
     def test_field_mapping_to_compiled_jq(
