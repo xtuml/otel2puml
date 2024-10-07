@@ -49,12 +49,10 @@ Although this tool was designed for use with the Protocol Verifier, as a standal
 By converting OpenTelemetry data to PlantUML diagrams, this tool bridges the gap between raw observability data and easily understandable visual representations, enhancing your ability to develop, maintain, and optimise complex distributed systems.
 
 ## Features
-* CLI functionality to convert OpenTelemetry data in json format into PlantUML sequence diagrams
-* Flexible, extensible architecture
-* Currently in development:
-  * Finding unique sequences within OTel data
-  * Processing unique sequences into PlantUML activity diagrams
-  * Processing alternative data formats
+* Convert OpenTelemetry (OTel) JSON data into detailed PlantUML activity diagrams with flexible output options and multiple subcommands for various processing needs.
+* Easily customize and extend the tool to support new data formats or processing requirements through a modular design.
+* Identify and extract unique event sequences from OTel data
+* Produce clear and comprehensive PlantUML activity diagrams that accurately depict the system.
 
 ## Quick Start
 
@@ -64,7 +62,7 @@ To quickly convert a PV event sequence JSON to a PlantUML activity diagram:
 2. Run the following command:
 
 ```sh
-python -m tel2puml your_otel_data.json -o output_diagram.puml
+python -m pv2puml pv_file.json
 ```
 
 3. Open output_diagram.puml with a PlantUML viewer to see your diagram.
@@ -106,7 +104,7 @@ python -m tel2puml your_otel_data.json -o output_diagram.puml
 ```
 ## Example Output
 ```sh
-python -m tel2puml example_above.json -o output_diagram.puml -sn "Example Sequence"
+python -m tel2puml pv2puml example_above.json -jn "output_diagram"
 ```
 
 ![](docs/images/example_sequence_for_readme.svg)
@@ -292,25 +290,25 @@ python -m tel2puml pv2puml [options] [FILE_PATHS...]
 - Convert a folder of job files into a PlantUML sequence diagram:
 
   ```bash
-  otel2puml pv2puml -fp /path/to/folder -o /path/to/output/
+  python -m pv2puml -fp /path/to/folder -o /path/to/output/
   ```
 
 - Convert specific job json files into a PlantUML sequence diagram:
 
   ```bash
-  otel2puml pv2puml file1.json file2.json -o /path/to/output/
+  python -m pv2puml file1.json file2.json -o /path/to/output/
   ```
 
 - Convert a folder of job JSON files with a custom job name:
 
   ```bash
-  otel2puml pv2puml -fp /path/to/folder -jn "MySequenceDiagram" -o /path/to/output/
+  python -m pv2puml -fp /path/to/folder -jn "MySequenceDiagram" -o /path/to/output/
   ```
 
 - Convert a folder of job JSON files and group events by job ID:
 
   ```bash
-  otel2puml pv2puml -fp /path/to/folder -group-by-job -o /path/to/output/
+  python -m pv2puml -fp /path/to/folder -group-by-job -o /path/to/output/
   ```
 
 ### Global Options
