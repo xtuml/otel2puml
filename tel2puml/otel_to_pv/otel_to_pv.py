@@ -61,9 +61,7 @@ def otel_to_pv(
     sequencer_config = config.get("sequencer", SequenceModelConfig())
     async_event_groups = sequencer_config.async_event_groups
     event_name_map_information = sequencer_config.event_name_map_information
-    if save_events:
-        pass
-    return (
+    pv_event_gen = (
         (
             job_name,
             sequence_otel_job_id_streams(
@@ -73,11 +71,18 @@ def otel_to_pv(
                     async_event_groups.get(job_name, None)
                 ),
                 event_types_map_information=(
-                    event_name_map_information.get(
-                        job_name, None
-                    )
+                    event_name_map_information.get(job_name, None)
                 ),
             ),
         )
         for job_name, job_id_streams in job_name_group_streams
     )
+    if save_events:
+        for job_name, pv_event_streams in pv_event_gen:
+            for pv_event_gen in pv_event_streams:
+                events = []
+                for pv_event in pv_event_gen:
+                    events.append(pv_event)
+                
+
+    return pv_event_gen
