@@ -2,6 +2,8 @@
 
 from typing import Iterable, Generator
 from copy import deepcopy
+from logging import WARNING
+from unittest import mock
 
 import pytest
 
@@ -17,6 +19,8 @@ from tel2puml.otel_to_pv.sequence_otel import (
     job_ids_to_eventid_to_otelevent_map,
     update_event_type_based_on_children,
     update_event_types_based_on_children,
+    convert_otel_event_stream_to_event_id_to_otelevent_map,
+    OTelTreeDisconnectedError
 )
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent, OTelEventTypeMap
 from tel2puml.tel2puml_types import PVEvent
@@ -317,7 +321,8 @@ class TestSeqeunceOTelJobs:
             get_root_event_from_event_id_to_event_map(events)
 
     def test_sequence_otel_event_job(
-        self, event_to_async_group_map: dict[str, dict[str, str]]
+        self, event_to_async_group_map: dict[str, dict[str, str]],
+        caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test sequence_otel_event_job."""
         events = self.events_with_root()
@@ -529,7 +534,48 @@ class TestSeqeunceOTelJobs:
         assert pv_events["0_0"]["eventType"] == "test_event_type"
         assert pv_events["0_1"]["eventType"] == "event_type_1"
 
-    def test_job_ids_to_eventid_to_otelevent_map(self) -> None:
+    def test_convert_otel_event_stream_to_event_id_to_otelevent_map(
+        self,
+    ) -> None:
+        """Tests for the function
+        convert_otel_event_stream_to_event_id_to_otelevent_map"""
+        events = self.events_with_root()
+        event_stream = [event for event in events.values()]
+        event_id_to_otelevent_map = (
+            convert_otel_event_stream_to_event_id_to_otelevent_map(
+                event_stream
+            )
+        )
+        assert event_id_to_otelevent_map == events
+        # Test case where the event_stream is empty
+        event_stream = []
+        assert (
+            convert_otel_event_stream_to_event_id_to_otelevent_map(
+                event_stream
+            )
+            == {}
+        )
+        # test case where the event_stream has a broken tree
+        del events["00"]
+        event_stream = [event for event in events.values()]
+        with pytest.raises(OTelTreeDisconnectedError):
+            convert_otel_event_stream_to_event_id_to_otelevent_map(
+                event_stream
+            )
+        # test case where a leaf event is missing but the tree is not broken
+        events = self.events_with_root()
+        del events["01"]
+        event_stream = [event for event in events.values()]
+        assert (
+            convert_otel_event_stream_to_event_id_to_otelevent_map(
+                event_stream
+            )
+            == events
+        )
+
+    def test_job_ids_to_eventid_to_otelevent_map(
+        self, caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Tests for the function job_ids_to_eventid_to_otelevent_map"""
         events = self.events_with_root()
 
@@ -545,3 +591,23 @@ class TestSeqeunceOTelJobs:
 
         assert len(actual_mappings) == len(expected_mappings)
         assert actual_mappings == expected_mappings
+        # test case where OTelTreeDisconnectedError is raised by
+        # convert_otel_event_stream_to_event_id_to_otelevent_map
+        with mock.patch(
+            "tel2puml.otel_to_pv.sequence_otel"
+            ".convert_otel_event_stream_to_event_id_to_otelevent_map"
+        ) as mock_convert_function:
+            mock_convert_function.side_effect = (
+                OTelTreeDisconnectedError
+            )
+            caplog.clear()
+            caplog.set_level(WARNING)
+            event_dict_gen = job_ids_to_eventid_to_otelevent_map(
+                [events.values()]
+            )
+            actual_mappings = list(event_dict_gen)
+            assert actual_mappings == []
+            assert (
+                "Parent events are missing for the job so the job cannot be "
+                "sequenced when the tree is broken."
+            ) in caplog.text
