@@ -509,7 +509,7 @@ class TestFieldMappingToCompiledJQ:
         ]
         # test case where the referenced array doesn't exist
         output = list(iter(compiled_jq.input_value(
-            {"records": {"first": "value7", "second": "value8"}}))
+            {"records": [{"first": "value7", "second": "value8"}]}))
         )
         assert output == [
             {"extracted_value": "value7"},
