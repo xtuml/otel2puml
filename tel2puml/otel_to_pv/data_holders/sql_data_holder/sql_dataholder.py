@@ -319,14 +319,13 @@ class SQLDataHolder(DataHolder):
             stmt_1 = sa.select(NodeModel.job_id, NodeModel.job_name).filter(
                 NodeModel.parent_event_id.is_(None)
             )
-            stmt_2 = sa.select(stmt_1.c.job_name).where(
-                stmt_1.c.job_id == NodeModel.job_id
-            )
-            stmt_3 = sa.update(NodeModel).values(
-                job_name=stmt_2
+            stmt_2 = sa.update(NodeModel).where(
+                NodeModel.job_id == stmt_1.c.job_id
+            ).values(
+                job_name=stmt_1.c.job_name
             )
             session.execute(
-                stmt_3
+                stmt_2
             )
             session.commit()
 
