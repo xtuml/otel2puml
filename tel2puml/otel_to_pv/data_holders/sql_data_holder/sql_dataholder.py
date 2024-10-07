@@ -369,7 +369,7 @@ class SQLDataHolder(DataHolder):
         time_window = get_time_window(self.time_buffer, self)
         with self.session as session:
             stmt = (
-                session.query(NodeModel.job_id)
+                sa.select(NodeModel.job_id)
                 .group_by(NodeModel.job_id)
                 .having(
                     sa.func.count(1).filter(
@@ -384,9 +384,10 @@ class SQLDataHolder(DataHolder):
                     )
                     > 0
                 )
-                .subquery()
             )
-            stmt_2 = sa.delete(NodeModel).where(NodeModel.job_id.not_in(stmt))
+            stmt_2 = sa.delete(NodeModel).where(
+                not_(NodeModel.job_id.in_(stmt))
+            )
             res = session.execute(stmt_2)
             session.commit()
             logging.getLogger().info(

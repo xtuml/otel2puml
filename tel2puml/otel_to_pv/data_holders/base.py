@@ -139,12 +139,9 @@ class DataHolder(ABC):
 
     @abstractmethod
     def remove_jobs_outside_of_time_window(
-        self, time_window: tuple[int, int]
+        self
     ) -> None:
         """Abstract method to remove jobs outside of the time window.
-
-        :param time_window: The time window for the unique graphs
-        :type time_window: `tuple`[`int`, `int`]
         """
         pass
 
