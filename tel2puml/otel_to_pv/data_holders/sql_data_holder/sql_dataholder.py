@@ -390,7 +390,7 @@ class SQLDataHolder(DataHolder):
             res = session.execute(stmt_2)
             session.commit()
             logging.getLogger().info(
-                f"Number of nodes outside of time window: {res.rowcount}"
+                f"Number of events outside of time window: {res.rowcount}"
             )
 
 
