@@ -445,7 +445,8 @@ class TestSQLDataHolder:
             "test_id_5",
         )
         (
-            sql_data_holder_otel_jobs_with_job_names_on_root.update_job_names_by_root_span()
+            sql_data_holder_otel_jobs_with_job_names_on_root
+            .update_job_names_by_root_span()
         )
         with sql_data_holder_otel_jobs_with_job_names_on_root.session as (
             session
