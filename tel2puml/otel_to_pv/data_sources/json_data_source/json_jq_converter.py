@@ -351,10 +351,13 @@ def get_jq_for_field_spec(
                         "the first variable "
                     )
                 jq_query += (
-                    f" | ({split_on_array[0]}.[]"
-                    + f" | select((try .{'.'.join(split_on_array[1:])} catch "
-                    "null) "
-                    + f'== "{key_value}")).{value_path} as {variable}'
+                    f" | (try ([{split_on_array[0]}.[]"
+                    + f" | select(try .{'.'.join(split_on_array[1:])})"
+                    + " | {"
+                    f"(.{'.'.join(split_on_array[1:])}):"
+                    f" .{value_path}"
+                    "}"
+                    f'] | add | ."{key_value}") catch null) as {variable}'
                 )
             else:
                 jq_query += f" | (try {key_path} catch null) as {variable}"

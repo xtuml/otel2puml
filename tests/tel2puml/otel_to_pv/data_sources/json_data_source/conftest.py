@@ -153,9 +153,9 @@ def field_mapping_with_variables(
 def field_spec_with_variables_1_expected_jq() -> str:
     """Expected JQ query for field_spec_with_variables_1"""
     return (
-        " | ($var1.second_1.second_2.[] | select((try .third_1.third_2 catch "
-        'null) == "value"))'
-        ".value_path.next as"
+        " | (try ([$var1.second_1.second_2.[] | select(try .third_1.third_2)"
+        ' | {(.third_1.third_2): .value_path.next}] | add | ."value")'
+        " catch null) as"
         " $out0concat00"
         " | (try $var2.third_1.third_2 catch null) as $out0concat10"
         " | (($out0concat00 | (if . == null then null else (. | tostring) "
@@ -198,9 +198,9 @@ def field_spec_with_variables_3_expected_jq() -> str:
 def field_spec_with_variables_4_expected_jq() -> str:
     """Expected JQ query for field_spec_with_variables_4"""
     return (
-        " | ($var1.second_1.second_2.[] | select((try .third_1.third_2 catch "
-        'null) == "value"))'
-        ".value_path.next as"
+        " | (try ([$var1.second_1.second_2.[] | select(try .third_1.third_2)"
+        ' | {(.third_1.third_2): .value_path.next}] | add | ."value")'
+        " catch null) as"
         " $out3concat00"
         " | (try $var2.third_1.third_2 catch null) as $out3concat01"
         " | (($out3concat00 // $out3concat01 | (if . == null then null else "
