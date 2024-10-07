@@ -251,7 +251,7 @@ class TestOtelToPV:
         events = []
         valid_event_ids = [f"{i}_{j}" for i in range(1, 5) for j in range(2)]
         valid_job_ids = {f"test_id_{i}" for i in range(1, 5)}
-        job_id_count: dict[str, int] = {}
+        job_id_count = {}
         for job_name, pv_event_streams in result:
             assert job_name == "test_name"
             for pv_event_gen in pv_event_streams:
