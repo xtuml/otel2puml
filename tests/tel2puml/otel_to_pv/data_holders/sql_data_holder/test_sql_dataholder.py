@@ -417,10 +417,12 @@ class TestSQLDataHolder:
         unique_job_ids_per_job_name = (
             sql_data_holder_extended.find_unique_graphs()
         )
-        assert set(unique_job_ids_per_job_name.keys()) == set([
-            "test_name_2",
-            "test_name",
-        ])
+        assert set(unique_job_ids_per_job_name.keys()) == set(
+            [
+                "test_name_2",
+                "test_name",
+            ]
+        )
         assert unique_job_ids_per_job_name["test_name"] == {
             "test_id_1",
         }
@@ -430,7 +432,7 @@ class TestSQLDataHolder:
 
     @staticmethod
     def test_update_job_names_by_root_span(
-        sql_data_holder_otel_jobs_with_job_names_on_root: SQLDataHolder
+        sql_data_holder_otel_jobs_with_job_names_on_root: SQLDataHolder,
     ) -> None:
         """Tests update_job_names_by_root_span method."""
         expected_event_id_to_job_name_and_job_id = {
@@ -439,7 +441,8 @@ class TestSQLDataHolder:
             for j in range(3)
         }
         expected_event_id_to_job_name_and_job_id["5_0"] = (
-            "test_name_5", "test_id_5"
+            "test_name_5",
+            "test_id_5",
         )
         (
             sql_data_holder_otel_jobs_with_job_names_on_root
@@ -731,13 +734,15 @@ def test_find_unique_graphs(
     unique_job_ids_per_job_name = find_unique_graphs(
         1, 2, sql_data_holder_extended
     )
-    assert set(unique_job_ids_per_job_name.keys()) == set([
-        "test_name_2",
-        "test_name",
-    ])
+    assert set(unique_job_ids_per_job_name.keys()) == set(
+        [
+            "test_name_2",
+            "test_name",
+        ]
+    )
     assert unique_job_ids_per_job_name["test_name"] == {
-            "test_id_1",
-        }
+        "test_id_1",
+    }
     assert unique_job_ids_per_job_name["test_name_2"] == {
         str(f"{i}{0}") for i in range(5)
     }
@@ -948,3 +953,32 @@ def test_stream_job_name_batches(
         all_events = list(otel_event_gen)
 
     assert len(all_events) == 0
+
+
+def test_remove_inconsistent_jobs(
+    sql_data_holder_with_otel_jobs: SQLDataHolder, caplog: LogCaptureFixture
+) -> None:
+    """Tests the method remove_inconsistent_jobs"""
+    sql_data_holder = sql_data_holder_with_otel_jobs
+    with sql_data_holder.session as session:
+        nodes = session.query(NodeModel).all()
+        assert len(nodes) == 10
+        assert "test_id_0" in {node.job_id for node in nodes}
+
+        # Delete the root span, creating disconnected data
+        session.execute(
+            sa.delete(NodeModel).where(NodeModel.event_id == "0_0")
+        )
+        session.commit()
+        assert session.query(NodeModel).count() == 9
+
+    with caplog.at_level(logging.INFO):
+        sql_data_holder.remove_inconsistent_jobs()
+
+        with sql_data_holder.session as session:
+            nodes = session.query(NodeModel).all()
+
+        assert len(nodes) == 8
+        assert "test_id_0" not in {node.job_id for node in nodes}
+
+        assert "Number of nodes with inconsistent jobs: 1" in caplog.text

@@ -6,7 +6,7 @@ from itertools import groupby
 import logging
 
 import sqlalchemy as sa
-from sqlalchemy import create_engine, insert, or_
+from sqlalchemy import create_engine, insert, or_, not_
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError, IntegrityError
 from sqlalchemy.orm.exc import DetachedInstanceError
@@ -317,15 +317,49 @@ class SQLDataHolder(DataHolder):
             stmt_1 = sa.select(NodeModel.job_id, NodeModel.job_name).filter(
                 NodeModel.parent_event_id.is_(None)
             )
-            stmt_2 = sa.update(NodeModel).where(
-                NodeModel.job_id == stmt_1.c.job_id
-            ).values(
-                job_name=stmt_1.c.job_name
+            stmt_2 = (
+                sa.update(NodeModel)
+                .where(NodeModel.job_id == stmt_1.c.job_id)
+                .values(job_name=stmt_1.c.job_name)
             )
-            session.execute(
-                stmt_2
-            )
+            session.execute(stmt_2)
             session.commit()
+
+    def remove_inconsistent_jobs(self) -> None:
+        """Method to remove spans associated with job ids that contain
+        disconnected spans.
+        """
+        with self.session as session:
+            # Finds all parent_id within node_association that does not exist
+            # within NodeModel table
+            stmt_1 = (
+                sa.select(NODE_ASSOCIATION.c.parent_id)
+                .where(
+                    not_(
+                        sa.exists().where(
+                            NODE_ASSOCIATION.c.parent_id == NodeModel.event_id
+                        )
+                    )
+                )
+                .distinct()
+                .subquery()
+            )
+            # Finds all job_ids assoication with stmt_1
+            stmt_2 = (
+                sa.select(NodeModel.job_id)
+                .join(
+                    NODE_ASSOCIATION,
+                    NODE_ASSOCIATION.c.child_id == NodeModel.event_id,
+                )
+                .where(NODE_ASSOCIATION.c.parent_id.in_(sa.select(stmt_1)))
+                .distinct()
+            )
+            stmt_3 = sa.delete(NodeModel).where(NodeModel.job_id.in_(stmt_2))
+            res = session.execute(stmt_3)
+            session.commit()
+            logging.getLogger().info(
+                f"Number of nodes with inconsistent jobs: {res.rowcount}"
+            )
 
 
 def intialise_temp_table_for_root_nodes(

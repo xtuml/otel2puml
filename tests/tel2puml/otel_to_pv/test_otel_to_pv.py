@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+import sqlalchemy as sa
 from pytest import MonkeyPatch
 
 from tel2puml.otel_to_pv.otel_to_pv import otel_to_pv
@@ -16,10 +17,14 @@ from tel2puml.otel_to_pv.config import (
     SequenceModelConfig,
 )
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEventTypeMap
+from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
+    NodeModel,
+)
 
 
 class TestOtelToPV:
     """Tests for the otel_to_pv function."""
+
     def get_ingest_config(
         self, config_yaml: str, new_dirpath: Path
     ) -> IngestDataConfig:
@@ -218,3 +223,46 @@ class TestOtelToPV:
                         assert pv_event["eventType"] == "test_event_type"
                     else:
                         assert pv_event["eventType"] == "event_type_1"
+
+        # Test 7: Remove disconnected spans
+        def mock_fetch_data_holder_disconnected_spans(
+            config: IngestDataConfig,
+        ) -> SQLDataHolder:
+            """Remove root span to create disconnected data within NodeModel
+            table"""
+            sql_data_holder = sql_data_holder_with_otel_jobs
+            with sql_data_holder.session as session:
+                stmt = sa.delete(NodeModel).where(NodeModel.event_id == "0_0")
+                session.execute(stmt)
+                session.commit()
+            return sql_data_holder
+
+        ingest_data_config = IngestDataConfig(
+            data_sources=mock_yaml_config_dict["data_sources"],
+            data_holders=mock_yaml_config_dict["data_holders"],
+            ingest_data=IngestTypes(**mock_yaml_config_dict["ingest_data"]),
+        )
+        monkeypatch.setattr(
+            "tel2puml.otel_to_pv.otel_to_pv.fetch_data_holder",
+            mock_fetch_data_holder_disconnected_spans,
+        )
+
+        result = otel_to_pv(ingest_data_config)
+        events = []
+        valid_event_ids = [f"{i}_{j}" for i in range(1, 5) for j in range(2)]
+        valid_job_ids = {f"test_id_{i}" for i in range(1, 5)}
+        job_id_count = {}
+        for job_name, pv_event_streams in result:
+            assert job_name == "test_name"
+            for pv_event_gen in pv_event_streams:
+                for pv_event in pv_event_gen:
+                    job_id_count.setdefault(pv_event["jobId"], 0)
+                    job_id_count[pv_event["jobId"]] += 1
+                    events.append(pv_event)
+                    assert pv_event["eventId"] in valid_event_ids
+                    assert pv_event["jobId"] in valid_job_ids
+                    valid_event_ids.remove(pv_event["eventId"])
+
+        assert len(events) == 8
+        assert all(job_id_count[job_id] == 2 for job_id in valid_job_ids)
+        assert len(valid_event_ids) == 0
