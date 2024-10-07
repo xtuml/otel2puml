@@ -322,7 +322,6 @@ class TestSeqeunceOTelJobs:
 
     def test_sequence_otel_event_job(
         self, event_to_async_group_map: dict[str, dict[str, str]],
-        caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test sequence_otel_event_job."""
         events = self.events_with_root()

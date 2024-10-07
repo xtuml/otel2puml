@@ -379,8 +379,8 @@ def convert_otel_event_stream_to_event_id_to_otelevent_map(
     :type otel_event_stream: `Iterable`[:class:`OTelEvent`]
     :return: A dictionary mapping event IDs to OTelEvent objects.
     :rtype: `dict`[`str`, :class:`OTelEvent`]
-    :raises ValueError: If refernced parent event IDs do not exist in the
-    stream.
+    :raisesd OTelTreeDisconnectedError: If refernced parent event IDs do not
+    exist in the stream.
     """
     event_id_to_otel_event_map: dict[str, OTelEvent] = {}
     parent_event_ids: set[str] = set()
