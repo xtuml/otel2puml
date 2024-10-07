@@ -50,11 +50,13 @@ class TestOtelToPV:
         event_to_async_group_map: dict[str, dict[str, str]],
     ) -> None:
         """Tests for the function otel_to_pv."""
+        time_buffer = 0
 
         # Test 1: Default parameters
         def mock_fetch_data_holder(config: IngestDataConfig) -> SQLDataHolder:
-            return sql_data_holder_with_otel_jobs
-
+            sql_data_holder = sql_data_holder_with_otel_jobs
+            sql_data_holder.time_buffer = time_buffer
+            return sql_data_holder
         ingest_data_config = IngestDataConfig(
             data_sources=mock_yaml_config_dict["data_sources"],
             data_holders=mock_yaml_config_dict["data_holders"],
@@ -64,7 +66,7 @@ class TestOtelToPV:
             "tel2puml.otel_to_pv.otel_to_pv.fetch_data_holder",
             mock_fetch_data_holder,
         )
-
+        # make the time buffer 0 to retrieve all events
         result = otel_to_pv(ingest_data_config)
 
         events = []
@@ -123,17 +125,17 @@ class TestOtelToPV:
         assert len(valid_event_ids) == 0
 
         # Test 3: find_unique_graphs = True
+        time_buffer = 0
         result = otel_to_pv(ingest_data_config, find_unique_graphs=True)
-
         num_events = 0
         # job id test_id_0 is outside the config time buffer window, therefore
         # it is not included, reducing total events streamed to 8
-        valid_event_ids = ["1_1", "1_0"]
+        valid_event_ids = ["0_1", "0_0"]
         for job_name, pv_event_streams in result:
             assert job_name == "test_name"
             for pv_event_gen in pv_event_streams:
                 for pv_event in pv_event_gen:
-                    assert pv_event["jobId"] == "test_id_1"
+                    assert pv_event["jobId"] == "test_id_0"
                     num_events += 1
                     assert pv_event["eventId"] in valid_event_ids
                     valid_event_ids.remove(pv_event["eventId"])
@@ -142,6 +144,7 @@ class TestOtelToPV:
         assert len(valid_event_ids) == 0
 
         # Test 4: async_flag = True
+        # time_buffer = 0
         ingest_config_copy = ingest_data_config.copy()
         ingest_config_copy["sequencer"] = SequenceModelConfig(async_flag=True)
         result = otel_to_pv(ingest_config_copy)
@@ -231,8 +234,9 @@ class TestOtelToPV:
             """Remove root span to create disconnected data within NodeModel
             table"""
             sql_data_holder = sql_data_holder_with_otel_jobs
+            sql_data_holder.time_buffer = time_buffer
             with sql_data_holder.session as session:
-                stmt = sa.delete(NodeModel).where(NodeModel.event_id == "0_0")
+                stmt = sa.delete(NodeModel).where(NodeModel.event_id == "4_0")
                 session.execute(stmt)
                 session.commit()
             return sql_data_holder
@@ -249,8 +253,8 @@ class TestOtelToPV:
 
         result = otel_to_pv(ingest_data_config)
         events = []
-        valid_event_ids = [f"{i}_{j}" for i in range(1, 5) for j in range(2)]
-        valid_job_ids = {f"test_id_{i}" for i in range(1, 5)}
+        valid_event_ids = [f"{i}_{j}" for i in range(4) for j in range(2)]
+        valid_job_ids = {f"test_id_{i}" for i in range(4)}
         job_id_count = {}
         for job_name, pv_event_streams in result:
             assert job_name == "test_name"
@@ -264,5 +268,28 @@ class TestOtelToPV:
                     valid_event_ids.remove(pv_event["eventId"])
 
         assert len(events) == 8
+        assert all(job_id_count[job_id] == 2 for job_id in valid_job_ids)
+        assert len(valid_event_ids) == 0
+        # Test 8: Remove jobs outside of time window
+        # (accounting for already removed jobs)
+        time_buffer = 1
+        result = otel_to_pv(ingest_data_config)
+
+        events = []
+        valid_event_ids = [f"{i}_{j}" for i in range(1, 4) for j in range(2)]
+        valid_job_ids = {f"test_id_{i}" for i in range(1, 4)}
+        job_id_count: dict[str, int] = {}
+        for job_name, pv_event_streams in result:
+            assert job_name == "test_name"
+            for pv_event_gen in pv_event_streams:
+                for pv_event in pv_event_gen:
+                    job_id_count.setdefault(pv_event["jobId"], 0)
+                    job_id_count[pv_event["jobId"]] += 1
+                    events.append(pv_event)
+                    assert pv_event["eventId"] in valid_event_ids
+                    assert pv_event["jobId"] in valid_job_ids
+                    valid_event_ids.remove(pv_event["eventId"])
+
+        assert len(events) == 6
         assert all(job_id_count[job_id] == 2 for job_id in valid_job_ids)
         assert len(valid_event_ids) == 0

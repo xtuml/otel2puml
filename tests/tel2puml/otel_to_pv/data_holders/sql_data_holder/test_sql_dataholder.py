@@ -467,6 +467,26 @@ class TestSQLDataHolder:
                     ]
                 )
 
+    @staticmethod
+    def test_remove_jobs_outside_of_time_window(
+        sql_data_holder_with_otel_jobs: SQLDataHolder,
+    ) -> None:
+        """Test the remove_jobs_outside_of_time_window function."""
+        sql_data_holder_with_otel_jobs.max_timestamp = 10**12 + 60 * 10**10
+        sql_data_holder_with_otel_jobs.remove_jobs_outside_of_time_window()
+        valid_event_ids = [f"{i}_{j}" for i in range(1, 4) for j in range(2)]
+        valid_job_ids = [f"test_id_{i}" for i in range(1, 4)] * 2
+        with sql_data_holder_with_otel_jobs.session as session:
+            nodes = session.query(NodeModel).all()
+            assert len(nodes) == 6
+            for node in nodes:
+                assert node.event_id in valid_event_ids
+                assert node.job_id in valid_job_ids
+                valid_event_ids.remove(node.event_id)
+                valid_job_ids.remove(node.job_id)
+        assert not valid_event_ids
+        assert not valid_job_ids
+
 
 def test_initialise_temp_table_for_root_nodes(
     sql_data_holder_with_otel_jobs: SQLDataHolder,
