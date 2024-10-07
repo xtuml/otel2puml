@@ -4,30 +4,37 @@ ingest_data:
 
 data_holders:
   sql:
-    db_uri: "sqlite:///otel_db.db"
+    db_uri: "sqlite:///:memory:"
     batch_size: 5
     time_buffer: 30
 
 data_sources:
   json:
-    dirpath:
-    filepath: data.json
-    header:
-      paths: [resource:attributes, scope_spans::scope:name]
+    dirpath: dir/path/to/json/files
+    filepath: null 
     field_mapping:
       job_name:
         key_paths:
-          [resource:attributes::key, scope_spans::scope:name]
-        key_value: [service.name, null]
-        value_paths: [value:Value:StringValue, null]
+          ["resource_spans.[].resource.attributes.[].key"]
+        key_value: [service.name]
+        value_paths: ["value.Value.StringValue"]
         value_type: string
       job_id:
-        key_paths: [job_id]
+        key_paths: ["resource_spans.[].scope_spans.[].spans.[].trace_id"]
         value_type: string
       event_type:
-        key_paths: [attributes::key, attributes::key]
-        key_value: [coral.namespace, http.status_code]
-        value_paths: [value:Value:StringValue, value:Value:IntValue]
+        key_paths: [
+          [
+            "resource_spans.[].scope_spans.[].spans.[].attributes.[].key",
+            "resource_spans.[].scope_spans.[].spans.[].name"
+          ],
+          [
+            "resource_spans.[].scope_spans.[].spans.[].attributes.[].key",
+            "resource_spans.[].scope_spans.[].spans.[].kind"
+          ],
+        ]
+        key_value: [[coral.operation, null], [http.status_code, null]]
+        value_paths: [[value:Value:StringValue, null], [value:Value:IntValue, null]]
         value_type: string
       event_id:
         key_paths: [span_id]
@@ -39,46 +46,8 @@ data_sources:
         key_paths: [end_time_unix_nano]
         value_type: string
       application_name:
-        key_paths: [attributes::key, HEADER:resource:attributes::key]
-        key_value: [coral.service, service.version]
-        value_paths: [value:Value:StringValue, value:Value:StringValue]
+        key_paths: ["resource_spans.[].scope_spans.[].scope.name"]
         value_type: string
       parent_event_id:
         key_paths: [parent_span_id]
         value_type: string
-      child_event_ids:
-        key_paths: [child_span_ids]
-        value_type: string
-sequencer:
-    async: false
-    async_event_groups:
-        job_name_1:
-            event_type_1:
-                A: group_1
-                B: group_1
-                C: group_1
-                D: group_2
-            event_type_4:
-                event_type_5: group_3
-        job_name_2:
-            event_type_6:
-                event_type_7: group_4
-                event_type_8: group_4
-    event_name_map_information:
-        job_name_1:
-            event_type_1:
-                mapped_event_type: mapped_event_type_1
-                child_event_types:
-                    - child_event_type_1
-                    - child_event_type_2
-            event_type_2:
-                mapped_event_type: mapped_event_type_2
-                child_event_types:
-                    - child_event_type_3
-                    - child_event_type_4
-        job_name_2:
-            event_type_3:
-                mapped_event_type: mapped_event_type_3
-                child_event_types:
-                    - child_event_type_5
-                    - child_event_type_6
