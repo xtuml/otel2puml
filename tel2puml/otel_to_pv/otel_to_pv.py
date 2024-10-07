@@ -1,5 +1,8 @@
 """Module to convert OpenTelemetry data to PVEvents."""
 
+import os
+import json
+import logging
 from typing import Generator, Any
 
 from tel2puml.otel_to_pv.config import IngestDataConfig, SequenceModelConfig
@@ -10,12 +13,15 @@ from tel2puml.otel_to_pv.ingest_otel_data import (
 from tel2puml.otel_to_pv.sequence_otel import sequence_otel_job_id_streams
 from tel2puml.tel2puml_types import PVEvent
 
+LOGGER = logging.getLogger(__name__)
+
 
 def otel_to_pv(
     config: IngestDataConfig,
     ingest_data: bool = False,
     find_unique_graphs: bool = False,
     save_events: bool = False,
+    output_file_directory: str = ".",
 ) -> Generator[
     tuple[str, Generator[Generator[PVEvent, Any, None], Any, None]], Any, None
 ]:
@@ -36,6 +42,8 @@ def otel_to_pv(
     :param save_events: Flag to indicate whether to save events to file.
     Defaults to False.
     :type save_events: bool
+    :param output_file_directory: Output file directory.
+    :type output_file_directory: `str`
     :rtype: `Generator`[`tuple`[`str`, `Generator`[`Generator`[:class:
     `PVEvent`, `Any`, `None`], `Any`, `None`]], `Any`, `None`]
 
@@ -78,11 +86,33 @@ def otel_to_pv(
         for job_name, job_id_streams in job_name_group_streams
     )
     if save_events:
+        count = 1
         for job_name, pv_event_streams in pv_event_gen:
-            for pv_event_gen in pv_event_streams:
-                events = []
-                for pv_event in pv_event_gen:
-                    events.append(pv_event)
-                
+            try:
+                os.makedirs(
+                    f"{output_file_directory}/{job_name}", exist_ok=True
+                )
+            except OSError as e:
+                LOGGER.error(
+                    f"Error creating directory {output_file_directory}/"
+                    f"{job_name}: {e}"
+                )
+                continue
+            for pv_event_stream in pv_event_streams:
+                for pv_event in pv_event_stream:
+                    try:
+                        with open(
+                            f"{output_file_directory}/{job_name}/"
+                            f"pv_event_sequence_{count}.json",
+                            "w",
+                        ) as f:
+                            json.dump(pv_event, f, indent=4)
+                        count += 1
+                    except IOError as e:
+                        LOGGER.error(
+                            f"Error writing file {output_file_directory}/"
+                            f"{job_name}/pv_event_sequence_{count}.json: {e}"
+                        )
+                        continue
 
     return pv_event_gen

@@ -1,5 +1,6 @@
 """Test the tel2puml.otel_to_pv.otel_to_pv module."""
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -48,6 +49,8 @@ class TestOtelToPV:
         mock_yaml_config_string: str,
         mock_temp_dir_with_json_files: Path,
         event_to_async_group_map: dict[str, dict[str, str]],
+        tmp_path: Path,
+        expected_job_json_content: list[dict[str, Any]],
     ) -> None:
         """Tests for the function otel_to_pv."""
 
@@ -266,3 +269,34 @@ class TestOtelToPV:
         assert len(events) == 8
         assert all(job_id_count[job_id] == 2 for job_id in valid_job_ids)
         assert len(valid_event_ids) == 0
+
+        # Test 8: save_events
+        output_dir = tmp_path / "json_output"
+        ingest_data_config = IngestDataConfig(
+            data_sources=mock_yaml_config_dict["data_sources"],
+            data_holders=mock_yaml_config_dict["data_holders"],
+            ingest_data=IngestTypes(**mock_yaml_config_dict["ingest_data"]),
+        )
+        monkeypatch.setattr(
+            "tel2puml.otel_to_pv.otel_to_pv.fetch_data_holder",
+            mock_fetch_data_holder,
+        )
+
+        result = otel_to_pv(
+            ingest_data_config,
+            save_events=True,
+            output_file_directory=str(output_dir),
+        )
+        json_file_dir = tmp_path / "json_output" / "test_name"
+        assert json_file_dir.exists()
+        files = list(json_file_dir.iterdir())
+        assert len(files) == 8
+
+        for i, expected_content in enumerate(expected_job_json_content):
+            file_path = json_file_dir / f"pv_event_sequence_{i+1}.json"
+
+            assert file_path.exists()
+
+            with file_path.open('r') as f:
+                file_content = json.load(f)
+                assert file_content == expected_content
