@@ -120,7 +120,7 @@ def handle_save_events(
     try:
         os.makedirs(f"{output_file_directory}/{job_name}", exist_ok=True)
     except OSError as e:
-        LOGGER.error(
+        raise OSError(
             f"Error creating directory {output_file_directory}/"
             f"{job_name}: {e}"
         )
@@ -151,7 +151,7 @@ def save_pv_event_to_file(
         ) as f:
             json.dump(pv_event, f, indent=4)
     except IOError as e:
-        LOGGER.error(
+        raise IOError(
             f"Error writing file {output_file_directory}/"
             f"{job_name}/pv_event_sequence_{count}.json: {e}"
         )

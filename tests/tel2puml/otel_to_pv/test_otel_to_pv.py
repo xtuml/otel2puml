@@ -4,11 +4,11 @@ import os
 import json
 from pathlib import Path
 from typing import Any, Generator
-from logging import ERROR
 
 import yaml
+import pytest
 import sqlalchemy as sa
-from pytest import LogCaptureFixture, MonkeyPatch
+from pytest import MonkeyPatch
 
 from tel2puml.otel_to_pv.otel_to_pv import (
     otel_to_pv,
@@ -56,8 +56,6 @@ class TestOtelToPV:
         mock_yaml_config_string: str,
         mock_temp_dir_with_json_files: Path,
         event_to_async_group_map: dict[str, dict[str, str]],
-        tmp_path: Path,
-        expected_job_json_content: list[dict[str, Any]],
     ) -> None:
         """Tests for the function otel_to_pv."""
         time_buffer = 0
@@ -385,9 +383,7 @@ class TestSavePVEventToFile:
             file_content = json.load(f)
             assert file_content == pv_event
 
-    def test_save_pv_event_to_file_io_error(
-        self, tmp_path: Path, caplog: LogCaptureFixture
-    ) -> None:
+    def test_save_pv_event_to_file_io_error(self, tmp_path: Path) -> None:
         """Test that IOError is handled correctly when writing the file."""
         job_name = "test_job"
         pv_event: PVEvent = {
@@ -407,10 +403,10 @@ class TestSavePVEventToFile:
         os.chmod(job_dir, 0o400)
 
         try:
-            caplog.set_level(ERROR)
-            caplog.clear()
-            save_pv_event_to_file(job_name, pv_event, str(output_dir), count)
-            assert "Error writing file" in caplog.text
+            with pytest.raises(IOError):
+                save_pv_event_to_file(
+                    job_name, pv_event, str(output_dir), count
+                )
         finally:
             # Restore permissions to delete the temp directory
             os.chmod(job_dir, 0o700)
@@ -477,9 +473,7 @@ class TestHandleSaveEvents:
                 file_content = json.load(f)
                 assert file_content == expected_pv_event
 
-    def test_handle_save_events_os_error(
-        self, tmp_path: Path, caplog: LogCaptureFixture
-    ) -> None:
+    def test_handle_save_events_os_error(self, tmp_path: Path) -> None:
         """
         Test that handle_save_events handles OSError when creating directories
         by making the output directory non-writable.
@@ -501,16 +495,11 @@ class TestHandleSaveEvents:
                 for stream in pv_event_streams:
                     yield (event for event in stream)
 
-            caplog.set_level(ERROR)
-            caplog.clear()
-            handle_save_events(
-                job_name, event_streams_gen(), str(non_writable_dir)
-            )
+            with pytest.raises(OSError):
+                handle_save_events(
+                    job_name, event_streams_gen(), str(non_writable_dir)
+                )
 
-            assert (
-                f"Error creating directory {non_writable_dir}/{job_name}:"
-                in caplog.text
-            )
         finally:
             # Restore write permissions to allow pytest to clean up the
             # temporary directory
