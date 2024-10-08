@@ -282,13 +282,13 @@ class TestOtelToPV:
             mock_fetch_data_holder,
         )
 
-        pv_event_gen = otel_to_pv(
+        result_gen = otel_to_pv(
             ingest_data_config,
             save_events=True,
             output_file_directory=str(output_dir),
         )
         # check pv_event_gen is exhausted
-        assert list(pv_event_gen) == []
+        assert list(result_gen) == []
 
         json_file_dir = tmp_path / "json_output" / "test_name"
         assert json_file_dir.exists()
