@@ -237,6 +237,8 @@ def handle_string_joined_variables_jq_query(
     :raises ValueError: If there are no priority variables in one of the nested
     lists
     """
+    if len(variables) == 0:
+        return ""
     join_variables_output: list[str] = []
     for priority_variables in variables:
         if len(priority_variables) == 0:
@@ -246,7 +248,11 @@ def handle_string_joined_variables_jq_query(
             + " // ".join(priority_variables)
             + " | (if . == null then null else (. | tostring) end))"
         )
-    return ' + "_" + '.join(join_variables_output)
+    return (
+        f"([{','.join(join_variables_output)}] |"
+        " if any(. == null) then null else "
+        f'join("_") end)'
+    )
 
 
 def handle_array_joined_variables_jq_query(
