@@ -321,7 +321,6 @@ class TestOtelToPV:
             sql_data_holder.time_buffer = 1
             return sql_data_holder
 
-        # Test 9: save_events
         output_dir = tmp_path / "json_output"
         ingest_data_config = IngestDataConfig(
             data_sources=mock_yaml_config_dict["data_sources"],
