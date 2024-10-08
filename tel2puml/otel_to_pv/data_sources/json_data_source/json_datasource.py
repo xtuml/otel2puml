@@ -123,9 +123,12 @@ class JSONDataSource(OTELDataSource):
                     except ValidationError as e:
                         self.event_error_pbar.update(1)
                         LOGGER.warning(
-                            f"Error parsing file: {filepath}\n"
-                            f"Error: {e}\n"
-                            f"Record: {record}"
+                            f"Error coercing data in file: {filepath}\n"
+                            f"Validation Error: {e}\n"
+                            f"Record: {record}\n"
+                            "Skipping record - if this is a persistent error, "
+                            "please check the field mapping or jq query in the"
+                            " input config.yaml."
                         )
 
     def __next__(self) -> OTelEvent:

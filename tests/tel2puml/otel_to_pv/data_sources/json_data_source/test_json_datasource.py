@@ -236,9 +236,10 @@ class TestJSONDataSource:
                 otel_event = next(otel_events)
             assert (
                 "tel2puml.otel_to_pv.data_sources.json_data_source."
-                "json_datasource:json_datasource.py:125 Error parsing file: "
+                "json_datasource:json_datasource.py:125 Error coercing data in"
+                " file: "
                 "/mock/dir/file1.json\n"
-                "Error: 6 validation errors for OTelEvent\n"
+                "Validation Error: 6 validation errors for OTelEvent\n"
                 "job_name\n"
                 "  Input should be a valid string [type=string_type, "
                 "input_value=None, input_type=NoneType]\n"
@@ -273,7 +274,10 @@ class TestJSONDataSource:
                 "'event_type': None, 'event_id': 'span001', "
                 "'start_timestamp': None, 'end_timestamp': None, "
                 "'application_name': None, 'parent_event_id': None, "
-                "'child_event_ids': None}"
+                "'child_event_ids': None}\n"
+                "Skipping record - if this is a persistent error, "
+                "please check the field mapping or jq query in the"
+                " input config.yaml."
             ) in caplog.text
 
     @staticmethod
