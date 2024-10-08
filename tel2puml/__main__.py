@@ -198,6 +198,8 @@ def generate_component_options(
                 generate_config(str(otel_to_pv_obj.config_file))
             ),
             ingest_data=otel_to_pv_obj.ingest_data,
+            save_events=otel_to_pv_obj.save_events,
+            find_unique_graphs=otel_to_pv_obj.find_unique_graphs,
         )
     elif command == "pv2puml":
         pv_to_puml_obj = PvToPumlArgs(**args_dict)

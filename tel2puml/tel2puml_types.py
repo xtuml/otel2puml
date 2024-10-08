@@ -134,6 +134,8 @@ class OtelPVOptions(TypedDict):
 
     config: IngestDataConfig
     ingest_data: bool
+    save_events: bool
+    find_unique_graphs: bool
 
 
 class PVPumlOptions(TypedDict):
