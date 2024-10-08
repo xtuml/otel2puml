@@ -287,7 +287,7 @@ class PUMLKillNode(PUMLNode):
         be added to the next line.
         :rtype: `tuple[list[str], int]`
         """
-        blocks = [f"{' ' * indent}kill"]
+        blocks = [f"{' ' * indent}detach"]
         next_indent_diff_total = 0 * tab_size
         return (
             blocks,
