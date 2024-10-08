@@ -137,6 +137,14 @@ class DataHolder(ABC):
         """
         pass
 
+    @abstractmethod
+    def remove_jobs_outside_of_time_window(
+        self
+    ) -> None:
+        """Abstract method to remove jobs outside of the time window.
+        """
+        pass
+
 
 def get_time_window(
     time_buffer: int, data_holder: DataHolder
