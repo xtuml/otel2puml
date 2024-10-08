@@ -33,9 +33,9 @@ class TestOtelToPuml:
     def mock_fetch_data_holder(self) -> Generator[MagicMock, None, None]:
         """Fixture to mock fetch_data_holder."""
         with patch(
-            "tel2puml.otel_to_pv.sequence_otel.fetch_data_holder"
-        ) as fetch_data_hoder_mock:
-            yield fetch_data_hoder_mock
+            "tel2puml.otel_to_pv.otel_to_pv.fetch_data_holder"
+        ) as mock_data_holder:
+            yield mock_data_holder
 
     @staticmethod
     def test_invalid_options_all_components_missing_otel_options(
@@ -350,9 +350,12 @@ class TestOtelToPuml:
         tmp_path: Path,
         mock_yaml_config_dict: dict[str, Any],
         mock_json_data: dict[str, Any],
+        mock_fetch_data_holder: MagicMock,
+        sql_data_holder_with_otel_jobs: SQLDataHolder,
     ) -> None:
         """Test successful execution when components='otel2puml' and save
         events is True."""
+        mock_fetch_data_holder.return_value = sql_data_holder_with_otel_jobs
 
         output_dir = tmp_path / "json_output"
         input_dir = tmp_path / "json_input"
@@ -371,7 +374,7 @@ class TestOtelToPuml:
 
         otel_options: OtelPVOptions = {
             "config": load_config_from_dict(mock_yaml_config_dict),
-            "ingest_data": True,
+            "ingest_data": False,
             "save_events": False,
             "find_unique_graphs": True,
         }
@@ -389,14 +392,14 @@ class TestOtelToPuml:
             data = json.load(f)
         assert data == mock_json_data
 
-        assert os.listdir(output_dir) == ["Frontend_TestJob.puml"]
-        puml_file_path = output_dir / "Frontend_TestJob.puml"
+        assert os.listdir(output_dir) == ["test_name.puml"]
+        puml_file_path = output_dir / "test_name.puml"
         expected_content = (
             "@startuml\n"
             '    partition "default_name" {\n'
             '        group "default_name"\n'
-            "            :com.C36.9ETRp_401;\n"
-            "            :com.T2h.366Yx_500;\n"
+            "            :event_type_1;\n"
+            "            :event_type_0;\n"
             "        end group\n"
             "    }\n"
             "@enduml"
@@ -404,5 +407,6 @@ class TestOtelToPuml:
         with open(puml_file_path, "r") as f:
             content = f.read()
             content = content.strip()
+            print(content)
             expected_content = expected_content.strip()
             assert content == expected_content

@@ -44,7 +44,6 @@ def otel_to_pv(
     :type output_file_directory: `str`
     :rtype: `Generator`[`tuple`[`str`, `Generator`[`Generator`[:class:
     `PVEvent`, `Any`, `None`], `Any`, `None`]], `Any`, `None`]
-
     """
     if ingest_data:
         data_holder = ingest_data_into_dataholder(config)
