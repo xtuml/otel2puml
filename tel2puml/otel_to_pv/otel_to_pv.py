@@ -2,7 +2,6 @@
 
 import os
 import json
-import logging
 from typing import Generator, Any
 
 from tel2puml.otel_to_pv.config import IngestDataConfig, SequenceModelConfig
