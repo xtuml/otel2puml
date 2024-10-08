@@ -227,7 +227,7 @@ python -m tel2puml otel2puml -c CONFIG_FILE [options]
 
 **Options:**
 
-- `-c`, `--config`: **(Required)** Path to the configuration YAML file.
+- `-c`, `--config`: **(Required)** Path to the configuration YAML file. [Usage](docs/user/Config.md)
 - `-ni`, `--no-ingest`: Do not load data into the data holder.
 - `-ug`, `--unique-graphs`: Find unique graphs within the data holder.
 - `-o`, `--output-dir`: Output directory path (default is the current directory). Nested folders are not supported.
@@ -250,7 +250,7 @@ python -m tel2puml otel2pv -c CONFIG_FILE [options]
 
 **Options:**
 
-- `-c`, `--config`: **(Required)** Path to the configuration YAML file.
+- `-c`, `--config`: **(Required)** Path to the configuration YAML file. [Usage](docs/user/Config.md)
 - `-ni`, `--no-ingest`: Do not load data into the data holder.
 - `-ug`, `--unique-graphs`: Find unique graphs within the data holder.
 - `-se`, `--save-events`: Save PVEvents in intermediate format.
