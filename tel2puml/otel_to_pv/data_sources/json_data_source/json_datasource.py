@@ -3,6 +3,10 @@
 import os
 from typing import Iterator
 import json
+from logging import getLogger
+
+from tqdm import tqdm
+from pydantic import ValidationError
 
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 from ..base import OTELDataSource
@@ -11,6 +15,9 @@ from .json_jq_converter import (
     field_mapping_to_compiled_jq,
 )
 from .json_config import JSONDataSourceConfig
+
+
+LOGGER = getLogger(__name__)
 
 
 class JSONDataSource(OTELDataSource):
@@ -33,6 +40,17 @@ class JSONDataSource(OTELDataSource):
         self.file_list = self.get_file_list()
         self.compiled_jq = field_mapping_to_compiled_jq(
             self.config["field_mapping"]
+        )
+        self.file_pbar = tqdm(
+            total=len(self.file_list),
+            desc="Ingesting JSON files",
+            unit="file",
+            position=0,
+        )
+        self.event_error_pbar = tqdm(
+            desc="Events with errors",
+            unit="event",
+            position=1,
         )
 
     def set_dirpath(self) -> str | None:
@@ -100,7 +118,18 @@ class JSONDataSource(OTELDataSource):
                 for record in generate_records_from_compiled_jq(
                     data, self.compiled_jq
                 ):
-                    yield OTelEvent(**record)
+                    try:
+                        yield OTelEvent(**record)
+                    except ValidationError as e:
+                        self.event_error_pbar.update(1)
+                        LOGGER.warning(
+                            f"Error coercing data in file: {filepath}\n"
+                            f"Validation Error: {e}\n"
+                            f"Record: {record}\n"
+                            "Skipping record - if this is a persistent error, "
+                            "please check the field mapping or jq query in the"
+                            " input config.yaml."
+                        )
 
     def __next__(self) -> OTelEvent:
         """Returns the next OTelEvent in the sequence
@@ -110,6 +139,7 @@ class JSONDataSource(OTELDataSource):
         """
         while self.current_file_index < len(self.file_list):
             if self.current_parser is None:
+                self.file_pbar.update(1)
                 self.current_parser = self.parse_json_stream(
                     self.file_list[self.current_file_index]
                 )
@@ -118,5 +148,6 @@ class JSONDataSource(OTELDataSource):
             except StopIteration:
                 self.current_file_index += 1
                 self.current_parser = None
-
+        self.file_pbar.close()
+        self.event_error_pbar.close()
         raise StopIteration

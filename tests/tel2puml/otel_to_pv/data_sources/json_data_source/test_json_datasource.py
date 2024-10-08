@@ -1,12 +1,14 @@
 """Tests for otel_data_source module."""
+
 import json
 import os
 import shutil
-from typing import Literal
+from typing import Literal, Any
+from logging import WARNING
 
 import yaml
 import pytest
-from pytest import FixtureRequest
+from pytest import FixtureRequest, LogCaptureFixture
 from pathlib import Path
 from unittest.mock import mock_open, patch
 
@@ -192,6 +194,94 @@ class TestJSONDataSource:
 
     @staticmethod
     @pytest.mark.usefixtures("mock_path_exists", "mock_filepath_in_dir")
+    def test_parse_json_stream(
+        mock_yaml_config_dict: IngestDataConfig,
+        mock_json_data: dict[str, Any],
+        caplog: LogCaptureFixture,
+    ) -> None:
+        """Tests the parse_json_stream method."""
+        mock_file_content = json.dumps(mock_json_data).encode("utf-8")
+        with patch("builtins.open", mock_open(read_data=mock_file_content)):
+            json_data_source = JSONDataSource(
+                mock_yaml_config_dict["data_sources"]["json"]
+            )
+            otel_events = json_data_source.parse_json_stream(
+                "/mock/dir/file1.json"
+            )
+            otel_event = next(otel_events)
+            assert otel_event.job_name == "Frontend_TestJob"
+            assert otel_event.job_id == "trace001_4.8"
+            assert otel_event.event_id == "span001"
+            assert otel_event.event_type == "com.T2h.366Yx_500"
+            assert otel_event.application_name == "Processor_1.0"
+            assert otel_event.start_timestamp == 1723544132228102912
+            assert otel_event.end_timestamp == 1723544132228219285
+            assert otel_event.parent_event_id is None
+            assert otel_event.child_event_ids == ["child1", "child2"]
+        # test case with a validation error
+        json_data = {"resource_spans": [
+            {"scope_spans": [{"spans": [{"span_id": "span001"}]}]}
+        ]}
+        mock_file_content = json.dumps(json_data).encode("utf-8")
+        with patch("builtins.open", mock_open(read_data=mock_file_content)):
+            json_data_source = JSONDataSource(
+                mock_yaml_config_dict["data_sources"]["json"]
+            )
+            caplog.clear()
+            caplog.set_level(WARNING)
+            otel_events = json_data_source.parse_json_stream(
+                "/mock/dir/file1.json"
+            )
+            with pytest.raises(StopIteration):
+                otel_event = next(otel_events)
+            assert (
+                "tel2puml.otel_to_pv.data_sources.json_data_source."
+                "json_datasource:json_datasource.py:125 Error coercing data in"
+                " file: "
+                "/mock/dir/file1.json\n"
+                "Validation Error: 6 validation errors for OTelEvent\n"
+                "job_name\n"
+                "  Input should be a valid string [type=string_type, "
+                "input_value=None, input_type=NoneType]\n"
+                "    For further information visit "
+                "https://errors.pydantic.dev/2.9/v/string_type\n"
+                "job_id\n"
+                "  Input should be a valid string [type=string_type, "
+                "input_value=None, input_type=NoneType]\n"
+                "    For further information visit "
+                "https://errors.pydantic.dev/2.9/v/string_type\n"
+                "event_type\n"
+                "  Input should be a valid string [type=string_type, "
+                "input_value=None, input_type=NoneType]\n"
+                "    For further information visit "
+                "https://errors.pydantic.dev/2.9/v/string_type\n"
+                "start_timestamp\n"
+                "  Input should be a valid integer [type=int_type, "
+                "input_value=None, input_type=NoneType]\n"
+                "    For further information visit "
+                "https://errors.pydantic.dev/2.9/v/int_type\n"
+                "end_timestamp\n"
+                "  Input should be a valid integer [type=int_type, "
+                "input_value=None, input_type=NoneType]\n"
+                "    For further information visit "
+                "https://errors.pydantic.dev/2.9/v/int_type\n"
+                "application_name\n"
+                "  Input should be a valid string [type=string_type, "
+                "input_value=None, input_type=NoneType]\n"
+                "    For further information visit "
+                "https://errors.pydantic.dev/2.9/v/string_type\n"
+                "Record: {'job_name': None, 'job_id': None, "
+                "'event_type': None, 'event_id': 'span001', "
+                "'start_timestamp': None, 'end_timestamp': None, "
+                "'application_name': None, 'parent_event_id': None, "
+                "'child_event_ids': None}\n"
+                "Skipping record - if this is a persistent error, "
+                "please check the field mapping or jq query in the"
+                " input config.yaml."
+            ) in caplog.text
+
+    @staticmethod
+    @pytest.mark.usefixtures("mock_path_exists", "mock_filepath_in_dir")
     @pytest.mark.parametrize(
         "mock_data, mock_yaml_config",
         [
@@ -215,7 +305,8 @@ class TestJSONDataSource:
             request.getfixturevalue(mock_data)
         ).encode("utf-8")
         mock_file_content = (
-            mock_file_content[:1] + b'"injected_error": "\x1b", '
+            mock_file_content[:1]
+            + b'"injected_error": "\x1b", '
             + mock_file_content[1:]
         )
         mock_yaml_config_dict = request.getfixturevalue(mock_yaml_config)
@@ -239,8 +330,7 @@ class TestJSONDataSource:
                 otel_events.append(data)
 
         def check_otel_events(
-            otel_events: list[OTelEvent],
-            n_check: Literal[2, 4]
+            otel_events: list[OTelEvent], n_check: Literal[2, 4]
         ) -> None:
             """Check the otel events."""
             otel_event = otel_events[0]
