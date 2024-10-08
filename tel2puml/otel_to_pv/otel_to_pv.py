@@ -27,7 +27,8 @@ def otel_to_pv(
 ]:
     """
     Stream data from data holder and convert to PVEvents. Optional parameters
-    to ingest data as well as find unique graphs within the data set.
+    to ingest data, find unique graphs within the data set, and save PVEvents
+    as json job files.
 
     :param config: The configuration for data ingestion and processing.
     :type config: :class:`IngestDataConfig`
@@ -39,7 +40,7 @@ def otel_to_pv(
     :type find_unique_graphs: `bool`, optional
     :return: Generator of tuples of job_name to generator of generators of
     PVEvents grouped by job_name, then job_id.
-    :param save_events: Flag to indicate whether to save events to file.
+    :param save_events: Flag to indicate whether to save events as json to file.
     Defaults to False.
     :type save_events: bool
     :param output_file_directory: Output file directory.

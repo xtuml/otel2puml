@@ -1382,6 +1382,7 @@ def event_to_async_group_map() -> dict[str, dict[str, str]]:
         },
     }
 
+
 @pytest.fixture
 def expected_job_json_content() -> list[dict[str, Any]]:
     """Return a list of dictionaries for expected job file content when saving
