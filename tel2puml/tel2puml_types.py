@@ -134,6 +134,7 @@ class OtelPVOptions(TypedDict):
 
     config: IngestDataConfig
     ingest_data: bool
+    save_events: bool
 
 
 class PVPumlOptions(TypedDict):

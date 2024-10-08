@@ -67,7 +67,10 @@ def otel_to_puml(
                     Any,
                     None,
                 ],
-            ] = otel_to_pv(**otel_to_pv_options)
+            ] = otel_to_pv(
+                **otel_to_pv_options,
+                output_file_directory=output_file_directory,
+            )
             if components == "otel2pv":
                 return
         case "pv2puml":
