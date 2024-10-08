@@ -50,7 +50,7 @@ The idea is to extract records of this type from a JSON file and map the fields 
 The code used follows the jq language (https://jqlang.github.io/jq/) for JSON data extraction. The jq language is a lightweight and flexible command-line JSON processor. Within configuration the same pathing structure as jq to extract data from the JSON file.
 
 ## 2. Configuration File Structure
-Configuration is provided to the application in the form of a YAML file (see X for details on all configuration fields). 
+Configuration is provided to the application in the form of a YAML file (see [User Config](/docs/user/Config.md) for details on all configuration fields). 
 This file specifies how to locate and interpret JSON telemetry data as part of the `data_sources` field that is used to ingest the raw Open Telemetry files. See below for the basic structure of the `data_sources.json` section of the file:
 
 ```yaml
@@ -173,10 +173,10 @@ Simply, a nested object is represented by a `.`, and an array is represented by 
 
 Conversely with `scope_spans.[].scope.name`, `scope_spans` is an array, so `.[].` is used to indicate that `scope` is a key within all the objects of that array. `name` is a key within the `scope` object, so it is separated by `.`.
 
-Every object within an array will be flattened and treated separately. Nested arrays are then also flattened and treated separately. For example, using the JSON example above, we could have `resource_spans.[].scope_spans.[].spans.[].attributes.[].key` to access all the keys within the `attributes` array within the `spans` array within the `scope_spans` array within the `resource_spans` array which would provide the following exploded list of keys:
+Every object within an array will be flattened and treated separately. Nested arrays are then also flattened and treated separately. Using the JSON example above, we could have `resource_spans.[].scope_spans.[].spans.[].attributes.[].key` to access all the keys within the `attributes` array within the `spans` array within the `scope_spans` array within the `resource_spans` array which would provide the following exploded list of keys:
 
 ```json
-["http.method", "http.host", "http.response"]
+["http.method", "http.response"]
 ```
 
 Many different fields will be accessed this way and as such the pathing structure is crucial to correctly access the data. Each field must be consistent with all other fields in the configuration file. Consistency primarily depends upon the nesting of arrays in the path. 
@@ -217,7 +217,7 @@ field_mapping:
         value_type: string
 ```
 
-This example would return `GET` from the [JSON example](#json-example).
+This example would return `GET` for span with `span_id=span001` from the [JSON example](#json-example).
 
 #### Key Components:
 
@@ -317,7 +317,7 @@ field_mapping:
         value_paths: [null, value.Value.IntValue]
         value_type: string
 ```
-This would return `/delete_200` from the [JSON example](#json-example).
+This would return `/delete_200` for span with `span_id=span001` from the [JSON example](#json-example).
 
 We must provide `null` in the `key_value` and `value_paths` if they are not required for that specific key_path.
 

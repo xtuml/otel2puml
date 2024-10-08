@@ -43,7 +43,7 @@ This section contains the configuration for the data holders. The following opti
 * `sql`: The configuration for the SQL data holder. The following options are available:
     * `db_uri`: The URI for the database to use. This should be a valid SQLAlchemy URI. The default value is `sqlite:///:memory:`.
     * `batch_size`: The number of events to add to the database in a single batch. The default value is `5`.
-    * `time_buffer`: The time buffer in seconds to use when processing events. The default value is `30`. This value is used to remove traces that have spans only outside within the time buffer (symetrical) i.e. if all data ingested is within the interval of 100 to 1000 seconds and the time buffer is 10 seconds, then the traces that have spans only outside the interval of 110 to 990 seconds will be removed.
+    * `time_buffer`: The time buffer in minutes to use when processing events. The default value is `30`. This value creates a time buffer around the data ingestion period. It removes traces that contain spans that fall entirely outside this buffer. For example, if all data is ingested between 100 and 1000 minutes, and the time buffer is 10 minutes, the system will remove any traces with spans that are completely outside the 110 to 990 minutes range.
 
 ### `data_sources`
 This section contains the configuration for the data sources. The following options are available:
