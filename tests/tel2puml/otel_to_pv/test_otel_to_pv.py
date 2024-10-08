@@ -314,7 +314,7 @@ class TestOtelToPV:
         tmp_path: Path,
         expected_job_json_content: list[dict[str, Any]],
     ) -> None:
-        """Tests for the function otel_to_pv."""
+        """Tests the save_events flag for the function otel_to_pv."""
 
         def mock_fetch_data_holder(config: IngestDataConfig) -> SQLDataHolder:
             sql_data_holder = sql_data_holder_with_otel_jobs
