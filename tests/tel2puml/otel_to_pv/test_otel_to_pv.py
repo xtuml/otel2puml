@@ -1,13 +1,20 @@
 """Test the tel2puml.otel_to_pv.otel_to_pv module."""
 
+import os
+import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import yaml
+import pytest
 import sqlalchemy as sa
 from pytest import MonkeyPatch
 
-from tel2puml.otel_to_pv.otel_to_pv import otel_to_pv
+from tel2puml.otel_to_pv.otel_to_pv import (
+    otel_to_pv,
+    handle_save_events,
+    save_pv_event_to_file,
+)
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.sql_dataholder import (
     SQLDataHolder,
 )
@@ -20,6 +27,7 @@ from tel2puml.otel_to_pv.otel_to_pv_types import OTelEventTypeMap
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
     NodeModel,
 )
+from tel2puml.tel2puml_types import PVEvent
 
 
 class TestOtelToPV:
@@ -57,6 +65,7 @@ class TestOtelToPV:
             sql_data_holder = sql_data_holder_with_otel_jobs
             sql_data_holder.time_buffer = time_buffer
             return sql_data_holder
+
         ingest_data_config = IngestDataConfig(
             data_sources=mock_yaml_config_dict["data_sources"],
             data_holders=mock_yaml_config_dict["data_holders"],
@@ -270,6 +279,7 @@ class TestOtelToPV:
         assert len(events) == 8
         assert all(job_id_count[job_id] == 2 for job_id in valid_job_ids)
         assert len(valid_event_ids) == 0
+
         # Test 8: Remove jobs outside of time window
         # (accounting for already removed jobs)
         time_buffer = 1
@@ -293,3 +303,225 @@ class TestOtelToPV:
         assert len(events) == 6
         assert all(job_id_count[job_id] == 2 for job_id in valid_job_ids)
         assert len(valid_event_ids) == 0
+
+    def test_otel_to_pv_save_events(
+        self,
+        monkeypatch: MonkeyPatch,
+        mock_yaml_config_dict: dict[str, Any],
+        sql_data_holder_with_otel_jobs: SQLDataHolder,
+        tmp_path: Path,
+        expected_job_json_content: list[dict[str, Any]],
+    ) -> None:
+        """Tests the save_events flag for the function otel_to_pv."""
+
+        def mock_fetch_data_holder(config: IngestDataConfig) -> SQLDataHolder:
+            sql_data_holder = sql_data_holder_with_otel_jobs
+            sql_data_holder.time_buffer = 1
+            return sql_data_holder
+
+        output_dir = tmp_path / "json_output"
+        ingest_data_config = IngestDataConfig(
+            data_sources=mock_yaml_config_dict["data_sources"],
+            data_holders=mock_yaml_config_dict["data_holders"],
+            ingest_data=IngestTypes(**mock_yaml_config_dict["ingest_data"]),
+        )
+        monkeypatch.setattr(
+            "tel2puml.otel_to_pv.otel_to_pv.fetch_data_holder",
+            mock_fetch_data_holder,
+        )
+
+        result_gen = otel_to_pv(
+            ingest_data_config,
+            save_events=True,
+            output_file_directory=str(output_dir),
+        )
+        # check pv_event_gen is exhausted
+        assert list(result_gen) == []
+
+        json_file_dir = tmp_path / "json_output" / "test_name"
+        assert json_file_dir.exists()
+        files = list(json_file_dir.iterdir())
+        assert len(files) == 8
+
+        for i, expected_content in enumerate(expected_job_json_content):
+            file_path = json_file_dir / f"pv_event_sequence_{i+1}.json"
+
+            assert file_path.exists()
+
+            with file_path.open("r") as f:
+                file_content = json.load(f)
+                assert file_content == expected_content
+
+
+class TestSavePVEventToFile:
+    """Tests for the save_pv_event_to_file function."""
+
+    def test_save_pv_event_to_file_success(self, tmp_path: Path) -> None:
+        """Test that PVEvent is saved correctly to a file."""
+        job_name = "test_job"
+        pv_event: PVEvent = {
+            "jobId": "test_job_id",
+            "eventId": "2",
+            "timestamp": "2024-10-08T12:00:00Z",
+            "previousEventIds": ["1"],
+            "applicationName": "test_app",
+            "jobName": "test_job",
+            "eventType": "test_event",
+        }
+        output_dir = tmp_path
+        count = 1
+
+        job_dir = output_dir / job_name
+        job_dir.mkdir(parents=True, exist_ok=True)
+
+        save_pv_event_to_file(job_name, pv_event, str(output_dir), count)
+
+        expected_file = job_dir / f"pv_event_sequence_{count}.json"
+        assert expected_file.exists()
+
+        with expected_file.open("r") as f:
+            file_content = json.load(f)
+            assert file_content == pv_event
+
+    def test_save_pv_event_to_file_io_error(self, tmp_path: Path) -> None:
+        """Test that IOError is handled correctly when writing the file."""
+        job_name = "test_job"
+        pv_event: PVEvent = {
+            "jobId": "test_job_id",
+            "eventId": "3",
+            "timestamp": "2024-10-08T12:10:00Z",
+            "applicationName": "test_app",
+            "jobName": "test_job",
+            "eventType": "test_event_error",
+        }
+        output_dir = tmp_path
+        count = 3
+
+        # Create a directory and make it read-only to simulate IOError
+        job_dir = output_dir / job_name
+        job_dir.mkdir(parents=True, exist_ok=True)
+        os.chmod(job_dir, 0o400)
+
+        try:
+            with pytest.raises(IOError):
+                save_pv_event_to_file(
+                    job_name, pv_event, str(output_dir), count
+                )
+        finally:
+            # Restore permissions to delete the temp directory
+            os.chmod(job_dir, 0o700)
+
+
+class TestHandleSaveEvents:
+    """Tests for the handle_save_events function."""
+
+    def test_handle_save_events_success(self, tmp_path: Path) -> None:
+        """Test that handle_save_events saves all PVEvents correctly."""
+        job_name = "test_job"
+        output_dir = tmp_path
+
+        pv_event_streams: list[list[PVEvent]] = [
+            [
+                {
+                    "jobId": "test_job_id",
+                    "eventId": "1",
+                    "timestamp": "2024-10-08T12:00:00Z",
+                    "applicationName": "test_app",
+                    "jobName": "test_job",
+                    "eventType": "test_event",
+                },
+                {
+                    "jobId": "test_job_id",
+                    "eventId": "2",
+                    "timestamp": "2024-10-08T12:05:00Z",
+                    "previousEventIds": ["1"],
+                    "applicationName": "test_app",
+                    "jobName": "test_job",
+                    "eventType": "test_event_followup",
+                },
+            ],
+            [
+                {
+                    "jobId": "test_job_id",
+                    "eventId": "3",
+                    "timestamp": "2024-10-08T12:10:00Z",
+                    "applicationName": "test_app",
+                    "jobName": "test_job",
+                    "eventType": "test_event_second_followup",
+                }
+            ],
+        ]
+
+        def event_streams_gen() -> (
+            Generator[Generator[PVEvent, Any, None], Any, None]
+        ):
+            for stream in pv_event_streams:
+                yield (event for event in stream)
+
+        handle_save_events(job_name, event_streams_gen(), str(output_dir))
+
+        job_dir = output_dir / job_name
+        assert job_dir.exists() and job_dir.is_dir()
+
+        for i, expected_pv_event in enumerate(
+            [event for sublist in pv_event_streams for event in sublist],
+            start=1,
+        ):
+            file_path = job_dir / f"pv_event_sequence_{i}.json"
+            assert file_path.exists()
+            with file_path.open("r") as f:
+                file_content = json.load(f)
+                assert file_content == expected_pv_event
+
+    def test_handle_save_events_os_error(self, tmp_path: Path) -> None:
+        """
+        Test that handle_save_events handles OSError when creating directories
+        by making the output directory non-writable.
+        """
+        job_name = "test_job"
+
+        non_writable_dir = tmp_path / "non_writable_dir"
+        non_writable_dir.mkdir(parents=True, exist_ok=True)
+
+        # Remove write permissions from the output directory
+        non_writable_dir.chmod(0o555)
+
+        try:
+            pv_event_streams: list[list[PVEvent]] = []
+
+            def event_streams_gen() -> (
+                Generator[Generator[PVEvent, Any, None], Any, None]
+            ):
+                for stream in pv_event_streams:
+                    yield (event for event in stream)
+
+            with pytest.raises(OSError):
+                handle_save_events(
+                    job_name, event_streams_gen(), str(non_writable_dir)
+                )
+
+        finally:
+            # Restore write permissions to allow pytest to clean up the
+            # temporary directory
+            non_writable_dir.chmod(0o755)
+
+    def test_handle_save_events_empty_stream(self, tmp_path: Path) -> None:
+        """Test that handle_save_events works correctly with an empty
+        PVEvent stream."""
+        job_name = "test_job"
+        output_dir = tmp_path
+
+        pv_event_streams: list[list[PVEvent]] = []
+
+        def event_streams_gen() -> (
+            Generator[Generator[PVEvent, Any, None], Any, None]
+        ):
+            for stream in pv_event_streams:
+                yield (event for event in stream)
+
+        handle_save_events(job_name, event_streams_gen(), str(output_dir))
+
+        job_dir = output_dir / job_name
+        assert job_dir.exists() and job_dir.is_dir()
+
+        assert not any(job_dir.iterdir())

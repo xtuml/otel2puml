@@ -1381,3 +1381,83 @@ def event_to_async_group_map() -> dict[str, dict[str, str]]:
             "event_type_21": "group_0",
         },
     }
+
+
+@pytest.fixture
+def expected_job_json_content() -> list[dict[str, Any]]:
+    """Return a list of dictionaries for expected job file content when saving
+    events."""
+    return [
+        {
+            "jobId": "test_id_1",
+            "eventId": "1_1",
+            "eventType": "event_type_1",
+            "timestamp": "1970-01-01T00:17:10.000000Z",
+            "previousEventIds": [],
+            "applicationName": "test_application_name",
+            "jobName": "test_name",
+        },
+        {
+            "jobId": "test_id_1",
+            "eventId": "1_0",
+            "eventType": "event_type_0",
+            "timestamp": "1970-01-01T00:20:00.000000Z",
+            "previousEventIds": ["1_1"],
+            "applicationName": "test_application_name",
+            "jobName": "test_name",
+        },
+        {
+            "jobId": "test_id_2",
+            "eventId": "2_1",
+            "eventType": "event_type_1",
+            "timestamp": "1970-01-01T00:20:00.000000Z",
+            "previousEventIds": [],
+            "applicationName": "test_application_name",
+            "jobName": "test_name",
+        },
+        {
+            "jobId": "test_id_2",
+            "eventId": "2_0",
+            "eventType": "event_type_0",
+            "timestamp": "1970-01-01T00:20:00.000000Z",
+            "previousEventIds": ["2_1"],
+            "applicationName": "test_application_name",
+            "jobName": "test_name",
+        },
+        {
+            "jobId": "test_id_3",
+            "eventId": "3_1",
+            "eventType": "event_type_1",
+            "timestamp": "1970-01-01T00:20:00.000000Z",
+            "previousEventIds": [],
+            "applicationName": "test_application_name",
+            "jobName": "test_name",
+        },
+        {
+            "jobId": "test_id_3",
+            "eventId": "3_0",
+            "eventType": "event_type_0",
+            "timestamp": "1970-01-01T00:26:40.000000Z",
+            "previousEventIds": ["3_1"],
+            "applicationName": "test_application_name",
+            "jobName": "test_name",
+        },
+        {
+            "jobId": "test_id_4",
+            "eventId": "4_1",
+            "eventType": "event_type_1",
+            "timestamp": "1970-01-01T00:26:40.000000Z",
+            "previousEventIds": [],
+            "applicationName": "test_application_name",
+            "jobName": "test_name",
+        },
+        {
+            "jobId": "test_id_4",
+            "eventId": "4_0",
+            "eventType": "event_type_0",
+            "timestamp": "1970-01-01T00:26:40.000000Z",
+            "previousEventIds": ["4_1"],
+            "applicationName": "test_application_name",
+            "jobName": "test_name",
+        },
+    ]
