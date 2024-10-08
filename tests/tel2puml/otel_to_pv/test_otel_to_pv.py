@@ -67,6 +67,7 @@ class TestOtelToPV:
             sql_data_holder = sql_data_holder_with_otel_jobs
             sql_data_holder.time_buffer = time_buffer
             return sql_data_holder
+
         ingest_data_config = IngestDataConfig(
             data_sources=mock_yaml_config_dict["data_sources"],
             data_holders=mock_yaml_config_dict["data_holders"],
@@ -280,7 +281,7 @@ class TestOtelToPV:
         assert len(events) == 8
         assert all(job_id_count[job_id] == 2 for job_id in valid_job_ids)
         assert len(valid_event_ids) == 0
-        
+
         # Test 8: Remove jobs outside of time window
         # (accounting for already removed jobs)
         time_buffer = 1
@@ -304,6 +305,21 @@ class TestOtelToPV:
         assert len(events) == 6
         assert all(job_id_count[job_id] == 2 for job_id in valid_job_ids)
         assert len(valid_event_ids) == 0
+
+    def test_otel_to_pv_save_events(
+        self,
+        monkeypatch: MonkeyPatch,
+        mock_yaml_config_dict: dict[str, Any],
+        sql_data_holder_with_otel_jobs: SQLDataHolder,
+        tmp_path: Path,
+        expected_job_json_content: list[dict[str, Any]],
+    ) -> None:
+        """Tests for the function otel_to_pv."""
+
+        def mock_fetch_data_holder(config: IngestDataConfig) -> SQLDataHolder:
+            sql_data_holder = sql_data_holder_with_otel_jobs
+            sql_data_holder.time_buffer = 1
+            return sql_data_holder
 
         # Test 9: save_events
         output_dir = tmp_path / "json_output"
