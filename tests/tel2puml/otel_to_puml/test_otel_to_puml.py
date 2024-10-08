@@ -124,6 +124,7 @@ class TestOtelToPuml:
             "config": load_config_from_dict(mock_yaml_config_dict),
             "ingest_data": True,
             "save_events": False,
+            "find_unique_graphs": False,
         }
 
         otel_to_puml(
@@ -186,6 +187,7 @@ class TestOtelToPuml:
             "config": load_config_from_dict(mock_yaml_config_dict),
             "ingest_data": True,
             "save_events": False,
+            "find_unique_graphs": False,
         }
         # Run function
         otel_to_puml(
@@ -296,6 +298,7 @@ class TestOtelToPuml:
             "config": load_config_from_dict(mock_yaml_config_dict),
             "ingest_data": True,
             "save_events": True,
+            "find_unique_graphs": False,
         }
 
         otel_to_puml(
@@ -341,3 +344,65 @@ class TestOtelToPuml:
             with file_path.open("r") as f:
                 file_content = json.load(f)
                 assert file_content == expected_content
+
+    @staticmethod
+    def test_find_unique_graphs(
+        tmp_path: Path,
+        mock_yaml_config_dict: dict[str, Any],
+        mock_json_data: dict[str, Any],
+    ) -> None:
+        """Test successful execution when components='otel2puml' and save
+        events is True."""
+
+        output_dir = tmp_path / "json_output"
+        input_dir = tmp_path / "json_input"
+
+        # Create the input directory
+        input_dir.mkdir(parents=True, exist_ok=True)
+
+        # Write mock_json_data to data.json in input_dir
+        data_file = input_dir / "data.json"
+        data_file.write_text(json.dumps(mock_json_data))
+
+        # Configure config
+        config = load_config_from_dict(mock_yaml_config_dict)
+        config["data_sources"]["json"]["dirpath"] = str(input_dir)
+        config["data_sources"]["json"]["filepath"] = None
+
+        otel_options: OtelPVOptions = {
+            "config": load_config_from_dict(mock_yaml_config_dict),
+            "ingest_data": True,
+            "save_events": False,
+            "find_unique_graphs": True,
+        }
+
+        otel_to_puml(
+            otel_to_pv_options=otel_options,
+            components="otel2puml",
+            output_file_directory=str(output_dir),
+        )
+
+        assert output_dir.exists()
+
+        assert data_file.exists()
+        with open(data_file, "r") as f:
+            data = json.load(f)
+        assert data == mock_json_data
+
+        assert os.listdir(output_dir) == ["Frontend_TestJob.puml"]
+        puml_file_path = output_dir / "Frontend_TestJob.puml"
+        expected_content = (
+            "@startuml\n"
+            '    partition "default_name" {\n'
+            '        group "default_name"\n'
+            "            :com.C36.9ETRp_401;\n"
+            "            :com.T2h.366Yx_500;\n"
+            "        end group\n"
+            "    }\n"
+            "@enduml"
+        )
+        with open(puml_file_path, "r") as f:
+            content = f.read()
+            content = content.strip()
+            expected_content = expected_content.strip()
+            assert content == expected_content
