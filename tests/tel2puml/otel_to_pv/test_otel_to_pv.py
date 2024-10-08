@@ -3,7 +3,7 @@
 import os
 import json
 from pathlib import Path
-from typing import Any, Generator, Iterator
+from typing import Any, Generator
 from logging import ERROR
 
 import yaml

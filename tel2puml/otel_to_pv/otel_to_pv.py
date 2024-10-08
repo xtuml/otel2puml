@@ -104,13 +104,14 @@ def handle_save_events(
     ],
     output_file_directory: str,
 ) -> None:
-    """Function to handle the save events flag. Saves PVEvents as job json files
-    within a job folder within the output file directory.
+    """Function to handle the save events flag. Saves PVEvents as job json
+    files within a job folder within the output file directory.
 
     :param job_name: The job name
     :type job_name: `str`
     :param pv_event_streams: Generator of generator of PVEvents
-    :type pv_event_streams: `Generator`[ `Generator`[:class`PVEvent`, `Any`, `None`], `Any`, `None`, ]
+    :type pv_event_streams: `Generator`[ `Generator`[:class`PVEvent`, `Any`,
+    `None`], `Any`, `None`, ]
     :param output_file_directory: Output file directory
     :type output_file_directory: `str`
     """
