@@ -13,8 +13,6 @@ from tel2puml.otel_to_pv.ingest_otel_data import (
 from tel2puml.otel_to_pv.sequence_otel import sequence_otel_job_id_streams
 from tel2puml.tel2puml_types import PVEvent
 
-LOGGER = logging.getLogger(__name__)
-
 
 def otel_to_pv(
     config: IngestDataConfig,
