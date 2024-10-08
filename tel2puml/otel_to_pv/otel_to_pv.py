@@ -87,33 +87,68 @@ def otel_to_pv(
         for job_name, job_id_streams in job_name_group_streams
     )
     if save_events:
-        count = 1
         for job_name, pv_event_streams in pv_event_gen:
-            try:
-                os.makedirs(
-                    f"{output_file_directory}/{job_name}", exist_ok=True
-                )
-            except OSError as e:
-                LOGGER.error(
-                    f"Error creating directory {output_file_directory}/"
-                    f"{job_name}: {e}"
-                )
-                continue
-            for pv_event_stream in pv_event_streams:
-                for pv_event in pv_event_stream:
-                    try:
-                        with open(
-                            f"{output_file_directory}/{job_name}/"
-                            f"pv_event_sequence_{count}.json",
-                            "w",
-                        ) as f:
-                            json.dump(pv_event, f, indent=4)
-                        count += 1
-                    except IOError as e:
-                        LOGGER.error(
-                            f"Error writing file {output_file_directory}/"
-                            f"{job_name}/pv_event_sequence_{count}.json: {e}"
-                        )
-                        continue
+            handle_save_events(
+                job_name, pv_event_streams, output_file_directory
+            )
 
     return pv_event_gen
+
+
+def handle_save_events(
+    job_name: str,
+    pv_event_streams: Generator[
+        Generator[PVEvent, Any, None],
+        Any,
+        None,
+    ],
+    output_file_directory: str,
+) -> None:
+    """Function to handle the save events flag. Saves PVEvents as job json files
+    within a job folder within the output file directory.
+
+    :param job_name: The job name
+    :type job_name: `str`
+    :param pv_event_streams: Generator of generator of PVEvents
+    :type pv_event_streams: `Generator`[ `Generator`[:class`PVEvent`, `Any`, `None`], `Any`, `None`, ]
+    :param output_file_directory: Output file directory
+    :type output_file_directory: `str`
+    """
+    try:
+        os.makedirs(f"{output_file_directory}/{job_name}", exist_ok=True)
+    except OSError as e:
+        LOGGER.error(
+            f"Error creating directory {output_file_directory}/"
+            f"{job_name}: {e}"
+        )
+    file_no = 1
+    for pv_event_stream in pv_event_streams:
+        for pv_event in pv_event_stream:
+            save_pv_event_to_file(
+                job_name, pv_event, output_file_directory, file_no
+            )
+            file_no += 1
+
+
+def save_pv_event_to_file(
+    job_name: str, pv_event: PVEvent, output_file_directory: str, count: int
+) -> None:
+    """Saves a PVEvent as a json file to a folder within the output directory.
+
+    :param pv_event: The PVEvent to save
+    :type pv_event: :class:`PVEvent`
+    :param output_file_directory: Output file directory
+    :type output_file_directory: `str`
+    """
+    try:
+        with open(
+            f"{output_file_directory}/{job_name}/"
+            f"pv_event_sequence_{count}.json",
+            "w",
+        ) as f:
+            json.dump(pv_event, f, indent=4)
+    except IOError as e:
+        LOGGER.error(
+            f"Error writing file {output_file_directory}/"
+            f"{job_name}/pv_event_sequence_{count}.json: {e}"
+        )
