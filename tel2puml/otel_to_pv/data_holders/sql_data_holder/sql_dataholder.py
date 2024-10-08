@@ -361,6 +361,39 @@ class SQLDataHolder(DataHolder):
                 f"Number of nodes with inconsistent jobs: {res.rowcount}"
             )
 
+    def remove_jobs_outside_of_time_window(
+        self
+    ) -> None:
+        """Remove jobs within the buffer.
+        """
+        time_window = get_time_window(self.time_buffer, self)
+        with self.session as session:
+            stmt = (
+                sa.select(NodeModel.job_id)
+                .group_by(NodeModel.job_id)
+                .having(
+                    sa.func.count(1).filter(
+                        (
+                            (NodeModel.start_timestamp <= time_window[1])
+                            & (NodeModel.start_timestamp >= time_window[0])
+                        )
+                        | (
+                            (NodeModel.end_timestamp <= time_window[1])
+                            & (NodeModel.end_timestamp >= time_window[0])
+                        )
+                    )
+                    > 0
+                )
+            )
+            stmt_2 = sa.delete(NodeModel).where(
+                not_(NodeModel.job_id.in_(stmt))
+            )
+            res = session.execute(stmt_2)
+            session.commit()
+            logging.getLogger().info(
+                f"Number of events outside of time window: {res.rowcount}"
+            )
+
 
 def intialise_temp_table_for_root_nodes(
     sql_data_holder: SQLDataHolder,

@@ -303,15 +303,18 @@ class TestFieldMappingToCompiledJQ:
         # test case with one variable
         assert handle_string_joined_variables_jq_query(
             [["x"]]
-        ) == "(x | (if . == null then null else (. | tostring) end))"
+        ) == (
+            '([(x | (if . == null then null else (. | tostring) end))] | if'
+            ' any(. == null) then null else join("_") end)'
+        )
         # test case with multiple variables with single and multiple priority
         # variables
         assert handle_string_joined_variables_jq_query(
             [["x", "y"], ["z"]]
         ) == (
-            '(x // y | (if . == null then null else (. | tostring) end))'
-            ' + "_" + '
-            '(z | (if . == null then null else (. | tostring) end))'
+            '([(x // y | (if . == null then null else (. | tostring) end)),'
+            '(z | (if . == null then null else (. | tostring) end))]'
+            ' | if any(. == null) then null else join("_") end)'
         )
 
     @staticmethod

@@ -1,0 +1,40 @@
+@startuml
+digraph G {
+    rankdir=LR;
+    subgraph clusterA {
+        node [style=rounded];
+        A [
+            shape=record,
+        ];
+        A2 [
+            shape=record,
+            label="A"
+        ];
+        B [
+            shape=record,
+        ];
+        B2 [
+            shape=record,
+            label="B"
+        ];
+        C [
+            shape=record,
+        ];
+        label = "group_1"
+        C2 [
+            shape=record,
+            label="C"
+        ];
+    }
+    node [style=rounded]; 
+    D [
+        shape=record,
+    ];
+    A -> D;
+    A2 -> D;
+    B -> D;
+    B2 -> D;
+    C -> D;
+    C2 -> D;
+}
+@enduml

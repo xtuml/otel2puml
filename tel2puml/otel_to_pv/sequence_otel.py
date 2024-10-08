@@ -1,9 +1,20 @@
 """Module to sequence OTel data from grouped OTelEvents"""
 
 from typing import Any, Generator, Iterable
+from logging import getLogger
+
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent, OTelEventTypeMap
 from tel2puml.tel2puml_types import PVEvent
 from tel2puml.utils import unix_nano_to_pv_string
+
+logger = getLogger(__name__)
+
+
+class OTelTreeDisconnectedError(Exception):
+    """Exception raised when the OTel tree is disconnected."""
+
+    def __init__(self, message: str = "OTel tree is disconnected.") -> None:
+        super().__init__(message)
 
 
 def order_groups_by_start_timestamp(
@@ -193,7 +204,8 @@ def sequence_otel_event_job(
     async_flag: bool = False,
     event_to_async_group_map: dict[str, dict[str, str]] | None = None,
 ) -> Generator[PVEvent, Any, None]:
-    """Sequence OTel events in a job.
+    """Sequence OTel events in a job. Requires the input dictionary to contain
+    all events in the job.
 
     :param event_id_to_event_map: A dictionary mapping event IDs to OTelEvents.
     :type event_id_to_event_map: `dict`[`str`, :class:`OTelEvent`]
@@ -356,6 +368,31 @@ def sequence_otel_job_id_streams(
     )
 
 
+def convert_otel_event_stream_to_event_id_to_otelevent_map(
+    otel_event_stream: Iterable[OTelEvent],
+) -> dict[str, OTelEvent]:
+    """
+    Converts a stream of OTelEvents to a mapping from event IDs to OTelEvent
+    objects.
+
+    :param otel_event_stream: A stream of OTelEvents.
+    :type otel_event_stream: `Iterable`[:class:`OTelEvent`]
+    :return: A dictionary mapping event IDs to OTelEvent objects.
+    :rtype: `dict`[`str`, :class:`OTelEvent`]
+    :raisesd OTelTreeDisconnectedError: If refernced parent event IDs do not
+    exist in the stream.
+    """
+    event_id_to_otel_event_map: dict[str, OTelEvent] = {}
+    parent_event_ids: set[str] = set()
+    for otel_event in otel_event_stream:
+        event_id_to_otel_event_map[otel_event.event_id] = otel_event
+        if otel_event.parent_event_id is not None:
+            parent_event_ids.add(otel_event.parent_event_id)
+    if not parent_event_ids.issubset(event_id_to_otel_event_map.keys()):
+        raise OTelTreeDisconnectedError()
+    return event_id_to_otel_event_map
+
+
 def job_ids_to_eventid_to_otelevent_map(
     job_id_streams: Iterable[Iterable[OTelEvent]],
 ) -> Generator[dict[str, OTelEvent], Any, None]:
@@ -370,4 +407,12 @@ def job_ids_to_eventid_to_otelevent_map(
     :rtype: `Generator`[`dict`[`str`, :class:`OTelEvent`], `Any`, `None`]
     """
     for job_group in job_id_streams:
-        yield {otel_event.event_id: otel_event for otel_event in job_group}
+        try:
+            yield convert_otel_event_stream_to_event_id_to_otelevent_map(
+                job_group
+            )
+        except OTelTreeDisconnectedError:
+            logger.warning(
+                "Parent events are missing for the job so the job cannot be "
+                "sequenced when the tree is broken."
+            )

@@ -158,9 +158,9 @@ def field_spec_with_variables_1_expected_jq() -> str:
         " catch null) as"
         " $out0concat00"
         " | (try $var2.third_1.third_2 catch null) as $out0concat10"
-        " | (($out0concat00 | (if . == null then null else (. | tostring) "
-        'end)) + "_" + ($out0concat10 | (if . == null then null else (. | '
-        "tostring) end)))"
+        " | (([($out0concat00 | (if . == null then null else (. | tostring) "
+        'end)),($out0concat10 | (if . == null then null else (. | '
+        'tostring) end))] | if any(. == null) then null else join("_") end))'
         " as"
         " $out0"
     )
@@ -172,9 +172,9 @@ def field_spec_with_variables_2_expected_jq() -> str:
     return (
         " | (try $var0.first.second.third catch null) as $out1concat00"
         " | (try $var0.first.second.third catch null) as $out1concat10"
-        " | (($out1concat00 | (if . == null then null else (. | tostring) "
-        'end)) + "_" + ($out1concat10 | (if . == null then null else (. | '
-        "tostring) end)))"
+        " | (([($out1concat00 | (if . == null then null else (. | tostring) "
+        'end)),($out1concat10 | (if . == null then null else (. | '
+        'tostring) end))] | if any(. == null) then null else join("_") end))'
         " as"
         " $out1"
     )
@@ -186,9 +186,9 @@ def field_spec_with_variables_3_expected_jq() -> str:
     return (
         " | (try $var3.fifth catch null) as $out2concat00"
         " | (try $var3.fifth catch null) as $out2concat10"
-        " | (($out2concat00 | (if . == null then null else (. | tostring) "
-        'end)) + "_" + ($out2concat10 | (if . == null then null else (. | '
-        "tostring) end)))"
+        " | (([($out2concat00 | (if . == null then null else (. | tostring) "
+        'end)),($out2concat10 | (if . == null then null else (. | '
+        'tostring) end))] | if any(. == null) then null else join("_") end))'
         " as"
         " $out2"
     )
@@ -203,8 +203,9 @@ def field_spec_with_variables_4_expected_jq() -> str:
         " catch null) as"
         " $out3concat00"
         " | (try $var2.third_1.third_2 catch null) as $out3concat01"
-        " | (($out3concat00 // $out3concat01 | (if . == null then null else "
-        "(. | tostring) end)))"
+        " | (([($out3concat00 // $out3concat01 | (if . == null then null else "
+        '(. | tostring) end))] | if any(. == null) then null else join("_") '
+        "end))"
         " as"
         " $out3"
     )
