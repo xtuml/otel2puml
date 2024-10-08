@@ -49,12 +49,10 @@ Although this tool was designed for use with the Protocol Verifier, as a standal
 By converting OpenTelemetry data to PlantUML diagrams, this tool bridges the gap between raw observability data and easily understandable visual representations, enhancing your ability to develop, maintain, and optimise complex distributed systems.
 
 ## Features
-* CLI functionality to convert JSON PV event sequences into PlantUML activity diagrams
-* Flexible, extensible architecture
-* Currently in development:
-  * Finding unique sequences within OTel data
-  * Processing unique sequences into PlantUML activity diagrams
-  * Processing alternative data formats
+* Convert OpenTelemetry (OTel) JSON data into detailed PlantUML activity diagrams with flexible output options and multiple subcommands for various processing needs.
+* Easily customize and extend the tool to support new data formats or processing requirements through a modular design.
+* Identify and extract unique event sequences from OTel data
+* Produce clear and comprehensive PlantUML activity diagrams that accurately depict the system.
 
 ## Quick Start
 
@@ -64,7 +62,7 @@ To quickly convert a PV event sequence JSON to a PlantUML activity diagram:
 2. Run the following command:
 
 ```sh
-python -m tel2puml your_otel_data.json -o output_diagram.puml
+python -m pv2puml pv_file.json
 ```
 
 3. Open output_diagram.puml with a PlantUML viewer to see your diagram.
@@ -106,7 +104,7 @@ python -m tel2puml your_otel_data.json -o output_diagram.puml
 ```
 ## Example Output
 ```sh
-python -m tel2puml example_above.json -o output_diagram.puml -sn "Example Sequence"
+python -m tel2puml pv2puml example_above.json -jn "output_diagram"
 ```
 
 ![](docs/images/example_sequence_for_readme.svg)
@@ -199,67 +197,137 @@ The devcontainer will automatically set up the environment with all necessary de
 
 ## tel2puml CLI Documentation
 
-`tel2puml` is a command-line tool for converting job JSON files to PlantUML sequence diagrams.
+`tel2puml` is a command-line tool designed to convert [OpenTelemetry](https://opentelemetry.io/)  into [PlantUML](https://plantuml.com/) sequence diagrams.
 
 ### Usage
 
-```sh
-python -m tel2puml [-h] [file_paths] [-fp dir] [-o file] [-sn name] [-group-by-job]
+The `tel2puml` CLI provides several subcommands to handle different data processing scenarios:
+
+- `otel2puml`: Convert OpenTelemetry data directly into PlantUML sequence diagrams.
+- `otel2pv`: Convert OpenTelemetry data into an intermediate PV format.
+- `pv2puml`: Convert PV data into PlantUML sequence diagrams.
+
+### General Syntax
+
+```bash
+python -m tel2puml [subcommand] [options]
 ```
 
-### Options
+### Subcommands and Options
 
-- `-h`, `--help`: Show this help message and exit.
+#### `otel2puml`
 
-- `-fp dir`, `--folder-path dir`: 
-  Path to folder containing job JSON files. 
-  Default: current directory.
+Converts OpenTelemetry data directly into a PlantUML sequence diagram.
 
-- `-o file`, `--output file`: 
-  Output file path for the generated PlantUML file. 
-  Default: `./default.puml`
+**Usage:**
 
-- `-sn name`, `--sequence-name name`: 
-  Name given to the PlantUML sequence diagram. 
-  Default: `default_name`
-
-- `file_paths`: 
-  Input .json files containing job data. Multiple files can be specified.
-
-- `-group-by-job`: 
-  Group events by job ID. This option doesn't take any value.
-
-### Examples
-
-1. Convert a folder of job JSON files to a PlantUML sequence diagram file:
-
-```sh
-python -m tel2puml -fp /path/to/folder -o /path/to/output.puml
+```bash
+python -m tel2puml otel2puml -c CONFIG_FILE [options]
 ```
 
-2. Convert a list of job JSON files to a PlantUML sequence diagram file:
+**Options:**
 
-```sh
-python -m tel2puml file1.json file2.json -o /path/to/output.puml
+- `-c`, `--config`: **(Required)** Path to the configuration YAML file. [Usage](docs/user/Config.md)
+- `-ni`, `--no-ingest`: Do not load data into the data holder.
+- `-ug`, `--unique-graphs`: Find unique graphs within the data holder.
+- `-o`, `--output-dir`: Output directory path (default is the current directory). Nested folders are not supported.
+
+**Example:**
+
+```bash
+python -m tel2puml otel2puml -c /path/to/config.yaml -o /output/path/
 ```
 
-3. Convert a folder of job JSON files to a PlantUML sequence diagram file with a custom name:
+#### `otel2pv`
 
-```sh
-python -m tel2puml -fp /path/to/folder -o /path/to/output.puml -sn "My Sequence Diagram"
+Converts OpenTelemetry data into an intermediate PV format.
+
+**Usage:**
+
+```bash
+python -m tel2puml otel2pv -c CONFIG_FILE [options]
 ```
 
-4. Convert a folder of job JSON files to PlantUML sequence diagram file, grouping PV Events by job ID:
+**Options:**
 
-```sh
-python -m tel2puml -fp /path/to/folder -o /path/to/output.puml -sn "My Sequence Diagram" -group-by-job
+- `-c`, `--config`: **(Required)** Path to the configuration YAML file. [Usage](docs/user/Config.md)
+- `-ni`, `--no-ingest`: Do not load data into the data holder.
+- `-ug`, `--unique-graphs`: Find unique graphs within the data holder.
+- `-se`, `--save-events`: Save PVEvents in intermediate format.
+- `-o`, `--output-dir`: Output directory path (default is the current directory).
+
+**Example:**
+
+```bash
+python -m tel2puml otel2pv -c /path/to/config.yaml -se
 ```
 
-### Behaviour
+#### `pv2puml`
 
-- If individual file paths are provided, the tool will convert those specific files to a single PlantUML diagram.
-- If the `-group-by-job` option is used, the tool will process all files in the specified folder, grouping events by job ID and outputting a PlantUML file to the specified output filepath.
-- If neither individual files nor the `-group-by-job` option are specified, the tool will convert all JSON files in the specified folder (or current directory if not specified) to a single PlantUML diagram.
+Converts PV data into PlantUML sequence diagrams.
+
+**Usage:**
+
+```bash
+python -m tel2puml pv2puml [options] [FILE_PATHS...]
+```
+
+**Options:**
+
+- `-fp`, `--folder-path`: Path to a folder containing job JSON files. Cannot be used with `FILE_PATHS`.
+- `FILE_PATHS`: One or more files containing job data. Cannot be used with `-fp`.
+- `-jn`, `--job-name`: Name for the PlantUML sequence diagram and output file prefix (default is `"default_name"`).
+- `-group-by-job`: Group events by job ID.
+- `-o`, `--output-dir`: Output directory path (default is the current directory).
+
+**Notes:**
+
+- You must provide either `-fp` or `FILE_PATHS`, but not both.
+- The `-group-by-job` option is useful when you have events from multiple jobs and want to separate them in the diagram.
+
+**Examples:**
+
+- Convert a folder of job files into a PlantUML sequence diagram:
+
+  ```bash
+  python -m pv2puml -fp /path/to/folder -o /path/to/output/
+  ```
+
+- Convert specific job json files into a PlantUML sequence diagram:
+
+  ```bash
+  python -m pv2puml file1.json file2.json -o /path/to/output/
+  ```
+
+- Convert a folder of job JSON files with a custom job name:
+
+  ```bash
+  python -m pv2puml -fp /path/to/folder -jn "MySequenceDiagram" -o /path/to/output/
+  ```
+
+- Convert a folder of job JSON files and group events by job ID:
+
+  ```bash
+  python -m pv2puml -fp /path/to/folder -group-by-job -o /path/to/output/
+  ```
+
+### Global Options
+
+- `-o`, `--output-dir`: Specify the output directory for generated files. Defaults to the current directory. Nested folders are not supported.
+
+## Help and Usage Information
+
+For detailed help on each subcommand, use the `-h` or `--help` option:
+
+```bash
+otel2puml [subcommand] -h
+```
+
+**Example:**
+
+```bash
+otel2puml pv2puml -h
+```
 
 ## Technical Implementation
 
