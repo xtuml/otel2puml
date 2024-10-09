@@ -165,7 +165,7 @@ class TestPUMLOperatorNode:
                     tab_size=tab_size
                 ) == ([
                     " " * indent + "switch (XOR)",
-                    " " * (indent + tab_size) + "case ()"
+                    " " * (indent + tab_size) + 'case ("")'
                 ], 2)
         # test END_XOR
         for indent in [0, 4]:

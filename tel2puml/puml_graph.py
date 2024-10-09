@@ -24,8 +24,8 @@ from tel2puml.loop_detection.loop_types import DUMMY_BREAK_EVENT_TYPE
 # to add to the next line within the block
 
 OPERATOR_NODE_PUML_MAP = {
-    ("START", "XOR"): (("switch (XOR)", "case ()"), 2, 0),
-    ("PATH", "XOR"): (("case ()",), 0, 1),
+    ("START", "XOR"): (("switch (XOR)", 'case ("")'), 2, 0),
+    ("PATH", "XOR"): (('case ("")',), 0, 1),
     ("END", "XOR"): (("endswitch",), -2, 2),
     ("START", "AND"): (("fork",), 1, 0),
     ("PATH", "AND"): (("fork again",), 0, 1),
