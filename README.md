@@ -339,17 +339,13 @@ Documentation for tel2puml can be found in the [docs](docs) folder. This contain
 
 ## Dependencies
 
-TEL2PUML depends on two other repositories:
+TEL2PUML depends on one other repository:
 
 1. [Janus](https://github.com/xtuml/janus): 
 
    Janus ingests PUML activity diagram files and generates event sequences from them.
 
-2. [Erebus](https://github.com/xtuml/erebus):
-
-   Erebus is a test harness framework for the protocol verifier.
-
-These dependencies are automatically managed when using the devcontainer setup or when running the `install_repositories.sh` script during manual installation.
+This dependency is automatically managed when using the devcontainer setup or when running the `install_repositories.sh` script during manual installation.
 
 ## Contributing
 

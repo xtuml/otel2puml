@@ -13,14 +13,3 @@ pip install -r requirements.txt
 pip install .
 cd ..
 rm -f -r janus/
-
-# erebus - test harness
-cd /tmp/
-git clone https://github.com/xtuml/erebus.git
-cd erebus
-git fetch --all --tags
-git checkout tags/v0.2.1-beta -b latest 
-pip install -r requirements.txt
-pip install .
-cd ..
-rm -f -r erebus/
