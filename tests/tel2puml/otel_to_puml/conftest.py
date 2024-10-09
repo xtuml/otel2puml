@@ -363,8 +363,8 @@ def sql_data_holder_with_otel_jobs(
     sql_data_holder = SQLDataHolder(
         config=mock_sql_config,
     )
-    sql_data_holder.min_timestamp = 10**12
-    sql_data_holder.max_timestamp = 2 * 10**12
+    sql_data_holder._min_timestamp = 10**12
+    sql_data_holder._max_timestamp = 2 * 10**12
     with sql_data_holder:
         for otel_events in otel_jobs.values():
             for otel_event in otel_events:

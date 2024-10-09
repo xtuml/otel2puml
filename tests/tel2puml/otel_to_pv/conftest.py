@@ -1156,8 +1156,8 @@ def sql_data_holder_with_otel_jobs(
     sql_data_holder = SQLDataHolder(
         config=mock_sql_config,
     )
-    sql_data_holder.min_timestamp = 10**12
-    sql_data_holder.max_timestamp = 2 * 10**12
+    sql_data_holder._min_timestamp = 10**12
+    sql_data_holder._max_timestamp = 2 * 10**12
     with sql_data_holder:
         for otel_events in otel_jobs.values():
             for otel_event in otel_events:
@@ -1181,8 +1181,8 @@ def sql_data_holder_with_multiple_otel_job_names(
     sql_data_holder = SQLDataHolder(
         config=mock_sql_config,
     )
-    sql_data_holder.min_timestamp = 10**12
-    sql_data_holder.max_timestamp = 2 * 10**12
+    sql_data_holder._min_timestamp = 10**12
+    sql_data_holder._max_timestamp = 2 * 10**12
     with sql_data_holder:
         for otel_events in otel_jobs_multiple_job_names.values():
             for otel_event in otel_events:
@@ -1204,8 +1204,8 @@ def sql_data_holder_with_shuffled_otel_events(
     sql_data_holder = SQLDataHolder(
         config=mock_sql_config,
     )
-    sql_data_holder.min_timestamp = 10**12
-    sql_data_holder.max_timestamp = 2 * 10**12
+    sql_data_holder._min_timestamp = 10**12
+    sql_data_holder._max_timestamp = 2 * 10**12
     with sql_data_holder:
         shuffled_tuples = [
             ("1", 0),
@@ -1241,8 +1241,8 @@ def sql_data_holder_otel_jobs_with_job_names_on_root(
     sql_data_holder = SQLDataHolder(
         config=mock_sql_config,
     )
-    sql_data_holder.min_timestamp = 10**12
-    sql_data_holder.max_timestamp = 2 * 10**12
+    sql_data_holder._min_timestamp = 10**12
+    sql_data_holder._max_timestamp = 2 * 10**12
     with sql_data_holder:
         for otel_events in otel_jobs_with_job_names_on_root.values():
             for otel_event in otel_events:
