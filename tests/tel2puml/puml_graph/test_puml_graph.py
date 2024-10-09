@@ -10,6 +10,7 @@ from tel2puml.tel2puml_types import (
 from tel2puml.puml_graph import (
     PUMLGraph,
     PUMLEventNode,
+    PUMLKillNode,
     PUMLOperatorNode,
     OPERATOR_NODE_PUML_MAP,
     update_graph_for_dummy_break_event_node,
@@ -138,6 +139,26 @@ class TestPUMLEventNode:
                     " " * (indent + tab_size) + ":event;",
                     " " * indent + "repeat while"
                 ], 0)
+
+
+class TestPUMLKillNode:
+    @staticmethod
+    def test_init() -> None:
+        """Tests the __init__ method."""
+        kill_node = PUMLKillNode(1)
+        assert kill_node.node_id == ("KILL", 1)
+        assert kill_node.node_type == "KILL"
+        assert kill_node.extra_info == {}
+
+    @staticmethod
+    def test_write_uml_block() -> None:
+        """Tests the write_uml_block method."""
+        kill_node = PUMLKillNode(1)
+        for indent in [0, 4]:
+            for tab_size in [0, 4]:
+                assert kill_node.write_uml_blocks(
+                    indent=indent, tab_size=tab_size
+                ) == ([" " * indent + "detach"], 0)
 
 
 class TestPUMLOperatorNode:
