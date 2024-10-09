@@ -4,6 +4,8 @@ import os
 import json
 from typing import Generator, Any
 
+from tqdm import tqdm
+
 from tel2puml.otel_to_pv.config import IngestDataConfig, SequenceModelConfig
 from tel2puml.otel_to_pv.ingest_otel_data import (
     ingest_data_into_dataholder,
@@ -85,6 +87,7 @@ def otel_to_pv(
         for job_name, job_id_streams in job_name_group_streams
     )
     if save_events:
+        print("Saving PVEvents to job json files...")
         for job_name, pv_event_streams in pv_event_gen:
             handle_save_events(
                 job_name, pv_event_streams, output_file_directory
@@ -121,13 +124,23 @@ def handle_save_events(
             f"{job_name}: {e}"
         )
     file_no = 1
-    for pv_event_stream in pv_event_streams:
-        for pv_event in pv_event_stream:
-            save_pv_event_to_file(
-                job_name, pv_event, output_file_directory, file_no
-            )
-            file_no += 1
-
+    with tqdm(
+        desc=f"Job: {job_name} | Events saved",
+        unit="event",
+        total=None,
+        dynamic_ncols=True,
+    ) as pbar:
+        for pv_event_stream in pv_event_streams:
+            for pv_event in pv_event_stream:
+                save_pv_event_to_file(
+                    job_name, pv_event, output_file_directory, file_no
+                )
+                file_no += 1
+                pbar.update(1)
+                pbar.set_description(
+                    f"Job: {job_name} | Events saved: {file_no - 1}"
+                )
+    print(f"All events for job '{job_name}' have been saved.")
 
 def save_pv_event_to_file(
     job_name: str, pv_event: PVEvent, output_file_directory: str, count: int

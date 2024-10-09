@@ -46,6 +46,8 @@ def otel_to_puml(
             getLogger(__name__).error(f"Error creating directory.{e}")
             return
 
+    print(f"Processing component: {components}...")
+
     match components:
         case "otel2puml" | "otel2pv":
             if otel_to_pv_options is None:
@@ -53,6 +55,7 @@ def otel_to_puml(
                     f"'{components}' has been selected, 'otel_to_pv_options'"
                     " is required."
                 )
+            print("Converting OpenTelemetry data to PVEvent streams...")
             pv_streams: Union[
                 Generator[
                     tuple[
@@ -71,7 +74,12 @@ def otel_to_puml(
                 **otel_to_pv_options,
                 output_file_directory=output_file_directory,
             )
+            print(f"Conversion completed for {components}.")
             if components == "otel2pv":
+                print(
+                    "Otel to PV conversion done. Exiting as no further steps"
+                    " were requested."
+                )
                 return
         case "pv2puml":
             if pv_to_puml_options is None:
@@ -79,11 +87,15 @@ def otel_to_puml(
                     "'pv2puml' has been selected, 'pv_to_puml_options' is"
                     " required."
                 )
+            print("Converting PV files to PVEvent streams...")
             pv_streams = pv_files_to_pv_streams(**pv_to_puml_options)
+            print(f"Conversion completed for {components}.")
         case _:
             raise ValueError(
                 "components should be one of 'otel2puml', 'otel2pv',"
                 " 'pv2puml'"
             )
     # Convert streams to puml files
+    print(f"Saving PUML files to '{output_file_directory}'...")
     pv_streams_to_puml_files(pv_streams, output_file_directory)
+    print("PUML files generation completed successfully!")
