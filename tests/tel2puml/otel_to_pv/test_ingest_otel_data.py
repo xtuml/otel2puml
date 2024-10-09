@@ -188,7 +188,7 @@ def test_fetch_data_holder(mock_yaml_config_dict: dict[str, Any]) -> None:
     data_holder = fetch_data_holder(ingest_data_config)
     assert isinstance(data_holder, SQLDataHolder)
     assert data_holder.batch_size == 5
-    assert data_holder.max_timestamp == 0
-    assert data_holder.min_timestamp == 999999999999999999999999999999999999999
+    assert data_holder.min_timestamp == 0
+    assert data_holder.max_timestamp == 9223372036854775807
     assert not data_holder.node_models_to_save
     assert not data_holder.node_relationships_to_save

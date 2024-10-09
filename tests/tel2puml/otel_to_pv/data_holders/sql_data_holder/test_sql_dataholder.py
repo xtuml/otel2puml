@@ -51,9 +51,9 @@ class TestSQLDataHolder:
             holder = SQLDataHolder(mock_sql_config)
             # Test the super().__init__() method
             assert (
-                holder.min_timestamp == 999999999999999999999999999999999999999
+                holder._min_timestamp == 9223372036854775807
             )
-            assert holder.max_timestamp == 0
+            assert holder._max_timestamp == 0
             # Test attributes set correctly
             assert holder.batch_size == 10
             assert holder.node_models_to_save == []
@@ -473,7 +473,7 @@ class TestSQLDataHolder:
         caplog: LogCaptureFixture,
     ) -> None:
         """Test the remove_jobs_outside_of_time_window function."""
-        sql_data_holder_with_otel_jobs.max_timestamp = 10**12 + 60 * 10**10
+        sql_data_holder_with_otel_jobs._max_timestamp = 10**12 + 60 * 10**10
         caplog.clear()
         caplog.set_level(logging.INFO)
         sql_data_holder_with_otel_jobs.remove_jobs_outside_of_time_window()

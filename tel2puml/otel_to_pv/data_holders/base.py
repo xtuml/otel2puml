@@ -19,8 +19,33 @@ class DataHolder(ABC):
     def __init__(self) -> None:
         """Constructor method."""
 
-        self.min_timestamp: int = 999999999999999999999999999999999999999
-        self.max_timestamp: int = 0
+        self._min_timestamp: int = 9223372036854775807
+        self._max_timestamp: int = 0
+
+    @property
+    def max_timestamp(self) -> int:
+        """Property to get the max timestamp. If the max timestamp is less than
+        the min timestamp, return the maximum value of an sqlite int
+        (292 years in nanoseconds).
+
+        :return: The max timestamp
+        :rtype: `int`
+        """
+        if self._max_timestamp < self._min_timestamp:
+            return 9223372036854775807
+        return self._max_timestamp
+
+    @property
+    def min_timestamp(self) -> int:
+        """Property to get the min timestamp. If the min timestamp is greater
+        than the max timestamp, return 0.
+
+        :return: The min timestamp
+        :rtype: `int`
+        """
+        if self._min_timestamp > self._max_timestamp:
+            return 0
+        return self._min_timestamp
 
     def save_data(self, otel_event: OTelEvent) -> None:
         """Method to save an OTelEvent, and keep track of the min and max
@@ -29,10 +54,13 @@ class DataHolder(ABC):
         :param otel_event: An OTelEvent object
         :type otel_event: :class: `OTelEvent`
         """
-        self.min_timestamp = min(
-            self.min_timestamp, otel_event.start_timestamp
+        self._min_timestamp = min(
+            self._min_timestamp, otel_event.start_timestamp
         )
-        self.max_timestamp = max(self.max_timestamp, otel_event.end_timestamp)
+        self._max_timestamp = max(
+            self._max_timestamp,
+            otel_event.end_timestamp
+        )
         self._save_data(otel_event)
 
     def __enter__(self) -> Self:
