@@ -2,13 +2,90 @@
 
 from typing import Generator, Any, Optional
 import random
+from uuid import uuid4
 
-from test_harness.protocol_verifier.simulator_data import (  # type: ignore[import-untyped]  # noqa: E501
-    Job,
-    generate_single_events,
-)
 from test_event_generator.io.run import puml_file_to_test_events  # type: ignore[import-untyped]  # noqa: E501
 from tel2puml.tel2puml_types import DUMMY_START_EVENT, PVEvent, DUMMY_EVENT
+
+
+class Job:
+    """A class to represent a job."""
+
+    def __init__(self) -> None:
+        """Initializes the job."""
+        self.events: list[PVEvent] = []
+
+    def parse_input_job(self, jobfile: list[dict[str, Any]]) -> None:
+        """Parses the input job file.
+
+        :param jobfile: The job file to parse.
+        :type jobfile: `list`[`dict`[`str`, `Any`]]
+        """
+        if len(self.events) > 0:
+            raise ValueError("The job already has events.")
+        for event in jobfile:
+            pv_event = transform_dict_into_pv_event(event)
+            self.events.append(pv_event)
+
+    @staticmethod
+    def sim_event(
+        event: PVEvent,
+        job_id: str,
+        event_id_map: dict[str, str],
+    ) -> PVEvent:
+        """Simulates an event.
+
+        :param event: The event to simulate.
+        :type event: :class:`PVEvent`
+        :param job_id: The job id.
+        :type job_id: `str`
+        :param event_id_map: The event id map.
+        :type event_id_map: `dict`[`str`, `str`]
+        :return: The simulated event.
+        :rtype: :class:`PVEvent`
+        raises ValueError: If the some event ids are not in the event id map.
+        """
+        previous_events: list[str] = []
+        if "previousEventIds" in event:
+            if isinstance(event["previousEventIds"], str):
+                previous_events = [event["previousEventIds"]]
+            else:
+                previous_events = event["previousEventIds"]
+        if not set([*previous_events, event["eventId"]]).issubset(
+            event_id_map.keys()
+        ):
+            raise ValueError(
+                "The some event ids are not in the event id map."
+            )
+        sim_event = event.copy()
+        sim_event["eventId"] = event_id_map[event["eventId"]]
+        sim_event["jobId"] = job_id
+        sim_event["previousEventIds"] = [
+            event_id_map[previous_event_id]
+            for previous_event_id in previous_events
+        ]
+        return sim_event
+
+    def create_new_event_id_map(self) -> dict[str, str]:
+        """Creates a new event id map.
+
+        :return: The new event id map.
+        :rtype: `dict`[`str`, `str`]
+        """
+        return {event["eventId"]: str(uuid4()) for event in self.events}
+
+    def simulate_job(self) -> Generator[PVEvent, Any, None]:
+        """Simulates the job.
+
+        :return: A generator that yields the events of the job.
+        :rtype: `Generator`[:class:`PVEvent`, `Any`, `None`]
+        """
+        event_id_map: dict[str, str] = self.create_new_event_id_map()
+        job_id = str(uuid4())
+        for event in self.events:
+            yield self.sim_event(
+                event, job_id, event_id_map
+            )
 
 
 def generate_test_data(
@@ -222,9 +299,8 @@ def generate_event_jsons(
     :return: A generator that yields the event jsons.
     :rtype: `Generator`[`PVEvent`, `Any`, `None`]
     """
-    for generator_of_datums in generate_single_events(jobs):
-        for datum in generator_of_datums:
-            yield transform_dict_into_pv_event(datum.kwargs["list_dict"][0])
+    for job in jobs:
+        yield from job.simulate_job()
 
 
 def generate_valid_jobs_from_puml_file(
@@ -250,5 +326,5 @@ def generate_valid_jobs_from_puml_file(
         list(test_jobs_with_info.keys())[0]
     ]["ValidSols"][0]:
         job = Job()
-        job.parse_input_jobfile(test_job_event_list)
+        job.parse_input_job(test_job_event_list)
         yield job
