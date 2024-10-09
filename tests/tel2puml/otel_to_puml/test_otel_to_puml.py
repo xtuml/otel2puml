@@ -233,12 +233,19 @@ class TestOtelToPuml:
         input_dir = tmp_path / "job_json"
 
         input_dir.mkdir(parents=True, exist_ok=True)
-
-        data_file = input_dir / "file1.json"
-        data_file.write_text(json.dumps(mock_job_json_file))
+        if group_by_job_id:
+            data_files: list[str] = []
+            for i, job_json in enumerate(mock_job_json_file):
+                data_file = input_dir / f"file{i}.json"
+                data_file.write_text(json.dumps(job_json))
+                data_files.append(str(data_file))
+        else:
+            data_file = input_dir / "file1.json"
+            data_file.write_text(json.dumps(mock_job_json_file))
+            data_files = [str(data_file)]
 
         pv_to_puml_options: PVPumlOptions = {
-            "file_list": [str(data_file)],
+            "file_list": data_files,
             "job_name": "TestName",
             "group_by_job_id": group_by_job_id,
         }
