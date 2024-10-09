@@ -26,7 +26,7 @@ jobs:
 
           pip install -r requirements.txt
       
-      - name: Install janus and erebus as packages
+      - name: Install janus as package
         run: |
           chmod +x ./scripts/install_repositories.sh && ./scripts/install_repositories.sh
 

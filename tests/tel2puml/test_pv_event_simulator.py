@@ -1,10 +1,127 @@
 """tests for module test_data_creation.py"""
+from typing import Any
+
+import pytest
+from pytest import MonkeyPatch
+
 from tel2puml.pv_event_simulator import (
     generate_valid_jobs_from_puml_file,
     generate_event_jsons,
     generate_test_data,
-    generate_test_data_event_sequences_from_puml
+    generate_test_data_event_sequences_from_puml,
+    Job,
 )
+from tel2puml.tel2puml_types import PVEvent
+
+
+class TestJob:
+    """Test class for Job"""
+    def input_job(self) -> list[PVEvent]:
+        """Returns a list of PVEvent objects"""
+        return [
+            PVEvent(
+                eventType="A",
+                jobId="B",
+                timestamp="2021-01-01T00:00:00",
+                eventId=f"{i}",
+                jobName="C",
+                applicationName="D",
+                previousEventIds=[] if i == 0 else [f"{i-1}"],
+            )
+            for i in range(2)
+        ]
+
+    def input_job_with_dict(self) -> list[dict[str, Any]]:
+        """Returns a list of dictionaries representing PVEvent objects"""
+        return [
+            {**event} for event in self.input_job()
+        ]
+
+    def test_init(self) -> None:
+        """tests for Job.__init__"""
+        job = Job()
+        assert job.events == []
+
+    def test_parse_input_job(self) -> None:
+        """tests for Job.parse_input_job_file"""
+        job = Job()
+        job.parse_input_job(self.input_job_with_dict())
+        assert len(job.events) == 2
+        assert job.events == self.input_job()
+
+    def test_sim_event(self) -> None:
+        """tests for Job.sim_event"""
+        events = self.input_job()
+        event = events[1]
+        sim_event = Job.sim_event(event, "X", {"0": "map0", "1": "map1"})
+        expected_event = PVEvent(
+            eventType="A",
+            jobId="X",
+            timestamp="2021-01-01T00:00:00",
+            eventId="map1",
+            jobName="C",
+            applicationName="D",
+            previousEventIds=["map0"],
+        )
+        assert sim_event == expected_event
+        # test case where event id map does not contain the event id
+        with pytest.raises(ValueError):
+            Job.sim_event(event, "X", {"0": "map0"})
+        # test case where event id map does not contain the previous event id
+        with pytest.raises(ValueError):
+            Job.sim_event(event, "X", {"1": "map1"})
+        # test positive case where the previous event is a string
+        event["previousEventIds"] = "0"
+        sim_event = Job.sim_event(event, "X", {"0": "map0", "1": "map1"})
+        assert sim_event == expected_event
+
+    @staticmethod
+    @pytest.fixture
+    def patch_uuid4(monkeypatch: MonkeyPatch) -> None:
+        """fixture to patch uuid4"""
+        import tel2puml.pv_event_simulator
+
+        to_pop_from = ["map0", "map1", "X"]
+        monkeypatch.setattr(
+            tel2puml.pv_event_simulator, "uuid4", lambda: to_pop_from.pop(0)
+        )
+
+    @pytest.mark.usefixtures("patch_uuid4")
+    def test_create_new_event_id_map(self) -> None:
+        """tests for Job.create_new_event_id_map"""
+        job = Job()
+        job.parse_input_job(self.input_job_with_dict())
+        event_id_map = job.create_new_event_id_map()
+        assert event_id_map == {"0": "map0", "1": "map1"}
+        # test case where the job has no events
+        job.events = []
+        event_id_map = job.create_new_event_id_map()
+        assert event_id_map == {}
+
+    @pytest.mark.usefixtures("patch_uuid4")
+    def test_simulate_job(self) -> None:
+        """tests for Job.simulate_job"""
+        job = Job()
+        job.parse_input_job(self.input_job_with_dict())
+        events = list(job.simulate_job())
+        assert len(events) == 2
+        for i, out_event, expected_event in zip(
+            range(2), events, self.input_job()
+        ):
+            assert (
+                out_event["applicationName"]
+                == expected_event["applicationName"]
+            )
+            assert out_event["eventType"] == expected_event["eventType"]
+            assert out_event["jobId"] == "X"
+            assert out_event["timestamp"] == expected_event["timestamp"]
+            assert out_event["jobName"] == expected_event["jobName"]
+            if i == 0:
+                assert out_event["previousEventIds"] == []
+                assert out_event["eventId"] == "map0"
+            else:
+                assert out_event["previousEventIds"] == ["map0"]
+                assert out_event["eventId"] == "map1"
 
 
 def test_generate_valid_jobs_from_puml_file() -> None:
@@ -15,7 +132,7 @@ def test_generate_valid_jobs_from_puml_file() -> None:
     assert len(result) == 1
     job = result[0]
     assert len(job.events) == 6
-    assert set([event.event_type for event in job.events]) == set(
+    assert set([event["eventType"] for event in job.events]) == set(
         ["A", "B", "C", "D", "E", "F"]
     )
 
