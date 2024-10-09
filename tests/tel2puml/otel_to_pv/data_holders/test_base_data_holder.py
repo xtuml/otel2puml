@@ -19,14 +19,14 @@ class TestDataHolder:
     @staticmethod
     def test__init__() -> None:
         """Test the __init__ method."""
-        data_holder = DataHolder()
+        data_holder = DataHolder()  # type: ignore[abstract]
         assert data_holder._max_timestamp == 0
         assert data_holder._min_timestamp == 9223372036854775807
 
     @staticmethod
     def test_max_timestamp() -> None:
         """Test the max_timestamp property."""
-        data_holder = DataHolder()
+        data_holder = DataHolder()  # type: ignore[abstract]
         assert data_holder.max_timestamp == 9223372036854775807
         data_holder._max_timestamp = 10**12
         assert data_holder.max_timestamp == 9223372036854775807
@@ -36,7 +36,7 @@ class TestDataHolder:
     @staticmethod
     def test_min_timestamp() -> None:
         """Test the min_timestamp property."""
-        data_holder = DataHolder()
+        data_holder = DataHolder()  # type: ignore[abstract]
         assert data_holder.min_timestamp == 0
         data_holder._min_timestamp = 10**12
         assert data_holder.min_timestamp == 0
