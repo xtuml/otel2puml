@@ -150,7 +150,7 @@ def save_pv_event_stream_to_file(
     output_file_directory: str,
     count: int,
     pbar: tqdm,
-) -> int:
+) -> None:
     """Saves a PVEvent as a json file to a folder within the output directory.
 
     :param pv_event_stream: The PVEvent stream to save
