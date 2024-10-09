@@ -4,8 +4,6 @@ import os
 import json
 from typing import Generator, Any
 
-from tqdm import tqdm
-
 from tel2puml.otel_to_pv.config import IngestDataConfig, SequenceModelConfig
 from tel2puml.otel_to_pv.ingest_otel_data import (
     ingest_data_into_dataholder,
@@ -124,31 +122,25 @@ def handle_save_events(
             f"{job_name}: {e}"
         )
     file_no = 1
-    with tqdm(
-        desc=f"Job: {job_name} | Events saved",
-        unit="event",
-        total=None,
-        dynamic_ncols=True,
-    ) as pbar:
-        for pv_event_stream in pv_event_streams:
-            for pv_event in pv_event_stream:
-                save_pv_event_to_file(
-                    job_name, pv_event, output_file_directory, file_no
-                )
-                file_no += 1
-                pbar.update(1)
-                pbar.set_description(
-                    f"Job: {job_name} | Events saved: {file_no - 1}"
-                )
+    print(f"Saving events for '{job_name}'...")
+    for pv_event_stream in pv_event_streams:
+        save_pv_event_stream_to_file(
+            job_name, pv_event_stream, output_file_directory, file_no
+        )
+        file_no += 1
     print(f"All events for job '{job_name}' have been saved.")
 
-def save_pv_event_to_file(
-    job_name: str, pv_event: PVEvent, output_file_directory: str, count: int
+
+def save_pv_event_stream_to_file(
+    job_name: str,
+    pv_event_stream: Generator[PVEvent, Any, None],
+    output_file_directory: str,
+    count: int,
 ) -> None:
     """Saves a PVEvent as a json file to a folder within the output directory.
 
-    :param pv_event: The PVEvent to save
-    :type pv_event: :class:`PVEvent`
+    :param pv_event_stream: The PVEvent stream to save
+    :type pv_event_stream: `Generator`[:class:`PVEvent`, `Any`, `None`]
     :param output_file_directory: Output file directory
     :type output_file_directory: `str`
     """
@@ -158,7 +150,7 @@ def save_pv_event_to_file(
             f"pv_event_sequence_{count}.json",
             "w",
         ) as f:
-            json.dump(pv_event, f, indent=4)
+            json.dump(list(pv_event_stream), f, indent=4)
     except IOError as e:
         raise IOError(
             f"Error writing file {output_file_directory}/"

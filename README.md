@@ -210,8 +210,11 @@ The `tel2puml` CLI provides several subcommands to handle different data process
 ### General Syntax
 
 ```bash
-python -m tel2puml [subcommand] [options]
+python -m tel2puml [-o output_directory] [subcommand] [options]
 ```
+
+** Global Options**
+- `-o`, `--output-dir`: Output directory path (default is the current directory). Nested folders are not supported.
 
 ### Subcommands and Options
 
@@ -222,7 +225,7 @@ Converts OpenTelemetry data directly into a PlantUML sequence diagram.
 **Usage:**
 
 ```bash
-python -m tel2puml otel2puml -c CONFIG_FILE [options]
+python -m tel2puml -o OUTPUT_DIR otel2puml -c CONFIG_FILE [options]
 ```
 
 **Options:**
@@ -230,12 +233,11 @@ python -m tel2puml otel2puml -c CONFIG_FILE [options]
 - `-c`, `--config`: **(Required)** Path to the configuration YAML file. [Usage](docs/user/Config.md)
 - `-ni`, `--no-ingest`: Do not load data into the data holder.
 - `-ug`, `--unique-graphs`: Find unique graphs within the data holder.
-- `-o`, `--output-dir`: Output directory path (default is the current directory). Nested folders are not supported.
 
 **Example:**
 
 ```bash
-python -m tel2puml otel2puml -c /path/to/config.yaml -o /output/path/
+python -m tel2puml -o /output/path/ otel2puml -c /path/to/config.yaml
 ```
 
 #### `otel2pv`
@@ -254,12 +256,11 @@ python -m tel2puml otel2pv -c CONFIG_FILE [options]
 - `-ni`, `--no-ingest`: Do not load data into the data holder.
 - `-ug`, `--unique-graphs`: Find unique graphs within the data holder.
 - `-se`, `--save-events`: Save PVEvents in intermediate format.
-- `-o`, `--output-dir`: Output directory path (default is the current directory).
 
 **Example:**
 
 ```bash
-python -m tel2puml otel2pv -c /path/to/config.yaml -se
+python -m tel2puml -o /output/path/ otel2pv -c /path/to/config.yaml -se
 ```
 
 #### `pv2puml`
@@ -278,7 +279,6 @@ python -m tel2puml pv2puml [options] [FILE_PATHS...]
 - `FILE_PATHS`: One or more files containing job data. Cannot be used with `-fp`.
 - `-jn`, `--job-name`: Name for the PlantUML sequence diagram and output file prefix (default is `"default_name"`).
 - `-group-by-job`: Group events by job ID.
-- `-o`, `--output-dir`: Output directory path (default is the current directory).
 
 **Notes:**
 
@@ -290,30 +290,26 @@ python -m tel2puml pv2puml [options] [FILE_PATHS...]
 - Convert a folder of job files into a PlantUML sequence diagram:
 
   ```bash
-  python -m pv2puml -fp /path/to/folder -o /path/to/output/
+  python -m tel2puml -o /path/to/output/ pv2puml -fp /path/to/folder
   ```
 
 - Convert specific job json files into a PlantUML sequence diagram:
 
   ```bash
-  python -m pv2puml file1.json file2.json -o /path/to/output/
+  python -m tel2puml -o /path/to/output/ pv2puml file1.json file2.json
   ```
 
 - Convert a folder of job JSON files with a custom job name:
 
   ```bash
-  python -m pv2puml -fp /path/to/folder -jn "MySequenceDiagram" -o /path/to/output/
+  python -m tel2puml -o /path/to/output/ pv2puml -fp /path/to/folder -jn "MySequenceDiagram"
   ```
 
 - Convert a folder of job JSON files and group events by job ID:
 
   ```bash
-  python -m pv2puml -fp /path/to/folder -group-by-job -o /path/to/output/
+  python -m tel2puml -o /path/to/output/ pv2puml -fp /path/to/folder -group-by-job
   ```
-
-### Global Options
-
-- `-o`, `--output-dir`: Specify the output directory for generated files. Defaults to the current directory. Nested folders are not supported.
 
 ## Help and Usage Information
 

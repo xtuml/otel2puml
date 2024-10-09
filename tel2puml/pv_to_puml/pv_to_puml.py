@@ -270,6 +270,7 @@ def pv_streams_to_puml_files(
     :type output_file_directory: `str`
     """
     for job_name, job_event_gen in pv_streams:
+        print(f"Converting {job_name} to PUML...")
         job_name = job_name.replace(" ", "_")
         puml_file_path = os.path.join(
             output_file_directory, f"{job_name}.puml"
@@ -278,6 +279,7 @@ def pv_streams_to_puml_files(
             job_event_gen,
             puml_file_path=puml_file_path,
         )
+        print(f"{job_name} successfully converted to PUML!")
 
 
 def pv_files_to_pv_streams(

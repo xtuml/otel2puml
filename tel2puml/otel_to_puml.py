@@ -89,7 +89,7 @@ def otel_to_puml(
                 )
             print("Converting PV files to PVEvent streams...")
             pv_streams = pv_files_to_pv_streams(**pv_to_puml_options)
-            print(f"Conversion completed for {components}.")
+            print(f"PVEvent streams generated for {components}.")
         case _:
             raise ValueError(
                 "components should be one of 'otel2puml', 'otel2pv',"
@@ -98,4 +98,4 @@ def otel_to_puml(
     # Convert streams to puml files
     print(f"Saving PUML files to '{output_file_directory}'...")
     pv_streams_to_puml_files(pv_streams, output_file_directory)
-    print("PUML files generation completed successfully!")
+    print("PUML files successfully generated!")
