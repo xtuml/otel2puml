@@ -4,8 +4,6 @@ import os
 import json
 from typing import Generator, Any
 
-from tqdm import tqdm
-
 from tel2puml.otel_to_pv.config import IngestDataConfig, SequenceModelConfig
 from tel2puml.otel_to_pv.ingest_otel_data import (
     ingest_data_into_dataholder,
@@ -127,29 +125,21 @@ def handle_save_events(
     print(f"Saving events for '{job_name}'...")
 
     file_no = 1
-    with tqdm(
-        desc=f"Job: {job_name} | Processed",
-        unit=" events",
-        total=None,
-        dynamic_ncols=True,
-    ) as pbar:
-        for pv_event_stream in pv_event_streams:
-            save_pv_event_stream_to_file(
-                job_name,
-                pv_event_stream,
-                output_file_directory,
-                file_no,
-                pbar,
-            )
-            file_no += 1
+    for pv_event_stream in pv_event_streams:
+        save_pv_event_stream_to_file(
+            job_name,
+            pv_event_stream,
+            output_file_directory,
+            file_no
+        )
+        file_no += 1
 
 
 def save_pv_event_stream_to_file(
     job_name: str,
     pv_event_stream: Generator[PVEvent, Any, None],
     output_file_directory: str,
-    count: int,
-    pbar: tqdm,
+    count: int
 ) -> None:
     """Saves a PVEvent as a json file to a folder within the output directory.
 
@@ -159,8 +149,6 @@ def save_pv_event_stream_to_file(
     :param count: Current file number
     :type count: `int`
     :type output_file_directory: `str`
-    :param pbar: The tqdm progress bar to update
-    :type pbar: `tqdm` instance
     """
     try:
         pv_event_list = list(pv_event_stream)
@@ -171,7 +159,6 @@ def save_pv_event_stream_to_file(
         )
         with open(file_path, "w") as f:
             json.dump(pv_event_list, f, indent=4)
-        pbar.update(len(pv_event_list))
     except IOError as e:
         raise IOError(
             f"Error writing file {output_file_directory}/{job_name}/"

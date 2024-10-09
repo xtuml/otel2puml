@@ -9,7 +9,6 @@ import yaml
 import pytest
 import sqlalchemy as sa
 from pytest import MonkeyPatch
-from tqdm import tqdm
 
 from tel2puml.otel_to_pv.otel_to_pv import (
     otel_to_pv,
@@ -395,7 +394,6 @@ class TestSavePVEventStreamsToFile:
             pv_stream,
             str(output_dir),
             count,
-            pbar=tqdm(),
         )
 
         expected_file = job_dir / f"pv_event_sequence_{count}.json"
@@ -432,7 +430,6 @@ class TestSavePVEventStreamsToFile:
                     pv_stream,
                     str(output_dir),
                     count,
-                    pbar=tqdm(),
                 )
         finally:
             # Restore permissions to delete the temp directory
