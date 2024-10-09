@@ -142,6 +142,7 @@ class TestPUMLEventNode:
 
 
 class TestPUMLKillNode:
+    """Tests for the PUMLKillNode class."""
     @staticmethod
     def test_init() -> None:
         """Tests the __init__ method."""
