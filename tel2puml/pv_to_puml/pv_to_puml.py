@@ -134,20 +134,19 @@ def pv_job_file_to_event_sequence(
     return out_data
 
 
-def pv_events_from_folder_to_event_stream(
-    folder_path: str,
+def pv_events_from_files_to_event_stream(
+    file_paths: list[str],
 ) -> Generator[PVEvent, Any, None]:
-    """Reads a folder of PV event json files and yields the events when
-    iterated over
+    """Reads a list of PV event json files and yields the events when iterated
+    over
 
-    :param folder_path: The path to the folder containing the PV event json
-    files
-    :type folder_path: `str`
+    :param file_paths: The paths to the PV event json files
+    :type file_paths: `list`[`str`]
     :return: A generator of events
     :rtype: `Generator`[:class:`PVEvent`, Any, None]
     """
-    for file_name in os.listdir(folder_path):
-        yield pv_event_file_to_event(os.path.join(folder_path, file_name))
+    for file_path in file_paths:
+        yield pv_event_file_to_event(file_path)
 
 
 def pv_job_files_to_event_sequence_streams(
@@ -204,54 +203,25 @@ def pv_jobs_from_folder_to_puml_file(
     pv_to_puml_file(pv_stream, puml_file_path, puml_name, keep_dummy_events)
 
 
-def pv_jobs_from_files_to_puml_file(
-    file_paths: list[str],
-    puml_file_path: str = "default.puml",
-    puml_name: str = "default_name",
-) -> None:
-    """Reads a list of PV job json array files and writes the PlantUML
-    sequence diagram to a file
+def pv_event_files_to_job_id_streams(
+    file_list: list[str] | None = None,
+) -> Generator[list[PVEvent], Any, None]:
+    """Converts PV event JSON files from a specified directory or a provided
+    file list into a generator of tuples.
 
-    :param file_paths: The paths to the PV job json files
-    :type file_paths: `list`[`str`]
-    :param puml_file_path: The path to save the PlantUML file to
-    :type puml_file_path: `str`
-    :param puml_name: The name of the PlantUML group to create
-    :type puml_name: `str`
+    Each tuple consists of the job name and a generator of lists of PVEvents.
+
+    :param file_list: A list of file paths to PV event JSON files. Defaults
+    to `None`.
+    :type file_list: `Optional`[`list`[`str`]]
+    :return: A generator that yields lists of PVEvents grouped by job_id.
+    :rtype: `Generator`[`list`[:class:`PVEvent`], `Any`, `None`]
     """
-    pv_stream = pv_job_files_to_event_sequence_streams(file_paths)
-    pv_to_puml_file(pv_stream, puml_file_path, puml_name)
-
-
-def pv_events_from_folder_to_puml_file(
-    folder_path: str,
-    puml_file_path: str = "default.puml",
-    puml_name: str = "default_name",
-    group_by_job: bool = True,
-) -> None:
-    """Reads a folder of PV json job array files, groups events by jobId and
-    writes the PlantUML sequence diagram
-
-    :param folder_path: The path to the folder containing the PV job json files
-    :type folder_path: `str`
-    :param puml_file_path: The filepath of the puml file output
-    :type puml_file_path: `str`
-    :param group_by_job: Boolean to group events by job id
-    :type group_by_job: `bool`
-    """
-    if not group_by_job:
-        return
-    # parse events from folder into pv stream
-    pv_stream = pv_events_from_folder_to_event_stream(folder_path)
-    # map job id to pv events
+    if file_list is None:
+        file_list = []
+    pv_stream = pv_events_from_files_to_event_stream(file_list)
     events_by_job_id = cluster_events_by_job_id(pv_stream)
-
-    # pv_stream expects Iterable[Iterable[PVEvent]]
-    pv_to_puml_file(
-        pv_stream=[pv_stream for pv_stream in events_by_job_id.values()],
-        puml_file_path=puml_file_path,
-        puml_name=puml_name,
-    )
+    yield from events_by_job_id.values()
 
 
 def pv_streams_to_puml_files(
@@ -311,18 +281,8 @@ def pv_files_to_pv_streams(
     """
     if file_list is None:
         file_list = []
-    pv_stream_sequence = pv_job_files_to_event_sequence_streams(file_list)
-
     if group_by_job_id:
-        events_by_job_id: dict[str, list[PVEvent]] = {}
-        for pv_stream in pv_stream_sequence:
-            clustered_events = cluster_events_by_job_id(pv_stream)
-            for job_id, events in clustered_events.items():
-                if job_id in events_by_job_id:
-                    events_by_job_id[job_id].extend(events)
-                else:
-                    events_by_job_id[job_id] = events
-
-        pv_stream_sequence = (events for events in events_by_job_id.values())
-
+        pv_stream_sequence = pv_event_files_to_job_id_streams(file_list)
+    else:
+        pv_stream_sequence = pv_job_files_to_event_sequence_streams(file_list)
     yield (job_name, pv_stream_sequence)
