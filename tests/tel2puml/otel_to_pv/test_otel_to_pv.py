@@ -9,6 +9,7 @@ import yaml
 import pytest
 import sqlalchemy as sa
 from pytest import MonkeyPatch
+from tqdm import tqdm
 
 from tel2puml.otel_to_pv.otel_to_pv import (
     otel_to_pv,
@@ -341,16 +342,20 @@ class TestOtelToPV:
         json_file_dir = tmp_path / "json_output" / "test_name"
         assert json_file_dir.exists()
         files = list(json_file_dir.iterdir())
-        assert len(files) == 8
+        assert len(files) == 4
 
-        for i, expected_content in enumerate(expected_job_json_content):
+        # 4 files, each with an array of 2 jobs
+        for i in range(4):
             file_path = json_file_dir / f"pv_event_sequence_{i+1}.json"
 
             assert file_path.exists()
 
             with file_path.open("r") as f:
                 file_content = json.load(f)
-                assert file_content == expected_content
+                assert (
+                    file_content
+                    == expected_job_json_content[(2 * i) : (2 * i) + 2]
+                )
 
 
 class TestSavePVEventStreamsToFile:
@@ -365,7 +370,6 @@ class TestSavePVEventStreamsToFile:
             "jobId": "test_job_id",
             "eventId": "1",
             "timestamp": "2024-10-08T12:00:00Z",
-            "previousEventIds": None,
             "applicationName": "test_app",
             "jobName": "test_job",
             "eventType": "test_event_A",
@@ -387,7 +391,12 @@ class TestSavePVEventStreamsToFile:
         job_dir.mkdir(parents=True, exist_ok=True)
 
         save_pv_event_stream_to_file(
-            job_name, pv_stream, str(output_dir), count
+            job_name,
+            pv_stream,
+            str(output_dir),
+            count,
+            events_processed=0,
+            pbar=tqdm(),
         )
 
         expected_file = job_dir / f"pv_event_sequence_{count}.json"
@@ -420,7 +429,12 @@ class TestSavePVEventStreamsToFile:
         try:
             with pytest.raises(IOError):
                 save_pv_event_stream_to_file(
-                    job_name, pv_stream, str(output_dir), count
+                    job_name,
+                    pv_stream,
+                    str(output_dir),
+                    count,
+                    events_processed=0,
+                    pbar=tqdm(),
                 )
         finally:
             # Restore permissions to delete the temp directory

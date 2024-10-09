@@ -4,6 +4,8 @@ import os
 import json
 from typing import Generator, Any
 
+from tqdm import tqdm
+
 from tel2puml.otel_to_pv.config import IngestDataConfig, SequenceModelConfig
 from tel2puml.otel_to_pv.ingest_otel_data import (
     ingest_data_into_dataholder,
@@ -121,14 +123,27 @@ def handle_save_events(
             f"Error creating directory {output_file_directory}/"
             f"{job_name}: {e}"
         )
-    file_no = 1
+
     print(f"Saving events for '{job_name}'...")
-    for pv_event_stream in pv_event_streams:
-        save_pv_event_stream_to_file(
-            job_name, pv_event_stream, output_file_directory, file_no
-        )
-        file_no += 1
-    print(f"All events for job '{job_name}' have been saved.")
+
+    file_no = 1
+    events_processed = 0
+    with tqdm(
+        desc=f"Job: {job_name} | Processed",
+        unit=" events",
+        total=None,
+        dynamic_ncols=True,
+    ) as pbar:
+        for pv_event_stream in pv_event_streams:
+            save_pv_event_stream_to_file(
+                job_name,
+                pv_event_stream,
+                output_file_directory,
+                file_no,
+                events_processed,
+                pbar,
+            )
+            file_no += 1
 
 
 def save_pv_event_stream_to_file(
@@ -136,23 +151,36 @@ def save_pv_event_stream_to_file(
     pv_event_stream: Generator[PVEvent, Any, None],
     output_file_directory: str,
     count: int,
-) -> None:
+    events_processed: int,
+    pbar: tqdm,
+) -> int:
     """Saves a PVEvent as a json file to a folder within the output directory.
 
     :param pv_event_stream: The PVEvent stream to save
     :type pv_event_stream: `Generator`[:class:`PVEvent`, `Any`, `None`]
     :param output_file_directory: Output file directory
+    :param count: Current file number
+    :type count: `int`
     :type output_file_directory: `str`
+    :param events_processed: Current total number of events processed
+    :type events_processed: `int`
+    :param pbar: The tqdm progress bar to update
+    :type pbar: `tqdm` instance
+    :return: Updated count of events processed
+    :rtype: `int`
     """
     try:
-        with open(
-            f"{output_file_directory}/{job_name}/"
-            f"pv_event_sequence_{count}.json",
-            "w",
-        ) as f:
-            json.dump(list(pv_event_stream), f, indent=4)
+        pv_event_list = list(pv_event_stream)
+
+        file_path = f"{output_file_directory}/{job_name}/pv_event_sequence_{count}.json"
+        with open(file_path, "w") as f:
+            json.dump(pv_event_list, f, indent=4)
+
+        events_processed += len(pv_event_list)
+
+        pbar.update(len(pv_event_list))
+        return events_processed
     except IOError as e:
         raise IOError(
-            f"Error writing file {output_file_directory}/"
-            f"{job_name}/pv_event_sequence_{count}.json: {e}"
+            f"Error writing file {output_file_directory}/{job_name}/pv_event_sequence_{count}.json: {e}"
         )
