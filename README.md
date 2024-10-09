@@ -214,7 +214,7 @@ python -m tel2puml [-o output_directory] [subcommand] [options]
 ```
 
 ** Global Options**
-- `-o`, `--output-dir`: Output directory path (default is the current directory). Nested folders are not supported.
+- `-o`, `--output-dir`: Output directory path (default is the current directory). Nested folder creation is not supported.
 
 ### Subcommands and Options
 
