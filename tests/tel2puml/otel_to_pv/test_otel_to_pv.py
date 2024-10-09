@@ -395,7 +395,6 @@ class TestSavePVEventStreamsToFile:
             pv_stream,
             str(output_dir),
             count,
-            events_processed=0,
             pbar=tqdm(),
         )
 
@@ -433,7 +432,6 @@ class TestSavePVEventStreamsToFile:
                     pv_stream,
                     str(output_dir),
                     count,
-                    events_processed=0,
                     pbar=tqdm(),
                 )
         finally:
