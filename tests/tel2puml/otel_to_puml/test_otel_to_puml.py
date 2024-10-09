@@ -310,7 +310,7 @@ class TestOtelToPuml:
         assert os.listdir(output_dir) == ["Frontend_TestJob"]
 
         job_json_folder_path = output_dir / "Frontend_TestJob"
-        assert sorted(os.listdir(job_json_folder_path)) == [
+        assert os.listdir(job_json_folder_path) == [
             "pv_event_sequence_1.json",
         ]
         expected_job_json_content = [
@@ -334,7 +334,6 @@ class TestOtelToPuml:
             },
         ]
         file_path = job_json_folder_path / "pv_event_sequence_1.json"
-
         assert file_path.exists()
 
         with file_path.open("r") as f:

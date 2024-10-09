@@ -172,8 +172,10 @@ def save_pv_event_stream_to_file(
     try:
         pv_event_list = list(pv_event_stream)
 
-        file_path = f"{output_file_directory}/{job_name}/"
-        f"pv_event_sequence_{count}.json"
+        file_path = (
+            f"{output_file_directory}/{job_name}/pv_event_sequence_"
+            f"{count}.json"
+        )
         with open(file_path, "w") as f:
             json.dump(pv_event_list, f, indent=4)
 
