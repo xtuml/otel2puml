@@ -206,10 +206,8 @@ def pv_jobs_from_folder_to_puml_file(
 def pv_event_files_to_job_id_streams(
     file_list: list[str] | None = None,
 ) -> Generator[list[PVEvent], Any, None]:
-    """Converts PV event JSON files from a specified directory or a provided
-    file list into a generator of tuples.
-
-    Each tuple consists of the job name and a generator of lists of PVEvents.
+    """File list of pv event files into a generator of lists of PV event
+    sequences grouped by job_id.
 
     :param file_list: A list of file paths to PV event JSON files. Defaults
     to `None`.
