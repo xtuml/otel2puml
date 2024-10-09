@@ -9,6 +9,9 @@ import pytest
 
 from tel2puml.pv_to_puml.pv_to_puml import (
     pv_to_puml_string,
+    pv_event_file_to_event,
+    pv_job_file_to_event_sequence,
+    pv_event_files_to_job_id_streams,
     pv_streams_to_puml_files,
     pv_files_to_pv_streams,
 )
@@ -62,6 +65,61 @@ def test_pv_to_puml_string() -> None:
     ) as file:
         expected_puml_string = file.read()
     assert check_puml_equivalence(puml_string, expected_puml_string)
+
+
+def test_pv_event_file_to_event(
+    mock_job_json_file: list[dict[str, Any]], tmp_path: Path
+) -> None:
+    """Test the `pv_event_file_to_event` function"""
+    file_path = tmp_path / "test.json"
+    with open(file_path, "w") as file:
+        json.dump(mock_job_json_file[0], file)
+    assert pv_event_file_to_event(file_path) == mock_job_json_file[0]
+    file_path = tmp_path / "test_error.json"
+    with open(file_path, "w") as file:
+        json.dump(mock_job_json_file, file)
+    with pytest.raises(ValueError):
+        pv_event_file_to_event(file_path)
+
+
+def test_pv_job_file_to_event_sequence(
+    mock_job_json_file: list[dict[str, Any]], tmp_path: Path
+) -> None:
+    """Test the `pv_job_file_to_event_sequence` function"""
+    file_path = tmp_path / "test.json"
+    with open(file_path, "w") as file:
+        json.dump(mock_job_json_file, file)
+    assert pv_job_file_to_event_sequence(file_path) == mock_job_json_file
+    # check case where file is not a list
+    file_path = tmp_path / "test_error.json"
+    with open(file_path, "w") as file:
+        json.dump(mock_job_json_file[0], file)
+    with pytest.raises(ValueError):
+        pv_job_file_to_event_sequence(file_path)
+    # check case when one of the event is not a dict
+    list_to_dump = mock_job_json_file[:2] + ["not a dict"]
+    file_path = tmp_path / "test_error_2.json"
+    with open(file_path, "w") as file:
+        json.dump(list_to_dump, file)
+    with pytest.raises(ValueError):
+        pv_job_file_to_event_sequence(file_path)
+
+
+def test_pv_event_files_to_job_id_streams(
+    mock_job_json_file: list[dict[str, Any]], tmp_path: Path
+) -> None:
+    """Test the `pv_event_files_to_job_id_streams` function"""
+    file_paths: list[str] = []
+    for event in mock_job_json_file:
+        file_path = tmp_path / f"{event['eventId']}.json"
+        with open(file_path, "w") as file:
+            json.dump(event, file)
+        file_paths.append(str(file_path))
+    jobs = list(pv_event_files_to_job_id_streams(file_paths))
+    assert len(jobs) == 1
+    assert sorted(
+        jobs[0], key=lambda x: x["eventId"],
+    ) == sorted(mock_job_json_file, key=lambda x: x["eventId"])
 
 
 def test_pv_streams_to_puml_files(
@@ -143,17 +201,40 @@ def test_pv_files_to_pv_streams(
 
     def create_json_file(
         input_dir: Path, file_name: str, data: list[dict[str, Any]]
-    ) -> Path:
+    ) -> list[str]:
         """Helper function to create json file"""
         input_dir.mkdir(parents=True, exist_ok=True)
         data_file = input_dir / file_name
         data_file.write_text(json.dumps(data))
-        return data_file
+        return [str(data_file)]
+
+    def create_event_files(
+        input_dir: Path, file_name: str, data: list[dict[str, Any]]
+    ) -> list[str]:
+        """Helper function to create event files"""
+        input_dir.mkdir(parents=True, exist_ok=True)
+        count = 0
+        file_paths: list[str] = []
+        for event in data:
+            file = input_dir / f"{file_name}_{count}.json"
+            with open(file, "w") as f:
+                f.write(json.dumps(event))
+            count += 1
+            file_paths.append(str(file))
+        return file_paths
 
     input_dir = tmp_path / "job_json"
-    data_file = create_json_file(input_dir, "file1.json", mock_job_json_file)
+
+    if group_by_job_id:
+        data_files = create_event_files(
+            input_dir, "job_id_001", mock_job_json_file
+        )
+    else:
+        data_files = create_json_file(
+            input_dir, "file1.json", mock_job_json_file
+        )
 
     pv_stream = pv_files_to_pv_streams(
-        file_list=[str(data_file)], group_by_job_id=group_by_job_id
+        file_list=data_files, group_by_job_id=group_by_job_id
     )
     verify_pv_events(pv_stream)
