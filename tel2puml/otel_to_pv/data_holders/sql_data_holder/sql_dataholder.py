@@ -4,6 +4,7 @@ from types import TracebackType
 from typing import Any, Generator, TypeVar, Iterable
 from itertools import groupby
 import logging
+import time
 
 import sqlalchemy as sa
 from sqlalchemy import create_engine, insert, or_, not_
@@ -12,6 +13,7 @@ from sqlalchemy.exc import OperationalError, IntegrityError
 from sqlalchemy.orm.exc import DetachedInstanceError
 from sqlalchemy.engine.base import Engine
 import xxhash
+from tqdm import tqdm
 
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
     NodeModel,
@@ -264,8 +266,18 @@ class SQLDataHolder(DataHolder):
             self.batch_size
         )
 
-        for node in query:
-            yield self.node_to_otel_event(node)
+        total_no_nodes = session.query(NodeModel).count()
+
+        with tqdm(
+            total=total_no_nodes,
+            desc="Streaming PVEvents",
+            unit="events",
+            position=0,
+        ) as pbar:
+            for node in query:
+                yield self.node_to_otel_event(node)
+                time.sleep(0.01)
+                pbar.update(1)
 
     def stream_data(
         self,
@@ -361,11 +373,8 @@ class SQLDataHolder(DataHolder):
                 f"Number of nodes with inconsistent jobs: {res.rowcount}"
             )
 
-    def remove_jobs_outside_of_time_window(
-        self
-    ) -> None:
-        """Remove jobs within the buffer.
-        """
+    def remove_jobs_outside_of_time_window(self) -> None:
+        """Remove jobs within the buffer."""
         time_window = get_time_window(self.time_buffer, self)
         with self.session as session:
             stmt = (
