@@ -74,12 +74,12 @@ def test_pv_event_file_to_event(
     file_path = tmp_path / "test.json"
     with open(file_path, "w") as file:
         json.dump(mock_job_json_file[0], file)
-    assert pv_event_file_to_event(file_path) == mock_job_json_file[0]
+    assert pv_event_file_to_event(str(file_path)) == mock_job_json_file[0]
     file_path = tmp_path / "test_error.json"
     with open(file_path, "w") as file:
         json.dump(mock_job_json_file, file)
     with pytest.raises(ValueError):
-        pv_event_file_to_event(file_path)
+        pv_event_file_to_event(str(file_path))
 
 
 def test_pv_job_file_to_event_sequence(
@@ -89,20 +89,20 @@ def test_pv_job_file_to_event_sequence(
     file_path = tmp_path / "test.json"
     with open(file_path, "w") as file:
         json.dump(mock_job_json_file, file)
-    assert pv_job_file_to_event_sequence(file_path) == mock_job_json_file
+    assert pv_job_file_to_event_sequence(str(file_path)) == mock_job_json_file
     # check case where file is not a list
     file_path = tmp_path / "test_error.json"
     with open(file_path, "w") as file:
         json.dump(mock_job_json_file[0], file)
     with pytest.raises(ValueError):
-        pv_job_file_to_event_sequence(file_path)
+        pv_job_file_to_event_sequence(str(file_path))
     # check case when one of the event is not a dict
     list_to_dump = mock_job_json_file[:2] + ["not a dict"]
     file_path = tmp_path / "test_error_2.json"
     with open(file_path, "w") as file:
         json.dump(list_to_dump, file)
     with pytest.raises(ValueError):
-        pv_job_file_to_event_sequence(file_path)
+        pv_job_file_to_event_sequence(str(file_path))
 
 
 def test_pv_event_files_to_job_id_streams(
