@@ -354,7 +354,7 @@ class TestOtelToPV:
                 file_content = json.load(f)
                 assert (
                     file_content
-                    == expected_job_json_content[(2 * i) : (2 * i) + 2]
+                    == expected_job_json_content[(2 * i): (2 * i) + 2]
                 )
 
 
