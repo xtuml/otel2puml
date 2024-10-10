@@ -1,13 +1,9 @@
 """Module for JSON config."""
-from typing import (
-    Optional,
-    TypedDict,
-    Union,
-    NotRequired,
-    Iterable,
-    Self,
-    Sequence
-)
+
+from typing import Optional, Union, NotRequired, Iterable, Self, Sequence
+from typing_extensions import TypedDict
+
+from pydantic import BaseModel, model_validator, Field
 
 
 class FieldSpec(TypedDict):
@@ -195,9 +191,7 @@ class JQFieldSpec:
                         )
                 return tuple(priority_optional_list)
             except TypeError:
-                raise TypeError(
-                    "Key value must be iterable or a string"
-                )
+                raise TypeError("Key value must be iterable or a string")
 
     @staticmethod
     def optional_list_to_jq_optional_list(
@@ -223,8 +217,7 @@ class JQFieldSpec:
             optional_list = [None] * len(jq_key_paths)
         for key_value, key_path in zip(optional_list, jq_key_paths):
             updated_optional_list.append(
-                JQFieldSpec.
-                optional_list_value_to_jq_optional_list_value(
+                JQFieldSpec.optional_list_value_to_jq_optional_list_value(
                     key_value, key_path
                 )
             )
@@ -244,19 +237,13 @@ class JQFieldSpec:
                 field_spec["key_paths"]
             )
         )
-        jq_field_spec_key_values = (
-            cls.optional_list_to_jq_optional_list(
-                field_spec["key_value"]
-                if "key_value" in field_spec else None,
-                jq_field_spec_key_paths
-            )
+        jq_field_spec_key_values = cls.optional_list_to_jq_optional_list(
+            field_spec["key_value"] if "key_value" in field_spec else None,
+            jq_field_spec_key_paths,
         )
-        jq_field_spec_value_paths = (
-            cls.optional_list_to_jq_optional_list(
-                field_spec["value_paths"]
-                if "value_paths" in field_spec else None,
-                jq_field_spec_key_paths
-            )
+        jq_field_spec_value_paths = cls.optional_list_to_jq_optional_list(
+            field_spec["value_paths"] if "value_paths" in field_spec else None,
+            jq_field_spec_key_paths,
         )
         return cls(
             key_paths=jq_field_spec_key_paths,
@@ -299,10 +286,47 @@ def field_spec_mapping_to_jq_field_spec_mapping(
     }
 
 
-class JSONDataSourceConfig(TypedDict):
+class OTelFieldMapping(TypedDict):
+    """Typed dict for OTelFieldMapping - the expected mapping of fields in the
+    used for the JSON data source."""
+    job_name: FieldSpec
+    job_id: FieldSpec
+    event_type: FieldSpec
+    event_id: FieldSpec
+    start_timestamp: FieldSpec
+    end_timestamp: FieldSpec
+    application_name: FieldSpec
+    parent_event_id: FieldSpec
+    child_event_ids: NotRequired[FieldSpec]
+
+
+class JSONDataSourceConfig(BaseModel):
     """Typed dict for JSONDataSourceConfig."""
 
-    filepath: Optional[str]
-    dirpath: Optional[str]
-    json_per_line: bool
-    field_mapping: dict[str, FieldSpec]
+    filepath: Optional[str] = Field(None, description="The file path")
+    dirpath: Optional[str] = Field(None, description="The directory path")
+    json_per_line: bool = Field(False, description="Flag for JSON per line")
+    field_mapping: Optional[OTelFieldMapping] = Field(
+        None, description="The field mapping"
+    )
+    jq_query: Optional[str] = Field(None, description="The jq query")
+
+    @model_validator(mode="after")
+    def verify_field_mapping_jq_query(self) -> Self:
+        """Verify field mapping jq query."""
+        if self.field_mapping is None and self.jq_query is None:
+            raise ValueError(
+                "Either field_mapping or jq_query must be provided"
+            )
+        if self.field_mapping is not None and self.jq_query is not None:
+            raise ValueError(
+                "Only one of field_mapping or jq_query should be provided"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def verify_file_path_dir_path(self) -> Self:
+        """Verify file path dir path."""
+        if self.filepath is None and self.dirpath is None:
+            raise ValueError("Either filepath or dirpath must be provided")
+        return self

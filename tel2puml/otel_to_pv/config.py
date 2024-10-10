@@ -1,11 +1,11 @@
 """Config schemas for otel_to_pv."""
 
 from typing import (
-    TypedDict,
-    NotRequired,
     Literal,
     Any,
+    NotRequired
 )
+from typing_extensions import TypedDict
 
 from pydantic import BaseModel, ConfigDict as PYDConfigDict
 
@@ -23,22 +23,21 @@ class SequenceModelConfig(BaseModel):
     event_name_map_information: dict[str, dict[str, OTelEventTypeMap]] = {}
 
 
-class SQLDataHolderConfig(TypedDict):
-    """Typed dict for SQLDataHolderConfig."""
+class SQLDataHolderConfig(BaseModel):
+    """BaseModel for SQLDataHolderConfig."""
 
-    db_uri: str
-    batch_size: int
-    time_buffer: int
+    db_uri: str = "sqlite:///:memory:"
+    batch_size: int = 1000
+    time_buffer: int = 0
 
 
 class DataHolders(TypedDict):
     """Typed dict for DataHolders."""
-
     sql: NotRequired[SQLDataHolderConfig]
 
 
 class IngestTypes(BaseModel):
-    """Typed dict for IngestTypes."""
+    """Base model for IngestTypes."""
 
     model_config = PYDConfigDict(extra="forbid")
 
@@ -46,22 +45,15 @@ class IngestTypes(BaseModel):
     data_holder: Literal["sql"]
 
 
-class IngestDataConfig(TypedDict):
-    """Typed dict for IngestData config."""
+class IngestDataConfig(BaseModel):
+    """Base model for IngestData config."""
+
+    model_config = PYDConfigDict(extra="forbid")
 
     data_sources: DataSources
     data_holders: DataHolders
     ingest_data: IngestTypes
-    sequencer: NotRequired[SequenceModelConfig]
-
-
-class Defaults(TypedDict):
-    """Typed dict for Defaults values in config."""
-
-    sequencer: SequenceModelConfig
-
-
-DEFAULTS = Defaults(sequencer=SequenceModelConfig())
+    sequencer: SequenceModelConfig = SequenceModelConfig()
 
 
 def load_config_from_dict(config: dict[str, Any]) -> IngestDataConfig:
@@ -72,21 +64,6 @@ def load_config_from_dict(config: dict[str, Any]) -> IngestDataConfig:
     :return: The config
     :rtype: :class:`IngestDataConfig`
     """
-    required_fields = ("data_sources", "data_holders", "ingest_data")
-    for required_field in required_fields:
-        assert required_field in config
-    otel_to_pv_config = IngestDataConfig(
-        data_sources=config["data_sources"],
-        data_holders=config["data_holders"],
-        ingest_data=IngestTypes(**config["ingest_data"]),
+    return IngestDataConfig(
+        **config
     )
-    # unrequired fields with defaults
-    unrequired_fields: tuple[Literal["sequencer"]] = ("sequencer",)
-    for unrequired_field in unrequired_fields:
-        if unrequired_field in config:
-            otel_to_pv_config[unrequired_field] = SequenceModelConfig(
-                **config[unrequired_field]
-            )
-        else:
-            otel_to_pv_config[unrequired_field] = DEFAULTS[unrequired_field]
-    return otel_to_pv_config
