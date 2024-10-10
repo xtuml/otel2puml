@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
 # Set environment variables for cvxopt build
 ENV CPPFLAGS="-I/usr/include/suitesparse"
 ENV CVXOPT_BUILD_GLPK=1
+ENV PYTHONUNBUFFERED=1
 
 # Caches packages installed by pip
 COPY requirements.txt .
