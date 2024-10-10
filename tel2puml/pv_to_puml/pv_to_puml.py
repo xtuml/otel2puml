@@ -6,6 +6,8 @@ from typing import Generator, Iterable, Any, Optional
 import json
 import os
 
+from tqdm import tqdm
+
 from tel2puml.tel2puml_types import PVEvent
 from tel2puml.pv_to_puml.data_ingestion import (
     cluster_events_by_job_id,
@@ -270,7 +272,7 @@ def pv_streams_to_puml_files(
     :type output_file_directory: `str`
     """
     for job_name, job_event_gen in pv_streams:
-        print(f"Converting {job_name} to PUML...")
+        tqdm.write(f"Converting {job_name} to PUML...")
         job_name = job_name.replace(" ", "_")
         puml_file_path = os.path.join(
             output_file_directory, f"{job_name}.puml"
@@ -279,7 +281,7 @@ def pv_streams_to_puml_files(
             job_event_gen,
             puml_file_path=puml_file_path,
         )
-        print(f"{job_name} successfully converted to PUML!")
+        tqdm.write(f"{job_name} successfully converted to PUML!")
 
 
 def pv_files_to_pv_streams(
