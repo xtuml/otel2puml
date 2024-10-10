@@ -1,12 +1,13 @@
 """Module containing DataSource sub class responsible for JSON ingestion."""
 
 import os
-from typing import Iterator
+from typing import Iterator, Any
 import json
 from logging import getLogger
 
 from tqdm import tqdm
 from pydantic import ValidationError
+import jq
 
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 from ..base import OTELDataSource
@@ -38,9 +39,7 @@ class JSONDataSource(OTELDataSource):
                 """No directory or files found. Please check yaml config."""
             )
         self.file_list = self.get_file_list()
-        self.compiled_jq = field_mapping_to_compiled_jq(
-            self.config["field_mapping"]
-        )
+        self.compiled_jq = self.get_compiled_jq_from_config(self.config)
         self.file_pbar = tqdm(
             total=len(self.file_list),
             desc="Ingesting JSON files",
@@ -65,13 +64,13 @@ class JSONDataSource(OTELDataSource):
         :rtype: `str` | `None`
         """
 
-        if not self.config["dirpath"]:
+        if not self.config.dirpath:
             return None
-        elif not os.path.isdir(self.config["dirpath"]):
+        elif not os.path.isdir(self.config.dirpath):
             raise ValueError(
-                f"{self.config['dirpath']} directory does not exist."
+                f"{self.config.dirpath} directory does not exist."
                 )
-        return self.config["dirpath"]
+        return self.config.dirpath
 
     def set_filepath(self) -> str | None:
         """Set the filepath.
@@ -80,11 +79,27 @@ class JSONDataSource(OTELDataSource):
         :rtype: `str` | `None`
         """
 
-        if not self.config["filepath"]:
+        if not self.config.filepath:
             return None
-        elif not os.path.isfile(self.config["filepath"]):
-            raise ValueError(f"{self.config['filepath']} does not exist.")
-        return self.config["filepath"]
+        elif not os.path.isfile(self.config.filepath):
+            raise ValueError(f"{self.config.filepath} does not exist.")
+        return self.config.filepath
+
+    @staticmethod
+    def get_compiled_jq_from_config(config: JSONDataSourceConfig) -> Any:
+        """Get the compiled jq query from the config.
+
+        :param config: The JSONDataSourceConfig object
+        :type config: :class:`JSONDataSourceConfig`
+        :return: The compiled jq query
+        :rtype: `Any`
+        """
+        if config.field_mapping is not None:
+            return field_mapping_to_compiled_jq(config.field_mapping)
+        elif config.jq_query is not None:
+            return jq.compile(config.jq_query)
+        else:
+            raise ValueError("No field mapping or jq query found in config.")
 
     def get_file_list(self) -> list[str]:
         """Get a list of filepaths to process.
@@ -115,7 +130,7 @@ class JSONDataSource(OTELDataSource):
         :rtype: `Iterator`[:class:`OTelEvent`]
         """
         with open(filepath, "r", encoding="utf-8") as file:
-            if self.config["json_per_line"]:
+            if self.config.json_per_line:
                 jsons = (json.loads(line, strict=False) for line in file)
             else:
                 jsons = (data for data in [json.load(file, strict=False)])
