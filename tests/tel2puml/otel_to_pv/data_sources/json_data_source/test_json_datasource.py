@@ -235,8 +235,7 @@ class TestJSONDataSource:
             with pytest.raises(StopIteration):
                 otel_event = next(otel_events)
             assert (
-                "tel2puml.otel_to_pv.data_sources.json_data_source."
-                "json_datasource:json_datasource.py:125 Error coercing data in"
+                "Error coercing data in"
                 " file: "
                 "/mock/dir/file1.json\n"
                 "Validation Error: 6 validation errors for OTelEvent\n"

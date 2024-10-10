@@ -4,6 +4,8 @@ import os
 import json
 from typing import Generator, Any
 
+from tqdm import tqdm
+
 from tel2puml.otel_to_pv.config import IngestDataConfig, SequenceModelConfig
 from tel2puml.otel_to_pv.ingest_otel_data import (
     ingest_data_into_dataholder,
@@ -46,7 +48,9 @@ def otel_to_pv(
     `PVEvent`, `Any`, `None`], `Any`, `None`]], `Any`, `None`]
     """
     if ingest_data:
+        tqdm.write("Ingesting data from data source...")
         data_holder = ingest_data_into_dataholder(config)
+        tqdm.write("Data ingested.")
     else:
         data_holder = fetch_data_holder(config)
     # validate spans
@@ -85,6 +89,7 @@ def otel_to_pv(
         for job_name, job_id_streams in job_name_group_streams
     )
     if save_events:
+        tqdm.write("Saving PVEvents to job json files...")
         for job_name, pv_event_streams in pv_event_gen:
             handle_save_events(
                 job_name, pv_event_streams, output_file_directory
@@ -120,34 +125,46 @@ def handle_save_events(
             f"Error creating directory {output_file_directory}/"
             f"{job_name}: {e}"
         )
+
+    tqdm.write(f"Saving events for '{job_name}'...")
+
     file_no = 1
     for pv_event_stream in pv_event_streams:
-        for pv_event in pv_event_stream:
-            save_pv_event_to_file(
-                job_name, pv_event, output_file_directory, file_no
-            )
-            file_no += 1
+        save_pv_event_stream_to_file(
+            job_name,
+            pv_event_stream,
+            output_file_directory,
+            file_no
+        )
+        file_no += 1
 
 
-def save_pv_event_to_file(
-    job_name: str, pv_event: PVEvent, output_file_directory: str, count: int
+def save_pv_event_stream_to_file(
+    job_name: str,
+    pv_event_stream: Generator[PVEvent, Any, None],
+    output_file_directory: str,
+    count: int
 ) -> None:
     """Saves a PVEvent as a json file to a folder within the output directory.
 
-    :param pv_event: The PVEvent to save
-    :type pv_event: :class:`PVEvent`
+    :param pv_event_stream: The PVEvent stream to save
+    :type pv_event_stream: `Generator`[:class:`PVEvent`, `Any`, `None`]
     :param output_file_directory: Output file directory
+    :param count: Current file number
+    :type count: `int`
     :type output_file_directory: `str`
     """
     try:
-        with open(
-            f"{output_file_directory}/{job_name}/"
-            f"pv_event_sequence_{count}.json",
-            "w",
-        ) as f:
-            json.dump(pv_event, f, indent=4)
+        pv_event_list = list(pv_event_stream)
+
+        file_path = (
+            f"{output_file_directory}/{job_name}/pv_event_sequence_"
+            f"{count}.json"
+        )
+        with open(file_path, "w") as f:
+            json.dump(pv_event_list, f, indent=4)
     except IOError as e:
         raise IOError(
-            f"Error writing file {output_file_directory}/"
-            f"{job_name}/pv_event_sequence_{count}.json: {e}"
+            f"Error writing file {output_file_directory}/{job_name}/"
+            f"pv_event_sequence_{count}.json: {e}"
         )

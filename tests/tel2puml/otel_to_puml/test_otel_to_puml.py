@@ -317,9 +317,8 @@ class TestOtelToPuml:
         assert os.listdir(output_dir) == ["Frontend_TestJob"]
 
         job_json_folder_path = output_dir / "Frontend_TestJob"
-        assert sorted(os.listdir(job_json_folder_path)) == [
+        assert os.listdir(job_json_folder_path) == [
             "pv_event_sequence_1.json",
-            "pv_event_sequence_2.json",
         ]
         expected_job_json_content = [
             {
@@ -341,16 +340,12 @@ class TestOtelToPuml:
                 "timestamp": "2024-08-13T10:15:32.229039Z",
             },
         ]
-        for i, expected_content in enumerate(
-            expected_job_json_content, start=1
-        ):
-            file_path = job_json_folder_path / f"pv_event_sequence_{i}.json"
+        file_path = job_json_folder_path / "pv_event_sequence_1.json"
+        assert file_path.exists()
 
-            assert file_path.exists()
-
-            with file_path.open("r") as f:
-                file_content = json.load(f)
-                assert file_content == expected_content
+        with file_path.open("r") as f:
+            file_content = json.load(f)
+            assert file_content == expected_job_json_content
 
     @staticmethod
     def test_find_unique_graphs(

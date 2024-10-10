@@ -12,6 +12,7 @@ from sqlalchemy.exc import OperationalError, IntegrityError
 from sqlalchemy.orm.exc import DetachedInstanceError
 from sqlalchemy.engine.base import Engine
 import xxhash
+from tqdm import tqdm
 
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
     NodeModel,
@@ -24,6 +25,8 @@ from tel2puml.otel_to_pv.config import SQLDataHolderConfig
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 
 T = TypeVar("T")
+
+LOGGER = logging.getLogger(__name__)
 
 
 class SQLDataHolder(DataHolder):
@@ -264,7 +267,12 @@ class SQLDataHolder(DataHolder):
             self.batch_size
         )
 
-        for node in query:
+        total_no_nodes = session.query(NodeModel).count()
+
+        for node in tqdm(
+            query, desc="Streaming OTelEvents from data store", unit="events",
+            position=0, total=total_no_nodes
+        ):
             yield self.node_to_otel_event(node)
 
     def stream_data(
@@ -361,11 +369,8 @@ class SQLDataHolder(DataHolder):
                 f"Number of nodes with inconsistent jobs: {res.rowcount}"
             )
 
-    def remove_jobs_outside_of_time_window(
-        self
-    ) -> None:
-        """Remove jobs within the buffer.
-        """
+    def remove_jobs_outside_of_time_window(self) -> None:
+        """Remove jobs within the buffer."""
         time_window = get_time_window(self.time_buffer, self)
         with self.session as session:
             stmt = (

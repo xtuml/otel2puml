@@ -13,7 +13,7 @@ from pytest import MonkeyPatch
 from tel2puml.otel_to_pv.otel_to_pv import (
     otel_to_pv,
     handle_save_events,
-    save_pv_event_to_file,
+    save_pv_event_stream_to_file,
 )
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.sql_dataholder import (
     SQLDataHolder,
@@ -341,47 +341,67 @@ class TestOtelToPV:
         json_file_dir = tmp_path / "json_output" / "test_name"
         assert json_file_dir.exists()
         files = list(json_file_dir.iterdir())
-        assert len(files) == 8
+        assert len(files) == 4
 
-        for i, expected_content in enumerate(expected_job_json_content):
+        # 4 files, each with an array of 2 jobs
+        for i in range(4):
             file_path = json_file_dir / f"pv_event_sequence_{i+1}.json"
 
             assert file_path.exists()
 
             with file_path.open("r") as f:
                 file_content = json.load(f)
-                assert file_content == expected_content
+                assert (
+                    file_content
+                    == expected_job_json_content[(2 * i): (2 * i) + 2]
+                )
 
 
-class TestSavePVEventToFile:
-    """Tests for the save_pv_event_to_file function."""
+class TestSavePVEventStreamsToFile:
+    """Tests for the save_pv_event_stream_to_file function."""
 
-    def test_save_pv_event_to_file_success(self, tmp_path: Path) -> None:
-        """Test that PVEvent is saved correctly to a file."""
+    def test_save_pv_event_stream_to_file_success(
+        self, tmp_path: Path
+    ) -> None:
+        """Test that PVEvents are saved correctly to a file."""
         job_name = "test_job"
         pv_event: PVEvent = {
+            "jobId": "test_job_id",
+            "eventId": "1",
+            "timestamp": "2024-10-08T12:00:00Z",
+            "applicationName": "test_app",
+            "jobName": "test_job",
+            "eventType": "test_event_A",
+        }
+        pv_event_2: PVEvent = {
             "jobId": "test_job_id",
             "eventId": "2",
             "timestamp": "2024-10-08T12:00:00Z",
             "previousEventIds": ["1"],
             "applicationName": "test_app",
             "jobName": "test_job",
-            "eventType": "test_event",
+            "eventType": "test_event_B",
         }
+        pv_stream = (pv_event for pv_event in [pv_event, pv_event_2])
         output_dir = tmp_path
         count = 1
 
         job_dir = output_dir / job_name
         job_dir.mkdir(parents=True, exist_ok=True)
 
-        save_pv_event_to_file(job_name, pv_event, str(output_dir), count)
+        save_pv_event_stream_to_file(
+            job_name,
+            pv_stream,
+            str(output_dir),
+            count,
+        )
 
         expected_file = job_dir / f"pv_event_sequence_{count}.json"
         assert expected_file.exists()
 
         with expected_file.open("r") as f:
             file_content = json.load(f)
-            assert file_content == pv_event
+            assert file_content == [pv_event, pv_event_2]
 
     def test_save_pv_event_to_file_io_error(self, tmp_path: Path) -> None:
         """Test that IOError is handled correctly when writing the file."""
@@ -394,6 +414,7 @@ class TestSavePVEventToFile:
             "jobName": "test_job",
             "eventType": "test_event_error",
         }
+        pv_stream = (pv_event for pv_event in [pv_event])
         output_dir = tmp_path
         count = 3
 
@@ -404,8 +425,11 @@ class TestSavePVEventToFile:
 
         try:
             with pytest.raises(IOError):
-                save_pv_event_to_file(
-                    job_name, pv_event, str(output_dir), count
+                save_pv_event_stream_to_file(
+                    job_name,
+                    pv_stream,
+                    str(output_dir),
+                    count,
                 )
         finally:
             # Restore permissions to delete the temp directory
@@ -464,7 +488,7 @@ class TestHandleSaveEvents:
         assert job_dir.exists() and job_dir.is_dir()
 
         for i, expected_pv_event in enumerate(
-            [event for sublist in pv_event_streams for event in sublist],
+            [events for events in pv_event_streams],
             start=1,
         ):
             file_path = job_dir / f"pv_event_sequence_{i}.json"
