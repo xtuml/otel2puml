@@ -18,7 +18,7 @@ from tel2puml.otel_to_pv.data_holders import SQLDataHolder
 from tel2puml.otel_to_pv.data_sources import (
     JSONDataSource,
 )
-from tel2puml.otel_to_pv.config import IngestDataConfig, IngestTypes
+from tel2puml.otel_to_pv.config import IngestDataConfig
 
 
 class TestIngestData:
@@ -32,9 +32,7 @@ class TestIngestData:
         ).replace("filepath: /path/to/json/file.json", "filepath: null")
         config_dict: dict[str, Any] = yaml.safe_load(update_config_yaml_string)
         config = IngestDataConfig(
-            data_sources=config_dict["data_sources"],
-            data_holders=config_dict["data_holders"],
-            ingest_data=IngestTypes(**config_dict["ingest_data"]),
+            **config_dict
         )
         return config
 
@@ -126,8 +124,8 @@ class TestIngestData:
             mock_yaml_config_string, mock_temp_dir_with_json_files
         )
 
-        data_holder = SQLDataHolder(config["data_holders"]["sql"])
-        data_source = JSONDataSource(config["data_sources"]["json"])
+        data_holder = SQLDataHolder(config.data_holders["sql"])
+        data_source = JSONDataSource(config.data_sources["json"])
         with data_holder.session as session:
             # Check no nodes in the database
             assert not session.query(NodeModel).all()
@@ -152,40 +150,18 @@ class TestIngestData:
 
 
 @pytest.mark.usefixtures("mock_path_exists", "mock_filepath_in_dir")
-def test_fetch_data_source(mock_yaml_config_dict: dict[str, Any]) -> None:
+def test_fetch_data_source(mock_ingest_config: IngestDataConfig) -> None:
     """Tests fetch_data_source function."""
-    ingest_data_config = IngestDataConfig(
-        data_sources=mock_yaml_config_dict["data_sources"],
-        data_holders=mock_yaml_config_dict["data_holders"],
-        ingest_data=IngestTypes(**mock_yaml_config_dict["ingest_data"]),
-    )
-    data_source = fetch_data_source(ingest_data_config)
+    data_source = fetch_data_source(mock_ingest_config)
     assert isinstance(data_source, JSONDataSource)
     assert data_source.dirpath == "/path/to/json/directory"
     assert data_source.filepath == "/path/to/json/file.json"
 
-    expected_config_headers = [
-        "filepath",
-        "dirpath",
-        "json_per_line",
-        "field_mapping",
-    ]
-    for key in data_source.config.keys():
-        assert key in expected_config_headers
-        expected_config_headers.remove(key)
-    assert not expected_config_headers
-
 
 @pytest.mark.usefixtures("mock_path_exists", "mock_filepath_in_dir")
-def test_fetch_data_holder(mock_yaml_config_dict: dict[str, Any]) -> None:
+def test_fetch_data_holder(mock_ingest_config: IngestDataConfig) -> None:
     """Tests fetch_data_holder function."""
-    ingest_data_config = IngestDataConfig(
-        data_sources=mock_yaml_config_dict["data_sources"],
-        data_holders=mock_yaml_config_dict["data_holders"],
-        ingest_data=IngestTypes(**mock_yaml_config_dict["ingest_data"]),
-    )
-
-    data_holder = fetch_data_holder(ingest_data_config)
+    data_holder = fetch_data_holder(mock_ingest_config)
     assert isinstance(data_holder, SQLDataHolder)
     assert data_holder.batch_size == 5
     assert data_holder.min_timestamp == 0

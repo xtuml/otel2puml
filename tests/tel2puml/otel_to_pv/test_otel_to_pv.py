@@ -67,9 +67,7 @@ class TestOtelToPV:
             return sql_data_holder
 
         ingest_data_config = IngestDataConfig(
-            data_sources=mock_yaml_config_dict["data_sources"],
-            data_holders=mock_yaml_config_dict["data_holders"],
-            ingest_data=IngestTypes(**mock_yaml_config_dict["ingest_data"]),
+            **mock_yaml_config_dict,
         )
         monkeypatch.setattr(
             "tel2puml.otel_to_pv.otel_to_pv.fetch_data_holder",
@@ -155,7 +153,7 @@ class TestOtelToPV:
         # Test 4: async_flag = True
         # time_buffer = 0
         ingest_config_copy = ingest_data_config.copy()
-        ingest_config_copy["sequencer"] = SequenceModelConfig(async_flag=True)
+        ingest_config_copy.sequencer = SequenceModelConfig(async_flag=True)
         result = otel_to_pv(ingest_config_copy)
         events = []
         valid_event_ids = [f"{i}_{j}" for i in range(5) for j in range(2)]
@@ -177,7 +175,7 @@ class TestOtelToPV:
         assert len(valid_event_ids) == 0
 
         # Test 5: event_to_async_group_map provided in config
-        ingest_data_config["sequencer"] = SequenceModelConfig(
+        ingest_data_config.sequencer = SequenceModelConfig(
             async_event_groups={
                 "test_name": event_to_async_group_map,
             }
@@ -204,7 +202,7 @@ class TestOtelToPV:
         assert all(job_id_count[job_id] == 2 for job_id in valid_job_ids)
         assert len(valid_event_ids) == 0
         # Test 6: event_name_map_information provided in config
-        ingest_data_config["sequencer"] = SequenceModelConfig(
+        ingest_data_config.sequencer = SequenceModelConfig(
             event_name_map_information={
                 "test_name": {
                     "event_type_0": OTelEventTypeMap(
@@ -238,7 +236,7 @@ class TestOtelToPV:
 
         # Test 7: Remove disconnected spans
         def mock_fetch_data_holder_disconnected_spans(
-            config: IngestDataConfig,
+            *_
         ) -> SQLDataHolder:
             """Remove root span to create disconnected data within NodeModel
             table"""
@@ -251,9 +249,7 @@ class TestOtelToPV:
             return sql_data_holder
 
         ingest_data_config = IngestDataConfig(
-            data_sources=mock_yaml_config_dict["data_sources"],
-            data_holders=mock_yaml_config_dict["data_holders"],
-            ingest_data=IngestTypes(**mock_yaml_config_dict["ingest_data"]),
+            **mock_yaml_config_dict,
         )
         monkeypatch.setattr(
             "tel2puml.otel_to_pv.otel_to_pv.fetch_data_holder",
@@ -321,9 +317,7 @@ class TestOtelToPV:
 
         output_dir = tmp_path / "json_output"
         ingest_data_config = IngestDataConfig(
-            data_sources=mock_yaml_config_dict["data_sources"],
-            data_holders=mock_yaml_config_dict["data_holders"],
-            ingest_data=IngestTypes(**mock_yaml_config_dict["ingest_data"]),
+            **mock_yaml_config_dict,
         )
         monkeypatch.setattr(
             "tel2puml.otel_to_pv.otel_to_pv.fetch_data_holder",

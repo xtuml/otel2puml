@@ -15,6 +15,9 @@ from unittest.mock import mock_open, patch
 from tel2puml.otel_to_pv.data_sources.json_data_source.json_datasource import (
     JSONDataSource,
 )
+from tel2puml.otel_to_pv.data_sources.json_data_source.json_config import (
+    JSONDataSourceConfig,
+)
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 from tel2puml.otel_to_pv.config import IngestDataConfig
 
@@ -25,30 +28,21 @@ class TestJSONDataSource:
     @staticmethod
     @pytest.mark.usefixtures("mock_path_exists")
     def test_get_yaml_config(
-        mock_yaml_config_dict: IngestDataConfig,
+        mock_ingest_config: IngestDataConfig,
     ) -> None:
         """Tests parsing yaml config file and setting config attribute."""
         json_data_source = JSONDataSource(
-            mock_yaml_config_dict["data_sources"]["json"]
+            mock_ingest_config.data_sources["json"]
         )
         config = json_data_source.config
 
         # Check if config is a dictionary
-        assert isinstance(config, dict)
-
-        # Check main config keys
-        expected_keys = {
-            "dirpath",
-            "filepath",
-            "json_per_line",
-            "field_mapping",
-        }
-        assert set(config.keys()) == expected_keys
+        assert isinstance(config, JSONDataSourceConfig)
 
         # Check string values
-        assert config["dirpath"] == "/path/to/json/directory"
-        assert config["filepath"] == "/path/to/json/file.json"
-        assert not config["json_per_line"]
+        assert config.dirpath == "/path/to/json/directory"
+        assert config.filepath == "/path/to/json/file.json"
+        assert not config.json_per_line
 
         # Check expected field mapping keys
         expected_field_mapping_keys = {
@@ -63,62 +57,62 @@ class TestJSONDataSource:
             "child_event_ids",
         }
         assert (
-            set(config["field_mapping"].keys()) == expected_field_mapping_keys
+            set(config.field_mapping.keys()) == expected_field_mapping_keys
         )
 
     @staticmethod
     @pytest.mark.usefixtures("mock_path_exists")
     def test_set_dirpath_valid(
-        mock_yaml_config_dict: IngestDataConfig,
+        mock_ingest_config: IngestDataConfig,
     ) -> None:
         """Tests set_dirpath method."""
         json_data_source = JSONDataSource(
-            mock_yaml_config_dict["data_sources"]["json"]
+            mock_ingest_config.data_sources["json"]
         )
         assert json_data_source.dirpath == "/path/to/json/directory"
 
     @staticmethod
     def test_set_dirpath_invalid(
-        mock_yaml_config_dict: IngestDataConfig,
+        mock_ingest_config: IngestDataConfig,
     ) -> None:
         """Tests the set_dirpath method with a non-existant directory."""
         with patch("os.path.isdir", return_value=False), patch(
             "os.path.isfile", return_value=True
         ):
             with pytest.raises(ValueError, match="directory does not exist"):
-                JSONDataSource(mock_yaml_config_dict["data_sources"]["json"])
+                JSONDataSource(mock_ingest_config.data_sources["json"])
 
     @staticmethod
     @pytest.mark.usefixtures("mock_path_exists")
     def test_set_filepath_valid(
-        mock_yaml_config_dict: IngestDataConfig,
+        mock_ingest_config: IngestDataConfig,
     ) -> None:
         """Tests the set_filepath method."""
         json_data_source = JSONDataSource(
-            mock_yaml_config_dict["data_sources"]["json"]
+            mock_ingest_config.data_sources["json"]
         )
         assert json_data_source.filepath == "/path/to/json/file.json"
 
     @staticmethod
     def test_set_filepath_invalid(
-        mock_yaml_config_dict: IngestDataConfig,
+        mock_ingest_config: IngestDataConfig,
     ) -> None:
         """Tests the set_filepath method with an non-existant file."""
         with patch("os.path.isdir", return_value=True), patch(
             "os.path.isfile", return_value=False
         ):
             with pytest.raises(ValueError, match="does not exist"):
-                JSONDataSource(mock_yaml_config_dict["data_sources"]["json"])
+                JSONDataSource(mock_ingest_config.data_sources["json"])
 
     @staticmethod
     @pytest.mark.usefixtures("mock_path_exists")
     def test_get_file_list(
-        mock_yaml_config_dict: IngestDataConfig, tmp_path: Path
+        mock_ingest_config: IngestDataConfig, tmp_path: Path
     ) -> None:
         """Tests the get_file_list method."""
 
         json_data_source = JSONDataSource(
-            mock_yaml_config_dict["data_sources"]["json"]
+            mock_ingest_config.data_sources["json"]
         )
         # Create temp directory
         temp_dir = tmp_path / "temp_dir"
@@ -186,16 +180,17 @@ class TestJSONDataSource:
         ).replace("filepath: /path/to/json/file.json", 'filepath: ""')
 
         config = yaml.safe_load(invalid_yaml)["data_sources"]["json"]
+        json_data_source_config = JSONDataSourceConfig(**config)
 
         with pytest.raises(
             FileNotFoundError, match="No directory or files found"
         ):
-            JSONDataSource(config)
+            JSONDataSource(json_data_source_config)
 
     @staticmethod
     @pytest.mark.usefixtures("mock_path_exists", "mock_filepath_in_dir")
     def test_parse_json_stream(
-        mock_yaml_config_dict: IngestDataConfig,
+        mock_ingest_config: IngestDataConfig,
         mock_json_data: dict[str, Any],
         caplog: LogCaptureFixture,
     ) -> None:
@@ -203,7 +198,7 @@ class TestJSONDataSource:
         mock_file_content = json.dumps(mock_json_data).encode("utf-8")
         with patch("builtins.open", mock_open(read_data=mock_file_content)):
             json_data_source = JSONDataSource(
-                mock_yaml_config_dict["data_sources"]["json"]
+                mock_ingest_config.data_sources["json"]
             )
             otel_events = json_data_source.parse_json_stream(
                 "/mock/dir/file1.json"
@@ -225,7 +220,7 @@ class TestJSONDataSource:
         mock_file_content = json.dumps(json_data).encode("utf-8")
         with patch("builtins.open", mock_open(read_data=mock_file_content)):
             json_data_source = JSONDataSource(
-                mock_yaml_config_dict["data_sources"]["json"]
+                mock_ingest_config.data_sources["json"]
             )
             caplog.clear()
             caplog.set_level(WARNING)
@@ -284,12 +279,12 @@ class TestJSONDataSource:
     @pytest.mark.parametrize(
         "mock_data, mock_yaml_config",
         [
-            ("mock_json_data", "mock_yaml_config_dict"),
+            ("mock_json_data", "mock_ingest_config"),
             (
                 "mock_json_data_without_list",
-                "mock_yaml_config_dict_without_list",
+                "mock_ingest_config_without_list",
             ),
-            ("mock_json_data", "mock_yaml_config_dict_json_per_line"),
+            ("mock_json_data", "mock_ingest_config_json_per_line"),
         ],
     )
     def test_end_to_end_json_parsing(
@@ -308,8 +303,10 @@ class TestJSONDataSource:
             + b'"injected_error": "\x1b", '
             + mock_file_content[1:]
         )
-        mock_yaml_config_dict = request.getfixturevalue(mock_yaml_config)
-        if mock_yaml_config_dict["data_sources"]["json"]["json_per_line"]:
+        mock_ingest_config: IngestDataConfig = request.getfixturevalue(
+            mock_yaml_config
+        )
+        if mock_ingest_config.data_sources["json"].json_per_line:
             mock_file_content = mock_file_content + b"\n" + mock_file_content
 
         with patch(
@@ -320,9 +317,9 @@ class TestJSONDataSource:
             return_value=["/mock/dir/file1.json"],
         ):
             json_data_source = JSONDataSource(
-                mock_yaml_config_dict["data_sources"]["json"]
+                mock_ingest_config.data_sources["json"]
             )
-            json_data_source.config["dirpath"] = ""
+            json_data_source.config.dirpath = ""
 
             otel_events: list[OTelEvent] = []
             for data in json_data_source:
@@ -379,11 +376,11 @@ class TestJSONDataSource:
             assert otel_event4.child_event_ids is None
 
         # without list
-        if mock_yaml_config == "mock_yaml_config_dict_without_list":
+        if mock_yaml_config == "mock_ingest_config_without_list":
             assert len(otel_events) == 2
             check_otel_events(otel_events, 2)
         # json on each line of file
-        elif mock_yaml_config == "mock_yaml_config_dict_json_per_line":
+        elif mock_yaml_config == "mock_ingest_config_json_per_line":
             assert len(otel_events) == 8
             check_otel_events(otel_events[:4], 4)
             check_otel_events(otel_events[4:], 4)

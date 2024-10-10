@@ -116,12 +116,14 @@ class TestOtelToPuml:
         data_file.write_text(json.dumps(mock_json_data))
 
         # Configure config
+        mock_yaml_config_dict["data_sources"]["json"]["dirpath"] = str(
+            input_dir
+        )
+        mock_yaml_config_dict["data_sources"]["json"]["filepath"] = None
         config = load_config_from_dict(mock_yaml_config_dict)
-        config["data_sources"]["json"]["dirpath"] = str(input_dir)
-        config["data_sources"]["json"]["filepath"] = None
 
         otel_options: OtelPVOptions = {
-            "config": load_config_from_dict(mock_yaml_config_dict),
+            "config": config,
             "ingest_data": True,
             "save_events": False,
             "find_unique_graphs": False,
@@ -176,15 +178,17 @@ class TestOtelToPuml:
         data_file.write_text(json.dumps(mock_json_data))
 
         # Configure config
-        config = load_config_from_dict(mock_yaml_config_dict)
-        config["data_sources"]["json"]["dirpath"] = str(input_dir)
-        config["data_sources"]["json"]["filepath"] = None
-        config["data_holders"]["sql"][
+        mock_yaml_config_dict["data_sources"]["json"]["dirpath"] = str(
+            input_dir
+        )
+        mock_yaml_config_dict["data_sources"]["json"]["filepath"] = None
+        mock_yaml_config_dict["data_holders"]["sql"][
             "db_uri"
         ] = f'sqlite:///{str(tmp_path / "test.db")}'
+        config = load_config_from_dict(mock_yaml_config_dict)
 
         otel_options: OtelPVOptions = {
-            "config": load_config_from_dict(mock_yaml_config_dict),
+            "config": config,
             "ingest_data": True,
             "save_events": False,
             "find_unique_graphs": False,
@@ -297,12 +301,14 @@ class TestOtelToPuml:
         data_file.write_text(json.dumps(mock_json_data))
 
         # Configure config
+        mock_yaml_config_dict["data_sources"]["json"]["dirpath"] = str(
+            input_dir
+        )
+        mock_yaml_config_dict["data_sources"]["json"]["filepath"] = None
         config = load_config_from_dict(mock_yaml_config_dict)
-        config["data_sources"]["json"]["dirpath"] = str(input_dir)
-        config["data_sources"]["json"]["filepath"] = None
 
         otel_options: OtelPVOptions = {
-            "config": load_config_from_dict(mock_yaml_config_dict),
+            "config": config,
             "ingest_data": True,
             "save_events": True,
             "find_unique_graphs": False,
@@ -370,12 +376,14 @@ class TestOtelToPuml:
         data_file.write_text(json.dumps(mock_json_data))
 
         # Configure config
+        mock_yaml_config_dict["data_sources"]["json"]["dirpath"] = str(
+            input_dir
+        )
+        mock_yaml_config_dict["data_sources"]["json"]["filepath"] = None
         config = load_config_from_dict(mock_yaml_config_dict)
-        config["data_sources"]["json"]["dirpath"] = str(input_dir)
-        config["data_sources"]["json"]["filepath"] = None
 
         otel_options: OtelPVOptions = {
-            "config": load_config_from_dict(mock_yaml_config_dict),
+            "config": config,
             "ingest_data": False,
             "save_events": False,
             "find_unique_graphs": True,
