@@ -11,6 +11,7 @@ from tel2puml.pv_to_puml.pv_to_puml import (
     pv_streams_to_puml_files,
     pv_files_to_pv_streams,
 )
+from tel2puml.utils import wrap_generator_with_start_and_end_messages
 
 
 def otel_to_puml(
@@ -46,7 +47,7 @@ def otel_to_puml(
             getLogger(__name__).error(f"Error creating directory.{e}")
             return
 
-    print(f"Processing component: {components}...")
+    print(f"Processing command: {components}...")
 
     match components:
         case "otel2puml" | "otel2pv":
@@ -55,7 +56,6 @@ def otel_to_puml(
                     f"'{components}' has been selected, 'otel_to_pv_options'"
                     " is required."
                 )
-            print("Converting OpenTelemetry data to PVEvent streams...")
             pv_streams: Union[
                 Generator[
                     tuple[
@@ -70,11 +70,20 @@ def otel_to_puml(
                     Any,
                     None,
                 ],
-            ] = otel_to_pv(
-                **otel_to_pv_options,
-                output_file_directory=output_file_directory,
+            ] = wrap_generator_with_start_and_end_messages(
+                otel_to_pv(
+                    **otel_to_pv_options,
+                    output_file_directory=output_file_directory,
+                ),
+                (
+                    "Converting ingested OpenTelemetry data to "
+                    "PVEvents and streaming..."
+                ),
+                (
+                    "All ingested OpenTelemetry data converted to PVEvents "
+                    "and streamed."
+                )
             )
-            print(f"Conversion completed for {components}.")
             if components == "otel2pv":
                 print(
                     "Otel to PV conversion done. Exiting as no further steps"
@@ -87,9 +96,11 @@ def otel_to_puml(
                     "'pv2puml' has been selected, 'pv_to_puml_options' is"
                     " required."
                 )
-            print("Converting PV files to PVEvent streams...")
-            pv_streams = pv_files_to_pv_streams(**pv_to_puml_options)
-            print(f"PVEvent streams generated for {components}.")
+            pv_streams = wrap_generator_with_start_and_end_messages(
+                pv_files_to_pv_streams(**pv_to_puml_options),
+                "Ingesting PV files and streaming PVEvents...",
+                "All PV files ingested and all PVEvents streamed.",
+            )
         case _:
             raise ValueError(
                 "components should be one of 'otel2puml', 'otel2pv',"

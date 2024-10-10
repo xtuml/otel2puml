@@ -46,7 +46,9 @@ def otel_to_pv(
     `PVEvent`, `Any`, `None`], `Any`, `None`]], `Any`, `None`]
     """
     if ingest_data:
+        print("Ingesting data from data source...")
         data_holder = ingest_data_into_dataholder(config)
+        print("Data ingested.")
     else:
         data_holder = fetch_data_holder(config)
     # validate spans

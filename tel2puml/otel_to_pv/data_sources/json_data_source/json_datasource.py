@@ -44,13 +44,18 @@ class JSONDataSource(OTELDataSource):
         self.file_pbar = tqdm(
             total=len(self.file_list),
             desc="Ingesting JSON files",
-            unit="file",
+            unit="files",
             position=0,
+        )
+        self.events_pbar = tqdm(
+            desc="Events processed correctly",
+            unit="events",
+            position=1,
         )
         self.event_error_pbar = tqdm(
             desc="Events with errors",
-            unit="event",
-            position=1,
+            unit="events",
+            position=2,
         )
 
     def set_dirpath(self) -> str | None:
@@ -120,6 +125,7 @@ class JSONDataSource(OTELDataSource):
                 ):
                     try:
                         yield OTelEvent(**record)
+                        self.events_pbar.update(1)
                     except ValidationError as e:
                         self.event_error_pbar.update(1)
                         LOGGER.warning(
@@ -149,5 +155,6 @@ class JSONDataSource(OTELDataSource):
                 self.current_file_index += 1
                 self.current_parser = None
         self.file_pbar.close()
+        self.events_pbar.close()
         self.event_error_pbar.close()
         raise StopIteration

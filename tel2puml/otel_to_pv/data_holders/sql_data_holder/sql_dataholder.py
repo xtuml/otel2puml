@@ -4,7 +4,6 @@ from types import TracebackType
 from typing import Any, Generator, TypeVar, Iterable
 from itertools import groupby
 import logging
-import time
 
 import sqlalchemy as sa
 from sqlalchemy import create_engine, insert, or_, not_
@@ -26,6 +25,8 @@ from tel2puml.otel_to_pv.config import SQLDataHolderConfig
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 
 T = TypeVar("T")
+
+LOGGER = logging.getLogger(__name__)
 
 
 class SQLDataHolder(DataHolder):
@@ -268,16 +269,11 @@ class SQLDataHolder(DataHolder):
 
         total_no_nodes = session.query(NodeModel).count()
 
-        with tqdm(
-            total=total_no_nodes,
-            desc="Streaming PVEvents",
-            unit="events",
-            position=0,
-        ) as pbar:
-            for node in query:
-                yield self.node_to_otel_event(node)
-                time.sleep(0.01)
-                pbar.update(1)
+        for node in tqdm(
+            query, desc="Streaming OTelEvents from data store", unit="events",
+            position=0, total=total_no_nodes
+        ):
+            yield self.node_to_otel_event(node)
 
     def stream_data(
         self,
@@ -311,6 +307,7 @@ class SQLDataHolder(DataHolder):
             for job_name, job_name_group in groupby(
                 job_name_event_generator, key=lambda x: x.job_name
             ):
+                print(f"Handling job_name: {job_name} ...")
                 # For each job_name, create a generator of generator of
                 # OtelEvents grouped by job_id
                 otel_event_gen = (

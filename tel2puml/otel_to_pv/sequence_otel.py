@@ -3,11 +3,13 @@
 from typing import Any, Generator, Iterable
 from logging import getLogger
 
+from tqdm import tqdm
+
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent, OTelEventTypeMap
 from tel2puml.tel2puml_types import PVEvent
 from tel2puml.utils import unix_nano_to_pv_string
 
-logger = getLogger(__name__)
+LOGGER = getLogger(__name__)
 
 
 class OTelTreeDisconnectedError(Exception):
@@ -323,7 +325,10 @@ def sequence_otel_jobs(
     :rtype: `Generator`[`Generator`[:class:`PVEvent`, `Any`, `None`], `Any`,
     `None`]
     """
-    for job in jobs:
+    for job in tqdm(
+        jobs, desc="Sequencing OTel event trees into PVEvent sequences",
+        unit="event trees", position=1
+    ):
         if event_types_map_information:
             update_event_types_based_on_children(
                 job, event_types_map_information
@@ -412,7 +417,7 @@ def job_ids_to_eventid_to_otelevent_map(
                 job_group
             )
         except OTelTreeDisconnectedError:
-            logger.warning(
+            LOGGER.warning(
                 "Parent events are missing for the job so the job cannot be "
                 "sequenced when the tree is broken."
             )
