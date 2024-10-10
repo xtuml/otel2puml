@@ -6,6 +6,7 @@ from typing import Optional, Generator, Any, TypeVar, Iterable, Hashable
 import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
+from tqdm import tqdm
 
 T = TypeVar("T")
 
@@ -437,12 +438,12 @@ def remove_nodes_without_path_back_to_loop(
             graph.remove_node(node)
 
 
-def wrap_generator_with_start_and_end_messages(
+def wrap_generator_with_tqdm_start_and_end_messages(
     generator: Generator[T, Any, None],
     start_message: str,
     end_message: str,
 ) -> Generator[T, Any, None]:
-    """Wrap a generator with a start and end message.
+    """Wrap a generator with a start and end message using tqdm.
 
     :param generator: The generator to wrap.
     :type generator: `Generator`[:class:`T`, Any, None]
@@ -454,6 +455,6 @@ def wrap_generator_with_start_and_end_messages(
     end message.
     :rtype: `Generator`[:class:`T`, Any, None]
     """
-    print(start_message)
+    tqdm.write(start_message)
     yield from generator
-    print(end_message)
+    tqdm.write(end_message)

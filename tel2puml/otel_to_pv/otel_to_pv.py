@@ -4,6 +4,8 @@ import os
 import json
 from typing import Generator, Any
 
+from tqdm import tqdm
+
 from tel2puml.otel_to_pv.config import IngestDataConfig, SequenceModelConfig
 from tel2puml.otel_to_pv.ingest_otel_data import (
     ingest_data_into_dataholder,
@@ -46,9 +48,9 @@ def otel_to_pv(
     `PVEvent`, `Any`, `None`], `Any`, `None`]], `Any`, `None`]
     """
     if ingest_data:
-        print("Ingesting data from data source...")
+        tqdm.write("Ingesting data from data source...")
         data_holder = ingest_data_into_dataholder(config)
-        print("Data ingested.")
+        tqdm.write("Data ingested.")
     else:
         data_holder = fetch_data_holder(config)
     # validate spans
@@ -87,7 +89,7 @@ def otel_to_pv(
         for job_name, job_id_streams in job_name_group_streams
     )
     if save_events:
-        print("Saving PVEvents to job json files...")
+        tqdm.write("Saving PVEvents to job json files...")
         for job_name, pv_event_streams in pv_event_gen:
             handle_save_events(
                 job_name, pv_event_streams, output_file_directory
@@ -124,7 +126,7 @@ def handle_save_events(
             f"{job_name}: {e}"
         )
 
-    print(f"Saving events for '{job_name}'...")
+    tqdm.write(f"Saving events for '{job_name}'...")
 
     file_no = 1
     for pv_event_stream in pv_event_streams:

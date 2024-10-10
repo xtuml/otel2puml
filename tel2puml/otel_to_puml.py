@@ -5,13 +5,15 @@ import os
 from logging import getLogger
 from typing import Generator, Optional, Literal, Any, Union
 
+from tqdm import tqdm
+
 from tel2puml.tel2puml_types import OtelPVOptions, PVEvent, PVPumlOptions
 from tel2puml.otel_to_pv.otel_to_pv import otel_to_pv
 from tel2puml.pv_to_puml.pv_to_puml import (
     pv_streams_to_puml_files,
     pv_files_to_pv_streams,
 )
-from tel2puml.utils import wrap_generator_with_start_and_end_messages
+from tel2puml.utils import wrap_generator_with_tqdm_start_and_end_messages
 
 
 def otel_to_puml(
@@ -47,7 +49,7 @@ def otel_to_puml(
             getLogger(__name__).error(f"Error creating directory.{e}")
             return
 
-    print(f"Processing command: {components}...")
+    tqdm.write(f"Processing command: {components}...")
 
     match components:
         case "otel2puml" | "otel2pv":
@@ -70,7 +72,7 @@ def otel_to_puml(
                     Any,
                     None,
                 ],
-            ] = wrap_generator_with_start_and_end_messages(
+            ] = wrap_generator_with_tqdm_start_and_end_messages(
                 otel_to_pv(
                     **otel_to_pv_options,
                     output_file_directory=output_file_directory,
@@ -85,7 +87,7 @@ def otel_to_puml(
                 )
             )
             if components == "otel2pv":
-                print(
+                tqdm.write(
                     "Otel to PV conversion done. Exiting as no further steps"
                     " were requested."
                 )
@@ -96,7 +98,7 @@ def otel_to_puml(
                     "'pv2puml' has been selected, 'pv_to_puml_options' is"
                     " required."
                 )
-            pv_streams = wrap_generator_with_start_and_end_messages(
+            pv_streams = wrap_generator_with_tqdm_start_and_end_messages(
                 pv_files_to_pv_streams(**pv_to_puml_options),
                 "Ingesting PV files and streaming PVEvents...",
                 "All PV files ingested and all PVEvents streamed.",
@@ -107,6 +109,6 @@ def otel_to_puml(
                 " 'pv2puml'"
             )
     # Convert streams to puml files
-    print(f"Saving PUML files to '{output_file_directory}'...")
+    tqdm.write(f"Saving PUML files to '{output_file_directory}'...")
     pv_streams_to_puml_files(pv_streams, output_file_directory)
-    print("PUML files successfully generated!")
+    tqdm.write("PUML files successfully generated!")
