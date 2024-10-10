@@ -117,7 +117,7 @@ There are two ways to set up this project: manual installation or using a devcon
 
 The project can be installed manually in a few different ways. Make sure you have the following prerequisites for all installation methods:
 * `git`
-* Python version 3.11.9 or lower
+* Python version 3.11.9
 * `bash`
 * `pip` (Python package manager)
 
@@ -316,13 +316,13 @@ python -m tel2puml pv2puml [options] [FILE_PATHS...]
 For detailed help on each subcommand, use the `-h` or `--help` option:
 
 ```bash
-otel2puml [subcommand] -h
+python -m tel2puml [subcommand] -h
 ```
 
 **Example:**
 
 ```bash
-otel2puml pv2puml -h
+python -m tel2puml pv2puml -h
 ```
 
 ## Technical Implementation
