@@ -1,5 +1,6 @@
 """Module to stream OTel data from a data source and store it within a
 data holder."""
+from typing import TypedDict, Type
 from tel2puml.otel_to_pv.data_holders import (
     SQLDataHolder,
     DataHolder,
@@ -9,6 +10,16 @@ from tel2puml.otel_to_pv.data_sources import (
     OTELDataSource,
 )
 from tel2puml.otel_to_pv.config import IngestDataConfig
+
+
+DATASOURCES = TypedDict(
+    "DATASOURCES", {"json": Type[JSONDataSource]}
+)(json=JSONDataSource)
+
+
+DATAHOLDERS = TypedDict(
+    "DATAHOLDERS", {"sql": Type[SQLDataHolder]}
+)(sql=SQLDataHolder)
 
 
 class IngestData:
@@ -44,12 +55,12 @@ def fetch_data_source(config: IngestDataConfig) -> OTELDataSource:
     :return: The subclass of OTelDataSource
     :rtype: :class: `OTelDataSource`
     """
-    data_source_type = config["ingest_data"].data_source
-    if data_source_type not in config["data_sources"]:
+    data_source_type = config.ingest_data.data_source
+    if data_source_type not in config.data_sources:
         raise ValueError(
             f"{data_source_type} is not present in the data source config."
         )
-    return JSONDataSource(config["data_sources"][data_source_type])
+    return DATASOURCES[data_source_type](config.data_sources[data_source_type])
 
 
 def fetch_data_holder(config: IngestDataConfig) -> DataHolder:
@@ -60,12 +71,13 @@ def fetch_data_holder(config: IngestDataConfig) -> DataHolder:
     :return: The subclass of DataHolder
     :rtype: :class: `DataHolder`
     """
-    data_holder_type = config["ingest_data"].data_holder
-    if data_holder_type not in config["data_holders"]:
+    data_holder_type = config.ingest_data.data_holder
+    data_holders = config.data_holders
+    if data_holder_type not in data_holders:
         raise ValueError(
             f"{data_holder_type} is not present in the data holder config."
         )
-    return SQLDataHolder(config["data_holders"][data_holder_type])
+    return DATAHOLDERS[data_holder_type](data_holders[data_holder_type])
 
 
 def ingest_data_into_dataholder(config: IngestDataConfig) -> DataHolder:

@@ -41,9 +41,9 @@ class SQLDataHolder(DataHolder):
         super().__init__()
         self.node_models_to_save: list[NodeModel] = []
         self.node_relationships_to_save: list[dict[str, str]] = []
-        self.batch_size: int = config["batch_size"]
-        self.time_buffer: int = config["time_buffer"]
-        self.engine: Engine = create_engine(config["db_uri"], echo=False)
+        self.batch_size: int = config.batch_size
+        self.time_buffer: int = config.time_buffer
+        self.engine: Engine = create_engine(config.db_uri, echo=False)
         self.base: Base = Base()
         self.session: Session = Session(bind=self.engine)
         self.create_db_tables()
