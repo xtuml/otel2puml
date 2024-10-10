@@ -236,7 +236,7 @@ class TestOtelToPV:
 
         # Test 7: Remove disconnected spans
         def mock_fetch_data_holder_disconnected_spans(
-            *_
+            *_: Any
         ) -> SQLDataHolder:
             """Remove root span to create disconnected data within NodeModel
             table"""

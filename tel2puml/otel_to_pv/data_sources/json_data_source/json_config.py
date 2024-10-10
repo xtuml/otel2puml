@@ -286,7 +286,7 @@ def field_spec_mapping_to_jq_field_spec_mapping(
     }
 
 
-class OTelFieldMapping(TypedDict):
+class OTelFieldMapping(BaseModel):
     """Typed dict for OTelFieldMapping - the expected mapping of fields in the
     used for the JSON data source."""
     job_name: FieldSpec
@@ -297,7 +297,27 @@ class OTelFieldMapping(TypedDict):
     end_timestamp: FieldSpec
     application_name: FieldSpec
     parent_event_id: FieldSpec
-    child_event_ids: NotRequired[FieldSpec]
+    child_event_ids: FieldSpec | None = None
+
+    def to_field_mapping(self) -> dict[str, FieldSpec]:
+        """Converts to field mapping.
+
+        :return: The field mapping
+        :rtype: `dict`[`str`, :class:`FieldSpec`]
+        """
+        field_mapping = {
+            "job_name": self.job_name,
+            "job_id": self.job_id,
+            "event_type": self.event_type,
+            "event_id": self.event_id,
+            "start_timestamp": self.start_timestamp,
+            "end_timestamp": self.end_timestamp,
+            "application_name": self.application_name,
+            "parent_event_id": self.parent_event_id,
+        }
+        if self.child_event_ids is not None:
+            field_mapping["child_event_ids"] = self.child_event_ids
+        return field_mapping
 
 
 class JSONDataSourceConfig(BaseModel):

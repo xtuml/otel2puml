@@ -7,7 +7,7 @@ from logging import getLogger
 
 from tqdm import tqdm
 from pydantic import ValidationError
-import jq
+import jq  # type: ignore[import-not-found]
 
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 from ..base import OTELDataSource
@@ -69,7 +69,7 @@ class JSONDataSource(OTELDataSource):
         elif not os.path.isdir(self.config.dirpath):
             raise ValueError(
                 f"{self.config.dirpath} directory does not exist."
-                )
+            )
         return self.config.dirpath
 
     def set_filepath(self) -> str | None:
@@ -95,7 +95,9 @@ class JSONDataSource(OTELDataSource):
         :rtype: `Any`
         """
         if config.field_mapping is not None:
-            return field_mapping_to_compiled_jq(config.field_mapping)
+            return field_mapping_to_compiled_jq(
+                config.field_mapping.to_field_mapping()
+            )
         elif config.jq_query is not None:
             return jq.compile(config.jq_query)
         else:

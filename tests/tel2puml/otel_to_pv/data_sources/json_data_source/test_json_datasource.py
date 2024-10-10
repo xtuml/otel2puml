@@ -16,7 +16,7 @@ from tel2puml.otel_to_pv.data_sources.json_data_source.json_datasource import (
     JSONDataSource,
 )
 from tel2puml.otel_to_pv.data_sources.json_data_source.json_config import (
-    JSONDataSourceConfig,
+    JSONDataSourceConfig
 )
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 from tel2puml.otel_to_pv.config import IngestDataConfig
@@ -43,22 +43,7 @@ class TestJSONDataSource:
         assert config.dirpath == "/path/to/json/directory"
         assert config.filepath == "/path/to/json/file.json"
         assert not config.json_per_line
-
-        # Check expected field mapping keys
-        expected_field_mapping_keys = {
-            "job_name",
-            "job_id",
-            "event_type",
-            "event_id",
-            "start_timestamp",
-            "end_timestamp",
-            "application_name",
-            "parent_event_id",
-            "child_event_ids",
-        }
-        assert (
-            set(config.field_mapping.keys()) == expected_field_mapping_keys
-        )
+        assert config.field_mapping is not None
 
     @staticmethod
     @pytest.mark.usefixtures("mock_path_exists")

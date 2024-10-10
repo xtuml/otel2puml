@@ -12,14 +12,22 @@ from tel2puml.otel_to_pv.data_sources import (
 from tel2puml.otel_to_pv.config import IngestDataConfig
 
 
-DATASOURCES = TypedDict(
-    "DATASOURCES", {"json": Type[JSONDataSource]}
-)(json=JSONDataSource)
+class DataSourcesTypedDict(TypedDict):
+    """Typed dict for DataSources."""
+
+    json: Type[JSONDataSource]
 
 
-DATAHOLDERS = TypedDict(
-    "DATAHOLDERS", {"sql": Type[SQLDataHolder]}
-)(sql=SQLDataHolder)
+class DataHoldersTypedDict(TypedDict):
+    """Typed dict for DataHolders."""
+
+    sql: Type[SQLDataHolder]
+
+
+DATASOURCES = DataSourcesTypedDict(json=JSONDataSource)
+
+
+DATAHOLDERS = DataHoldersTypedDict(sql=SQLDataHolder)
 
 
 class IngestData:
