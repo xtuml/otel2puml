@@ -1,19 +1,19 @@
 """Module containing DataSource sub class responsible for JSON ingestion."""
 
 import os
-from typing import Iterator, Any
+from typing import Iterator
 import json
 from logging import getLogger
 
 from tqdm import tqdm
 from pydantic import ValidationError
-import jq  # type: ignore[import-not-found]
 
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 from ..base import OTELDataSource
 from .json_jq_converter import (
     generate_records_from_compiled_jq,
-    field_mapping_to_compiled_jq,
+    compile_jq_query,
+    get_jq_query_from_config
 )
 from .json_config import JSONDataSourceConfig
 
@@ -39,7 +39,9 @@ class JSONDataSource(OTELDataSource):
                 """No directory or files found. Please check yaml config."""
             )
         self.file_list = self.get_file_list()
-        self.compiled_jq = self.get_compiled_jq_from_config(self.config)
+        self.compiled_jq = compile_jq_query(
+            get_jq_query_from_config(self.config)
+        )
         self.file_pbar = tqdm(
             total=len(self.file_list),
             desc="Ingesting JSON files",
@@ -84,24 +86,6 @@ class JSONDataSource(OTELDataSource):
         elif not os.path.isfile(self.config.filepath):
             raise ValueError(f"{self.config.filepath} does not exist.")
         return self.config.filepath
-
-    @staticmethod
-    def get_compiled_jq_from_config(config: JSONDataSourceConfig) -> Any:
-        """Get the compiled jq query from the config.
-
-        :param config: The JSONDataSourceConfig object
-        :type config: :class:`JSONDataSourceConfig`
-        :return: The compiled jq query
-        :rtype: `Any`
-        """
-        if config.field_mapping is not None:
-            return field_mapping_to_compiled_jq(
-                config.field_mapping.to_field_mapping()
-            )
-        elif config.jq_query is not None:
-            return jq.compile(config.jq_query)
-        else:
-            raise ValueError("No field mapping or jq query found in config.")
 
     def get_file_list(self) -> list[str]:
         """Get a list of filepaths to process.

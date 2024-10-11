@@ -9,7 +9,26 @@ from .json_config import (
     JQFieldSpec,
     field_spec_mapping_to_jq_field_spec_mapping,
     FieldSpec,
+    JSONDataSourceConfig,
 )
+
+
+class JQCompileError(Exception):
+    """Exception raised for errors in the JQ compilation process."""
+
+    def __init__(self, message: str) -> None:
+        """Constructor method."""
+        message = f"Error compiling jq query:\n{message}"
+        super().__init__(message)
+
+
+class JQExtractionError(Exception):
+    """Exception raised for errors in the JQ extraction process."""
+
+    def __init__(self, message: str) -> None:
+        """Constructor method."""
+        message = f"Error extracting data using input jq query:\n{message}"
+        super().__init__(message)
 
 
 class JQVariableTree:
@@ -448,6 +467,20 @@ def jq_field_mapping_to_compiled_jq(
     return jq.compile(jq_query)
 
 
+def field_mapping_to_jq_query(field_mapping: dict[str, FieldSpec]) -> str:
+    """Convert the field mapping to a jq query.
+
+    :param field_mapping: The field mapping
+    :type field_mapping: `dict`[`str`, :class:`FieldSpec`]
+    :return: The jq query
+    :rtype: `str`
+    """
+    jq_field_mapping = field_spec_mapping_to_jq_field_spec_mapping(
+        field_mapping
+    )
+    return jq_field_mapping_to_jq_query(jq_field_mapping)
+
+
 def field_mapping_to_compiled_jq(field_mapping: dict[str, FieldSpec]) -> Any:
     """Convert the field mapping to a compiled jq query.
 
@@ -473,10 +506,48 @@ def generate_records_from_compiled_jq(
     :type compiled_jq: `Any`
     :return: A generator of records
     :rtype: `Generator`[`Any`, `None`, `None`]
+    :raises JQExtractionError: If there is an error extracting data using the
+    input jq query
     """
     records = iter(compiled_jq.input_value(input_data))
-    for record in records:
-        if isinstance(record, list):
-            yield from record
-        else:
-            yield record
+    try:
+        for record in records:
+            if isinstance(record, list):
+                yield from record
+            else:
+                yield record
+    except ValueError as e:
+        raise JQExtractionError(str(e))
+
+
+def compile_jq_query(jq_query: str) -> Any:
+    """Compile the jq query.
+
+    :param jq_query: The jq query
+    :type jq_query: `str`
+    :return: The compiled jq query
+    :rtype: `Any`
+    :raises JQCompileError: If there is an error compiling the jq query
+    """
+    try:
+        return jq.compile(jq_query)
+    except ValueError as e:
+        raise JQCompileError(f"{str(e)}")
+
+
+def get_jq_query_from_config(config: JSONDataSourceConfig) -> str:
+    """Get the jq query from the config.
+
+    :param config: The JSONDataSourceConfig object
+    :type config: :class:`JSONDataSourceConfig`
+    :return: The compiled jq query
+    :rtype: `Any`
+    """
+    if config.field_mapping is not None:
+        return field_mapping_to_jq_query(
+            config.field_mapping.to_field_mapping()
+        )
+    elif config.jq_query is not None:
+        return config.jq_query
+    else:
+        raise ValueError("No field mapping or jq query found in config.")
