@@ -4,6 +4,7 @@ on:
     push:
       branches:
         - 'main'
+        - '183-create-dockerfile'
       tags:
         - 'v*'
 
