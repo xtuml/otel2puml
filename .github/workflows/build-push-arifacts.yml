@@ -2,9 +2,6 @@ name: Build and Push Zipapp Archive To Release
 on:
   release:
     types: [published]
-  push:
-    tags:
-      - 'v-dev-beta'
 
 jobs:
   zipapp-amd-build-and-push:
