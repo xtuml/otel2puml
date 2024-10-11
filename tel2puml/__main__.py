@@ -21,6 +21,7 @@ Example:
 import os
 import argparse
 import yaml
+import warnings
 from typing import Any, Literal
 
 from .otel_to_puml import otel_to_puml
@@ -219,6 +220,8 @@ def generate_component_options(
 
 
 if __name__ == "__main__":
+    warnings.filterwarnings("ignore")
+
     args: argparse.Namespace = parser.parse_args()
     args_dict = vars(args)
     otel_pv_options, pv_puml_options = generate_component_options(

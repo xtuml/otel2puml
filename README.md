@@ -7,7 +7,11 @@ This project converts [OpenTelemetry (OTel)](https://opentelemetry.io/) data int
   <ol>
     <li><a href="#why-use-this-tool">Why Use This Tool?</a></li>
     <li><a href="#features">Features</a></li>
-    <li><a href="#quick-start">Quick Start</a></li>
+    <li><a href="#quick-start">Quick Start</a>
+      <ol>
+        <li><a href="#using-docker-image">Using Docker Image</a></li>
+      </ol>
+    </li>
     <li><a href="#example-input">Example Input</a></li>
     <li><a href="#example-output">Example Output</a></li>
     <li><a href="#installation">Installation</a>
@@ -108,6 +112,31 @@ python -m tel2puml pv2puml example_above.json -jn "output_diagram"
 ```
 
 ![](docs/images/example_sequence_for_readme.svg)
+
+## Using Docker Image
+
+You can run otel2puml using the provided [Docker image](https://github.com/orgs/xtuml/packages?repo_name=otel2puml). This is especially useful if you want to run the tool in an isolated environment without manually managing dependencies. Here’s how to do it:
+
+Example Command:
+```bash
+docker run \
+ -v /path/to/job_json_files:/job_json_files \
+ -v /path/to/config.yaml:/config.yaml \
+ -v /path/to/puml_output:/puml_output \
+ ghcr.io/xtuml/otel2puml:<version> \
+ -o /puml_output otel2puml -c /config.yaml
+```
+
+Explanation:
+
+* `-v /path/to/job_json_files:/job_json_files`: Mounts a local folder containing your OTel data in JSON format to the Docker container's /job_json_files directory.
+* `-v /path/to/config.yaml:/config.yaml`: Mounts the configuration file for `otel2puml` to the Docker container's /config.yaml.
+* `-v /path/to/puml_output:/puml_output`: Mounts a local folder where the output PlantUML diagrams will be saved.
+* `ghcr.io/xtuml/otel2puml`:latest: Specifies the Docker image to run.
+* `-o /puml_output`: Tells `otel2puml` where to save the generated PlantUML files inside the container (linked to the local `puml_output` folder).
+* `otel2puml -c /config.yaml`: Runs the `otel2puml` command using the provided configuration file.
+
+Replace `/path/to/` with the actual paths on your local machine.
 
 ## Installation
 
