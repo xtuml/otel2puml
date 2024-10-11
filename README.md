@@ -115,7 +115,7 @@ python -m tel2puml pv2puml example_above.json -jn "output_diagram"
 
 ## Using Docker Image
 
-You can run otel2puml using the provided Docker image. This is especially useful if you want to run the tool in an isolated environment without manually managing dependencies. Here’s how to do it:
+You can run otel2puml using the provided [Docker image](https://github.com/orgs/xtuml/packages?repo_name=otel2puml). This is especially useful if you want to run the tool in an isolated environment without manually managing dependencies. Here’s how to do it:
 
 Example Command:
 ```bash
@@ -123,7 +123,7 @@ docker run \
  -v /path/to/job_json_files:/job_json_files \
  -v /path/to/config.yaml:/config.yaml \
  -v /path/to/puml_output:/puml_output \
- ghcr.io/your-username/otel2puml:latest \
+ ghcr.io/xtuml/otel2puml:<version> \
  -o /puml_output otel2puml -c /config.yaml
 ```
 

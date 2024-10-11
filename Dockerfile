@@ -37,4 +37,4 @@ RUN /otel2puml_app/install_repositories.sh
 
 EXPOSE 8800
 
-ENTRYPOINT [ "python", "-m" ]
+ENTRYPOINT [ "python", "-m" , "tel2puml"]
