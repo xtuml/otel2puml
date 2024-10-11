@@ -24,7 +24,7 @@ import yaml
 import warnings
 from typing import Any, Literal
 
-from .otel_to_puml import otel_to_puml
+from tel2puml.otel_to_puml import otel_to_puml
 from tel2puml.tel2puml_types import (
     OtelToPVArgs,
     PvToPumlArgs,
