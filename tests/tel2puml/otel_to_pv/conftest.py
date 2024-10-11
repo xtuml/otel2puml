@@ -39,6 +39,7 @@ def mock_yaml_config_string() -> str:
                     dirpath: /path/to/json/directory
                     filepath: /path/to/json/file.json
                     json_per_line: false
+                    jq_query: null
                     field_mapping:
                         job_name:
                             key_paths: [

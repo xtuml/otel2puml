@@ -39,8 +39,9 @@ class JSONDataSource(OTELDataSource):
                 """No directory or files found. Please check yaml config."""
             )
         self.file_list = self.get_file_list()
+        self.jq_query = get_jq_query_from_config(self.config)
         self.compiled_jq = compile_jq_query(
-            get_jq_query_from_config(self.config)
+            self.jq_query
         )
         self.file_pbar = tqdm(
             total=len(self.file_list),
