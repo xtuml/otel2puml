@@ -10,6 +10,7 @@ This project converts [OpenTelemetry (OTel)](https://opentelemetry.io/) data int
     <li><a href="#quick-start">Quick Start</a>
       <ol>
         <li><a href="#using-docker-image">Using Docker Image</a></li>
+        <li><a href="#using-python-executable">Using Python Executable</a></li>
       </ol>
     </li>
     <li><a href="#example-input">Example Input</a></li>
@@ -137,6 +138,14 @@ Explanation:
 * `otel2puml -c /config.yaml`: Runs the `otel2puml` command using the provided configuration file.
 
 Replace `/path/to/` with the actual paths on your local machine.
+
+## Using Python Executable
+On each new [release](https://github.com/xtuml/otel2puml/releases) of otel2puml, both an amd and arm python executable are attached as artifacts.
+These are downloadable and can be run from the terminal (assuming python is installed). Below is an example of usage using the arm version:
+
+```bash
+python tel2puml-arm.pyz otel2puml -o /path/to/output -c /path/to/config.yaml
+```
 
 ## Installation
 
