@@ -3,18 +3,28 @@
 from typing import Optional, Union, NotRequired, Iterable, Self, Sequence
 from typing_extensions import TypedDict
 
-from pydantic import BaseModel, model_validator, Field
+from pydantic import BaseModel, model_validator, Field, ConfigDict
 
 
 class FieldSpec(TypedDict):
     """Typed dict for FieldSpec."""
 
-    key_paths: Sequence[str | Iterable[str]]
+    key_paths: Union[Sequence[str | Iterable[str]], str]
     key_value: NotRequired[
-        Optional[Sequence[Optional[Union[str, Iterable[str | None]]]]]
+        Optional[
+            Union[
+                Sequence[Optional[Union[str, Iterable[str | None]]]],
+                str
+            ]
+        ]
     ]
     value_paths: NotRequired[
-        Optional[Sequence[Optional[Union[str, Iterable[str | None]]]]]
+        Optional[
+            Union[
+                Sequence[Optional[Union[str, Iterable[str | None]]]],
+                str
+            ]
+        ]
     ]
     value_type: str
 
@@ -145,15 +155,18 @@ class JQFieldSpec:
 
     @staticmethod
     def field_spec_key_paths_to_jq_field_spec_key_paths(
-        key_paths: Sequence[str | Iterable[str]],
+        key_paths: Union[Sequence[str | Iterable[str]], str],
     ) -> list[tuple[str, ...]]:
         """Converts field spec key paths to jq field spec key paths.
 
         :param key_paths: The key paths
-        :type key_paths: :class:`Sequence`[`str` | `Iterable`[`str`]]
+        :type key_paths: `Union`[`Sequence`[`str` | `Iterable`[`str`]],
+        `str`]
         :return: The jq field spec key paths
         :rtype: `list`[`tuple`[`str`, ...]]
         """
+        if isinstance(key_paths, str):
+            key_paths = [key_paths]
         updated_key_paths: list[tuple[str, ...]] = []
         for key_path in key_paths:
             updated_key_paths.append(
@@ -196,22 +209,26 @@ class JQFieldSpec:
     @staticmethod
     def optional_list_to_jq_optional_list(
         optional_list: Optional[
-            Sequence[Optional[Union[str, Iterable[str | None]]]]
+            Union[
+                Sequence[Optional[Union[str, Iterable[str | None]]]],
+                str
+            ]
         ],
         jq_key_paths: Sequence[tuple[str, ...]],
     ) -> list[tuple[str | None, ...]]:
         """Converts optional list to jq optional list.
 
         :param optional_list: The optional list
-        :type optional_list: `Optional`[`Sequence`[`Optional`[
-        `Union`[`str`, `Iterable`[`str` | `None`]]
-        ]]]
+        :type optional_list: `Optional`[`Union`[`Sequence`[`Optional`[`Union`[
+        `str`, `Iterable`[`str` | `None`]]]], `str`]]
         :param jq_key_paths: The jq key paths
         :type jq_key_paths: `Sequence`[`tuple`[`str`, ...]]
         :return: The jq optional list
         :rtype: `list`[`tuple`[`str` | `None`, ...
         ]]
         """
+        if isinstance(optional_list, str):
+            optional_list = [optional_list]
         updated_optional_list: list[tuple[str | None, ...]] = []
         if optional_list is None:
             optional_list = [None] * len(jq_key_paths)
@@ -322,6 +339,13 @@ class OTelFieldMapping(BaseModel):
 
 class JSONDataSourceConfig(BaseModel):
     """Typed dict for JSONDataSourceConfig."""
+
+    model_config = ConfigDict(
+        description="The model config",
+        required=True,
+        strict=True,
+        extra="forbid",
+    )
 
     filepath: Optional[str] = Field(None, description="The file path")
     dirpath: Optional[str] = Field(None, description="The directory path")
