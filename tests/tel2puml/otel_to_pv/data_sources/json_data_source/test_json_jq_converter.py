@@ -1,12 +1,14 @@
 """Tests for the json_jq_converter module."""
+
 from typing import Any
 import pytest
 
 import jq  # type: ignore[import-not-found]
 from pytest import MonkeyPatch
 
-from tel2puml.otel_to_pv.data_sources.json_data_source.json_config \
-    import JQFieldSpec, FieldSpec
+from tel2puml.otel_to_pv.data_sources.json_data_source.json_config import (
+    JQFieldSpec, FieldSpec, JSONDataSourceConfig
+)
 from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter \
     import (
         JQVariableTree,
@@ -22,13 +24,19 @@ from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter \
         get_jq_query_from_field_mapping_with_variables_and_var_tree,
         jq_field_mapping_to_jq_query,
         jq_field_mapping_to_compiled_jq,
+        field_mapping_to_jq_query,
         field_mapping_to_compiled_jq,
-        generate_records_from_compiled_jq
+        generate_records_from_compiled_jq,
+        compile_jq_query,
+        JQCompileError,
+        JQExtractionError,
+        get_jq_query_from_config
     )
 
 
 class TestJQVariableTree:
     """Tests for the JQVariableTree class."""
+
     @staticmethod
     def test__init__() -> None:
         """Test the __init__ method of the JQVariableTree class."""
@@ -104,6 +112,7 @@ class TestJQVariableTree:
 class TestFieldMappingToCompiledJQ:
     """Tests for the field_mapping_to_compiled_jq function and related
     functions."""
+
     @staticmethod
     def check_first_child(
         first_child: JQVariableTree, second_child: bool = False
@@ -189,8 +198,10 @@ class TestFieldMappingToCompiledJQ:
             )
 
     def test_update_field_spec_with_variables(
-        self, field_spec_1: JQFieldSpec, field_spec_2: JQFieldSpec,
-        field_spec_4: JQFieldSpec
+        self,
+        field_spec_1: JQFieldSpec,
+        field_spec_2: JQFieldSpec,
+        field_spec_4: JQFieldSpec,
     ) -> None:
         """Test the update_field_spec_with_variables function."""
         field_spec = field_spec_1
@@ -301,10 +312,8 @@ class TestFieldMappingToCompiledJQ:
         with pytest.raises(ValueError):
             handle_string_joined_variables_jq_query([["x", "y"], []])
         # test case with one variable
-        assert handle_string_joined_variables_jq_query(
-            [["x"]]
-        ) == (
-            '([(x | (if . == null then null else (. | tostring) end))] | if'
+        assert handle_string_joined_variables_jq_query([["x"]]) == (
+            "([(x | (if . == null then null else (. | tostring) end))] | if"
             ' any(. == null) then null else join("_") end)'
         )
         # test case with multiple variables with single and multiple priority
@@ -312,8 +321,8 @@ class TestFieldMappingToCompiledJQ:
         assert handle_string_joined_variables_jq_query(
             [["x", "y"], ["z"]]
         ) == (
-            '([(x // y | (if . == null then null else (. | tostring) end)),'
-            '(z | (if . == null then null else (. | tostring) end))]'
+            "([(x // y | (if . == null then null else (. | tostring) end)),"
+            "(z | (if . == null then null else (. | tostring) end))]"
             ' | if any(. == null) then null else join("_") end)'
         )
 
@@ -326,24 +335,20 @@ class TestFieldMappingToCompiledJQ:
         with pytest.raises(ValueError):
             handle_array_joined_variables_jq_query([["x", "y"], []])
         # test case with one variable
-        assert handle_array_joined_variables_jq_query(
-            [["x"]]
-        ) == (
+        assert handle_array_joined_variables_jq_query([["x"]]) == (
             "([x]) | flatten | (if (. | all(. == null)) and . != [] then null "
             "else . end)"
         )
         # test case with multiple variables with single and multiple priority
         # variables
-        assert handle_array_joined_variables_jq_query(
-            [["x", "y"], ["z"]]
-        ) == (
+        assert handle_array_joined_variables_jq_query([["x", "y"], ["z"]]) == (
             "([x//y] + [z]) | flatten | (if (. | all(. == null)) and . != [] "
             "then null else . end)"
         )
 
     @staticmethod
     def test_handle_value_type_joined_variables_jq_query(
-        monkeypatch: MonkeyPatch
+        monkeypatch: MonkeyPatch,
     ) -> None:
         """Test the handle_value_type_joined_variables_jq_query function."""
         target_module = (
@@ -352,24 +357,23 @@ class TestFieldMappingToCompiledJQ:
         )
         monkeypatch.setattr(
             target_module + ".handle_string_joined_variables_jq_query",
-            lambda *_: "string"
+            lambda *_: "string",
         )
         monkeypatch.setattr(
             target_module + ".handle_array_joined_variables_jq_query",
-            lambda *_: "array"
+            lambda *_: "array",
         )
         # test case with string value type
-        assert handle_value_type_joined_variables_jq_query(
-            [], "string"
-        ) == "string"
+        assert (
+            handle_value_type_joined_variables_jq_query([], "string")
+            == "string"
+        )
         # test case with array value type
-        assert handle_value_type_joined_variables_jq_query(
-            [], "array"
-        ) == "array"
+        assert (
+            handle_value_type_joined_variables_jq_query([], "array") == "array"
+        )
         with pytest.raises(ValueError):
-            handle_value_type_joined_variables_jq_query(
-                [], "incorrect"
-            )
+            handle_value_type_joined_variables_jq_query([], "incorrect")
 
     @staticmethod
     def test_get_jq_for_field_spec(
@@ -423,7 +427,8 @@ class TestFieldMappingToCompiledJQ:
         # check case with more than one array in the key path
         field_spec = JQFieldSpec(
             key_paths=[
-                ("first.[].second.[].third",), ("first.[].second.third",)
+                ("first.[].second.[].third",),
+                ("first.[].second.third",),
             ],
             key_values=[("value",), (None,)],
             value_paths=[("value_path.next",), (None,)],
@@ -433,9 +438,10 @@ class TestFieldMappingToCompiledJQ:
             get_jq_for_field_spec(field_spec, "$out0")
         # check case with multiple values in a single key path signifying
         # priority order
-        assert get_jq_for_field_spec(
-            field_spec_with_variables_4, "$out3"
-        ) == field_spec_with_variables_4_expected_jq
+        assert (
+            get_jq_for_field_spec(field_spec_with_variables_4, "$out3")
+            == field_spec_with_variables_4_expected_jq
+        )
 
     @staticmethod
     def test_get_jq_using_field_mapping(
@@ -471,6 +477,15 @@ class TestFieldMappingToCompiledJQ:
         assert jq_query == (expected_full_query)
 
     @staticmethod
+    def test_field_mapping_to_jq_query(
+        field_spec_field_mapping: dict[str, FieldSpec],
+        expected_full_query: str,
+    ) -> None:
+        """Test the field_mapping_to_jq_query function."""
+        jq_query = field_mapping_to_jq_query(field_spec_field_mapping)
+        assert jq_query == (expected_full_query)
+
+    @staticmethod
     def test_jq_field_mapping_to_compiled_jq(
         jq_field_mapping_for_fixture_data: dict[str, JQFieldSpec],
         mock_json_data: dict[str, Any],
@@ -489,12 +504,20 @@ class TestFieldMappingToCompiledJQ:
         # test records
         test_records = {
             "records": [
-                {"first": "value1", "second": "value2", "array": [
-                    {"key": "a_value", "value": "value3"},
-                ]},
-                {"first": "value4", "second": "value5", "array": [
-                    {"key": "not_a_value", "value": "value6"},
-                ]},
+                {
+                    "first": "value1",
+                    "second": "value2",
+                    "array": [
+                        {"key": "a_value", "value": "value3"},
+                    ],
+                },
+                {
+                    "first": "value4",
+                    "second": "value5",
+                    "array": [
+                        {"key": "not_a_value", "value": "value6"},
+                    ],
+                },
             ]
         }
         jq_field_spec = JQFieldSpec(
@@ -511,8 +534,12 @@ class TestFieldMappingToCompiledJQ:
             {"extracted_value": "value4"},
         ]
         # test case where the referenced array doesn't exist
-        output = list(iter(compiled_jq.input_value(
-            {"records": [{"first": "value7", "second": "value8"}]}))
+        output = list(
+            iter(
+                compiled_jq.input_value(
+                    {"records": [{"first": "value7", "second": "value8"}]}
+                )
+            )
         )
         assert output == [
             {"extracted_value": "value7"},
@@ -554,3 +581,56 @@ class TestFieldMappingToCompiledJQ:
             {"first": "value1", "second": "value2"},
             {"first": "value3", "second": "value4"},
         ]
+        # test extraction error
+        compiled_jq = jq.compile(".records[].[].[]")
+        with pytest.raises(JQExtractionError):
+            list(generate_records_from_compiled_jq(data, compiled_jq))
+
+    @staticmethod
+    def test_compile_jq_query():
+        """Test the compile_jq_query function."""
+        jq_query = compile_jq_query(".records[]")
+        assert isinstance(jq_query, jq._Program)
+        # test compile error
+        with pytest.raises(JQCompileError) as e:
+            compile_jq_query("l")
+        assert str(e.value) == (
+            "Error compiling jq query:\n"
+            "jq: error: l/0 is not defined at <top-level>,"
+            " line 1:\nl\njq: 1 compile error"
+        )
+
+
+def test_get_jq_query_from_config(monkeypatch: MonkeyPatch) -> None:
+    # test case where jq query is provided
+    config = JSONDataSourceConfig(
+        field_mapping=None,
+        filepath="filepath",
+        dirpath="dirpath",
+        json_per_line=False,
+        jq_query="jq_query",
+    )
+    assert get_jq_query_from_config(config) == "jq_query"
+    # test case with field mapping
+    config = JSONDataSourceConfig(
+        **dict(
+            field_mapping={
+                field: {"key_paths": "key_path", "value_type": "value_type"}
+                for field in [
+                    "job_name", "job_id", "event_type", "event_id",
+                    "start_timestamp", "end_timestamp", "application_name",
+                    "parent_event_id"
+                ]
+            },
+            filepath="filepath",
+            dirpath="dirpath",
+            json_per_line=False,
+            jq_query=None,
+        )
+    )
+    import tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter
+    monkeypatch.setattr(
+        tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter,
+        "field_mapping_to_jq_query", lambda *_: "jq_query"
+    )
+    assert get_jq_query_from_config(config) == "jq_query"
