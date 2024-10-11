@@ -1,11 +1,15 @@
 """Tests for json_config.py."""
+
 import pytest
 from pytest import MonkeyPatch
+from pydantic import ValidationError
 
 from tel2puml.otel_to_pv.data_sources.json_data_source.json_config import (
     JQFieldSpec,
     FieldSpec,
-    field_spec_mapping_to_jq_field_spec_mapping
+    field_spec_mapping_to_jq_field_spec_mapping,
+    JSONDataSourceConfig,
+    OTelFieldMapping,
 )
 
 
@@ -298,3 +302,152 @@ def test_field_spec_mapping_to_jq_field_spec_mapping(
             field_mapping_for_fixture_data
         )
     )
+
+
+class TestJSONDataSourceConfig:
+    @staticmethod
+    def valid_field_spec() -> dict[str, str]:
+        return dict(key_paths="key1", value_type="string")
+
+    @staticmethod
+    def invalid_field_spec() -> dict[str, str]:
+        return dict(
+            key_paths="key1",
+        )
+
+    def otel_field_mapping(
+        self, valid: bool = True, with_child: bool = False
+    ) -> dict[str, dict[str, str]]:
+        field_mapping = {
+            "job_name": self.valid_field_spec(),
+            "job_id": self.valid_field_spec(),
+            "event_type": self.valid_field_spec(),
+            "event_id": self.valid_field_spec(),
+            "start_timestamp": self.valid_field_spec(),
+            "end_timestamp": self.valid_field_spec(),
+            "application_name": self.valid_field_spec(),
+            "parent_event_id": (
+                self.valid_field_spec() if valid else self.invalid_field_spec()
+            ),
+        }
+        if with_child:
+            field_mapping["child_event_ids"] = self.valid_field_spec()
+        return field_mapping
+
+    def test_otel_field_mapping(self) -> None:
+        """Test otel_field_mapping."""
+        # test case where all field specs are valid and no child event ids
+        # field
+
+        def check_fields(otel_mapping_model: OTelFieldMapping) -> None:
+            assert otel_mapping_model.job_name == self.valid_field_spec()
+            assert otel_mapping_model.event_type == self.valid_field_spec()
+            assert otel_mapping_model.event_id == self.valid_field_spec()
+            assert otel_mapping_model.job_id == self.valid_field_spec()
+            assert (
+                otel_mapping_model.start_timestamp == self.valid_field_spec()
+            )
+            assert otel_mapping_model.end_timestamp == self.valid_field_spec()
+            assert (
+                otel_mapping_model.application_name == self.valid_field_spec()
+            )
+            assert (
+                otel_mapping_model.parent_event_id == self.valid_field_spec()
+            )
+
+        model = OTelFieldMapping(**self.otel_field_mapping())
+        check_fields(model)
+        assert model.child_event_ids is None
+        # test case where all field specs are valid and there is a child event
+        # ids field
+        model = OTelFieldMapping(**self.otel_field_mapping(with_child=True))
+        check_fields(model)
+        assert model.child_event_ids == self.valid_field_spec()
+        # test case where one of the field specs is invalid
+        with pytest.raises(ValidationError):
+            OTelFieldMapping(**self.otel_field_mapping(valid=False))
+
+    def test_json_data_source_config(self) -> None:
+        """Test JSONDataSourceConfig."""
+        # test cases where input config should be valid
+        field_mapping = self.otel_field_mapping()
+        # case with all cases of valid combinations of filepath and dirpath
+        for case in [("filepath", None), (None, "dirpath")]:
+            config = JSONDataSourceConfig(
+                **dict(
+                    field_mapping=field_mapping,
+                    filepath=case[0],
+                    dirpath=case[1],
+                    json_per_line=True,
+                )
+            )
+            assert config.field_mapping == OTelFieldMapping(**field_mapping)
+            assert config.filepath == case[0]
+            assert config.dirpath == case[1]
+            assert config.json_per_line
+        # case with all valid combinations of field mapping and jq query
+        for case in [(field_mapping, None), (None, "jq_query")]:
+            config = JSONDataSourceConfig(
+                **dict(
+                    field_mapping=case[0],
+                    filepath="filepath",
+                    dirpath="dirpath",
+                    json_per_line=False,
+                    jq_query=case[1],
+                )
+            )
+            assert config.field_mapping == (
+                OTelFieldMapping(**field_mapping)
+                if (case[0] is not None)
+                else None
+            )
+            assert config.jq_query == case[1]
+            assert not config.json_per_line
+            assert config.filepath == "filepath"
+            assert config.dirpath == "dirpath"
+        # test case negative cases of incorrect types
+        for case in [
+            "field_mapping",
+            "filepath",
+            "dirpath",
+            "jq_query",
+            "json_per_line",
+        ]:
+            input_dict = dict(
+                field_mapping=field_mapping,
+                filepath="filepath",
+                dirpath="dirpath",
+                json_per_line=True,
+                jq_query=None,
+            )
+            input_dict[case] = 1
+            print(case)
+            with pytest.raises(ValidationError):
+                JSONDataSourceConfig(**input_dict)
+        # test case where both field_mapping and jq_query are None
+        with pytest.raises(ValidationError):
+            JSONDataSourceConfig(
+                field_mapping=None,
+                filepath="filepath",
+                dirpath="dirpath",
+                json_per_line=True,
+                jq_query=None,
+            )
+        # test case where both field mapping and jq query are provided
+        with pytest.raises(ValidationError):
+            JSONDataSourceConfig(
+                field_mapping=field_mapping,
+                filepath="filepath",
+                dirpath="dirpath",
+                json_per_line=True,
+                jq_query="jq_query",
+            )
+        # test case where file path and dir path are both None
+        with pytest.raises(ValidationError):
+            JSONDataSourceConfig(
+                field_mapping=field_mapping,
+                filepath=None,
+                dirpath=None,
+                json_per_line=True,
+                jq_query=None,
+            )
