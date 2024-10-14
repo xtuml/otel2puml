@@ -31,7 +31,8 @@ from tel2puml.tel2puml_types import (
     OtelPVOptions,
     PVPumlOptions,
 )
-from tel2puml.otel_to_pv.config import load_config_from_dict
+from tel2puml.otel_to_pv.config import IngestDataConfig
+
 
 parser = argparse.ArgumentParser(prog="otel2puml")
 # global arguments
@@ -194,10 +195,11 @@ def generate_component_options(
     otel_pv_options, pv_puml_options = None, None
     if command == "otel2puml" or command == "otel2pv":
         otel_to_pv_obj = OtelToPVArgs(**args_dict)
+        config = IngestDataConfig(
+            **generate_config(str(otel_to_pv_obj.config_file))
+        )
         otel_pv_options = OtelPVOptions(
-            config=load_config_from_dict(
-                generate_config(str(otel_to_pv_obj.config_file))
-            ),
+            config=config,
             ingest_data=otel_to_pv_obj.ingest_data,
             save_events=otel_to_pv_obj.save_events,
             find_unique_graphs=otel_to_pv_obj.find_unique_graphs,

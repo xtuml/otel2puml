@@ -17,7 +17,7 @@ def test_load_config_from_dict(mock_yaml_config_dict: dict[str, Any]) -> None:
     """Test load_config_from_yaml_string."""
     otel_to_pv_config = load_config_from_dict(mock_yaml_config_dict)
     # check sequencer default is set
-    assert otel_to_pv_config["sequencer"] == SequenceModelConfig()
+    assert otel_to_pv_config.sequencer == SequenceModelConfig()
     # check case where sequencer is provided
     temp_config = deepcopy(mock_yaml_config_dict)
     temp_config["sequencer"] = {
@@ -30,7 +30,7 @@ def test_load_config_from_dict(mock_yaml_config_dict: dict[str, Any]) -> None:
         "async_flag": True
     }
     otel_to_pv_config = load_config_from_dict(temp_config)
-    assert otel_to_pv_config["sequencer"] == SequenceModelConfig(
+    assert otel_to_pv_config.sequencer == SequenceModelConfig(
         async_event_groups={
             "job_1": {
                 "event_1": {},
@@ -43,7 +43,7 @@ def test_load_config_from_dict(mock_yaml_config_dict: dict[str, Any]) -> None:
     for field in ["data_sources", "data_holders", "ingest_data"]:
         temp_config = deepcopy(mock_yaml_config_dict)
         temp_config.pop(field)
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValidationError):
             load_config_from_dict(temp_config)
     # test case where an fields are not present for ingest_data
     for field in ["data_source", "data_holder"]:

@@ -358,11 +358,11 @@ def sql_data_holder_with_otel_jobs(
     mock_sql_config: SQLDataHolderConfig,
 ) -> Generator[SQLDataHolder, Any, None]:
     """Creates a SQLDataHolder object with 5 jobs, each with 2 events."""
-    mock_sql_config["time_buffer"] = 1
-    mock_sql_config["batch_size"] = 2
     sql_data_holder = SQLDataHolder(
         config=mock_sql_config,
     )
+    sql_data_holder.time_buffer = 1
+    sql_data_holder.batch_size = 2
     sql_data_holder._min_timestamp = 10**12
     sql_data_holder._max_timestamp = 2 * 10**12
     with sql_data_holder:

@@ -51,7 +51,8 @@ This section contains the configuration for the data sources. The following opti
     * `dirpath`: The path to the directory containing the JSON files. This is required if `filepath` is not provided.
     * `filepath`: The path to the JSON file. This is required if `dirpath` is not provided.
     * `json_per_line`: A boolean value indicating whether each line in the JSON file is a separate JSON object. The default value is `false`.
-    * `field_mapping`: The field mapping configuration. The details of how this is used can be found in the [JSON Data Converter HOW TO](/docs/user/json_data_converter_HOWTO.md) section.
+    * `field_mapping`: The field mapping configuration. The details of how this is used can be found in the [JSON Data Converter HOW TO](/docs/user/json_data_converter_HOWTO.md) section. This is required if `jq_query` is not provided and cannot be used in conjunction with `jq_query`.
+    * `jq_query`: A jq query to use to extract the data from the JSON file. This is required if `field_mapping` is not provided and cannot be used in conjunction with `field_mapping`. The jq query should return objects representing single events ([OTel Event](/docs/user/json_data_converter_HOWTO.md#1-introduction)). JQ usage can be found at https://jqlang.github.io/jq/.
 
 ### `sequencer`
 This option is not required and can be omitted if the sequencer is not being used or synchronous sequencing is being used.

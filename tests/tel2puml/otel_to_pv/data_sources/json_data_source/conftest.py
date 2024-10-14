@@ -77,6 +77,22 @@ def field_mapping(
 
 
 @pytest.fixture
+def field_spec_field_mapping(
+    field_mapping: dict[str, JQFieldSpec]
+) -> dict[str, FieldSpec]:
+    """Fixture for field mapping using previous field specs"""
+    return {
+        k: FieldSpec(
+            key_paths=v.key_paths,
+            key_value=v.key_values,
+            value_paths=v.value_paths,
+            value_type=v.value_type,
+        )
+        for k, v in field_mapping.items()
+    }
+
+
+@pytest.fixture
 def field_spec_with_variables_1() -> JQFieldSpec:
     """Fixture for 1st JQFieldSpec object with variables added"""
     return JQFieldSpec(

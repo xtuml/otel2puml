@@ -19,7 +19,7 @@ from tel2puml.otel_to_pv.data_holders.sql_data_holder.sql_dataholder import (
     SQLDataHolder,
     intialise_temp_table_for_root_nodes,
 )
-from tel2puml.otel_to_pv.config import SQLDataHolderConfig
+from tel2puml.otel_to_pv.config import SQLDataHolderConfig, IngestDataConfig
 
 
 @pytest.fixture
@@ -39,6 +39,7 @@ def mock_yaml_config_string() -> str:
                     dirpath: /path/to/json/directory
                     filepath: /path/to/json/file.json
                     json_per_line: false
+                    jq_query: null
                     field_mapping:
                         job_name:
                             key_paths: [
@@ -104,6 +105,14 @@ def mock_yaml_config_dict(mock_yaml_config_string: str) -> dict[str, Any]:
 
 
 @pytest.fixture
+def mock_ingest_config(
+    mock_yaml_config_dict: dict[str, Any]
+) -> IngestDataConfig:
+    """Mocks the ingest config."""
+    return IngestDataConfig(**mock_yaml_config_dict)
+
+
+@pytest.fixture
 def mock_yaml_config_dict_without_list(
     mock_yaml_config_string: str,
 ) -> dict[str, Any]:
@@ -116,6 +125,14 @@ def mock_yaml_config_dict_without_list(
 
 
 @pytest.fixture
+def mock_ingest_config_without_list(
+    mock_yaml_config_dict_without_list: dict[str, Any],
+) -> IngestDataConfig:
+    """Mocks the ingest config without list."""
+    return IngestDataConfig(**mock_yaml_config_dict_without_list)
+
+
+@pytest.fixture
 def mock_yaml_config_dict_json_per_line(
     mock_yaml_config_string: str,
 ) -> dict[str, Any]:
@@ -123,6 +140,14 @@ def mock_yaml_config_dict_json_per_line(
     config_dict: dict[str, Any] = yaml.safe_load(mock_yaml_config_string)
     config_dict["data_sources"]["json"]["json_per_line"] = True
     return config_dict
+
+
+@pytest.fixture
+def mock_ingest_config_json_per_line(
+    mock_yaml_config_dict_json_per_line: dict[str, Any],
+) -> IngestDataConfig:
+    """Mocks the ingest config with json per line."""
+    return IngestDataConfig(**mock_yaml_config_dict_json_per_line)
 
 
 @pytest.fixture
@@ -1151,11 +1176,11 @@ def sql_data_holder_with_otel_jobs(
     mock_sql_config: SQLDataHolderConfig,
 ) -> Generator[SQLDataHolder, Any, None]:
     """Creates a SQLDataHolder object with 5 jobs, each with 2 events."""
-    mock_sql_config["time_buffer"] = 1
-    mock_sql_config["batch_size"] = 2
     sql_data_holder = SQLDataHolder(
         config=mock_sql_config,
     )
+    sql_data_holder.time_buffer = 1
+    sql_data_holder.batch_size = 2
     sql_data_holder._min_timestamp = 10**12
     sql_data_holder._max_timestamp = 2 * 10**12
     with sql_data_holder:
@@ -1176,11 +1201,11 @@ def sql_data_holder_with_multiple_otel_job_names(
 ) -> Generator[SQLDataHolder, Any, None]:
     """Creates a SQLDataHolder object with 10 jobs consisting of 2 job names,
     each with 2 events."""
-    mock_sql_config["time_buffer"] = 1
-    mock_sql_config["batch_size"] = 2
     sql_data_holder = SQLDataHolder(
         config=mock_sql_config,
     )
+    sql_data_holder.time_buffer = 1
+    sql_data_holder.batch_size = 2
     sql_data_holder._min_timestamp = 10**12
     sql_data_holder._max_timestamp = 2 * 10**12
     with sql_data_holder:
@@ -1200,10 +1225,10 @@ def sql_data_holder_with_shuffled_otel_events(
     mock_sql_config: SQLDataHolderConfig,
 ) -> Generator[SQLDataHolder, Any, None]:
     """Creates a SQLDataHolder object with 5 jobs, each with 2 events."""
-    mock_sql_config["time_buffer"] = 1
     sql_data_holder = SQLDataHolder(
         config=mock_sql_config,
     )
+    sql_data_holder.time_buffer = 1
     sql_data_holder._min_timestamp = 10**12
     sql_data_holder._max_timestamp = 2 * 10**12
     with sql_data_holder:
@@ -1236,11 +1261,11 @@ def sql_data_holder_otel_jobs_with_job_names_on_root(
     mock_sql_config: SQLDataHolderConfig,
 ) -> Generator[SQLDataHolder, Any, None]:
     """Creates a SQLDataHolder object with 5 jobs, each with 2 events."""
-    mock_sql_config["time_buffer"] = 1
-    mock_sql_config["batch_size"] = 2
     sql_data_holder = SQLDataHolder(
         config=mock_sql_config,
     )
+    sql_data_holder.time_buffer = 1
+    sql_data_holder.batch_size = 2
     sql_data_holder._min_timestamp = 10**12
     sql_data_holder._max_timestamp = 2 * 10**12
     with sql_data_holder:

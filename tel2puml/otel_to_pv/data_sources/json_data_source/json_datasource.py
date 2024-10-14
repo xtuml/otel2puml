@@ -12,7 +12,8 @@ from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 from ..base import OTELDataSource
 from .json_jq_converter import (
     generate_records_from_compiled_jq,
-    field_mapping_to_compiled_jq,
+    compile_jq_query,
+    get_jq_query_from_config
 )
 from .json_config import JSONDataSourceConfig
 
@@ -38,8 +39,9 @@ class JSONDataSource(OTELDataSource):
                 """No directory or files found. Please check yaml config."""
             )
         self.file_list = self.get_file_list()
-        self.compiled_jq = field_mapping_to_compiled_jq(
-            self.config["field_mapping"]
+        self.jq_query = get_jq_query_from_config(self.config)
+        self.compiled_jq = compile_jq_query(
+            self.jq_query
         )
         self.file_pbar = tqdm(
             total=len(self.file_list),
@@ -65,13 +67,13 @@ class JSONDataSource(OTELDataSource):
         :rtype: `str` | `None`
         """
 
-        if not self.config["dirpath"]:
+        if not self.config.dirpath:
             return None
-        elif not os.path.isdir(self.config["dirpath"]):
+        elif not os.path.isdir(self.config.dirpath):
             raise ValueError(
-                f"{self.config['dirpath']} directory does not exist."
-                )
-        return self.config["dirpath"]
+                f"{self.config.dirpath} directory does not exist."
+            )
+        return self.config.dirpath
 
     def set_filepath(self) -> str | None:
         """Set the filepath.
@@ -80,11 +82,11 @@ class JSONDataSource(OTELDataSource):
         :rtype: `str` | `None`
         """
 
-        if not self.config["filepath"]:
+        if not self.config.filepath:
             return None
-        elif not os.path.isfile(self.config["filepath"]):
-            raise ValueError(f"{self.config['filepath']} does not exist.")
-        return self.config["filepath"]
+        elif not os.path.isfile(self.config.filepath):
+            raise ValueError(f"{self.config.filepath} does not exist.")
+        return self.config.filepath
 
     def get_file_list(self) -> list[str]:
         """Get a list of filepaths to process.
@@ -115,7 +117,7 @@ class JSONDataSource(OTELDataSource):
         :rtype: `Iterator`[:class:`OTelEvent`]
         """
         with open(filepath, "r", encoding="utf-8") as file:
-            if self.config["json_per_line"]:
+            if self.config.json_per_line:
                 jsons = (json.loads(line, strict=False) for line in file)
             else:
                 jsons = (data for data in [json.load(file, strict=False)])

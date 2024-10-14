@@ -6,7 +6,7 @@ from typing import Generator, Any
 
 from tqdm import tqdm
 
-from tel2puml.otel_to_pv.config import IngestDataConfig, SequenceModelConfig
+from tel2puml.otel_to_pv.config import IngestDataConfig
 from tel2puml.otel_to_pv.ingest_otel_data import (
     ingest_data_into_dataholder,
     fetch_data_holder,
@@ -69,7 +69,7 @@ def otel_to_pv(
 
     job_name_group_streams = data_holder.stream_data(job_name_to_job_ids_map)
     # get the async event groups from the config
-    sequencer_config = config.get("sequencer", SequenceModelConfig())
+    sequencer_config = config.sequencer
     async_event_groups = sequencer_config.async_event_groups
     event_name_map_information = sequencer_config.event_name_map_information
     pv_event_gen = (
