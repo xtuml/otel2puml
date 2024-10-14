@@ -373,3 +373,56 @@ class TestJSONDataSource:
         else:
             assert len(otel_events) == 4
             check_otel_events(otel_events, 4)
+
+    @staticmethod
+    @pytest.mark.usefixtures("mock_path_exists", "mock_filepath_in_dir")
+    def test_iter_with_input_jq_query() -> None:
+        """Tests parsing a json file with a jq query."""
+        config_dict = {
+            "filepath": "/path/to/json/file.json",
+            "json_per_line": False,
+            "field_mapping": None,
+            "jq_query": (
+                '.[] | { "job_name": .job_name, "job_id": '
+                '.job_id, "event_id": .event_id, '
+                '"event_type": .event_type, "application_name": '
+                '.application_name, "start_timestamp": '
+                '.start_timestamp, "end_timestamp": '
+                '.end_timestamp, "parent_event_id": '
+                '.parent_event_id }'
+            ),
+        }
+        json_data_source_config = JSONDataSourceConfig(**config_dict)
+        data = [
+            {
+                "job_name": f"job_name_{i}",
+                "job_id": f"job_id_{i}",
+                "event_id": f"event_id_{i}",
+                "event_type": f"event_type_{i}",
+                "application_name": f"application_name_{i}",
+                "start_timestamp": i,
+                "end_timestamp": i + 1,
+                "parent_event_id": f"parent_event_id_{i}",
+            }
+            for i in range(5)
+        ]
+        mock_file_content = json.dumps(data).encode("utf-8")
+        with patch(
+            "builtins.open", mock_open(read_data=mock_file_content)
+        ), patch.object(
+            JSONDataSource,
+            "get_file_list",
+            return_value=["/path/to/json/file.json"],
+        ):
+            json_data_source = JSONDataSource(json_data_source_config)
+            otel_events = list(json_data_source)
+        assert len(otel_events) == 5
+        for i, otel_event in enumerate(otel_events):
+            assert otel_event.job_name == f"job_name_{i}"
+            assert otel_event.job_id == f"job_id_{i}"
+            assert otel_event.event_id == f"event_id_{i}"
+            assert otel_event.event_type == f"event_type_{i}"
+            assert otel_event.application_name == f"application_name_{i}"
+            assert otel_event.start_timestamp == i
+            assert otel_event.end_timestamp == i + 1
+            assert otel_event.parent_event_id == f"parent_event_id_{i}"
