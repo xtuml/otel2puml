@@ -341,7 +341,6 @@ class JSONDataSourceConfig(BaseModel):
     """BaseModel for JSONDataSourceConfig."""
 
     model_config = ConfigDict(
-        required=True,
         strict=True,
         extra="forbid",
     )
