@@ -150,6 +150,16 @@ These are downloadable and can be run from the terminal (assuming python is inst
 python tel2puml-arm.pyz otel2puml -o /path/to/output -c /path/to/config.yaml
 ```
 
+## Dependencies
+
+TEL2PUML depends on one other repository:
+
+1. [Janus](https://github.com/xtuml/janus): 
+
+   Janus ingests PUML activity diagram files and generates event sequences from them.
+
+This dependency is automatically managed when using the devcontainer setup or when running the `install_repositories.sh` script during manual installation.
+
 ## Installation
 
 There are two ways to set up this project: manual installation or using a devcontainer (recommended).
@@ -373,16 +383,6 @@ To gain a better technical understanding of the project it's recommended to read
 ## Documentation
 
 Documentation for tel2puml can be found in the [docs](docs) folder. This contains [design notes](docs/development/design), [end to end test information](docs/development/end-to-end-tests) and the [technical implementation overview](docs/Technical_implementation_overview.md).
-
-## Dependencies
-
-TEL2PUML depends on one other repository:
-
-1. [Janus](https://github.com/xtuml/janus): 
-
-   Janus ingests PUML activity diagram files and generates event sequences from them.
-
-This dependency is automatically managed when using the devcontainer setup or when running the `install_repositories.sh` script during manual installation.
 
 ## Contributing
 
