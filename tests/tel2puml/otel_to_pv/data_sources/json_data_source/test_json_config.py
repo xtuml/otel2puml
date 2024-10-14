@@ -1,4 +1,5 @@
 """Tests for json_config.py."""
+from typing import Any
 
 import pytest
 from pytest import MonkeyPatch
@@ -305,12 +306,15 @@ def test_field_spec_mapping_to_jq_field_spec_mapping(
 
 
 class TestJSONDataSourceConfig:
+    """Tests for JSONDataSourceConfig class."""
     @staticmethod
     def valid_field_spec() -> dict[str, str]:
+        """Return a valid field spec."""
         return dict(key_paths="key1", value_type="string")
 
     @staticmethod
     def invalid_field_spec() -> dict[str, str]:
+        """Return an invalid field spec."""
         return dict(
             key_paths="key1",
         )
@@ -318,6 +322,7 @@ class TestJSONDataSourceConfig:
     def otel_field_mapping(
         self, valid: bool = True, with_child: bool = False
     ) -> dict[str, dict[str, str]]:
+        """Return an otel field mapping dictionary"""
         field_mapping = {
             "job_name": self.valid_field_spec(),
             "job_id": self.valid_field_spec(),
@@ -372,56 +377,57 @@ class TestJSONDataSourceConfig:
         # test cases where input config should be valid
         field_mapping = self.otel_field_mapping()
         # case with all cases of valid combinations of filepath and dirpath
-        for case in [("filepath", None), (None, "dirpath")]:
+        for case_1 in [("filepath", None), (None, "dirpath")]:
+            config_dict: dict[str, Any] = dict(
+                field_mapping=field_mapping,
+                filepath=case_1[0],
+                dirpath=case_1[1],
+                json_per_line=True,
+            )
             config = JSONDataSourceConfig(
-                **dict(
-                    field_mapping=field_mapping,
-                    filepath=case[0],
-                    dirpath=case[1],
-                    json_per_line=True,
-                )
+                **config_dict
             )
             assert config.field_mapping == OTelFieldMapping(**field_mapping)
-            assert config.filepath == case[0]
-            assert config.dirpath == case[1]
+            assert config.filepath == case_1[0]
+            assert config.dirpath == case_1[1]
             assert config.json_per_line
         # case with all valid combinations of field mapping and jq query
-        for case in [(field_mapping, None), (None, "jq_query")]:
+        for case_2 in [(field_mapping, None), (None, "jq_query")]:
+            config_dict = dict(
+                field_mapping=case_2[0],
+                filepath="filepath",
+                dirpath="dirpath",
+                json_per_line=False,
+                jq_query=case_2[1],
+            )
             config = JSONDataSourceConfig(
-                **dict(
-                    field_mapping=case[0],
-                    filepath="filepath",
-                    dirpath="dirpath",
-                    json_per_line=False,
-                    jq_query=case[1],
-                )
+                **config_dict
             )
             assert config.field_mapping == (
                 OTelFieldMapping(**field_mapping)
-                if (case[0] is not None)
+                if (case_2[0] is not None)
                 else None
             )
-            assert config.jq_query == case[1]
+            assert config.jq_query == case_2[1]
             assert not config.json_per_line
             assert config.filepath == "filepath"
             assert config.dirpath == "dirpath"
         # test case negative cases of incorrect types
-        for case in [
+        for case_3 in [
             "field_mapping",
             "filepath",
             "dirpath",
             "jq_query",
             "json_per_line",
         ]:
-            input_dict = dict(
+            input_dict: dict[str, Any] = dict(
                 field_mapping=field_mapping,
                 filepath="filepath",
                 dirpath="dirpath",
                 json_per_line=True,
                 jq_query=None,
             )
-            input_dict[case] = 1
-            print(case)
+            input_dict[case_3] = 1
             with pytest.raises(ValidationError):
                 JSONDataSourceConfig(**input_dict)
         # test case where both field_mapping and jq_query are None
@@ -435,19 +441,25 @@ class TestJSONDataSourceConfig:
             )
         # test case where both field mapping and jq query are provided
         with pytest.raises(ValidationError):
-            JSONDataSourceConfig(
+            config_dict = dict(
                 field_mapping=field_mapping,
                 filepath="filepath",
                 dirpath="dirpath",
                 json_per_line=True,
                 jq_query="jq_query",
             )
+            JSONDataSourceConfig(
+                **config_dict
+            )
         # test case where file path and dir path are both None
         with pytest.raises(ValidationError):
-            JSONDataSourceConfig(
+            config_dict = dict(
                 field_mapping=field_mapping,
                 filepath=None,
                 dirpath=None,
                 json_per_line=True,
                 jq_query=None,
+            )
+            JSONDataSourceConfig(
+                **config_dict
             )

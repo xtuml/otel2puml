@@ -304,7 +304,7 @@ def field_spec_mapping_to_jq_field_spec_mapping(
 
 
 class OTelFieldMapping(BaseModel):
-    """Typed dict for OTelFieldMapping - the expected mapping of fields in the
+    """BaseModel for OTelFieldMapping - the expected mapping of fields in the
     used for the JSON data source."""
     job_name: FieldSpec
     job_id: FieldSpec
@@ -338,10 +338,9 @@ class OTelFieldMapping(BaseModel):
 
 
 class JSONDataSourceConfig(BaseModel):
-    """Typed dict for JSONDataSourceConfig."""
+    """BaseModel for JSONDataSourceConfig."""
 
     model_config = ConfigDict(
-        description="The model config",
         required=True,
         strict=True,
         extra="forbid",

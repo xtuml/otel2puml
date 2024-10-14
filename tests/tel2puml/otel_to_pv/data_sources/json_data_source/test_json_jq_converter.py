@@ -587,7 +587,7 @@ class TestFieldMappingToCompiledJQ:
             list(generate_records_from_compiled_jq(data, compiled_jq))
 
     @staticmethod
-    def test_compile_jq_query():
+    def test_compile_jq_query() -> None:
         """Test the compile_jq_query function."""
         jq_query = compile_jq_query(".records[]")
         assert isinstance(jq_query, jq._Program)
@@ -602,6 +602,7 @@ class TestFieldMappingToCompiledJQ:
 
 
 def test_get_jq_query_from_config(monkeypatch: MonkeyPatch) -> None:
+    """Test the get_jq_query_from_config function."""
     # test case where jq query is provided
     config = JSONDataSourceConfig(
         field_mapping=None,
@@ -612,21 +613,27 @@ def test_get_jq_query_from_config(monkeypatch: MonkeyPatch) -> None:
     )
     assert get_jq_query_from_config(config) == "jq_query"
     # test case with field mapping
+    config_dict: dict[str, Any] = {
+        "field_mapping": {
+            field: {"key_paths": "key_path", "value_type": "value_type"}
+            for field in [
+                "job_name",
+                "job_id",
+                "event_type",
+                "event_id",
+                "start_timestamp",
+                "end_timestamp",
+                "application_name",
+                "parent_event_id",
+            ]
+        },
+        "filepath": "filepath",
+        "dirpath": "dirpath",
+        "json_per_line": False,
+        "jq_query": None,
+    }
     config = JSONDataSourceConfig(
-        **dict(
-            field_mapping={
-                field: {"key_paths": "key_path", "value_type": "value_type"}
-                for field in [
-                    "job_name", "job_id", "event_type", "event_id",
-                    "start_timestamp", "end_timestamp", "application_name",
-                    "parent_event_id"
-                ]
-            },
-            filepath="filepath",
-            dirpath="dirpath",
-            json_per_line=False,
-            jq_query=None,
-        )
+        **config_dict
     )
     import tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter
     monkeypatch.setattr(

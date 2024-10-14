@@ -378,7 +378,7 @@ class TestJSONDataSource:
     @pytest.mark.usefixtures("mock_path_exists", "mock_filepath_in_dir")
     def test_iter_with_input_jq_query() -> None:
         """Tests parsing a json file with a jq query."""
-        config_dict = {
+        config_dict: dict[str, Any] = {
             "filepath": "/path/to/json/file.json",
             "json_per_line": False,
             "field_mapping": None,
