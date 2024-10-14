@@ -58,6 +58,7 @@ data_sources:
     json:
         dirpath: path/to/json/directory
         filepath: path/to/json/file
+        json_per_line: false
         field_mapping:
             job_name:
                 key_paths: []
@@ -72,6 +73,7 @@ data_sources:
             application_name:
             parent_event_id:
             child_event_ids:
+        jq_query: <jq_query>
 ```
 
 ## 3. Understanding Configuration Settings
