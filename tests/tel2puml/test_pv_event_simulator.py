@@ -272,6 +272,16 @@ def test_generate_test_data_event_sequences_from_puml_branch_counts() -> None:
 def test_transform_dict_into_pv_event_no_mapping_config() -> None:
     """Tests the function transform_dict_into_pv_event with no mapping config
     """
+    def validate_pv_event(pv_event: PVEvent, prev_id: bool) -> None:
+        assert isinstance(pv_event, dict)
+        assert pv_event["eventId"] == "event_test"
+        assert pv_event["eventType"] == "eventType_test"
+        assert pv_event["jobId"] == "jobId_test"
+        assert pv_event["timestamp"] == "timestamp_test"
+        assert pv_event["applicationName"] == "applicationName_test"
+        assert pv_event["jobName"] == "jobName_test"
+        if prev_id:
+            assert pv_event["previousEventIds"] == ["1"]
     # Test 1: Successful transformation no previous_event_id
     pv_event_dict: dict[str, Any] = {
         "eventId": "event_test",
@@ -283,13 +293,7 @@ def test_transform_dict_into_pv_event_no_mapping_config() -> None:
     }
 
     pv_event = transform_dict_into_pv_event(pv_event_dict)
-    assert isinstance(pv_event, dict)
-    assert pv_event["eventId"]=="event_test"
-    assert pv_event["eventType"]=="eventType_test"
-    assert pv_event["jobId"] == "jobId_test"
-    assert pv_event["timestamp"] == "timestamp_test"
-    assert pv_event["applicationName"] == "applicationName_test"
-    assert pv_event["jobName"]=="jobName_test"
+    validate_pv_event(pv_event, False)
 
     # Test 2: Successful transformation previous_event_id as string
     pv_event_dict = {
@@ -303,14 +307,7 @@ def test_transform_dict_into_pv_event_no_mapping_config() -> None:
     }
 
     pv_event = transform_dict_into_pv_event(pv_event_dict)
-    assert isinstance(pv_event, dict)
-    assert pv_event["eventId"] == "event_test"
-    assert pv_event["eventType"] == "eventType_test"
-    assert pv_event["jobId"] == "jobId_test"
-    assert pv_event["timestamp"] == "timestamp_test"
-    assert pv_event["applicationName"] == "applicationName_test"
-    assert pv_event["jobName"] == "jobName_test"
-    assert pv_event["previousEventIds"] == ["1"]
+    validate_pv_event(pv_event, True)
 
     # Test 3: Successful transformation previous_event_id as list
     pv_event_dict = {
@@ -324,14 +321,7 @@ def test_transform_dict_into_pv_event_no_mapping_config() -> None:
     }
 
     pv_event = transform_dict_into_pv_event(pv_event_dict)
-    assert isinstance(pv_event, dict)
-    assert pv_event["eventId"] == "event_test"
-    assert pv_event["eventType"] == "eventType_test"
-    assert pv_event["jobId"] == "jobId_test"
-    assert pv_event["timestamp"] == "timestamp_test"
-    assert pv_event["applicationName"] == "applicationName_test"
-    assert pv_event["jobName"] == "jobName_test"
-    assert pv_event["previousEventIds"] == ["1"]
+    validate_pv_event(pv_event, True)
 
     # Test 4: Incorrect mandatory field
     pv_event_dict = {
@@ -348,6 +338,17 @@ def test_transform_dict_into_pv_event_no_mapping_config() -> None:
 
 def test_transform_dict_into_pv_event_with_mapping_config() -> None:
     """Tests the function transform_dict_into_pv_event with mapping config"""
+    def validate_pv_event(pv_event: PVEvent, prev_id: bool) -> None:
+        assert isinstance(pv_event, dict)
+        assert pv_event["eventId"] == "event_test"
+        assert pv_event["eventType"] == "eventType_test"
+        assert pv_event["jobId"] == "jobId_test"
+        assert pv_event["timestamp"] == "timestamp_test"
+        assert pv_event["applicationName"] == "applicationName_test"
+        assert pv_event["jobName"] == "jobName_test"
+        if prev_id:
+            assert pv_event["previousEventIds"] == ["1"]
+
     # mapping config used for all tests
     mapping_config = MappingConfig(
         jobId="jobIdNew",
@@ -371,13 +372,7 @@ def test_transform_dict_into_pv_event_with_mapping_config() -> None:
     pv_event = transform_dict_into_pv_event(
         pv_event_dict, mapping_config=mapping_config
     )
-    assert isinstance(pv_event, dict)
-    assert pv_event["eventId"] == "event_test"
-    assert pv_event["eventType"] == "eventType_test"
-    assert pv_event["jobId"] == "jobId_test"
-    assert pv_event["timestamp"] == "timestamp_test"
-    assert pv_event["applicationName"] == "applicationName_test"
-    assert pv_event["jobName"] == "jobName_test"
+    validate_pv_event(pv_event, False)
 
     # Test 2: Successful transformation previous_event_id as string
     pv_event_dict = {
@@ -393,14 +388,7 @@ def test_transform_dict_into_pv_event_with_mapping_config() -> None:
     pv_event = transform_dict_into_pv_event(
         pv_event_dict, mapping_config=mapping_config
     )
-    assert isinstance(pv_event, dict)
-    assert pv_event["eventId"] == "event_test"
-    assert pv_event["eventType"] == "eventType_test"
-    assert pv_event["jobId"] == "jobId_test"
-    assert pv_event["timestamp"] == "timestamp_test"
-    assert pv_event["applicationName"] == "applicationName_test"
-    assert pv_event["jobName"] == "jobName_test"
-    assert pv_event["previousEventIds"] == ["1"]
+    validate_pv_event(pv_event, True)
 
     # Test 3: Successful transformation previous_event_id as list
     pv_event_dict = {
@@ -416,14 +404,7 @@ def test_transform_dict_into_pv_event_with_mapping_config() -> None:
     pv_event = transform_dict_into_pv_event(
         pv_event_dict, mapping_config=mapping_config
     )
-    assert isinstance(pv_event, dict)
-    assert pv_event["eventId"] == "event_test"
-    assert pv_event["eventType"] == "eventType_test"
-    assert pv_event["jobId"] == "jobId_test"
-    assert pv_event["timestamp"] == "timestamp_test"
-    assert pv_event["applicationName"] == "applicationName_test"
-    assert pv_event["jobName"] == "jobName_test"
-    assert pv_event["previousEventIds"] == ["1"]
+    validate_pv_event(pv_event, True)
 
     # Test 4: Incorrect mandatory field
     pv_event_dict = {
