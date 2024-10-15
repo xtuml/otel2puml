@@ -661,7 +661,7 @@ def update_graph_for_dummy_break_event_node(
     dummy_break_event_in_node: PUMLNode = list(
         graph.in_edges([dummy_break_event_node])
     )[0][0]
-    dummy_break_event_out_node: PUMLNode = list(
+    dummy_break_event_out_node: PUMLNode | None = list(
         graph.out_edges([dummy_break_event_node])
     )[0][1] if list(graph.out_edges([dummy_break_event_node])) else None
     if isinstance(dummy_break_event_in_node, PUMLEventNode):
@@ -731,6 +731,10 @@ def update_graph_for_dummy_break_event_node(
                 )
                 if out_node == dummy_break_event_node:
                     graph.remove_node(dummy_break_event_node)
+                    if dummy_break_event_out_node is None:
+                        raise ValueError(
+                            "Dummy break event node does not have an out node"
+                        )
                     graph.add_puml_edge(
                         new_event_node,
                         dummy_break_event_out_node
