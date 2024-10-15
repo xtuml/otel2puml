@@ -273,7 +273,7 @@ def test_transform_dict_into_pv_event_no_mapping_config() -> None:
     """Tests the function transform_dict_into_pv_event with no mapping config
     """
     # Test 1: Successful transformation no previous_event_id
-    pv_event_dict = {
+    pv_event_dict: dict[str, Any] = {
         "eventId": "event_test",
         "eventType": "eventType_test",
         "jobId": "jobId_test",
@@ -359,7 +359,7 @@ def test_transform_dict_into_pv_event_with_mapping_config() -> None:
         eventType="eventTypeNew",
     )
     # Test 1: Successful transformation no previous_event_id
-    pv_event_dict = {
+    pv_event_dict: dict[str, Any] = {
         "eventIdNew": "event_test",
         "eventTypeNew": "eventType_test",
         "jobIdNew": "jobId_test",
