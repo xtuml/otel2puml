@@ -37,7 +37,7 @@ class NodeModel(Base):
     job_name: Mapped[str] = mapped_column(String, nullable=False)
     job_id: Mapped[str] = mapped_column(String, nullable=False)
     event_type: Mapped[str] = mapped_column(String, nullable=False)
-    event_id: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    event_id: Mapped[str] = mapped_column(String, nullable=False)
     start_timestamp: Mapped[int] = mapped_column(Integer, nullable=False)
     end_timestamp: Mapped[int] = mapped_column(Integer, nullable=False)
     application_name: Mapped[str] = mapped_column(String, nullable=False)
