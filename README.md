@@ -67,10 +67,10 @@ To quickly convert a PV event sequence JSON to a PlantUML activity diagram:
 2. Run the following command:
 
     ```sh
-    python -m tel2puml pv2puml <pv event sequence json>
+    python -m tel2puml pv2puml <pv event sequence json> -jn <output_diagram_name>
     ```
 
-3. This will generate a PlantUML activity diagram in the current directory with the default name `default_name.puml`.
+3. This will generate a PlantUML activity diagram in the current directory with the default name `<output_diagram_name>.puml`.
 4. Open the generated PlantUML file in a PlantUML viewer to see the activity diagram.
 ### Example
 A full example follows using the command above.
@@ -112,7 +112,7 @@ A full example follows using the command above.
 #### Example Output
 The following command will generate a PlantUML activity diagram from the above JSON file (using the -jn flag to specify the output diagram name):
 ```sh
-python -m tel2puml pv2puml example_above.json -jn "output_diagram"
+python -m tel2puml pv2puml example_above.json -jn "Example Sequence"
 ```
 
 ![](docs/images/example_sequence_for_readme.svg)
