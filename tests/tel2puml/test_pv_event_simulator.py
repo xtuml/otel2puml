@@ -273,6 +273,7 @@ def test_transform_dict_into_pv_event_no_mapping_config() -> None:
     """Tests the function transform_dict_into_pv_event with no mapping config
     """
     def validate_pv_event(pv_event: PVEvent, prev_id: bool) -> None:
+        """Helper function to validate pv_event"""
         assert isinstance(pv_event, dict)
         assert pv_event["eventId"] == "event_test"
         assert pv_event["eventType"] == "eventType_test"
@@ -339,6 +340,7 @@ def test_transform_dict_into_pv_event_no_mapping_config() -> None:
 def test_transform_dict_into_pv_event_with_mapping_config() -> None:
     """Tests the function transform_dict_into_pv_event with mapping config"""
     def validate_pv_event(pv_event: PVEvent, prev_id: bool) -> None:
+        """Helper function to validate pv_event"""
         assert isinstance(pv_event, dict)
         assert pv_event["eventId"] == "event_test"
         assert pv_event["eventType"] == "eventType_test"
