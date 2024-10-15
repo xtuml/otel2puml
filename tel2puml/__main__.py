@@ -253,11 +253,9 @@ if __name__ == "__main__":
     otel_pv_options, pv_puml_options = generate_component_options(
         args.command, args_dict
     )
-    import pprint
-    pprint.pp(otel_pv_options)
-    # otel_to_puml(
-    #     otel_pv_options,
-    #     pv_puml_options,
-    #     args_dict["output_file_directory"],
-    #     args.command,
-    # )
+    otel_to_puml(
+        otel_pv_options,
+        pv_puml_options,
+        args_dict["output_file_directory"],
+        args.command,
+    )

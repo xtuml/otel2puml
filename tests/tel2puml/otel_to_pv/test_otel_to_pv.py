@@ -388,6 +388,7 @@ class TestSavePVEventStreamsToFile:
             pv_stream,
             str(output_dir),
             count,
+            mapping_config=None
         )
 
         expected_file = job_dir / f"pv_event_sequence_{count}.json"
@@ -424,6 +425,7 @@ class TestSavePVEventStreamsToFile:
                     pv_stream,
                     str(output_dir),
                     count,
+                    mapping_config=None
                 )
         finally:
             # Restore permissions to delete the temp directory
@@ -476,7 +478,9 @@ class TestHandleSaveEvents:
             for stream in pv_event_streams:
                 yield (event for event in stream)
 
-        handle_save_events(job_name, event_streams_gen(), str(output_dir))
+        handle_save_events(
+            job_name, event_streams_gen(), str(output_dir), mapping_config=None
+        )
 
         job_dir = output_dir / job_name
         assert job_dir.exists() and job_dir.is_dir()
@@ -515,7 +519,10 @@ class TestHandleSaveEvents:
 
             with pytest.raises(OSError):
                 handle_save_events(
-                    job_name, event_streams_gen(), str(non_writable_dir)
+                    job_name,
+                    event_streams_gen(),
+                    str(non_writable_dir),
+                    mapping_config=None,
                 )
 
         finally:
@@ -537,7 +544,7 @@ class TestHandleSaveEvents:
             for stream in pv_event_streams:
                 yield (event for event in stream)
 
-        handle_save_events(job_name, event_streams_gen(), str(output_dir))
+        handle_save_events(job_name, event_streams_gen(), str(output_dir),mapping_config=None)
 
         job_dir = output_dir / job_name
         assert job_dir.exists() and job_dir.is_dir()

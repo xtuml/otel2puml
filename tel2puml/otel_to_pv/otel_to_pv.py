@@ -21,7 +21,7 @@ def otel_to_pv(
     find_unique_graphs: bool = False,
     save_events: bool = False,
     output_file_directory: str = ".",
-    mapping_config: MappingConfig | None = None
+    mapping_config: MappingConfig | None = None,
 ) -> Generator[
     tuple[str, Generator[Generator[PVEvent, Any, None], Any, None]], Any, None
 ]:
@@ -93,7 +93,10 @@ def otel_to_pv(
         tqdm.write("Saving PVEvents to job json files...")
         for job_name, pv_event_streams in pv_event_gen:
             handle_save_events(
-                job_name, pv_event_streams, output_file_directory
+                job_name,
+                pv_event_streams,
+                output_file_directory,
+                mapping_config,
             )
 
     return pv_event_gen
@@ -107,6 +110,7 @@ def handle_save_events(
         None,
     ],
     output_file_directory: str,
+    mapping_config: MappingConfig | None,
 ) -> None:
     """Function to handle the save events flag. Saves PVEvents as job json
     files within a job folder within the output file directory.
@@ -135,7 +139,8 @@ def handle_save_events(
             job_name,
             pv_event_stream,
             output_file_directory,
-            file_no
+            file_no,
+            mapping_config,
         )
         file_no += 1
 
@@ -144,7 +149,8 @@ def save_pv_event_stream_to_file(
     job_name: str,
     pv_event_stream: Generator[PVEvent, Any, None],
     output_file_directory: str,
-    count: int
+    count: int,
+    mapping_config: MappingConfig | None,
 ) -> None:
     """Saves a PVEvent as a json file to a folder within the output directory.
 
@@ -156,7 +162,18 @@ def save_pv_event_stream_to_file(
     :type output_file_directory: `str`
     """
     try:
-        pv_event_list = list(pv_event_stream)
+        if not mapping_config:
+            pv_event_list: list[PVEvent] | list[dict[str, Any]] = list(
+                pv_event_stream
+            )
+        else:
+            pv_event_list = [
+                {
+                    getattr(mapping_config, key): value
+                    for key, value in pv_event.items()
+                }
+                for pv_event in pv_event_stream
+            ]
 
         file_path = (
             f"{output_file_directory}/{job_name}/pv_event_sequence_"
