@@ -280,11 +280,13 @@ def transform_dict_into_pv_event(
         }
     else:
         mandatory_fields = {
-            field for field in mapping_config.model_dump().values()
+            field
+            for key, field in mapping_config.model_dump().items()
+            if key != "previousEventIds"
         }
     if not mandatory_fields.issubset(pv_dict.keys()):
         raise ValueError(
-            "The dictionary does not contain all the mandatory " "fields."
+            "The dictionary does not contain all the mandatory fields."
         )
     pv_event = PVEvent(
         eventId=(
@@ -318,11 +320,17 @@ def transform_dict_into_pv_event(
             else pv_dict[mapping_config.jobName]
         ),
     )
-    if "previousEventIds" in pv_dict:
-        if isinstance(pv_dict["previousEventIds"], str):
-            pv_event["previousEventIds"] = [pv_dict["previousEventIds"]]
-        elif isinstance(pv_dict["previousEventIds"], list):
-            pv_event["previousEventIds"] = pv_dict["previousEventIds"]
+    previous_event_ids_key = (
+        "previousEventIds"
+        if not mapping_config
+        else mapping_config.previousEventIds
+    )
+
+    if previous_event_ids_key in pv_dict:
+        if isinstance(pv_dict[previous_event_ids_key], str):
+            pv_event["previousEventIds"] = [pv_dict[previous_event_ids_key]]
+        elif isinstance(pv_dict[previous_event_ids_key], list):
+            pv_event["previousEventIds"] = pv_dict[previous_event_ids_key]
         else:
             raise ValueError(
                 "The previousEventIds field is not a string or a list."
