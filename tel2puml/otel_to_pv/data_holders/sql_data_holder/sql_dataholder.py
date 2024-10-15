@@ -399,6 +399,23 @@ class SQLDataHolder(DataHolder):
                 f"Number of events outside of time window: {res.rowcount}"
             )
 
+    def remove_duplicate_events(self) -> None:
+        """Remove duplicate events in the data holder."""
+        with self.session as session:
+            stmt = (
+                sa.select(sa.func.min(NodeModel.id))
+                .group_by(NodeModel.event_id)
+                .subquery()
+            )
+            stmt_2 = sa.delete(NodeModel).where(
+                NodeModel.event_id.notin_(stmt)
+            )
+            res = session.execute(stmt_2)
+            session.commit()
+            logging.getLogger().info(
+                f"Number of duplicate events removed: {res.rowcount}"
+            )
+
 
 def intialise_temp_table_for_root_nodes(
     sql_data_holder: SQLDataHolder,
