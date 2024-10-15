@@ -5,7 +5,12 @@ import random
 from uuid import uuid4
 
 from test_event_generator.io.run import puml_file_to_test_events  # type: ignore[import-untyped]  # noqa: E501
-from tel2puml.tel2puml_types import DUMMY_START_EVENT, PVEvent, DUMMY_EVENT, MappingConfig
+from tel2puml.tel2puml_types import (
+    DUMMY_START_EVENT,
+    PVEvent,
+    DUMMY_EVENT,
+    MappingConfig,
+)
 
 
 class Job:
@@ -54,9 +59,7 @@ class Job:
         if not set([*previous_events, event["eventId"]]).issubset(
             event_id_map.keys()
         ):
-            raise ValueError(
-                "The some event ids are not in the event id map."
-            )
+            raise ValueError("The some event ids are not in the event id map.")
         sim_event = event.copy()
         sim_event["eventId"] = event_id_map[event["eventId"]]
         sim_event["jobId"] = job_id
@@ -83,9 +86,7 @@ class Job:
         event_id_map: dict[str, str] = self.create_new_event_id_map()
         job_id = str(uuid4())
         for event in self.events:
-            yield self.sim_event(
-                event, job_id, event_id_map
-            )
+            yield self.sim_event(event, job_id, event_id_map)
 
 
 def generate_test_data(
@@ -114,8 +115,10 @@ def generate_test_data(
     :rtype: `Generator[PVEvent, Any, None]`
     """
     for event_sequence in generate_test_data_event_sequences_from_puml(
-        input_puml_file, template_all_paths, num_paths_to_template,
-        is_branch_puml
+        input_puml_file,
+        template_all_paths,
+        num_paths_to_template,
+        is_branch_puml,
     ):
         yield from event_sequence
 
@@ -151,16 +154,19 @@ def generate_test_data_event_sequences_from_puml(
     `Any`, `None`]
     """
     test_job_templates = [
-        job for job in generate_valid_jobs_from_puml_file(
+        job
+        for job in generate_valid_jobs_from_puml_file(
             input_puml_file,
         )
     ]
     if is_branch_puml:
         test_job_templates.extend(
-            [job for job in generate_valid_jobs_from_puml_file(
-                input_puml_file,
-                num_branches=3
-            )]
+            [
+                job
+                for job in generate_valid_jobs_from_puml_file(
+                    input_puml_file, num_branches=3
+                )
+            ]
         )
     counter = 0
     if template_all_paths:
@@ -184,7 +190,7 @@ def generate_test_data_event_sequences_from_puml(
 
 
 def remove_dummy_start_event_from_event_sequence(
-    event_sequence: Generator[PVEvent, Any, None]
+    event_sequence: Generator[PVEvent, Any, None],
 ) -> Generator[PVEvent, Any, None]:
     """This function removes the dummy start event from an event sequence that
     is given the appropriate event type.
@@ -251,8 +257,7 @@ def remove_dummy_start_event_from_event_sequence(
 
 
 def transform_dict_into_pv_event(
-    pv_dict: dict[str, Any],
-    mapping_config: MappingConfig | None = None
+    pv_dict: dict[str, Any], mapping_config: MappingConfig | None = None
 ) -> PVEvent:
     """This function transforms a dictionary into a pv event.
 
@@ -264,22 +269,54 @@ def transform_dict_into_pv_event(
     :return: The pv event.
     :rtype: :class:`PVEvent`
     """
-    mandatory_fields = {
-        "eventId", "eventType", "jobId", "timestamp", "applicationName",
-        "jobName"
-    }
+    if not mapping_config:
+        mandatory_fields = {
+            "eventId",
+            "eventType",
+            "jobId",
+            "timestamp",
+            "applicationName",
+            "jobName",
+        }
+    else:
+        mandatory_fields = {
+            field for field in mapping_config.model_dump().values()
+        }
     if not mandatory_fields.issubset(pv_dict.keys()):
         raise ValueError(
-            "The dictionary does not contain all the mandatory "
-            "fields."
+            "The dictionary does not contain all the mandatory " "fields."
         )
     pv_event = PVEvent(
-        eventId=pv_dict["eventId"],
-        eventType=pv_dict["eventType"],
-        jobId=pv_dict["jobId"],
-        timestamp=pv_dict["timestamp"],
-        applicationName=pv_dict["applicationName"],
-        jobName=pv_dict["jobName"],
+        eventId=(
+            pv_dict["eventId"]
+            if not mapping_config
+            else pv_dict[mapping_config.eventId]
+        ),
+        eventType=(
+            pv_dict["eventType"]
+            if not mapping_config
+            else pv_dict[mapping_config.eventType]
+        ),
+        jobId=(
+            pv_dict["jobId"]
+            if not mapping_config
+            else pv_dict[mapping_config.jobId]
+        ),
+        timestamp=(
+            pv_dict["timestamp"]
+            if not mapping_config
+            else pv_dict[mapping_config.timestamp]
+        ),
+        applicationName=(
+            pv_dict["applicationName"]
+            if not mapping_config
+            else pv_dict[mapping_config.applicationName]
+        ),
+        jobName=(
+            pv_dict["jobName"]
+            if not mapping_config
+            else pv_dict[mapping_config.jobName]
+        ),
     )
     if "previousEventIds" in pv_dict:
         if isinstance(pv_dict["previousEventIds"], str):
