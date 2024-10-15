@@ -5,7 +5,7 @@ import random
 from uuid import uuid4
 
 from test_event_generator.io.run import puml_file_to_test_events  # type: ignore[import-untyped]  # noqa: E501
-from tel2puml.tel2puml_types import DUMMY_START_EVENT, PVEvent, DUMMY_EVENT
+from tel2puml.tel2puml_types import DUMMY_START_EVENT, PVEvent, DUMMY_EVENT, MappingConfig
 
 
 class Job:
@@ -252,11 +252,15 @@ def remove_dummy_start_event_from_event_sequence(
 
 def transform_dict_into_pv_event(
     pv_dict: dict[str, Any],
+    mapping_config: MappingConfig | None = None
 ) -> PVEvent:
     """This function transforms a dictionary into a pv event.
 
     :param pv_dict: The dictionary to transform.
     :type pv_dict: `dict`[`str`, `Any`]
+    :param mapping_config: Mapping application data to user data for PVEvent
+    objects. Defaults to `None`
+    :type mapping_config: :class: `MappingConfig`
     :return: The pv event.
     :rtype: :class:`PVEvent`
     """

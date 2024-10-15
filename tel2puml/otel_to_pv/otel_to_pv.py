@@ -45,6 +45,9 @@ def otel_to_pv(
     :type save_events: bool
     :param output_file_directory: Output file directory.
     :type output_file_directory: `str`
+    :param mapping_config: Mapping application data to user data for PVEvent
+    objects.
+    :type mapping_config: :class: `MappingConfig`
     :rtype: `Generator`[`tuple`[`str`, `Generator`[`Generator`[:class:
     `PVEvent`, `Any`, `None`], `Any`, `None`]], `Any`, `None`]
     """
