@@ -27,7 +27,7 @@ from tel2puml.otel_to_pv.otel_to_pv_types import OTelEventTypeMap
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
     NodeModel,
 )
-from tel2puml.tel2puml_types import PVEvent
+from tel2puml.tel2puml_types import PVEvent, MappingConfig
 
 
 class TestOtelToPV:
@@ -236,7 +236,7 @@ class TestOtelToPV:
 
         # Test 7: Remove disconnected spans
         def mock_fetch_data_holder_disconnected_spans(
-            *_: Any
+            *_: Any,
         ) -> SQLDataHolder:
             """Remove root span to create disconnected data within NodeModel
             table"""
@@ -347,113 +347,39 @@ class TestOtelToPV:
                 file_content = json.load(f)
                 assert (
                     file_content
-                    == expected_job_json_content[(2 * i): (2 * i) + 2]
+                    == expected_job_json_content[(2 * i) : (2 * i) + 2]
                 )
 
 
 class TestSavePVEventStreamsToFile:
     """Tests for the save_pv_event_stream_to_file function."""
 
+    def setup_method(self) -> None:
+        """Setup method to initialize test data."""
+        self.pv_event: PVEvent = {
+            "jobId": "test_job_id",
+            "eventId": "1",
+            "timestamp": "2024-10-08T12:00:00Z",
+            "applicationName": "test_app",
+            "jobName": "test_job",
+            "eventType": "test_event_A",
+        }
+        self.pv_event_2: PVEvent = {
+            "jobId": "test_job_id",
+            "eventId": "2",
+            "timestamp": "2024-10-08T12:00:00Z",
+            "previousEventIds": ["1"],
+            "applicationName": "test_app",
+            "jobName": "test_job",
+            "eventType": "test_event_B",
+        }
+
     def test_save_pv_event_stream_to_file_success(
         self, tmp_path: Path
     ) -> None:
         """Test that PVEvents are saved correctly to a file."""
         job_name = "test_job"
-        pv_event: PVEvent = {
-            "jobId": "test_job_id",
-            "eventId": "1",
-            "timestamp": "2024-10-08T12:00:00Z",
-            "applicationName": "test_app",
-            "jobName": "test_job",
-            "eventType": "test_event_A",
-        }
-        pv_event_2: PVEvent = {
-            "jobId": "test_job_id",
-            "eventId": "2",
-            "timestamp": "2024-10-08T12:00:00Z",
-            "previousEventIds": ["1"],
-            "applicationName": "test_app",
-            "jobName": "test_job",
-            "eventType": "test_event_B",
-        }
-        pv_stream = (pv_event for pv_event in [pv_event, pv_event_2])
-        output_dir = tmp_path
-        count = 1
-
-        job_dir = output_dir / job_name
-        job_dir.mkdir(parents=True, exist_ok=True)
-
-        save_pv_event_stream_to_file(
-            job_name,
-            pv_stream,
-            str(output_dir),
-            count,
-            mapping_config=None
-        )
-
-        expected_file = job_dir / f"pv_event_sequence_{count}.json"
-        assert expected_file.exists()
-
-        with expected_file.open("r") as f:
-            file_content = json.load(f)
-            assert file_content == [pv_event, pv_event_2]
-
-    def test_save_pv_event_to_file_io_error(self, tmp_path: Path) -> None:
-        """Test that IOError is handled correctly when writing the file."""
-        job_name = "test_job"
-        pv_event: PVEvent = {
-            "jobId": "test_job_id",
-            "eventId": "3",
-            "timestamp": "2024-10-08T12:10:00Z",
-            "applicationName": "test_app",
-            "jobName": "test_job",
-            "eventType": "test_event_error",
-        }
-        pv_stream = (pv_event for pv_event in [pv_event])
-        output_dir = tmp_path
-        count = 3
-
-        # Create a directory and make it read-only to simulate IOError
-        job_dir = output_dir / job_name
-        job_dir.mkdir(parents=True, exist_ok=True)
-        os.chmod(job_dir, 0o400)
-
-        try:
-            with pytest.raises(IOError):
-                save_pv_event_stream_to_file(
-                    job_name,
-                    pv_stream,
-                    str(output_dir),
-                    count,
-                    mapping_config=None
-                )
-        finally:
-            # Restore permissions to delete the temp directory
-            os.chmod(job_dir, 0o700)
-
-    def test_save_pv_event_stream_to_file_mapping_config_success(
-        self, tmp_path: Path
-    ) -> None:
-        """Test that PVEvents are saved correctly to a file."""
-        job_name = "test_job"
-        pv_event: PVEvent = {
-            "jobId": "test_job_id",
-            "eventId": "1",
-            "timestamp": "2024-10-08T12:00:00Z",
-            "applicationName": "test_app",
-            "jobName": "test_job",
-            "eventType": "test_event_A",
-        }
-        pv_event_2: PVEvent = {
-            "jobId": "test_job_id",
-            "eventId": "2",
-            "timestamp": "2024-10-08T12:00:00Z",
-            "previousEventIds": ["1"],
-            "applicationName": "test_app",
-            "jobName": "test_job",
-            "eventType": "test_event_B",
-        }
-        pv_stream = (pv_event for pv_event in [pv_event, pv_event_2])
+        pv_stream = (pv_event for pv_event in [self.pv_event, self.pv_event_2])
         output_dir = tmp_path
         count = 1
 
@@ -469,7 +395,85 @@ class TestSavePVEventStreamsToFile:
 
         with expected_file.open("r") as f:
             file_content = json.load(f)
-            assert file_content == [pv_event, pv_event_2]
+            assert file_content == [self.pv_event, self.pv_event_2]
+
+    def test_save_pv_event_to_file_io_error(self, tmp_path: Path) -> None:
+        """Test that IOError is handled correctly when writing the file."""
+        job_name = "test_job"
+        pv_stream = (pv_event for pv_event in [self.pv_event])
+        output_dir = tmp_path
+        count = 3
+
+        # Create a directory and make it read-only to simulate IOError
+        job_dir = output_dir / job_name
+        job_dir.mkdir(parents=True, exist_ok=True)
+        os.chmod(job_dir, 0o400)
+
+        try:
+            with pytest.raises(IOError):
+                save_pv_event_stream_to_file(
+                    job_name,
+                    pv_stream,
+                    str(output_dir),
+                    count,
+                    mapping_config=None,
+                )
+        finally:
+            # Restore permissions to delete the temp directory
+            os.chmod(job_dir, 0o700)
+
+    def test_save_pv_event_stream_to_file_mapping_config_success(
+        self, tmp_path: Path
+    ) -> None:
+        """Test that PVEvents are saved correctly to a file."""
+        mapping_config = MappingConfig(
+            jobId="jobIdNew",
+            eventId="eventIdNew",
+            timestamp="timestampNew",
+            previousEventIds="previousEventIdsNew",
+            applicationName="applicationNameNew",
+            jobName="jobNameNew",
+            eventType="eventTypeNew",
+        )
+        job_name = "test_job"
+        expected_pv_event: dict[str, Any] = {
+            "jobIdNew": "test_job_id",
+            "eventIdNew": "1",
+            "timestampNew": "2024-10-08T12:00:00Z",
+            "applicationNameNew": "test_app",
+            "jobNameNew": "test_job",
+            "eventTypeNew": "test_event_A",
+        }
+        expected_pv_event_2: dict[str, Any] = {
+            "jobIdNew": "test_job_id",
+            "eventIdNew": "2",
+            "timestampNew": "2024-10-08T12:00:00Z",
+            "previousEventIdsNew": ["1"],
+            "applicationNameNew": "test_app",
+            "jobNameNew": "test_job",
+            "eventTypeNew": "test_event_B",
+        }
+        pv_stream = (pv_event for pv_event in [self.pv_event, self.pv_event_2])
+        output_dir = tmp_path
+        count = 1
+
+        job_dir = output_dir / job_name
+        job_dir.mkdir(parents=True, exist_ok=True)
+
+        save_pv_event_stream_to_file(
+            job_name,
+            pv_stream,
+            str(output_dir),
+            count,
+            mapping_config=mapping_config,
+        )
+
+        expected_file = job_dir / f"pv_event_sequence_{count}.json"
+        assert expected_file.exists()
+
+        with expected_file.open("r") as f:
+            file_content = json.load(f)
+            assert file_content == [expected_pv_event, expected_pv_event_2]
 
 
 class TestHandleSaveEvents:
@@ -584,7 +588,9 @@ class TestHandleSaveEvents:
             for stream in pv_event_streams:
                 yield (event for event in stream)
 
-        handle_save_events(job_name, event_streams_gen(), str(output_dir),mapping_config=None)
+        handle_save_events(
+            job_name, event_streams_gen(), str(output_dir), mapping_config=None
+        )
 
         job_dir = output_dir / job_name
         assert job_dir.exists() and job_dir.is_dir()
