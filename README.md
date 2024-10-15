@@ -187,9 +187,13 @@ Before proceeding with the manual installation, ensure you have the following pr
 
 To install the project manually:
 
-1. Set up a Python virtual environment (recommended)
-2. Navigate to the project root directory
-3. Run the following commands:
+1. Clone the repository
+```bash
+git clone https://github.com/xtuml/otel2puml.git
+```
+2. Set up a Python virtual environment (recommended)
+3. Navigate to the project root directory
+4. Run the following commands:
 
 ```bash
 conda install -c conda-forge cvxopt
@@ -211,9 +215,10 @@ Before proceeding, ensure you have the following prerequisites that are required
 
 To install the project manually:
 
-1. Set up a Python virtual environment (recommended)
-2. Navigate to the project root directory
-3. Run the following commands:
+1. Clone the repository
+2. Set up a Python virtual environment (recommended)
+3. Navigate to the project root directory
+4. Run the following commands:
 
 ```bash
 ./scripts/install_repositories.sh
@@ -226,9 +231,10 @@ python3.11 -m pip install -r requirements.txt
 
 To install the project manually on MacOS:
 
-1. Set up a Python virtual environment (recommended)
-2. Navigate to the project root directory
-3. Run the following commands:
+1. Clone the repository
+2. Set up a Python virtual environment (recommended)
+3. Navigate to the project root directory
+4. Run the following commands:
 
 ```bash
 ./scripts/install_repositories.sh
