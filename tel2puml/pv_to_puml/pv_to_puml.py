@@ -8,7 +8,7 @@ import os
 
 from tqdm import tqdm
 
-from tel2puml.tel2puml_types import PVEvent
+from tel2puml.tel2puml_types import PVEvent, MappingConfig
 from tel2puml.pv_to_puml.data_ingestion import (
     cluster_events_by_job_id,
     update_and_create_events_from_clustered_pvevents,
@@ -256,6 +256,7 @@ def pv_files_to_pv_streams(
     file_list: list[str] | None = None,
     job_name: str = "default.puml",
     group_by_job_id: Optional[bool] = False,
+    mapping_config: MappingConfig | None = None
 ) -> Generator[
     tuple[str, Generator[list[PVEvent], Any, None]],
     Any,

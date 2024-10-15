@@ -12,7 +12,7 @@ from tel2puml.otel_to_pv.ingest_otel_data import (
     fetch_data_holder,
 )
 from tel2puml.otel_to_pv.sequence_otel import sequence_otel_job_id_streams
-from tel2puml.tel2puml_types import PVEvent
+from tel2puml.tel2puml_types import PVEvent, MappingConfig
 
 
 def otel_to_pv(
@@ -21,6 +21,7 @@ def otel_to_pv(
     find_unique_graphs: bool = False,
     save_events: bool = False,
     output_file_directory: str = ".",
+    mapping_config: MappingConfig | None = None
 ) -> Generator[
     tuple[str, Generator[Generator[PVEvent, Any, None], Any, None]], Any, None
 ]:

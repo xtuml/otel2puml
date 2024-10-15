@@ -16,6 +16,18 @@ from pydantic import (
 from tel2puml.otel_to_pv.config import IngestDataConfig
 
 
+class MappingConfig(BaseModel):
+    """Mapping configuration for PVEvent"""
+
+    jobId: str
+    eventId: str
+    timestamp: str
+    previousEventIds: str
+    applicationName: str
+    jobName: str
+    eventType: str
+
+
 class PVEvent(TypedDict):
     """A PV event"""
 
@@ -136,6 +148,7 @@ class OtelPVOptions(TypedDict):
     ingest_data: bool
     save_events: bool
     find_unique_graphs: bool
+    mapping_config: MappingConfig | None
 
 
 class PVPumlOptions(TypedDict):
@@ -144,6 +157,7 @@ class PVPumlOptions(TypedDict):
     file_list: list[str]
     job_name: str
     group_by_job_id: bool
+    mapping_config: MappingConfig | None
 
 
 class OtelToPVArgs(BaseModel):
@@ -170,6 +184,9 @@ class OtelToPVArgs(BaseModel):
         default=False,
         description="Flag indicating whether to save events to the output"
         " directory",
+    )
+    mapping_config_file: FilePath | None = Field(
+        default=None, description="Path to mapping configuration file"
     )
 
     @field_validator("config_file")
@@ -208,6 +225,9 @@ class PvToPumlArgs(BaseModel):
     )
     group_by_job: StrictBool = Field(
         default=False, description="Group events by job ID"
+    )
+    mapping_config_file: FilePath | None = Field(
+        default=None, description="Path to mapping configuration file"
     )
 
     @model_validator(mode="after")
