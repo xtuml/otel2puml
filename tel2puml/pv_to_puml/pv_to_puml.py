@@ -22,7 +22,8 @@ from tel2puml.pv_to_puml.walk_puml_graph.node_update import (
     update_nested_node_graph_with_break_points,
 )
 from tel2puml.loop_detection.detect_loops import detect_loops
-from tel2puml.pv_to_puml.walk_puml_graph.create_node_graph_from_event_graph import (
+from tel2puml.pv_to_puml.walk_puml_graph.\
+    create_node_graph_from_event_graph import (
     create_node_graph_from_event_graph,
 )
 from tel2puml.pv_to_puml.walk_puml_graph.find_and_add_loop_kill_paths import (
@@ -119,8 +120,7 @@ def pv_event_file_to_event(
 
 
 def pv_job_file_to_event_sequence(
-    file_path: str,
-    mapping_config: MappingConfig | None = None
+    file_path: str, mapping_config: MappingConfig | None = None
 ) -> list[PVEvent]:
     """Reads a PV job json array file and returns the event sequence
 
@@ -163,8 +163,7 @@ def pv_events_from_files_to_event_stream(
 
 
 def pv_job_files_to_event_sequence_streams(
-    file_paths: list[str],
-    mapping_config: MappingConfig | None = None
+    file_paths: list[str], mapping_config: MappingConfig | None = None
 ) -> Generator[list[PVEvent], Any, None]:
     """Reads a list of PV job json array files and yields the event sequences
     when iterated over

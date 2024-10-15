@@ -1,4 +1,5 @@
 """tests for module test_data_creation.py"""
+
 from typing import Any
 
 import pytest
@@ -17,6 +18,7 @@ from tel2puml.tel2puml_types import PVEvent, MappingConfig
 
 class TestJob:
     """Test class for Job"""
+
     def input_job(self) -> list[PVEvent]:
         """Returns a list of PVEvent objects"""
         return [
@@ -34,9 +36,7 @@ class TestJob:
 
     def input_job_with_dict(self) -> list[dict[str, Any]]:
         """Returns a list of dictionaries representing PVEvent objects"""
-        return [
-            {**event} for event in self.input_job()
-        ]
+        return [{**event} for event in self.input_job()]
 
     def test_init(self) -> None:
         """tests for Job.__init__"""
@@ -272,6 +272,7 @@ def test_generate_test_data_event_sequences_from_puml_branch_counts() -> None:
 def test_transform_dict_into_pv_event_no_mapping_config() -> None:
     """Tests the function transform_dict_into_pv_event with no mapping config
     """
+
     def validate_pv_event(pv_event: PVEvent, prev_id: bool) -> None:
         """Helper function to validate pv_event"""
         assert isinstance(pv_event, dict)
@@ -283,6 +284,7 @@ def test_transform_dict_into_pv_event_no_mapping_config() -> None:
         assert pv_event["jobName"] == "jobName_test"
         if prev_id:
             assert pv_event["previousEventIds"] == ["1"]
+
     # Test 1: Successful transformation no previous_event_id
     pv_event_dict: dict[str, Any] = {
         "eventId": "event_test",
@@ -304,7 +306,7 @@ def test_transform_dict_into_pv_event_no_mapping_config() -> None:
         "timestamp": "timestamp_test",
         "applicationName": "applicationName_test",
         "jobName": "jobName_test",
-        "previousEventIds": "1"
+        "previousEventIds": "1",
     }
 
     pv_event = transform_dict_into_pv_event(pv_event_dict)
@@ -339,6 +341,7 @@ def test_transform_dict_into_pv_event_no_mapping_config() -> None:
 
 def test_transform_dict_into_pv_event_with_mapping_config() -> None:
     """Tests the function transform_dict_into_pv_event with mapping config"""
+
     def validate_pv_event(pv_event: PVEvent, prev_id: bool) -> None:
         """Helper function to validate pv_event"""
         assert isinstance(pv_event, dict)
@@ -418,4 +421,6 @@ def test_transform_dict_into_pv_event_with_mapping_config() -> None:
         "jobNameNew": "jobName_test",
     }
     with pytest.raises(ValueError):
-        pv_event = transform_dict_into_pv_event(pv_event_dict, mapping_config=mapping_config)
+        pv_event = transform_dict_into_pv_event(
+            pv_event_dict, mapping_config=mapping_config
+        )
