@@ -120,11 +120,15 @@ def pv_event_file_to_event(
 
 def pv_job_file_to_event_sequence(
     file_path: str,
+    mapping_config: MappingConfig | None = None
 ) -> list[PVEvent]:
     """Reads a PV job json array file and returns the event sequence
 
     :param file_path: The path to the PV job json file
     :type file_path: `str`
+    :param mapping_config: Mapping application data to user data for PVEvent
+    objects. Defaults to `None`
+    :type mapping_config: :class: `MappingConfig`
     :return: The event sequence
     :rtype: `list`[:class:`PVEvent`]
     """
@@ -136,7 +140,7 @@ def pv_job_file_to_event_sequence(
     for event in data:
         if not isinstance(event, dict):
             raise ValueError("The file does not contain a list of events")
-        out_data.append(transform_dict_into_pv_event(event))
+        out_data.append(transform_dict_into_pv_event(event, mapping_config))
     return out_data
 
 
@@ -160,17 +164,21 @@ def pv_events_from_files_to_event_stream(
 
 def pv_job_files_to_event_sequence_streams(
     file_paths: list[str],
+    mapping_config: MappingConfig | None = None
 ) -> Generator[list[PVEvent], Any, None]:
     """Reads a list of PV job json array files and yields the event sequences
     when iterated over
 
     :param file_paths: The paths to the PV job json files
     :type file_paths: `list`[`str`]
+    :param mapping_config: Mapping application data to user data for PVEvent
+    objects. Defaults to `None`
+    :type mapping_config: :class: `MappingConfig`
     :return: A generator of event sequences
     :rtype: `Generator`[`list`[:class:`PVEvent`], Any, None]
     """
     for file_path in file_paths:
-        yield pv_job_file_to_event_sequence(file_path)
+        yield pv_job_file_to_event_sequence(file_path, mapping_config)
 
 
 def pv_jobs_from_folder_to_event_sequence_streams(
@@ -303,5 +311,7 @@ def pv_files_to_pv_streams(
             file_list, mapping_config
         )
     else:
-        pv_stream_sequence = pv_job_files_to_event_sequence_streams(file_list)
+        pv_stream_sequence = pv_job_files_to_event_sequence_streams(
+            file_list, mapping_config
+        )
     yield (job_name, pv_stream_sequence)
