@@ -208,6 +208,16 @@ class OtelToPVArgs(BaseModel):
             )
         return self
 
+    @model_validator(mode="after")
+    def check_mapping_config(self) -> Self:
+        """Check that mapping_config_file is not set when otel2puml is
+        selected."""
+        if self.command == "otel2puml" and self.mapping_config_file:
+            raise ValueError(
+                "mapping_config_file must not be set if otel2puml is selected."
+            )
+        return self
+
 
 class PvToPumlArgs(BaseModel):
     """Pydantic model for PvToPuml CLI arguments."""
