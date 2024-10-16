@@ -347,7 +347,7 @@ class TestOtelToPV:
                 file_content = json.load(f)
                 assert (
                     file_content
-                    == expected_job_json_content[(2 * i): (2 * i) + 2]
+                    == expected_job_json_content[(2 * i) : (2 * i) + 2]
                 )
 
 
@@ -387,7 +387,7 @@ class TestSavePVEventStreamsToFile:
         job_dir.mkdir(parents=True, exist_ok=True)
 
         save_pv_event_stream_to_file(
-            job_name, pv_stream, str(output_dir), count, mapping_config=None
+            job_name, pv_stream, str(output_dir), count
         )
 
         expected_file = job_dir / f"pv_event_sequence_{count}.json"
@@ -412,11 +412,7 @@ class TestSavePVEventStreamsToFile:
         try:
             with pytest.raises(IOError):
                 save_pv_event_stream_to_file(
-                    job_name,
-                    pv_stream,
-                    str(output_dir),
-                    count,
-                    mapping_config=None,
+                    job_name, pv_stream, str(output_dir), count
                 )
         finally:
             # Restore permissions to delete the temp directory
@@ -522,9 +518,7 @@ class TestHandleSaveEvents:
             for stream in pv_event_streams:
                 yield (event for event in stream)
 
-        handle_save_events(
-            job_name, event_streams_gen(), str(output_dir), mapping_config=None
-        )
+        handle_save_events(job_name, event_streams_gen(), str(output_dir))
 
         job_dir = output_dir / job_name
         assert job_dir.exists() and job_dir.is_dir()
@@ -563,10 +557,7 @@ class TestHandleSaveEvents:
 
             with pytest.raises(OSError):
                 handle_save_events(
-                    job_name,
-                    event_streams_gen(),
-                    str(non_writable_dir),
-                    mapping_config=None,
+                    job_name, event_streams_gen(), str(non_writable_dir)
                 )
 
         finally:
@@ -588,9 +579,7 @@ class TestHandleSaveEvents:
             for stream in pv_event_streams:
                 yield (event for event in stream)
 
-        handle_save_events(
-            job_name, event_streams_gen(), str(output_dir), mapping_config=None
-        )
+        handle_save_events(job_name, event_streams_gen(), str(output_dir))
 
         job_dir = output_dir / job_name
         assert job_dir.exists() and job_dir.is_dir()
