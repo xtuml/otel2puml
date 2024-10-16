@@ -22,9 +22,9 @@ NODE_ASSOCIATION = Table(
     "NODE_ASSOCIATION",
     Base.metadata,
     Column(
-        "parent_id", String, ForeignKey("nodes.event_id"), primary_key=True
+        "parent_id", String, ForeignKey("nodes.event_id")
     ),
-    Column("child_id", String, ForeignKey("nodes.event_id"), primary_key=True),
+    Column("child_id", String, ForeignKey("nodes.event_id")),
 )
 
 
@@ -37,7 +37,7 @@ class NodeModel(Base):
     job_name: Mapped[str] = mapped_column(String, nullable=False)
     job_id: Mapped[str] = mapped_column(String, nullable=False)
     event_type: Mapped[str] = mapped_column(String, nullable=False)
-    event_id: Mapped[str] = mapped_column(String, nullable=False)
+    event_id: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     start_timestamp: Mapped[int] = mapped_column(Integer, nullable=False)
     end_timestamp: Mapped[int] = mapped_column(Integer, nullable=False)
     application_name: Mapped[str] = mapped_column(String, nullable=False)

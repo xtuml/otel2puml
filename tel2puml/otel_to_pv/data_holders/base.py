@@ -173,12 +173,6 @@ class DataHolder(ABC):
         """
         pass
 
-    @abstractmethod
-    def remove_duplicate_events(self) -> None:
-        """Abstract method to remove duplicate events in the data holder.
-        """
-        pass
-
 
 def get_time_window(
     time_buffer: int, data_holder: DataHolder

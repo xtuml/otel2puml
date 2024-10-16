@@ -136,7 +136,8 @@ class TestSQLDataHolder:
 
     @staticmethod
     def test_save_data(
-        mock_sql_config: SQLDataHolderConfig, mock_otel_events: list[OTelEvent]
+        mock_sql_config: SQLDataHolderConfig,
+        mock_otel_events: list[OTelEvent], caplog: LogCaptureFixture
     ) -> None:
         """Tests save_data method"""
 
@@ -167,6 +168,38 @@ class TestSQLDataHolder:
             holder.session.query(NodeModel).filter_by(event_id="1").first()
         )
         assert node_0.children == [node_1]
+        # test adding an event that causes an integrity error and then filters
+        # it out
+        holder.batch_size = 1
+        caplog.clear()
+        caplog.set_level(logging.WARNING)
+        holder.save_data(mock_otel_events[0])
+        assert (
+            "IntegrityError: Likely trying to insert duplicate data."
+            " Checking and filtering duplicates and trying again."
+        ) in caplog.text
+        assert (
+            "Found 1 duplicate/s for Event ID 0. Only the first occurrence "
+            "will be saved."
+        ) in caplog.text
+
+    @staticmethod
+    def test_get_event_ids_existing_in_db(
+        sql_data_holder_with_otel_jobs: SQLDataHolder,
+    ) -> None:
+        """Test the get_event_ids_existing_in_db function."""
+        # check partial case
+        event_ids = (
+            sql_data_holder_with_otel_jobs.get_event_ids_existing_in_db(
+                {f"{i}_{j}" for i in range(4) for j in range(2)}
+            )
+        )
+        assert event_ids == {f"{i}_{j}" for i in range(4) for j in range(2)}
+        # check empty case
+        event_ids = (
+            sql_data_holder_with_otel_jobs.get_event_ids_existing_in_db(set())
+        )
+        assert event_ids == set()
 
     @staticmethod
     def test_commit_batched_data_success(
@@ -288,6 +321,117 @@ class TestSQLDataHolder:
                 holder.commit_batched_data_to_database()
             mock_rollback.assert_called_once()
             assert "Unexpected Error" in str(context.value)
+
+    @staticmethod
+    def test_check_and_filter_non_unique_nodes_and_associations(
+        sql_data_holder_with_otel_jobs: SQLDataHolder,
+        otel_jobs: dict[str, list[OTelEvent]],
+        caplog: LogCaptureFixture,
+    ) -> None:
+        """Test the check_and_filter_non_unique_nodes_and_associations
+        function."""
+        # Adding duplicate nodes in the same batch
+        fields = dict(
+            job_name="test_name",
+            job_id="test_id",
+            event_type="event_type",
+            event_id="X",
+            start_timestamp=1695639486119918080,
+            end_timestamp=1695639486119918084,
+            application_name="test_application_name",
+            parent_event_id="Y",
+        )
+        duplicate_nodes = [NodeModel(**fields) for _ in range(3)]
+        sql_data_holder_with_otel_jobs.node_models_to_save = duplicate_nodes
+        caplog.clear()
+        caplog.set_level(logging.WARNING)
+        (
+            sql_data_holder_with_otel_jobs
+            .check_and_filter_non_unique_nodes_and_associations()
+        )
+        assert (
+            "Found 2 duplicate/s for Event ID "
+            "X. Only the first occurrence will be saved."
+        ) in caplog.text
+        with sql_data_holder_with_otel_jobs.session as session:
+            nodes = (
+                session.query(NodeModel)
+                .filter(NodeModel.event_id == "X")
+                .all()
+            )
+            assert len(nodes) == 1
+            node = nodes[0]
+            for field, value in fields.items():
+                assert getattr(node, field) == value
+            associations = (
+                session.query(NODE_ASSOCIATION)
+                .filter(NODE_ASSOCIATION.c.child_id == "X")
+                .all()
+            )
+            assert len(associations) == 1
+            assert associations[0].parent_id == "Y"
+            assert associations[0].child_id == "X"
+        # check case where the duplicate nodes are already in the database
+        sql_data_holder_with_otel_jobs.node_models_to_save = [
+            NodeModel(
+                job_name=otel_event.job_name,
+                job_id=otel_event.job_id,
+                event_type=otel_event.event_type,
+                event_id=otel_event.event_id,
+                start_timestamp=otel_event.start_timestamp,
+                end_timestamp=otel_event.end_timestamp,
+                application_name=otel_event.application_name,
+                parent_event_id="Z",
+            )
+            for otel_event in otel_jobs["0"]
+        ]
+        sql_data_holder_with_otel_jobs.node_relationships_to_save = [
+            {"parent_id": "Z", "child_id": "0_0"},
+            {"parent_id": "Z", "child_id": "0_1"},
+        ]
+        caplog.clear()
+        (
+            sql_data_holder_with_otel_jobs
+            .check_and_filter_non_unique_nodes_and_associations()
+        )
+        assert (
+            "Found 1 duplicate/s for Event ID "
+            "0_0. Only the first occurrence will be saved."
+        ) in caplog.text
+        assert (
+            "Found 1 duplicate/s for Event ID "
+            "0_1. Only the first occurrence will be saved."
+        ) in caplog.text
+        with sql_data_holder_with_otel_jobs.session as session:
+            nodes = (
+                session.query(NodeModel)
+                .filter(NodeModel.event_id.in_(["0_0", "0_1"]))
+                .all()
+            )
+            assert len(nodes) == 2
+            event_ids = ["0_0", "0_1"]
+            for node in nodes:
+                if node.event_id == "0_0":
+                    assert node.parent_event_id is None
+                else:
+                    assert node.parent_event_id == "0_0"
+                event_ids.remove(node.event_id)
+            assert event_ids == []
+            associations = (
+                session.query(NODE_ASSOCIATION)
+                .filter(
+                    (
+                        (NODE_ASSOCIATION.c.child_id == "0_0")
+                        & (NODE_ASSOCIATION.c.parent_id == "Z")
+                    )
+                    | (
+                        (NODE_ASSOCIATION.c.child_id == "0_1")
+                        & (NODE_ASSOCIATION.c.parent_id == "Z")
+                    )
+                )
+                .all()
+            )
+            assert len(associations) == 0
 
     @staticmethod
     def test_sql_data_holder_exit_method(
