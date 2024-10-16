@@ -220,7 +220,7 @@ def generate_component_options(
             mapping_config = PVEventMappingConfig(
                 **generate_config(str(otel_to_pv_obj.mapping_config_file))
             )
-            otel_pv_options.mapping_config = mapping_config
+            otel_pv_options["mapping_config"] = mapping_config
     elif command == "pv2puml":
         pv_to_puml_obj = PvToPumlArgs(**args_dict)
         if pv_to_puml_obj.file_paths:
@@ -238,7 +238,7 @@ def generate_component_options(
             mapping_config = PVEventMappingConfig(
                 **generate_config(str(pv_to_puml_obj.mapping_config_file))
             )
-            pv_puml_options.mapping_config = mapping_config
+            pv_puml_options["mapping_config"] = mapping_config
 
     return otel_pv_options, pv_puml_options
 
