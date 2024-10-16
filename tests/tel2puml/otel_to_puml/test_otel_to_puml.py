@@ -127,7 +127,6 @@ class TestOtelToPuml:
             "ingest_data": True,
             "save_events": False,
             "find_unique_graphs": False,
-            "mapping_config": None
         }
 
         otel_to_puml(
@@ -193,7 +192,6 @@ class TestOtelToPuml:
             "ingest_data": True,
             "save_events": False,
             "find_unique_graphs": False,
-            "mapping_config": None
         }
         # Run function
         otel_to_puml(
@@ -254,7 +252,6 @@ class TestOtelToPuml:
             "file_list": data_files,
             "job_name": "TestName",
             "group_by_job_id": group_by_job_id,
-            "mapping_config": None,
         }
 
         otel_to_puml(
@@ -315,7 +312,6 @@ class TestOtelToPuml:
             "ingest_data": True,
             "save_events": True,
             "find_unique_graphs": False,
-            "mapping_config": None,
         }
 
         otel_to_puml(
@@ -391,7 +387,6 @@ class TestOtelToPuml:
             "ingest_data": False,
             "save_events": False,
             "find_unique_graphs": True,
-            "mapping_config": None,
         }
 
         otel_to_puml(
