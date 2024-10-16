@@ -269,7 +269,7 @@ def transform_dict_into_pv_event(
     :return: The pv event.
     :rtype: :class:`PVEvent`
     """
-    if not mapping_config:
+    if mapping_config is None:
         mandatory_fields = {
             "eventId",
             "eventType",
@@ -291,38 +291,38 @@ def transform_dict_into_pv_event(
     pv_event = PVEvent(
         eventId=(
             pv_dict["eventId"]
-            if not mapping_config
+            if mapping_config is None
             else pv_dict[mapping_config.eventId]
         ),
         eventType=(
             pv_dict["eventType"]
-            if not mapping_config
+            if mapping_config is None
             else pv_dict[mapping_config.eventType]
         ),
         jobId=(
             pv_dict["jobId"]
-            if not mapping_config
+            if mapping_config is None
             else pv_dict[mapping_config.jobId]
         ),
         timestamp=(
             pv_dict["timestamp"]
-            if not mapping_config
+            if mapping_config is None
             else pv_dict[mapping_config.timestamp]
         ),
         applicationName=(
             pv_dict["applicationName"]
-            if not mapping_config
+            if mapping_config is None
             else pv_dict[mapping_config.applicationName]
         ),
         jobName=(
             pv_dict["jobName"]
-            if not mapping_config
+            if mapping_config is None
             else pv_dict[mapping_config.jobName]
         ),
     )
     previous_event_ids_key = (
         "previousEventIds"
-        if not mapping_config
+        if mapping_config is None
         else mapping_config.previousEventIds
     )
 

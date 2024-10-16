@@ -46,7 +46,7 @@ def otel_to_pv(
     :param output_file_directory: Output file directory.
     :type output_file_directory: `str`
     :param mapping_config: Mapping application data to user data for PVEvent
-    objects.
+    objects. Defaults to `None`.
     :type mapping_config: :class: `MappingConfig`
     :rtype: `Generator`[`tuple`[`str`, `Generator`[`Generator`[:class:
     `PVEvent`, `Any`, `None`], `Any`, `None`]], `Any`, `None`]
@@ -125,6 +125,9 @@ def handle_save_events(
     `None`], `Any`, `None`, ]
     :param output_file_directory: Output file directory
     :type output_file_directory: `str`
+    :param mapping_config: Mapping application data to user data for PVEvent
+    objects. Defaults to `None`.
+    :type mapping_config: :class: `MappingConfig`
     """
     try:
         os.makedirs(f"{output_file_directory}/{job_name}", exist_ok=True)
@@ -163,9 +166,12 @@ def save_pv_event_stream_to_file(
     :param count: Current file number
     :type count: `int`
     :type output_file_directory: `str`
+    :param mapping_config: Mapping application data to user data for PVEvent
+    objects. Defaults to `None`.
+    :type mapping_config: :class: `MappingConfig`
     """
     try:
-        if not mapping_config:
+        if mapping_config is None:
             pv_event_list: list[PVEvent] | list[dict[str, Any]] = list(
                 pv_event_stream
             )
