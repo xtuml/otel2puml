@@ -205,12 +205,12 @@ def generate_component_options(
     """
 
     otel_pv_options, pv_puml_options = None, None
+    mapping_config = PVEventMappingConfig()
     if command == "otel2puml" or command == "otel2pv":
         otel_to_pv_obj = OtelToPVArgs(**args_dict)
         config = IngestDataConfig(
             **generate_config(str(otel_to_pv_obj.config_file))
         )
-        mapping_config = None
         if otel_to_pv_obj.mapping_config_file:
             mapping_config = PVEventMappingConfig(
                 **generate_config(str(otel_to_pv_obj.mapping_config_file))
@@ -230,7 +230,6 @@ def generate_component_options(
             ]
         elif pv_to_puml_obj.folder_path:
             file_list = find_files(str(pv_to_puml_obj.folder_path))
-        mapping_config = None
         if pv_to_puml_obj.mapping_config_file:
             mapping_config = PVEventMappingConfig(
                 **generate_config(str(pv_to_puml_obj.mapping_config_file))

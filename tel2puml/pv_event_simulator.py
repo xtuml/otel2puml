@@ -257,7 +257,8 @@ def remove_dummy_start_event_from_event_sequence(
 
 
 def transform_dict_into_pv_event(
-    pv_dict: dict[str, Any], mapping_config: PVEventMappingConfig | None = None
+    pv_dict: dict[str, Any],
+    mapping_config: PVEventMappingConfig = PVEventMappingConfig(),
 ) -> PVEvent:
     """This function transforms a dictionary into a pv event.
 
@@ -269,68 +270,32 @@ def transform_dict_into_pv_event(
     :return: The pv event.
     :rtype: :class:`PVEvent`
     """
-    if mapping_config is None:
-        mandatory_fields = {
-            "eventId",
-            "eventType",
-            "jobId",
-            "timestamp",
-            "applicationName",
-            "jobName",
-        }
-    else:
-        mandatory_fields = {
-            field
-            for key, field in mapping_config.model_dump().items()
-            if key != "previousEventIds"
-        }
+    mandatory_fields = {
+        field
+        for key, field in mapping_config.model_dump().items()
+        if key != "previousEventIds"
+    }
     if not mandatory_fields.issubset(pv_dict.keys()):
         raise ValueError(
             "The dictionary does not contain all the mandatory fields."
         )
     pv_event = PVEvent(
-        eventId=(
-            pv_dict["eventId"]
-            if mapping_config is None
-            else pv_dict[mapping_config.eventId]
-        ),
-        eventType=(
-            pv_dict["eventType"]
-            if mapping_config is None
-            else pv_dict[mapping_config.eventType]
-        ),
-        jobId=(
-            pv_dict["jobId"]
-            if mapping_config is None
-            else pv_dict[mapping_config.jobId]
-        ),
-        timestamp=(
-            pv_dict["timestamp"]
-            if mapping_config is None
-            else pv_dict[mapping_config.timestamp]
-        ),
-        applicationName=(
-            pv_dict["applicationName"]
-            if mapping_config is None
-            else pv_dict[mapping_config.applicationName]
-        ),
-        jobName=(
-            pv_dict["jobName"]
-            if mapping_config is None
-            else pv_dict[mapping_config.jobName]
-        ),
-    )
-    previous_event_ids_key = (
-        "previousEventIds"
-        if mapping_config is None
-        else mapping_config.previousEventIds
+        eventId=(pv_dict[mapping_config.eventId]),
+        eventType=(pv_dict[mapping_config.eventType]),
+        jobId=(pv_dict[mapping_config.jobId]),
+        timestamp=(pv_dict[mapping_config.timestamp]),
+        applicationName=(pv_dict[mapping_config.applicationName]),
+        jobName=(pv_dict[mapping_config.jobName]),
     )
 
-    if previous_event_ids_key in pv_dict:
-        if isinstance(pv_dict[previous_event_ids_key], str):
-            pv_event["previousEventIds"] = [pv_dict[previous_event_ids_key]]
-        elif isinstance(pv_dict[previous_event_ids_key], list):
-            pv_event["previousEventIds"] = pv_dict[previous_event_ids_key]
+    if mapping_config.previousEventIds in pv_dict:
+        prev_event_id: str | list[str] = pv_dict[
+            mapping_config.previousEventIds
+        ]
+        if isinstance(prev_event_id, str):
+            pv_event["previousEventIds"] = [prev_event_id]
+        elif isinstance(prev_event_id, list):
+            pv_event["previousEventIds"] = prev_event_id
         else:
             raise ValueError(
                 "The previousEventIds field is not a string or a list."

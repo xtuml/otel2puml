@@ -120,7 +120,7 @@ def pv_event_file_to_event(
 
 
 def pv_job_file_to_event_sequence(
-    file_path: str, mapping_config: PVEventMappingConfig | None = None
+    file_path: str, mapping_config: PVEventMappingConfig = PVEventMappingConfig()
 ) -> list[PVEvent]:
     """Reads a PV job json array file and returns the event sequence
 
