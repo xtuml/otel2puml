@@ -85,7 +85,84 @@ class SQLDataHolder(DataHolder):
         self.add_node_relations(otel_event)
 
         if len(self.node_models_to_save) >= self.batch_size:
-            self.commit_batched_data_to_database()
+            try:
+                self.commit_batched_data_to_database()
+            except IntegrityError:
+                LOGGER.warning(
+                    "IntegrityError: Likely trying to insert duplicate data."
+                    " Checking and filtering duplicates and trying again."
+                )
+                self.check_and_filter_non_unique_nodes_and_associations()
+
+    def _update_node_relations_from_node(self, node: NodeModel) -> None:
+        """Method to update node relations from a node.
+
+        :param node: A NodeModel object
+        :type node: :class:`NodeModel`
+        """
+        if node.parent_event_id is not None:
+            self.node_relationships_to_save.append(
+                {
+                    "parent_id": node.parent_event_id,
+                    "child_id": node.event_id,
+                }
+            )
+
+    def get_event_ids_existing_in_db(
+        self, event_ids_to_check: Iterable[str]
+    ) -> set[str]:
+        """Method to get event IDs that already exist in the database.
+
+        :param event_ids_to_check: A list of event IDs to check
+        :type event_ids_to_check: `Iterable`[`str`]
+        :return: A set of event IDs that already exist in the database
+        :rtype: `set`[`str`]
+        """
+        with self.session as session:
+            existing_event_id_cells = (
+                session.query(NodeModel.event_id)
+                .filter(NodeModel.event_id.in_(event_ids_to_check))
+                .all()
+            )
+            return {str(row[0]) for row in existing_event_id_cells}
+
+    def check_and_filter_non_unique_nodes_and_associations(self) -> None:
+        """Method to check and filter non-unique nodes and associations and
+        then commit the batched data to the database again"""
+        event_id_duplicates: dict[str, int] = {}
+        filtered_nodes: list[NodeModel] = []
+        # filter out duplicate event_ids and save count of duplicates
+        for node in self.node_models_to_save:
+            event_id_num = event_id_duplicates.get(node.event_id, 0)
+            if event_id_num == 0:
+                filtered_nodes.append(node)
+            event_id_duplicates[node.event_id] = event_id_num + 1
+        # check if any of the filtered nodes already exist in the database
+        existing_event_ids = self.get_event_ids_existing_in_db(
+            event_id_duplicates.keys()
+        )
+        # update event_id_duplicates with the number of duplicates for each
+        # event_id that already exists in the database
+        for event_id in existing_event_ids:
+            event_id_duplicates[event_id] += 1
+        filtered_nodes = [
+            node for node in filtered_nodes
+            if node.event_id not in existing_event_ids
+        ]
+        # reset node_models_to_save and node_relationships_to_save
+        self.node_models_to_save = filtered_nodes
+        self.node_relationships_to_save = []
+        for node in filtered_nodes:
+            self._update_node_relations_from_node(node)
+        # commit the filtered data to the database
+        self.commit_batched_data_to_database()
+        # log warning for each duplicate event_id
+        for event_id, num_duplicates in event_id_duplicates.items():
+            if num_duplicates > 1:
+                LOGGER.warning(
+                    f"Found {num_duplicates - 1} duplicate/s for Event ID "
+                    f"{event_id}. Only the first occurrence will be saved."
+                )
 
     def commit_batched_data_to_database(self) -> None:
         """Method to commit batched node models, and their relationships to
