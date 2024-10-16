@@ -205,23 +205,22 @@ def generate_component_options(
     """
 
     otel_pv_options, pv_puml_options = None, None
-    mapping_config = PVEventMappingConfig()
     if command == "otel2puml" or command == "otel2pv":
         otel_to_pv_obj = OtelToPVArgs(**args_dict)
         config = IngestDataConfig(
             **generate_config(str(otel_to_pv_obj.config_file))
         )
-        if otel_to_pv_obj.mapping_config_file:
-            mapping_config = PVEventMappingConfig(
-                **generate_config(str(otel_to_pv_obj.mapping_config_file))
-            )
         otel_pv_options = OtelPVOptions(
             config=config,
             ingest_data=otel_to_pv_obj.ingest_data,
             save_events=otel_to_pv_obj.save_events,
             find_unique_graphs=otel_to_pv_obj.find_unique_graphs,
-            mapping_config=mapping_config,
         )
+        if otel_to_pv_obj.mapping_config_file:
+            mapping_config = PVEventMappingConfig(
+                **generate_config(str(otel_to_pv_obj.mapping_config_file))
+            )
+            otel_pv_options.mapping_config = mapping_config
     elif command == "pv2puml":
         pv_to_puml_obj = PvToPumlArgs(**args_dict)
         if pv_to_puml_obj.file_paths:
@@ -230,16 +229,16 @@ def generate_component_options(
             ]
         elif pv_to_puml_obj.folder_path:
             file_list = find_files(str(pv_to_puml_obj.folder_path))
-        if pv_to_puml_obj.mapping_config_file:
-            mapping_config = PVEventMappingConfig(
-                **generate_config(str(pv_to_puml_obj.mapping_config_file))
-            )
         pv_puml_options = PVPumlOptions(
             file_list=file_list,
             job_name=pv_to_puml_obj.job_name,
             group_by_job_id=pv_to_puml_obj.group_by_job,
-            mapping_config=mapping_config,
         )
+        if pv_to_puml_obj.mapping_config_file:
+            mapping_config = PVEventMappingConfig(
+                **generate_config(str(pv_to_puml_obj.mapping_config_file))
+            )
+            pv_puml_options.mapping_config = mapping_config
 
     return otel_pv_options, pv_puml_options
 
