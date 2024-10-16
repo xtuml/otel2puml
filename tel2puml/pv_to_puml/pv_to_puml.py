@@ -22,9 +22,9 @@ from tel2puml.pv_to_puml.walk_puml_graph.node_update import (
     update_nested_node_graph_with_break_points,
 )
 from tel2puml.loop_detection.detect_loops import detect_loops
-from tel2puml.pv_to_puml.walk_puml_graph \
-    .create_node_graph_from_event_graph \
-    import create_node_graph_from_event_graph
+from tel2puml.pv_to_puml.walk_puml_graph.create_node_graph_from_event_graph import (
+    create_node_graph_from_event_graph,
+)
 from tel2puml.pv_to_puml.walk_puml_graph.find_and_add_loop_kill_paths import (
     find_and_add_loop_kill_paths_to_nested_graphs,
 )
@@ -99,7 +99,8 @@ def pv_to_puml_file(
 
 
 def pv_event_file_to_event(
-    file_path: str, mapping_config: PVEventMappingConfig | None = None
+    file_path: str,
+    mapping_config: PVEventMappingConfig = PVEventMappingConfig(),
 ) -> PVEvent:
     """Reads a PV event json file and returns the event
 
@@ -144,7 +145,8 @@ def pv_job_file_to_event_sequence(
 
 
 def pv_events_from_files_to_event_stream(
-    file_paths: list[str], mapping_config: PVEventMappingConfig | None = None
+    file_paths: list[str],
+    mapping_config: PVEventMappingConfig = PVEventMappingConfig(),
 ) -> Generator[PVEvent, Any, None]:
     """Reads a list of PV event json files and yields the events when iterated
     over
@@ -162,7 +164,8 @@ def pv_events_from_files_to_event_stream(
 
 
 def pv_job_files_to_event_sequence_streams(
-    file_paths: list[str], mapping_config: PVEventMappingConfig | None = None
+    file_paths: list[str],
+    mapping_config: PVEventMappingConfig = PVEventMappingConfig(),
 ) -> Generator[list[PVEvent], Any, None]:
     """Reads a list of PV job json array files and yields the event sequences
     when iterated over
@@ -220,7 +223,7 @@ def pv_jobs_from_folder_to_puml_file(
 
 def pv_event_files_to_job_id_streams(
     file_list: list[str] | None = None,
-    mapping_config: PVEventMappingConfig | None = None,
+    mapping_config: PVEventMappingConfig = PVEventMappingConfig(),
 ) -> Generator[list[PVEvent], Any, None]:
     """File list of pv event files into a generator of lists of PV event
     sequences grouped by job_id.
@@ -273,7 +276,7 @@ def pv_files_to_pv_streams(
     file_list: list[str] | None = None,
     job_name: str = "default.puml",
     group_by_job_id: Optional[bool] = False,
-    mapping_config: PVEventMappingConfig | None = None,
+    mapping_config: PVEventMappingConfig = PVEventMappingConfig(),
 ) -> Generator[
     tuple[str, Generator[list[PVEvent], Any, None]],
     Any,
