@@ -113,7 +113,7 @@ def handle_save_events(
         None,
     ],
     output_file_directory: str,
-    mapping_config: PVEventMappingConfig | None,
+    mapping_config: PVEventMappingConfig = PVEventMappingConfig(),
 ) -> None:
     """Function to handle the save events flag. Saves PVEvents as job json
     files within a job folder within the output file directory.
@@ -156,7 +156,7 @@ def save_pv_event_stream_to_file(
     pv_event_stream: Generator[PVEvent, Any, None],
     output_file_directory: str,
     count: int,
-    mapping_config: PVEventMappingConfig | None,
+    mapping_config: PVEventMappingConfig = PVEventMappingConfig(),
 ) -> None:
     """Saves a PVEvent as a json file to a folder within the output directory.
 
