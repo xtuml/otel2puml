@@ -21,7 +21,7 @@ def otel_to_pv(
     find_unique_graphs: bool = False,
     save_events: bool = False,
     output_file_directory: str = ".",
-    mapping_config: PVEventMappingConfig | None = None,
+    mapping_config: PVEventMappingConfig = PVEventMappingConfig(),
 ) -> Generator[
     tuple[str, Generator[Generator[PVEvent, Any, None], Any, None]], Any, None
 ]:
@@ -46,7 +46,7 @@ def otel_to_pv(
     :param output_file_directory: Output file directory.
     :type output_file_directory: `str`
     :param mapping_config: Mapping application data to user data for PVEvent
-    objects. Defaults to `None`.
+    objects. Defaults to `PVEventMappingConfig`.
     :type mapping_config: :class: `PVEventMappingConfig`
     :rtype: `Generator`[`tuple`[`str`, `Generator`[`Generator`[:class:
     `PVEvent`, `Any`, `None`], `Any`, `None`]], `Any`, `None`]
@@ -126,7 +126,7 @@ def handle_save_events(
     :param output_file_directory: Output file directory
     :type output_file_directory: `str`
     :param mapping_config: Mapping application data to user data for PVEvent
-    objects. Defaults to `None`.
+    objects. Defaults to `PVEventMappingConfig`.
     :type mapping_config: :class: `PVEventMappingConfig`
     """
     try:
@@ -167,7 +167,7 @@ def save_pv_event_stream_to_file(
     :type count: `int`
     :type output_file_directory: `str`
     :param mapping_config: Mapping application data to user data for PVEvent
-    objects. Defaults to `None`.
+    objects. Defaults to `PVEventMappingConfig`.
     :type mapping_config: :class: `PVEventMappingConfig`
     """
     try:
