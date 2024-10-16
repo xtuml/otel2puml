@@ -22,9 +22,9 @@ from tel2puml.pv_to_puml.walk_puml_graph.node_update import (
     update_nested_node_graph_with_break_points,
 )
 from tel2puml.loop_detection.detect_loops import detect_loops
-from tel2puml.pv_to_puml.walk_puml_graph.create_node_graph_from_event_graph import (
-    create_node_graph_from_event_graph,
-)
+from tel2puml.pv_to_puml.walk_puml_graph. \
+    create_node_graph_from_event_graph \
+    import create_node_graph_from_event_graph
 from tel2puml.pv_to_puml.walk_puml_graph.find_and_add_loop_kill_paths import (
     find_and_add_loop_kill_paths_to_nested_graphs,
 )
