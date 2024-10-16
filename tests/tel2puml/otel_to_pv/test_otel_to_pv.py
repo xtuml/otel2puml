@@ -9,7 +9,6 @@ import yaml
 import pytest
 import sqlalchemy as sa
 from pytest import MonkeyPatch
-from pydantic import ValidationError
 
 from tel2puml.otel_to_pv.otel_to_pv import (
     otel_to_pv,
