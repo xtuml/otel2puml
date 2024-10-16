@@ -266,7 +266,7 @@ def transform_dict_into_pv_event(
     :type pv_dict: `dict`[`str`, `Any`]
     :param mapping_config: Mapping application data to user data for PVEvent
     objects. Defaults to `PVEventMappingConfig`
-    :type mapping_config: :class: `PVEventMappingConfig`
+    :type mapping_config: :class:`PVEventMappingConfig`
     :return: The pv event.
     :rtype: :class:`PVEvent`
     """

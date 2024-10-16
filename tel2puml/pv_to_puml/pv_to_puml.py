@@ -108,7 +108,7 @@ def pv_event_file_to_event(
     :type file_path: `str`
     :param mapping_config: Mapping application data to user data for PVEvent
     objects. Defaults to `PVEventMappingConfig`
-    :type mapping_config: :class: `PVEventMappingConfig`
+    :type mapping_config: :class:`PVEventMappingConfig`
     :return: The event
     :rtype: :class:`PVEvent`
     """
@@ -129,7 +129,7 @@ def pv_job_file_to_event_sequence(
     :type file_path: `str`
     :param mapping_config: Mapping application data to user data for PVEvent
     objects. Defaults to `PVEventMappingConfig`
-    :type mapping_config: :class: `PVEventMappingConfig`
+    :type mapping_config: :class:`PVEventMappingConfig`
     :return: The event sequence
     :rtype: `list`[:class:`PVEvent`]
     """
@@ -156,7 +156,7 @@ def pv_events_from_files_to_event_stream(
     :type file_paths: `list`[`str`]
     :param mapping_config: Mapping application data to user data for PVEvent
     objects. Defaults to `PVEventMappingConfig`
-    :type mapping_config: :class: `PVEventMappingConfig`
+    :type mapping_config: :class:`PVEventMappingConfig`
     :return: A generator of events
     :rtype: `Generator`[:class:`PVEvent`, Any, None]
     """
@@ -175,7 +175,7 @@ def pv_job_files_to_event_sequence_streams(
     :type file_paths: `list`[`str`]
     :param mapping_config: Mapping application data to user data for PVEvent
     objects. Defaults to `PVEventMappingConfig`
-    :type mapping_config: :class: `PVEventMappingConfig`
+    :type mapping_config: :class:`PVEventMappingConfig`
     :return: A generator of event sequences
     :rtype: `Generator`[`list`[:class:`PVEvent`], Any, None]
     """
@@ -234,7 +234,7 @@ def pv_event_files_to_job_id_streams(
     :type file_list: `Optional`[`list`[`str`]]
     :param mapping_config: Mapping application data to user data for PVEvent
     objects. Defaults to `PVEventMappingConfig`
-    :type mapping_config: :class: `PVEventMappingConfig`
+    :type mapping_config: :class:`PVEventMappingConfig`
     :return: A generator that yields lists of PVEvents grouped by job_id.
     :rtype: `Generator`[`list`[:class:`PVEvent`], `Any`, `None`]
     """
@@ -302,7 +302,7 @@ def pv_files_to_pv_streams(
     and a generator of lists of PVEvents.
     :param mapping_config: Mapping application data to user data for PVEvent
     objects. Defaults to `PVEventMappingConfig`
-    :type mapping_config: :class: `PVEventMappingConfig`
+    :type mapping_config: :class:`PVEventMappingConfig`
     :rtype: `Generator`[`tuple`[`str`,`Generator`[list[PVEvent]], `Any`,
     `None`]],`Any`,`None`]
     """

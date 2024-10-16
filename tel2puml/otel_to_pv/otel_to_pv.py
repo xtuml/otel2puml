@@ -21,7 +21,7 @@ def otel_to_pv(
     find_unique_graphs: bool = False,
     save_events: bool = False,
     output_file_directory: str = ".",
-    mapping_config: PVEventMappingConfig = PVEventMappingConfig(),
+    mapping_config: PVEventMappingConfig | None = None,
 ) -> Generator[
     tuple[str, Generator[Generator[PVEvent, Any, None], Any, None]], Any, None
 ]:
@@ -46,8 +46,8 @@ def otel_to_pv(
     :param output_file_directory: Output file directory.
     :type output_file_directory: `str`
     :param mapping_config: Mapping application data to user data for PVEvent
-    objects. Defaults to `PVEventMappingConfig`.
-    :type mapping_config: :class: `PVEventMappingConfig`
+    objects. Defaults to `None`.
+    :type mapping_config: :class:`PVEventMappingConfig` | `None`
     :rtype: `Generator`[`tuple`[`str`, `Generator`[`Generator`[:class:
     `PVEvent`, `Any`, `None`], `Any`, `None`]], `Any`, `None`]
     """
@@ -113,7 +113,7 @@ def handle_save_events(
         None,
     ],
     output_file_directory: str,
-    mapping_config: PVEventMappingConfig = PVEventMappingConfig(),
+    mapping_config: PVEventMappingConfig | None = None,
 ) -> None:
     """Function to handle the save events flag. Saves PVEvents as job json
     files within a job folder within the output file directory.
@@ -126,8 +126,8 @@ def handle_save_events(
     :param output_file_directory: Output file directory
     :type output_file_directory: `str`
     :param mapping_config: Mapping application data to user data for PVEvent
-    objects. Defaults to `PVEventMappingConfig`.
-    :type mapping_config: :class: `PVEventMappingConfig`
+    objects. Defaults to `None`.
+    :type mapping_config: :class:`PVEventMappingConfig` | `None`
     """
     try:
         os.makedirs(f"{output_file_directory}/{job_name}", exist_ok=True)
@@ -156,7 +156,7 @@ def save_pv_event_stream_to_file(
     pv_event_stream: Generator[PVEvent, Any, None],
     output_file_directory: str,
     count: int,
-    mapping_config: PVEventMappingConfig = PVEventMappingConfig(),
+    mapping_config: PVEventMappingConfig | None = None,
 ) -> None:
     """Saves a PVEvent as a json file to a folder within the output directory.
 
@@ -167,8 +167,8 @@ def save_pv_event_stream_to_file(
     :type count: `int`
     :type output_file_directory: `str`
     :param mapping_config: Mapping application data to user data for PVEvent
-    objects. Defaults to `PVEventMappingConfig`.
-    :type mapping_config: :class: `PVEventMappingConfig`
+    objects. Defaults to `None`.
+    :type mapping_config: :class:`PVEventMappingConfig` | `None`
     """
     try:
         if mapping_config is None:

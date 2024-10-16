@@ -26,7 +26,7 @@ A custom `mapping_config.yaml` file is used when the structure of the data does 
 
 ## Default Behaviour Without a Mapping Configuration
 
-If no mapping configuration file is provided, `tel2puml` uses its default internal mappings for the `PVEvent` object. A custom mapping configuration is only necessary when the data structure deviates from the default schema.
+If no mapping configuration file is provided, `tel2puml` uses its default [internal mappings](/tel2puml/mapping_config.yaml) for the `PVEvent` object. A custom mapping configuration is only necessary when the data structure deviates from the default schema.
 
 ## Example of Custom Mapping Configuration
 
