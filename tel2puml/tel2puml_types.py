@@ -148,7 +148,7 @@ class OtelPVOptions(TypedDict):
     ingest_data: bool
     save_events: bool
     find_unique_graphs: bool
-    mapping_config: PVEventMappingConfig | None
+    mapping_config: NotRequired[Optional[PVEventMappingConfig]]
 
 
 class PVPumlOptions(TypedDict):
