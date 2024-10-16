@@ -30,7 +30,7 @@ from tel2puml.tel2puml_types import (
     PvToPumlArgs,
     OtelPVOptions,
     PVPumlOptions,
-    MappingConfig
+    PVEventMappingConfig
 )
 from tel2puml.otel_to_pv.config import IngestDataConfig
 
@@ -212,7 +212,7 @@ def generate_component_options(
         )
         mapping_config = None
         if otel_to_pv_obj.mapping_config_file:
-            mapping_config = MappingConfig(
+            mapping_config = PVEventMappingConfig(
                 **generate_config(str(otel_to_pv_obj.mapping_config_file))
             )
         otel_pv_options = OtelPVOptions(
@@ -232,7 +232,7 @@ def generate_component_options(
             file_list = find_files(str(pv_to_puml_obj.folder_path))
         mapping_config = None
         if pv_to_puml_obj.mapping_config_file:
-            mapping_config = MappingConfig(
+            mapping_config = PVEventMappingConfig(
                 **generate_config(str(pv_to_puml_obj.mapping_config_file))
             )
         pv_puml_options = PVPumlOptions(

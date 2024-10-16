@@ -9,7 +9,7 @@ from tel2puml.tel2puml_types import (
     DUMMY_START_EVENT,
     PVEvent,
     DUMMY_EVENT,
-    MappingConfig,
+    PVEventMappingConfig,
 )
 
 
@@ -257,7 +257,7 @@ def remove_dummy_start_event_from_event_sequence(
 
 
 def transform_dict_into_pv_event(
-    pv_dict: dict[str, Any], mapping_config: MappingConfig | None = None
+    pv_dict: dict[str, Any], mapping_config: PVEventMappingConfig | None = None
 ) -> PVEvent:
     """This function transforms a dictionary into a pv event.
 
@@ -265,7 +265,7 @@ def transform_dict_into_pv_event(
     :type pv_dict: `dict`[`str`, `Any`]
     :param mapping_config: Mapping application data to user data for PVEvent
     objects. Defaults to `None`
-    :type mapping_config: :class: `MappingConfig`
+    :type mapping_config: :class: `PVEventMappingConfig`
     :return: The pv event.
     :rtype: :class:`PVEvent`
     """

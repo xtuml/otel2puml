@@ -27,7 +27,7 @@ from tel2puml.otel_to_pv.otel_to_pv_types import OTelEventTypeMap
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
     NodeModel,
 )
-from tel2puml.tel2puml_types import PVEvent, MappingConfig
+from tel2puml.tel2puml_types import PVEvent, PVEventMappingConfig
 
 
 class TestOtelToPV:
@@ -426,7 +426,7 @@ class TestSavePVEventStreamsToFile:
         self, tmp_path: Path
     ) -> None:
         """Test that PVEvents are saved correctly to a file."""
-        mapping_config = MappingConfig(
+        mapping_config = PVEventMappingConfig(
             jobId="jobIdNew",
             eventId="eventIdNew",
             timestamp="timestampNew",

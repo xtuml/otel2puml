@@ -16,16 +16,16 @@ from pydantic import (
 from tel2puml.otel_to_pv.config import IngestDataConfig
 
 
-class MappingConfig(BaseModel):
+class PVEventMappingConfig(BaseModel):
     """Mapping configuration for PVEvent"""
 
-    jobId: str
-    eventId: str
-    timestamp: str
-    previousEventIds: str
-    applicationName: str
-    jobName: str
-    eventType: str
+    jobId: str = "jobId"
+    eventId: str = "eventId"
+    timestamp: str = "timestamp"
+    previousEventIds: str = "previousEventIds"
+    applicationName: str = "applicationName"
+    jobName: str = "jobName"
+    eventType: str = "eventType"
 
 
 class PVEvent(TypedDict):
@@ -148,7 +148,7 @@ class OtelPVOptions(TypedDict):
     ingest_data: bool
     save_events: bool
     find_unique_graphs: bool
-    mapping_config: MappingConfig | None
+    mapping_config: NotRequired[PVEventMappingConfig]
 
 
 class PVPumlOptions(TypedDict):
@@ -157,7 +157,7 @@ class PVPumlOptions(TypedDict):
     file_list: list[str]
     job_name: str
     group_by_job_id: bool
-    mapping_config: MappingConfig | None
+    mapping_config: NotRequired[PVEventMappingConfig]
 
 
 class OtelToPVArgs(BaseModel):

@@ -13,7 +13,7 @@ from tel2puml.pv_event_simulator import (
     Job,
     transform_dict_into_pv_event,
 )
-from tel2puml.tel2puml_types import PVEvent, MappingConfig
+from tel2puml.tel2puml_types import PVEvent, PVEventMappingConfig
 
 
 class TestJob:
@@ -355,7 +355,7 @@ def test_transform_dict_into_pv_event_with_mapping_config() -> None:
             assert pv_event["previousEventIds"] == ["1"]
 
     # mapping config used for all tests
-    mapping_config = MappingConfig(
+    mapping_config = PVEventMappingConfig(
         jobId="jobIdNew",
         eventId="eventIdNew",
         timestamp="timestampNew",
