@@ -9,6 +9,7 @@ import yaml
 import pytest
 import sqlalchemy as sa
 from pytest import MonkeyPatch
+from pydantic import ValidationError
 
 from tel2puml.otel_to_pv.otel_to_pv import (
     otel_to_pv,
@@ -347,7 +348,7 @@ class TestOtelToPV:
                 file_content = json.load(f)
                 assert (
                     file_content
-                    == expected_job_json_content[(2 * i): (2 * i) + 2]
+                    == expected_job_json_content[(2 * i) : (2 * i) + 2]
                 )
 
 
@@ -474,6 +475,20 @@ class TestSavePVEventStreamsToFile:
         with expected_file.open("r") as f:
             file_content = json.load(f)
             assert file_content == [expected_pv_event, expected_pv_event_2]
+
+    def test_invalid_mapping_config(self) -> None:
+        """Test that ValidationError is raised on invalid MappingConfig object
+        """
+        with pytest.raises(ValidationError):
+            MappingConfig(
+                jobIdIncorrect="jobIdNew",
+                eventId="eventIdNew",
+                timestamp="timestampNew",
+                previousEventIds="previousEventIdsNew",
+                applicationName="applicationNameNew",
+                jobName="jobNameNew",
+                eventType="eventTypeNew",
+            )
 
 
 class TestHandleSaveEvents:
