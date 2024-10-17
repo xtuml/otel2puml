@@ -1,4 +1,4 @@
-# Configuring tel2puml/find_unique_graphs
+# Configuring JSON data extraction and mapping 
 
 ## Table of Contents
 <!-- TABLE OF CONTENTS -->
@@ -29,7 +29,7 @@
 
 
 ## 1. Introduction
-This document is a guide to configure json_data_converter to correctly parse JSON telemetry data and map it to the application schema used internally. The internal schema is detailed below for context:
+This document is a guide to the configuration used to correctly parse JSON telemetry data and map it to the application schema used internally. The internal schema is detailed below for context:
 
 ```python
 class OTelEvent(NamedTuple):
