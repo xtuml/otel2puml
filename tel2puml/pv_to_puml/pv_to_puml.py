@@ -8,7 +8,7 @@ import os
 
 from tqdm import tqdm
 
-from tel2puml.tel2puml_types import PVEvent
+from tel2puml.tel2puml_types import PVEvent, PVEventMappingConfig
 from tel2puml.pv_to_puml.data_ingestion import (
     cluster_events_by_job_id,
     update_and_create_events_from_clustered_pvevents,
@@ -22,10 +22,9 @@ from tel2puml.pv_to_puml.walk_puml_graph.node_update import (
     update_nested_node_graph_with_break_points,
 )
 from tel2puml.loop_detection.detect_loops import detect_loops
-from tel2puml.pv_to_puml.walk_puml_graph.create_node_graph_from_event_graph  \
-    import (
-        create_node_graph_from_event_graph,
-    )
+from tel2puml.pv_to_puml.walk_puml_graph. \
+    create_node_graph_from_event_graph \
+    import create_node_graph_from_event_graph
 from tel2puml.pv_to_puml.walk_puml_graph.find_and_add_loop_kill_paths import (
     find_and_add_loop_kill_paths_to_nested_graphs,
 )
@@ -99,11 +98,17 @@ def pv_to_puml_file(
         puml_file.write(puml_string)
 
 
-def pv_event_file_to_event(file_path: str) -> PVEvent:
+def pv_event_file_to_event(
+    file_path: str,
+    mapping_config: PVEventMappingConfig = PVEventMappingConfig(),
+) -> PVEvent:
     """Reads a PV event json file and returns the event
 
     :param file_path: The path to the PV event json file
     :type file_path: `str`
+    :param mapping_config: Mapping application data to user data for PVEvent
+    objects. Defaults to `PVEventMappingConfig`
+    :type mapping_config: :class:`PVEventMappingConfig`
     :return: The event
     :rtype: :class:`PVEvent`
     """
@@ -111,16 +116,20 @@ def pv_event_file_to_event(file_path: str) -> PVEvent:
         data = json.load(file)
         if not isinstance(data, dict):
             raise ValueError("The file does not contain a single event")
-    return transform_dict_into_pv_event(data)
+    return transform_dict_into_pv_event(data, mapping_config)
 
 
 def pv_job_file_to_event_sequence(
     file_path: str,
+    mapping_config: PVEventMappingConfig = PVEventMappingConfig(),
 ) -> list[PVEvent]:
     """Reads a PV job json array file and returns the event sequence
 
     :param file_path: The path to the PV job json file
     :type file_path: `str`
+    :param mapping_config: Mapping application data to user data for PVEvent
+    objects. Defaults to `PVEventMappingConfig`
+    :type mapping_config: :class:`PVEventMappingConfig`
     :return: The event sequence
     :rtype: `list`[:class:`PVEvent`]
     """
@@ -132,38 +141,46 @@ def pv_job_file_to_event_sequence(
     for event in data:
         if not isinstance(event, dict):
             raise ValueError("The file does not contain a list of events")
-        out_data.append(transform_dict_into_pv_event(event))
+        out_data.append(transform_dict_into_pv_event(event, mapping_config))
     return out_data
 
 
 def pv_events_from_files_to_event_stream(
     file_paths: list[str],
+    mapping_config: PVEventMappingConfig = PVEventMappingConfig(),
 ) -> Generator[PVEvent, Any, None]:
     """Reads a list of PV event json files and yields the events when iterated
     over
 
     :param file_paths: The paths to the PV event json files
     :type file_paths: `list`[`str`]
+    :param mapping_config: Mapping application data to user data for PVEvent
+    objects. Defaults to `PVEventMappingConfig`
+    :type mapping_config: :class:`PVEventMappingConfig`
     :return: A generator of events
     :rtype: `Generator`[:class:`PVEvent`, Any, None]
     """
     for file_path in file_paths:
-        yield pv_event_file_to_event(file_path)
+        yield pv_event_file_to_event(file_path, mapping_config)
 
 
 def pv_job_files_to_event_sequence_streams(
     file_paths: list[str],
+    mapping_config: PVEventMappingConfig = PVEventMappingConfig(),
 ) -> Generator[list[PVEvent], Any, None]:
     """Reads a list of PV job json array files and yields the event sequences
     when iterated over
 
     :param file_paths: The paths to the PV job json files
     :type file_paths: `list`[`str`]
+    :param mapping_config: Mapping application data to user data for PVEvent
+    objects. Defaults to `PVEventMappingConfig`
+    :type mapping_config: :class:`PVEventMappingConfig`
     :return: A generator of event sequences
     :rtype: `Generator`[`list`[:class:`PVEvent`], Any, None]
     """
     for file_path in file_paths:
-        yield pv_job_file_to_event_sequence(file_path)
+        yield pv_job_file_to_event_sequence(file_path, mapping_config)
 
 
 def pv_jobs_from_folder_to_event_sequence_streams(
@@ -207,6 +224,7 @@ def pv_jobs_from_folder_to_puml_file(
 
 def pv_event_files_to_job_id_streams(
     file_list: list[str] | None = None,
+    mapping_config: PVEventMappingConfig = PVEventMappingConfig(),
 ) -> Generator[list[PVEvent], Any, None]:
     """File list of pv event files into a generator of lists of PV event
     sequences grouped by job_id.
@@ -214,12 +232,15 @@ def pv_event_files_to_job_id_streams(
     :param file_list: A list of file paths to PV event JSON files. Defaults
     to `None`.
     :type file_list: `Optional`[`list`[`str`]]
+    :param mapping_config: Mapping application data to user data for PVEvent
+    objects. Defaults to `PVEventMappingConfig`
+    :type mapping_config: :class:`PVEventMappingConfig`
     :return: A generator that yields lists of PVEvents grouped by job_id.
     :rtype: `Generator`[`list`[:class:`PVEvent`], `Any`, `None`]
     """
     if file_list is None:
         file_list = []
-    pv_stream = pv_events_from_files_to_event_stream(file_list)
+    pv_stream = pv_events_from_files_to_event_stream(file_list, mapping_config)
     events_by_job_id = cluster_events_by_job_id(pv_stream)
     yield from events_by_job_id.values()
 
@@ -256,6 +277,7 @@ def pv_files_to_pv_streams(
     file_list: list[str] | None = None,
     job_name: str = "default.puml",
     group_by_job_id: Optional[bool] = False,
+    mapping_config: PVEventMappingConfig = PVEventMappingConfig(),
 ) -> Generator[
     tuple[str, Generator[list[PVEvent], Any, None]],
     Any,
@@ -278,13 +300,20 @@ def pv_files_to_pv_streams(
     :type group_by_job_id: `bool`
     :return: A generator that yields tuples. Each tuple contains the job name
     and a generator of lists of PVEvents.
+    :param mapping_config: Mapping application data to user data for PVEvent
+    objects. Defaults to `PVEventMappingConfig`
+    :type mapping_config: :class:`PVEventMappingConfig`
     :rtype: `Generator`[`tuple`[`str`,`Generator`[list[PVEvent]], `Any`,
     `None`]],`Any`,`None`]
     """
     if file_list is None:
         file_list = []
     if group_by_job_id:
-        pv_stream_sequence = pv_event_files_to_job_id_streams(file_list)
+        pv_stream_sequence = pv_event_files_to_job_id_streams(
+            file_list, mapping_config
+        )
     else:
-        pv_stream_sequence = pv_job_files_to_event_sequence_streams(file_list)
+        pv_stream_sequence = pv_job_files_to_event_sequence_streams(
+            file_list, mapping_config
+        )
     yield (job_name, pv_stream_sequence)

@@ -313,6 +313,7 @@ python -m tel2puml otel2pv -c CONFIG_FILE [options]
 - `-ni`, `--no-ingest`: Do not load data into the data holder.
 - `-ug`, `--unique-graphs`: Find unique graphs within the data holder.
 - `-se`, `--save-events`: Save PVEvents in intermediate format.
+- `-mc`, `--mapping-config`: Path to the mapping configuration file. [Usage](docs/user/mapping_config.md)
 
 **Example:**
 
@@ -336,6 +337,7 @@ python -m tel2puml pv2puml [options] [FILE_PATHS...]
 - `FILE_PATHS`: One or more files containing job data. Cannot be used with `-fp`.
 - `-jn`, `--job-name`: Name for the PlantUML sequence diagram and output file prefix (default is `"default_name"`).
 - `-group-by-job`: Group events by job ID.
+- `-mc`, `--mapping-config`: Path to the mapping configuration file. [Usage](docs/user/mapping_config.md)
 
 **Notes:**
 

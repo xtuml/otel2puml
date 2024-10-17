@@ -1,0 +1,8 @@
+# Configuration file for mapping application data to user data for PVEvent objects.
+jobId: jobId
+eventId: eventId
+timestamp: timestamp
+previousEventIds: previousEventIds
+applicationName: applicationName
+jobName: jobName
+eventType: eventType

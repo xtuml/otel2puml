@@ -12,7 +12,7 @@ from tel2puml.otel_to_pv.ingest_otel_data import (
     fetch_data_holder,
 )
 from tel2puml.otel_to_pv.sequence_otel import sequence_otel_job_id_streams
-from tel2puml.tel2puml_types import PVEvent
+from tel2puml.tel2puml_types import PVEvent, PVEventMappingConfig
 
 
 def otel_to_pv(
@@ -21,6 +21,7 @@ def otel_to_pv(
     find_unique_graphs: bool = False,
     save_events: bool = False,
     output_file_directory: str = ".",
+    mapping_config: PVEventMappingConfig | None = None,
 ) -> Generator[
     tuple[str, Generator[Generator[PVEvent, Any, None], Any, None]], Any, None
 ]:
@@ -44,6 +45,9 @@ def otel_to_pv(
     :type save_events: bool
     :param output_file_directory: Output file directory.
     :type output_file_directory: `str`
+    :param mapping_config: Mapping application data to user data for PVEvent
+    objects. Defaults to `None`.
+    :type mapping_config: :class:`PVEventMappingConfig` | `None`
     :rtype: `Generator`[`tuple`[`str`, `Generator`[`Generator`[:class:
     `PVEvent`, `Any`, `None`], `Any`, `None`]], `Any`, `None`]
     """
@@ -92,7 +96,10 @@ def otel_to_pv(
         tqdm.write("Saving PVEvents to job json files...")
         for job_name, pv_event_streams in pv_event_gen:
             handle_save_events(
-                job_name, pv_event_streams, output_file_directory
+                job_name,
+                pv_event_streams,
+                output_file_directory,
+                mapping_config,
             )
 
     return pv_event_gen
@@ -106,6 +113,7 @@ def handle_save_events(
         None,
     ],
     output_file_directory: str,
+    mapping_config: PVEventMappingConfig | None = None,
 ) -> None:
     """Function to handle the save events flag. Saves PVEvents as job json
     files within a job folder within the output file directory.
@@ -117,6 +125,9 @@ def handle_save_events(
     `None`], `Any`, `None`, ]
     :param output_file_directory: Output file directory
     :type output_file_directory: `str`
+    :param mapping_config: Mapping application data to user data for PVEvent
+    objects. Defaults to `None`.
+    :type mapping_config: :class:`PVEventMappingConfig` | `None`
     """
     try:
         os.makedirs(f"{output_file_directory}/{job_name}", exist_ok=True)
@@ -134,7 +145,8 @@ def handle_save_events(
             job_name,
             pv_event_stream,
             output_file_directory,
-            file_no
+            file_no,
+            mapping_config,
         )
         file_no += 1
 
@@ -143,7 +155,8 @@ def save_pv_event_stream_to_file(
     job_name: str,
     pv_event_stream: Generator[PVEvent, Any, None],
     output_file_directory: str,
-    count: int
+    count: int,
+    mapping_config: PVEventMappingConfig | None = None,
 ) -> None:
     """Saves a PVEvent as a json file to a folder within the output directory.
 
@@ -153,9 +166,23 @@ def save_pv_event_stream_to_file(
     :param count: Current file number
     :type count: `int`
     :type output_file_directory: `str`
+    :param mapping_config: Mapping application data to user data for PVEvent
+    objects. Defaults to `None`.
+    :type mapping_config: :class:`PVEventMappingConfig` | `None`
     """
     try:
-        pv_event_list = list(pv_event_stream)
+        if mapping_config is None:
+            pv_event_list: list[PVEvent] | list[dict[str, Any]] = list(
+                pv_event_stream
+            )
+        else:
+            pv_event_list = [
+                {
+                    getattr(mapping_config, key): value
+                    for key, value in pv_event.items()
+                }
+                for pv_event in pv_event_stream
+            ]
 
         file_path = (
             f"{output_file_directory}/{job_name}/pv_event_sequence_"

@@ -30,6 +30,7 @@ from tel2puml.tel2puml_types import (
     PvToPumlArgs,
     OtelPVOptions,
     PVPumlOptions,
+    PVEventMappingConfig
 )
 from tel2puml.otel_to_pv.config import IngestDataConfig
 
@@ -44,6 +45,18 @@ parser.add_argument(
     help="Output folder path",
     default=".",
     dest="output_file_directory",
+)
+
+# mapping config, shared between otel2pv and pv2puml
+mapping_config_parent_parser = argparse.ArgumentParser(add_help=False)
+
+mapping_config_parent_parser.add_argument(
+    "-mc",
+    "--mapping-config",
+    metavar="mapping-config",
+    help="Path to mapping configuration file",
+    dest="mapping_config_file",
+    required=False,
 )
 
 # otel subparsers and shared arguments
@@ -86,7 +99,7 @@ otel_to_puml_parser = subparsers.add_parser(
 otel_to_pv_parser = subparsers.add_parser(
     "otel2pv",
     help="otel to pv help",
-    parents=[otel_parent_parser],
+    parents=[otel_parent_parser, mapping_config_parent_parser],
 )
 
 # otel to pv args
@@ -100,8 +113,7 @@ otel_to_pv_parser.add_argument(
 
 # pv to puml subparser
 pv_to_puml_parser = subparsers.add_parser(
-    "pv2puml",
-    help="pv to puml help",
+    "pv2puml", help="pv to puml help", parents=[mapping_config_parent_parser]
 )
 pv_input_paths = pv_to_puml_parser.add_argument_group(
     "Input paths",
@@ -204,6 +216,11 @@ def generate_component_options(
             save_events=otel_to_pv_obj.save_events,
             find_unique_graphs=otel_to_pv_obj.find_unique_graphs,
         )
+        if otel_to_pv_obj.mapping_config_file:
+            mapping_config = PVEventMappingConfig(
+                **generate_config(str(otel_to_pv_obj.mapping_config_file))
+            )
+            otel_pv_options["mapping_config"] = mapping_config
     elif command == "pv2puml":
         pv_to_puml_obj = PvToPumlArgs(**args_dict)
         if pv_to_puml_obj.file_paths:
@@ -217,6 +234,11 @@ def generate_component_options(
             job_name=pv_to_puml_obj.job_name,
             group_by_job_id=pv_to_puml_obj.group_by_job,
         )
+        if pv_to_puml_obj.mapping_config_file:
+            mapping_config = PVEventMappingConfig(
+                **generate_config(str(pv_to_puml_obj.mapping_config_file))
+            )
+            pv_puml_options["mapping_config"] = mapping_config
 
     return otel_pv_options, pv_puml_options
 
