@@ -168,7 +168,7 @@ There are two ways to set up this project: manual installation or using a devcon
 
 The project can be installed manually in a few different ways. Make sure you have the following prerequisites for all installation methods:
 * `git`
-* Python version 3.11.9
+* Python version > 3.11.0 and < 3.13
 * `bash`
 * `pip` (Python package manager)
 
