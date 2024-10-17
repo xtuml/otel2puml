@@ -221,7 +221,7 @@ field_mapping:
 
 This example would return `GET` for span with `span_id=span001` from the [JSON example](#json-example).
 
-It should be noted that if a value in the `key_paths` field is a path that contains at least one array i.e. `.[].` is in the path, then that path must be surrounded by quoatation marks as when the YAML file is processed the `[]` will be interpreted as a list and not as a string.
+It should be noted that if a value in the `key_paths` field is a path that contains at least one array i.e. `.[].` is in the path, then that path must be surrounded by quoatation marks. This is necessary because the YAML file is processed the `[]` will be interpreted as a list and not as a string unless it is encapsulated in quotes that signal it part of a string.
 
 #### Key Components:
 
