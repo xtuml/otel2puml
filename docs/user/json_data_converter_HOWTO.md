@@ -212,7 +212,7 @@ The `field_mapping` section is the core of the configuration, defining how to ma
 field_mapping:
     event_type:
         key_paths: [
-            resource_spans.[].scope_spans.[].spans.[].attributes.[].key
+            "resource_spans.[].scope_spans.[].spans.[].attributes.[].key"
         ]
         key_value: [http.method]
         value_paths: [value.Value.StringValue]
@@ -220,6 +220,8 @@ field_mapping:
 ```
 
 This example would return `GET` for span with `span_id=span001` from the [JSON example](#json-example).
+
+It should be noted that if a value in the `key_paths` field is a path that contains at least one array i.e. `.[].` is in the path, then that path must be surrounded by quoatation marks. This is necessary because the YAML file is processed the `[]` will be interpreted as a list and not as a string unless it is encapsulated in quotes that signal it part of a string.
 
 #### Key Components:
 
@@ -279,7 +281,7 @@ So the user would specify the following in the `field_mapping`:
 ```yaml
 field_mapping:
     event_type:
-        key_paths: [attributes.[].key]
+        key_paths: ["attributes.[].key"]
         key_value: [http.method]
         value_paths: [value.Value.StringValue]
         value_type: string
@@ -301,7 +303,7 @@ the user would specify the following in the `field_mapping`:
 ```yaml
 field_mapping:
     event_type:
-        key_paths: [attributes.[].trace_id]
+        key_paths: ["attributes.[].trace_id"]
         value_type: string
 ```
 #### Concatenation
@@ -312,8 +314,8 @@ If the user wants to concatenate multiple values, they can specify multiple key_
 field_mapping:
     event_type:
         key_paths: [
-            resource_spans.[].scope_spans.[].spans.[].name,
-            resource_spans.[].scope_spans.[].spans.[].attributes.[].key
+            "resource_spans.[].scope_spans.[].spans.[].name",
+            "resource_spans.[].scope_spans.[].spans.[].attributes.[].key"
         ]
         key_value: [null, http.response]
         value_paths: [null, value.Value.IntValue]
@@ -331,10 +333,10 @@ In some cases, the user may want to provide a fallback value if the primary valu
 field_mapping:
     event_type:
         key_paths: [
-            resource_spans.[].scope_spans.[].spans.[].name,
+            "resource_spans.[].scope_spans.[].spans.[].name",
             [
-                resource_spans.[].scope_spans.[].spans.[].not_here, # this is not a valid path
-                resource_spans.[].scope_spans.[].spans.[].attributes.[].key # this is the fallback path
+                "resource_spans.[].scope_spans.[].spans.[].not_here", # this is not a valid path
+                "resource_spans.[].scope_spans.[].spans.[].attributes.[].key" # this is the fallback path
             ]
         ]
         key_value: [null, [null, http.response]]
@@ -361,10 +363,10 @@ To extract `trace_id` from the [JSON example](#json-example) and map it to `job_
 ```yaml
 field_mapping:
     job_id:
-        key_paths: [resource_spans.[].scope_spans.[].spans.[].trace_id]
+        key_paths: ["resource_spans.[].scope_spans.[].spans.[].trace_id"]
         value_type: string
     event_id:
-        key_paths: [resource_spans.[].scope_spans.[].spans.[].span_id]
+        key_paths: ["resource_spans.[].scope_spans.[].spans.[].span_id"]
         value_type: string
 ```
 
@@ -388,31 +390,31 @@ For more complex scenarios, such as concatenating multiple values and having fal
 field_mapping:
     event_type:
         key_paths: [
-            resource_spans.[].scope_spans.[].spans.name,
+            "resource_spans.[].scope_spans.[].spans.name",
             [
-                resource_spans.[].scope_spans.[].spans.not_here, # this is not a valid path
-                resource_spans.[].scope_spans.[].spans.attributes.[].key # this is the fallback path
+                "resource_spans.[].scope_spans.[].spans.not_here", # this is not a valid path
+                "resource_spans.[].scope_spans.[].spans.attributes.[].key" # this is the fallback path
             ]
         ]
         key_value: [null, [null, http.response]]
         value_paths: [null, [null, value.Value.IntValue]]
         value_type: string
     job_name:
-        key_paths: [resource_spans.[].resource.attributes.[].key]
+        key_paths: ["resource_spans.[].resource.attributes.[].key"]
         key_value: [service.name]
         value_paths: [value.Value.StringValue]
         value_type: string
     event_id:
-        key_paths: [resource_spans.[].scope_spans.[].spans.[].span_id]
+        key_paths: ["resource_spans.[].scope_spans.[].spans.[].span_id"]
         value_type: string
     start_timestamp:
         key_paths: [
-            resource_spans.[].scope_spans.[].spans.[].start_time_unix_nano
+            "resource_spans.[].scope_spans.[].spans.[].start_time_unix_nano"
         ]
         value_type: string
     end_timestamp:
         key_paths: [
-            resource_spans.[].scope_spans.[].spans.[].end_time_unix_nano
+            "resource_spans.[].scope_spans.[].spans.[].end_time_unix_nano"
         ]
         value_type: string
 ```
@@ -433,15 +435,15 @@ In this example the user want to extract the field `job_name` that is a value in
 ```yaml
 field_mapping:
     job_name:
-        key_paths: [resource_spans.[].resource.attributes.[].key]
+        key_paths: ["resource_spans.[].resource.attributes.[].key"]
         key_value: [service.name]
         value_paths: [value.Value.StringValue]
         value_type: string
     job_id:
-        key_paths: [resource_spans.[].scope_spans.[].spans.[].trace_id]
+        key_paths: ["resource_spans.[].scope_spans.[].spans.[].trace_id"]
         value_type: string
     event_id:
-        key_paths: [resource_spans.[].scope_spans.[].spans.[].span_id]
+        key_paths: ["resource_spans.[].scope_spans.[].spans.[].span_id"]
         value_type: string
 ```
 
@@ -465,42 +467,42 @@ In this example the user wants to extract all the fields in the OTelEvent schema
 ```yaml
 field_mapping:
     job_name:
-        key_paths: [resource_spans.[].resource.attributes.[].key]
+        key_paths: ["resource_spans.[].resource.attributes.[].key"]
         key_value: [service.name]
         value_paths: [value.Value.StringValue]
         value_type: string
     job_id:
-        key_paths: [resource_spans.[].scope_spans.[].spans.[].trace_id]
+        key_paths: ["resource_spans.[].scope_spans.[].spans.[].trace_id"]
         value_type: string
     event_type:
         key_paths: [
-            resource_spans.[].scope_spans.[].spans.name,
+            "resource_spans.[].scope_spans.[].spans.name",
             [
-                resource_spans.[].scope_spans.[].spans.not_here, # this is not a valid path
-                resource_spans.[].scope_spans.[].spans.attributes.[].key # this is the fallback path
+                "resource_spans.[].scope_spans.[].spans.not_here", # this is not a valid path
+                "resource_spans.[].scope_spans.[].spans.attributes.[].key" # this is the fallback path
             ]
         ]
         key_value: [null, [null, http.response]]
         value_paths: [null, [null, value.Value.IntValue]]
         value_type: string
     event_id:
-        key_paths: [resource_spans.[].scope_spans.[].spans.[].span_id]
+        key_paths: ["resource_spans.[].scope_spans.[].spans.[].span_id"]
         value_type: string
     start_timestamp:
         key_paths: [
-            resource_spans.[].scope_spans.[].spans.[].start_time_unix_nano
+            "resource_spans.[].scope_spans.[].spans.[].start_time_unix_nano"
         ]
         value_type: string
     end_timestamp:
         key_paths: [
-            resource_spans.[].scope_spans.[].spans.[].end_time_unix_nano
+            "resource_spans.[].scope_spans.[].spans.[].end_time_unix_nano"
         ]
         value_type: string
     application_name:
-        key_paths: [resource_spans.[].scope_spans.[].scope.name]
+        key_paths: ["resource_spans.[].scope_spans.[].scope.name"]
         value_type: string
     parent_event_id:
-        key_paths: [resource_spans.[].scope_spans.[].spans.[].parent_span_id]
+        key_paths: ["resource_spans.[].scope_spans.[].spans.[].parent_span_id"]
         value_type: string
 ```
 
