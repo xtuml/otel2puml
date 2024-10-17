@@ -22,9 +22,9 @@ NODE_ASSOCIATION = Table(
     "NODE_ASSOCIATION",
     Base.metadata,
     Column(
-        "parent_id", String, ForeignKey("nodes.event_id")
+        "parent_id", String, ForeignKey("nodes.event_id"), primary_key=True
     ),
-    Column("child_id", String, ForeignKey("nodes.event_id")),
+    Column("child_id", String, ForeignKey("nodes.event_id"), primary_key=True),
 )
 
 
