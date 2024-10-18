@@ -311,7 +311,17 @@ class LogicBlockHolder:
             )
             + [new_node]
         )
-        self.logic_node.is_loop_kill_path = self.loop_kill_paths.copy()
+        self.logic_node.is_loop_kill_path = (
+            [
+                self.logic_node.is_loop_kill_path[self._path_indexes[index]]
+                for index in not_indices
+            ]
+            + [
+                self.logic_node.is_loop_kill_path[index]
+                for index in self._merged_path_indexes
+            ]
+            + self.loop_kill_paths[-1:]
+        )
         # make sure all indexes that mirror the logic node indexes are updated
         # correctly
         not_indices_len = len(not_indices)
