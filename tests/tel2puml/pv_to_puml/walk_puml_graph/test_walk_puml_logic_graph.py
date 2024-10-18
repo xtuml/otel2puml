@@ -5,13 +5,13 @@ import networkx as nx
 from tel2puml.pv_to_puml.walk_puml_graph.node import Node
 from .utils import (
     merge_markov_without_loops_and_logic_detection_analysis,
-    get_event_reference_from_events
+    get_event_reference_from_events,
 )
 from tel2puml.pv_to_puml.walk_puml_graph.walk_puml_logic_graph import (
     create_puml_graph_from_node_class_graph,
     check_is_merge_node_for_logic_block,
     LogicBlockHolder,
-    walk_nested_graph
+    walk_nested_graph,
 )
 from tel2puml.puml_graph import (
     PUMLGraph,
@@ -27,9 +27,13 @@ from tel2puml.pv_event_simulator import (
 from tel2puml.check_puml_equiv import (
     check_puml_graph_equivalence_to_expected_graphs,
     gen_puml_graphs_from_files,
-    check_puml_equivalence
+    check_puml_equivalence,
 )
-from tel2puml.tel2puml_types import DUMMY_START_EVENT, PUMLOperatorNodes
+from tel2puml.tel2puml_types import (
+    DUMMY_START_EVENT,
+    PUMLOperatorNodes,
+    PUMLOperator,
+)
 
 
 class TestCreatePumlGraphFromNodeClassGraph:
@@ -281,3 +285,47 @@ def test_walk_nested_graph(
         puml_graph.write_puml_string(),
         expected_graph_puml_graph.write_puml_string(),
     )
+
+
+class TestLogicBlockHolder:
+    """Tests for the LogicBlockHolder class."""
+
+    def test_create_logic_merge_logic_node_reset(self) -> None:
+        """Test the create_logic_merge function to test that the logic node is
+        reset correctly."""
+        # setup
+        out_going_nodes = [
+            (
+                Node(f"{i}", event_type=f"{i}")
+                if i != 3
+                else Node(f"{i}", event_type=f"{i-1}")
+            )
+            for i in range(6)
+        ]
+        merge_node = Node("merge", event_type="merge")
+        logic_node = Node(operator="XOR", outgoing_logic=out_going_nodes)
+        logic_node.is_loop_kill_path = [False] * 2 + [True] * 2 + [False] * 2
+        puml_graph = PUMLGraph()
+        start_op, end_op = puml_graph.create_operator_node_pair(
+            PUMLOperator.XOR
+        )
+        logic_block_holder = LogicBlockHolder(
+            start_op, end_op, logic_node=logic_node
+        )
+        # pop out two paths from the logic node
+        logic_block_holder.set_path_node(pop=True)
+        logic_block_holder.set_path_node(pop=True)
+        # set merge node
+        logic_block_holder.merge_nodes[-1] = merge_node
+        logic_block_holder.merge_nodes[-2] = merge_node
+        # test
+        _ = logic_block_holder.create_logic_merge(
+            puml_graph,
+            merge_node,
+        )
+        # check that the logic node has been reset correctly
+        assert len(logic_node.outgoing_logic) == 5
+        assert logic_node.outgoing_logic[:4] == out_going_nodes[:2] + list(
+            reversed(out_going_nodes[4:])
+        )
+        assert logic_node.is_loop_kill_path == [False] * 4 + [True]
