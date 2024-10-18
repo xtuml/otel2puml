@@ -65,7 +65,7 @@ class SQLDataHolder(DataHolder):
         :type exc_tb: `Optional`[:class:`TracebackType`]
         """
         super().__exit__(exc_type, exc_val, exc_tb)
-        self.commit_batched_data_to_database()
+        self.commit_batched_unique_data_to_database()
         self.session.close()
 
     def create_db_tables(self) -> None:
@@ -85,14 +85,7 @@ class SQLDataHolder(DataHolder):
         self.add_node_relations(otel_event)
 
         if len(self.node_models_to_save) >= self.batch_size:
-            try:
-                self.commit_batched_data_to_database()
-            except IntegrityError:
-                LOGGER.warning(
-                    "IntegrityError: Likely trying to insert duplicate data."
-                    " Checking and filtering duplicates and trying again."
-                )
-                self.check_and_filter_non_unique_nodes_and_associations()
+            self.commit_batched_unique_data_to_database()
 
     def _update_node_relations_from_node(self, node: NodeModel) -> None:
         """Method to update node relations from a node.
@@ -178,6 +171,19 @@ class SQLDataHolder(DataHolder):
         except (IntegrityError, OperationalError, Exception) as e:
             self.session.rollback()
             raise e
+
+    def commit_batched_unique_data_to_database(self) -> None:
+        """Method to commit batched unique node models (unique event ids), and
+        their relationships to a SQL database.
+        """
+        try:
+            self.commit_batched_data_to_database()
+        except IntegrityError:
+            LOGGER.warning(
+                "IntegrityError: Likely trying to insert duplicate data."
+                " Checking and filtering duplicates and trying again."
+            )
+            self.check_and_filter_non_unique_nodes_and_associations()
 
     def batch_insert_objects(self, objects: list[T]) -> None:
         """Method to batch insert objects into database.
