@@ -26,4 +26,24 @@ python -m tel2puml -o puml_output otel2puml -c docs/e2e_walkthrough/example_conf
 
 ### Step 4: View PUML output
 
-If run successfully, a [Users_Service.puml](/puml_output/Users_Service.puml) file should exist within the directory `puml_output`.
+If run successfully, a [Users_Service.puml](/puml_output/Users_Service.puml) file should exist within the directory `puml_output` and the below output.
+
+![](docs/images/example_Users_Service.svg)
+
+### Exploring other commands
+#### otel2pv
+To generate and save job JSON files, run the following command:
+
+```bash
+python -m tel2puml -o pv_event_json otel2pv -c docs/e2e_walkthrough/example_config.yaml -se
+```
+
+A directory located at `pv_event_json/Users_Service` will have been created with 3 JSON files.
+
+#### pv2puml
+To generate the PUML from the newly created job JSON files, run the following command:
+
+```bash
+python -m tel2puml -o puml_output pv2puml -fp pv_event_json/Users_Service -jn "Users_Service"
+```
+
