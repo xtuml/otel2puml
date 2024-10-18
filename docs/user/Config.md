@@ -31,6 +31,8 @@ data_sources:
 sequencer: <sequencer config>
 ```
 
+*Note*: The indentation in the configuration file is important and should be consistent with the example above to avoid errors.    
+
 ## Configuration Options
 
 ### `ingest_data`
