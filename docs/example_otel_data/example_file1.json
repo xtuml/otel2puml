@@ -1,0 +1,580 @@
+ {
+    "resource_spans": [
+        {
+            "resource": {
+                "attributes": [
+                    {
+                        "key": "service.name",
+                        "value": {
+                            "Value": {
+                                "StringValue": "Users"
+                            }
+                        }
+                    },
+                    {
+                        "key": "service.version",
+                        "value": {
+                            "Value": {
+                                "StringValue": "1.0"
+                            }
+                        }
+                    }
+                ]
+            },
+            "scope_spans": [
+                {
+                    "scope": {
+                        "name": "Service"
+                    },
+                    "spans": [
+                        {
+                            "trace_id": "trace_001",
+                            "span_id": "span_001",
+                            "parent_span_id": null,
+                            "child_span_ids": [],
+                            "flags": 691,
+                            "name": "return_response",
+                            "kind": 1,
+                            "start_time_unix_nano": 1700000000000000010,
+                            "end_time_unix_nano": 1700000000000000011,
+                            "attributes": [
+                                {
+                                    "key": "http.method",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "POST"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "cloudProvider",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "Azure"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "http.target",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "/yqOFK"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "http.host",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "ee4fcp.com:6151"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "coral.operation",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "FMjK5vu8DTOperation"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "coral.service",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "Service"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "coral.namespace",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "com.test"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "http.status_code",
+                                    "value": {
+                                        "Value": {
+                                            "IntValue": 200
+                                        }
+                                    }
+                                }
+                            ],
+                            "status": {},
+                            "resource": {
+                                "attributes": [
+                                    {
+                                        "key": "service.name",
+                                        "value": {
+                                            "Value": {
+                                                "StringValue": "5nVC-Service"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "service.version",
+                                        "value": {
+                                            "Value": {
+                                                "StringValue": "1.7"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "other_key",
+                                        "value": {
+                                            "Value": {
+                                                "StringValue": "5.5"
+                                            }
+                                        }
+                                    }
+                                ]
+                            },
+                            "scope": {
+                                "name": "cds-xpqu05"
+                            }
+                        },
+                        {
+                            "trace_id": "trace_001",
+                            "span_id": "span_002",
+                            "parent_span_id": "span_001",
+                            "child_span_ids": [],
+                            "flags": 584,
+                            "name": "fetch_user_data",
+                            "kind": 5,
+                            "start_time_unix_nano": 1700000000000000009,
+                            "end_time_unix_nano": 1700000000000000010,
+                            "attributes": [
+                                {
+                                    "key": "http.method",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "GET"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "cloudProvider",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "Azure"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "http.target",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "/sV83M"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "http.host",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "Oo9lYV.com:8072"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "coral.operation",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "LUO0bdFWv4Operation"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "coral.service",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "Service"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "coral.namespace",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "com.example"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "http.status_code",
+                                    "value": {
+                                        "Value": {
+                                            "IntValue": 200
+                                        }
+                                    }
+                                }
+                            ],
+                            "status": {},
+                            "resource": {
+                                "attributes": [
+                                    {
+                                        "key": "service.name",
+                                        "value": {
+                                            "Value": {
+                                                "StringValue": "jMqu-Service"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "service.version",
+                                        "value": {
+                                            "Value": {
+                                                "StringValue": "1.0"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "other_key",
+                                        "value": {
+                                            "Value": {
+                                                "StringValue": "4.8"
+                                            }
+                                        }
+                                    }
+                                ]
+                            },
+                            "scope": {
+                                "name": "cds-QxUKLr"
+                            }
+                        },
+                        {
+                            "trace_id": "trace_001",
+                            "span_id": "span_003",
+                            "parent_span_id": "span_002",
+                            "child_span_ids": [],
+                            "flags": 192,
+                            "name": "authorization_check",
+                            "kind": 3,
+                            "start_time_unix_nano": 1700000000000000008,
+                            "end_time_unix_nano": 1700000000000000007,
+                            "attributes": [
+                                {
+                                    "key": "http.method",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "GET"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "cloudProvider",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "GCP"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "http.target",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "/c7ZRR"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "http.host",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "gYBh5S.com:5559"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "coral.operation",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "CeQy28zdRvOperation"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "coral.service",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "Processor"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "coral.namespace",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "com.test"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "http.status_code",
+                                    "value": {
+                                        "Value": {
+                                            "IntValue": 200
+                                        }
+                                    }
+                                }
+                            ],
+                            "status": {},
+                            "resource": {
+                                "attributes": [
+                                    {
+                                        "key": "service.name",
+                                        "value": {
+                                            "Value": {
+                                                "StringValue": "RpKd-Service"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "service.version",
+                                        "value": {
+                                            "Value": {
+                                                "StringValue": "1.8"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "other_key",
+                                        "value": {
+                                            "Value": {
+                                                "StringValue": "4.7"
+                                            }
+                                        }
+                                    }
+                                ]
+                            },
+                            "scope": {
+                                "name": "cds-LUDHRP"
+                            }
+                        },
+                        {
+                            "trace_id": "trace_001",
+                            "span_id": "span_004",
+                            "parent_span_id": "span_002",
+                            "child_span_ids": [],
+                            "flags": 437,
+                            "name": "authorization_check",
+                            "kind": 2,
+                            "start_time_unix_nano": 1700000000000000007,
+                            "end_time_unix_nano": 1700000000000000006,
+                            "attributes": [
+                                {
+                                    "key": "http.method",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "DELETE"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "cloudProvider",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "Azure"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "http.target",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "/vetRq"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "http.host",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "nwpo1q.com:9817"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "coral.operation",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "l2MF15SD8VOperation"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "coral.service",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "Service"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "coral.namespace",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "com.example"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "http.status_code",
+                                    "value": {
+                                        "Value": {
+                                            "IntValue": 200
+                                        }
+                                    }
+                                }
+                            ],
+                            "status": {},
+                            "resource": {
+                                "attributes": [
+                                    {
+                                        "key": "service.name",
+                                        "value": {
+                                            "Value": {
+                                                "StringValue": "3Dtc-Service"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "service.version",
+                                        "value": {
+                                            "Value": {
+                                                "StringValue": "2.8"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "other_key",
+                                        "value": {
+                                            "Value": {
+                                                "StringValue": "5.2"
+                                            }
+                                        }
+                                    }
+                                ]
+                            },
+                            "scope": {
+                                "name": "cds-l5pMP4"
+                            }
+                        },
+                        {
+                            "trace_id": "trace_001",
+                            "span_id": "span_005",
+                            "parent_span_id": "span_002",
+                            "child_span_ids": [],
+                            "flags": 614,
+                            "name": "user_login",
+                            "kind": 1,
+                            "start_time_unix_nano": 1700000000000000006,
+                            "end_time_unix_nano": 1700000000000000005,
+                            "attributes": [
+                                {
+                                    "key": "http.method",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "DELETE"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "cloudProvider",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "GCP"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "http.target",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "/6LThG"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "http.host",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "3dnLCf.com:7892"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "coral.operation",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "gj0E5BkTfnOperation"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "coral.service",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "Service"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "coral.namespace",
+                                    "value": {
+                                        "Value": {
+                                            "StringValue": "com.example"
+                                        }
+                                    }
+                                },
+                                {
+                                    "key": "http.status_code",
+                                    "value": {
+                                        "Value": {
+                                            "IntValue": 200
+                                        }
+                                    }
+                                }
+                            ],
+                            "status": {},
+                            "resource": {
+                                "attributes": [
+                                    {
+                                        "key": "service.name",
+                                        "value": {
+                                            "Value": {
+                                                "StringValue": "e6gV-Service"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "service.version",
+                                        "value": {
+                                            "Value": {
+                                                "StringValue": "1.2"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "key": "other_key",
+                                        "value": {
+                                            "Value": {
+                                                "StringValue": "2.2"
+                                            }
+                                        }
+                                    }
+                                ]
+                            },
+                            "scope": {
+                                "name": "cds-cuHQKR"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
