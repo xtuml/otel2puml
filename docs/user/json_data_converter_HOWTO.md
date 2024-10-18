@@ -47,7 +47,7 @@ class OTelEvent(NamedTuple):
 
 The idea is to extract records of this type from a JSON file and map the fields to the corresponding fields in the application schema. This is done by specifying the paths to the fields in the JSON file and the data types of the fields in the application schema.
 
-The code used follows the jq language (https://jqlang.github.io/jq/) for JSON data extraction. The jq language is a lightweight and flexible command-line JSON processor. Within configuration the same pathing structure as jq to extract data from the JSON file.
+The code used follows the jq language (https://jqlang.github.io/jq/) for JSON data extraction. The jq language is a lightweight and flexible command-line JSON processor. Within the configuration, the same pathing structure as jq is used to extract data from the JSON file.
 
 ## 2. Configuration File Structure
 Configuration is provided to the application in the form of a YAML file (see [User Config](/docs/user/Config.md) for details on all configuration fields). 
@@ -390,10 +390,10 @@ For more complex scenarios, such as concatenating multiple values and having fal
 field_mapping:
     event_type:
         key_paths: [
-            "resource_spans.[].scope_spans.[].spans.name",
+            "resource_spans.[].scope_spans.[].spans.[].name",
             [
-                "resource_spans.[].scope_spans.[].spans.not_here", # this is not a valid path
-                "resource_spans.[].scope_spans.[].spans.attributes.[].key" # this is the fallback path
+                "resource_spans.[].scope_spans.[].spans.[].not_here", # this is not a valid path
+                "resource_spans.[].scope_spans.[].spans.[].attributes.[].key" # this is the fallback path
             ]
         ]
         key_value: [null, [null, http.response]]
@@ -476,10 +476,10 @@ field_mapping:
         value_type: string
     event_type:
         key_paths: [
-            "resource_spans.[].scope_spans.[].spans.name",
+            "resource_spans.[].scope_spans.[].spans.[].name",
             [
-                "resource_spans.[].scope_spans.[].spans.not_here", # this is not a valid path
-                "resource_spans.[].scope_spans.[].spans.attributes.[].key" # this is the fallback path
+                "resource_spans.[].scope_spans.[].spans.[].not_here", # this is not a valid path
+                "resource_spans.[].scope_spans.[].spans.[].attributes.[].key" # this is the fallback path
             ]
         ]
         key_value: [null, [null, http.response]]
