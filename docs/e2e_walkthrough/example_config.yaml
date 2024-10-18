@@ -8,7 +8,7 @@ data_holders:
     time_buffer: 0
 data_sources:
   json:
-    dirpath: docs/example_otel_data
+    dirpath: docs/e2e_walkthrough/example_otel_data
     filepath: null
     json_per_line: false
     field_mapping:
