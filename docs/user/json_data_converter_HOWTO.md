@@ -76,6 +76,8 @@ data_sources:
         jq_query: <jq_query>
 ```
 
+*Note*: The indentation for the field mapping is important and must be consistent with the example above.
+
 ## 3. Understanding Configuration Settings
 
 ### JSON Example
