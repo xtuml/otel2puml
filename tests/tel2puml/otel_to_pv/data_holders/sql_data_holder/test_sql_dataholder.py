@@ -435,7 +435,8 @@ class TestSQLDataHolder:
 
     @staticmethod
     def test_sql_data_holder_exit_method(
-        mock_sql_config: SQLDataHolderConfig, mock_otel_event: OTelEvent
+        mock_sql_config: SQLDataHolderConfig, mock_otel_event: OTelEvent,
+        caplog: LogCaptureFixture
     ) -> None:
         """Tests the __exit__ method using a context manager."""
 
@@ -451,6 +452,20 @@ class TestSQLDataHolder:
         )
         assert isinstance(node, NodeModel)
         assert node.job_name == "test_job"
+        caplog.clear()
+        caplog.set_level(logging.WARNING)
+        with holder:
+            holder.save_data(mock_otel_event)
+            assert len(holder.session.query(NodeModel).all()) == 1
+        assert (
+            "IntegrityError: Likely trying to insert duplicate data."
+            " Checking and filtering duplicates and trying again."
+        ) in caplog.text
+        assert (
+            "Found 1 duplicate/s for Event ID 456. Only the first occurrence "
+            "will be saved."
+        ) in caplog.text
+        assert len(holder.session.query(NodeModel).all()) == 1
 
     @staticmethod
     def test_integration_save_and_retrieve(
