@@ -155,7 +155,7 @@ def test_fetch_data_source(mock_ingest_config: IngestDataConfig) -> None:
     data_source = fetch_data_source(mock_ingest_config)
     assert isinstance(data_source, JSONDataSource)
     assert data_source.dirpath == "/path/to/json/directory"
-    assert data_source.filepath == "/path/to/json/file.json"
+    assert data_source.filepath is None
 
 
 @pytest.mark.usefixtures("mock_path_exists", "mock_filepath_in_dir")

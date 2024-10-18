@@ -606,7 +606,7 @@ def test_get_jq_query_from_config(monkeypatch: MonkeyPatch) -> None:
     # test case where jq query is provided
     config = JSONDataSourceConfig(
         field_mapping=None,
-        filepath="filepath",
+        filepath=None,
         dirpath="dirpath",
         json_per_line=False,
         jq_query="jq_query",
@@ -627,7 +627,7 @@ def test_get_jq_query_from_config(monkeypatch: MonkeyPatch) -> None:
                 "parent_event_id",
             ]
         },
-        "filepath": "filepath",
+        "filepath": None,
         "dirpath": "dirpath",
         "json_per_line": False,
         "jq_query": None,
