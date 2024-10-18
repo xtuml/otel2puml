@@ -25,7 +25,7 @@ data_holders:
 data_sources:
     json:
         dirpath: /path/to/json/directory
-        filepath: /path/to/json/file.json
+        filepath: null
         json_per_line: false
         field_mapping: <field mapping config>
 sequencer: <sequencer config>
@@ -50,8 +50,8 @@ This section contains the configuration for the data holders. The following opti
 ### `data_sources`
 This section contains the configuration for the data sources. The following options are available:
 * `json`: The configuration for the JSON data source. The following options are available:
-    * `dirpath`: The path to the directory containing the JSON files. This is required if `filepath` is not provided.
-    * `filepath`: The path to the JSON file. This is required if `dirpath` is not provided.
+    * `dirpath`: The path to the directory containing the JSON files. This is required if `filepath` is not provided and cannot be used in conjunction with `filepath`.
+    * `filepath`: The path to the JSON file. This is required if `dirpath` is not provided and cannot be used in conjunction with `dirpath`.
     * `json_per_line`: A boolean value indicating whether each line in the JSON file is a separate JSON object. The default value is `false`.
     * `field_mapping`: The field mapping configuration. The details of how this is used can be found in the [JSON Data Converter HOW TO](/docs/user/json_data_converter_HOWTO.md) section. This is required if `jq_query` is not provided and cannot be used in conjunction with `jq_query`.
     * `jq_query`: A jq query to use to extract the data from the JSON file. This is required if `field_mapping` is not provided and cannot be used in conjunction with `field_mapping`. The jq query should return objects representing single events ([OTel Event](/docs/user/json_data_converter_HOWTO.md#1-introduction)). JQ usage can be found at https://jqlang.github.io/jq/.

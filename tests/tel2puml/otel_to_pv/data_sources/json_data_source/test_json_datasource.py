@@ -16,7 +16,7 @@ from tel2puml.otel_to_pv.data_sources.json_data_source.json_datasource import (
     JSONDataSource,
 )
 from tel2puml.otel_to_pv.data_sources.json_data_source.json_config import (
-    JSONDataSourceConfig
+    JSONDataSourceConfig,
 )
 from tel2puml.otel_to_pv.otel_to_pv_types import OTelEvent
 from tel2puml.otel_to_pv.config import IngestDataConfig
@@ -41,7 +41,7 @@ class TestJSONDataSource:
 
         # Check string values
         assert config.dirpath == "/path/to/json/directory"
-        assert config.filepath == "/path/to/json/file.json"
+        assert config.filepath is None
         assert not config.json_per_line
         assert config.field_mapping is not None
 
@@ -73,6 +73,10 @@ class TestJSONDataSource:
         mock_ingest_config: IngestDataConfig,
     ) -> None:
         """Tests the set_filepath method."""
+        mock_ingest_config.data_sources["json"].dirpath = None
+        mock_ingest_config.data_sources["json"].filepath = (
+            "/path/to/json/file.json"
+        )
         json_data_source = JSONDataSource(
             mock_ingest_config.data_sources["json"]
         )
@@ -86,6 +90,10 @@ class TestJSONDataSource:
         with patch("os.path.isdir", return_value=True), patch(
             "os.path.isfile", return_value=False
         ):
+            mock_ingest_config.data_sources["json"].dirpath = None
+            mock_ingest_config.data_sources["json"].filepath = (
+                "/path/to/json/file.json"
+            )
             with pytest.raises(ValueError, match="does not exist"):
                 JSONDataSource(mock_ingest_config.data_sources["json"])
 
@@ -199,9 +207,11 @@ class TestJSONDataSource:
             assert otel_event.parent_event_id is None
             assert otel_event.child_event_ids == ["child1", "child2"]
         # test case with a validation error
-        json_data = {"resource_spans": [
-            {"scope_spans": [{"spans": [{"span_id": "span001"}]}]}
-        ]}
+        json_data = {
+            "resource_spans": [
+                {"scope_spans": [{"spans": [{"span_id": "span001"}]}]}
+            ]
+        }
         mock_file_content = json.dumps(json_data).encode("utf-8")
         with patch("builtins.open", mock_open(read_data=mock_file_content)):
             json_data_source = JSONDataSource(
@@ -389,7 +399,7 @@ class TestJSONDataSource:
                 '.application_name, "start_timestamp": '
                 '.start_timestamp, "end_timestamp": '
                 '.end_timestamp, "parent_event_id": '
-                '.parent_event_id }'
+                ".parent_event_id }"
             ),
         }
         json_data_source_config = JSONDataSourceConfig(**config_dict)

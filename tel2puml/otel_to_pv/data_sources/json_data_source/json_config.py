@@ -12,18 +12,12 @@ class FieldSpec(TypedDict):
     key_paths: Union[Sequence[str | Iterable[str]], str]
     key_value: NotRequired[
         Optional[
-            Union[
-                Sequence[Optional[Union[str, Iterable[str | None]]]],
-                str
-            ]
+            Union[Sequence[Optional[Union[str, Iterable[str | None]]]], str]
         ]
     ]
     value_paths: NotRequired[
         Optional[
-            Union[
-                Sequence[Optional[Union[str, Iterable[str | None]]]],
-                str
-            ]
+            Union[Sequence[Optional[Union[str, Iterable[str | None]]]], str]
         ]
     ]
     value_type: str
@@ -209,10 +203,7 @@ class JQFieldSpec:
     @staticmethod
     def optional_list_to_jq_optional_list(
         optional_list: Optional[
-            Union[
-                Sequence[Optional[Union[str, Iterable[str | None]]]],
-                str
-            ]
+            Union[Sequence[Optional[Union[str, Iterable[str | None]]]], str]
         ],
         jq_key_paths: Sequence[tuple[str, ...]],
     ) -> list[tuple[str | None, ...]]:
@@ -306,6 +297,7 @@ def field_spec_mapping_to_jq_field_spec_mapping(
 class OTelFieldMapping(BaseModel):
     """BaseModel for OTelFieldMapping - the expected mapping of fields in the
     used for the JSON data source."""
+
     job_name: FieldSpec
     job_id: FieldSpec
     event_type: FieldSpec
@@ -371,4 +363,8 @@ class JSONDataSourceConfig(BaseModel):
         """Verify file path dir path."""
         if self.filepath is None and self.dirpath is None:
             raise ValueError("Either filepath or dirpath must be provided")
+        if self.filepath is not None and self.dirpath is not None:
+            raise ValueError(
+                "Only one of filepath or dirpath should be provided"
+            )
         return self
