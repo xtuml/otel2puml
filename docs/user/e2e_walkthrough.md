@@ -1,36 +1,49 @@
-## Walkthrough
+## E2E tel2puml Walkthrough
 
 This section provides a complete walkthrough of using `tel2puml` to convert OpenTelemetry (OTel) data into PlantUML activity diagrams. Example data is used to demonstrate the process from input OpenTelemetry data to the final generated diagrams.
 
-### Step 1: Set Up the Environment
+### Step 1: Set Up The Environment
 
-Before running the commands in this walkthrough, ensure that the tool is installed. It can be installed using the provided Docker image or through manual dependency installation. Refer to the [Installation](https://github.com/xtuml/otel2puml/blob/main/README.md#installation) section for more details.
+Before running the commands in this walkthrough, ensure that the tool is installed. It can be installed using the provided Docker image or manually. Refer to the [Installation](https://github.com/xtuml/otel2puml/blob/main/README.md#installation) section for more details.
 
-### Step 2: Prepare Input Data
+### Step 2: Take A Look At Example Input Data
 
-For this walkthrough, example JSON files are provided within [docs/example_otel_data](/docs/example_otel_data). They are:
+For this walkthrough, example JSON files are provided within [docs/example_otel_data](/docs/e2e_walkthrough/example_otel_data). They are:
 
-- [Example File 1](/docs/example_otel_data/example_file1.json)
-- [Example File 2](/docs/example_otel_data/example_file2.json)
-- [Example File 3](/docs/example_otel_data/example_file3.json)
+- [Example File 1](/docs/e2e_walkthrough/example_otel_data/example_file1.json)
+- [Example File 2](/docs/e2e_walkthrough/example_otel_data/example_file2.json)
+- [Example File 3](/docs/e2e_walkthrough/example_otel_data/example_file3.json)
 
-A [config](docs/example_otel_data/example_config.yaml) file has already been setup to be used with the example files.
+A [config](/docs/e2e_walkthrough/example_config.yaml) file has already been setup to be used with the example files.
 
-### Step 3: Generate a PlantUML Diagram using otel2puml command
+### Step 3: Generate PlantUML Diagram Using otel2puml Command
 
-If you have manually installed otel2puml, run the following command to generate a puml diagram:
+For manual installation, run the following command to generate a puml diagram:
 
 ```bash
+cd otel2puml
+
 python -m tel2puml -o puml_output otel2puml -c docs/e2e_walkthrough/example_config.yaml
 ```
 
+For use with Docker, the following volumes must be mounted:
+
+1. Output folder
+2. Example files folder
+3. Config file
+
+Please refer to the [Using Docker Image](https://github.com/xtuml/otel2puml/blob/main/README.md#using-docker-image) as a guide.
+
 ### Step 4: View PUML output
 
-If run successfully, a [Users_Service.puml](/puml_output/Users_Service.puml) file should exist within the directory `puml_output` and the below output.
+For manual installation, if run successfully, a [Users_Service.puml](/puml_output/Users_Service.puml) file should exist within the directory `puml_output` displaying the below output. For use with docker, the output will be found in the output directory specified.
 
-![](docs/images/example_Users_Service.svg)
+![](/docs/images/example_Users_Service.svg)
 
-### Exploring other commands
+### Step 5: Exploring other commands
+
+For these commands, manual installation is assumed. For docker installation, please refer to the [Docker guide](https://github.com/xtuml/otel2puml/blob/main/README.md#using-docker-image)
+
 #### otel2pv
 To generate and save job JSON files, run the following command:
 
@@ -47,3 +60,4 @@ To generate the PUML from the newly created job JSON files, run the following co
 python -m tel2puml -o puml_output pv2puml -fp pv_event_json/Users_Service -jn "Users_Service"
 ```
 
+The output should be the same as Step 4.
