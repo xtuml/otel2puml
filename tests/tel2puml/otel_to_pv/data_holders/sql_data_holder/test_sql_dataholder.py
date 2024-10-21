@@ -323,6 +323,110 @@ class TestSQLDataHolder:
             assert "Unexpected Error" in str(context.value)
 
     @staticmethod
+    def test_commit_batched_unique_data_to_database(
+        mock_sql_config: SQLDataHolderConfig,
+        caplog: LogCaptureFixture,
+    ) -> None:
+        """Tests commit_batched_unique_data_to_database method, with success.
+        """
+
+        holder = SQLDataHolder(mock_sql_config)
+        parent_node_models = [
+            NodeModel(
+                job_name="test_job_name",
+                job_id="test_job_id",
+                event_type="test_event",
+                event_id="100",
+                start_timestamp=1723544154817893024,
+                end_timestamp=1723544154817798024,
+                application_name="test_app",
+                parent_event_id=None,
+            )
+            for _ in range(2)
+        ]
+        child_node_models = [
+            NodeModel(
+                job_name="test_job_name",
+                job_id="test_job_id",
+                event_type="test_event",
+                event_id="101",
+                start_timestamp=1723544154817893024,
+                end_timestamp=1723544154817798024,
+                application_name="test_app",
+                parent_event_id="100",
+            )
+            for _ in range(2)
+        ]
+
+        holder.node_relationships_to_save.append(
+            {"parent_id": "100", "child_id": "101"}
+        )
+        holder.node_models_to_save.append(parent_node_models[0])
+        holder.node_models_to_save.append(child_node_models[0])
+
+        holder.commit_batched_unique_data_to_database()
+
+        # try adding same data again
+        caplog.clear()
+        caplog.set_level(logging.WARNING)
+
+        holder.node_relationships_to_save.append(
+            {"parent_id": "100", "child_id": "101"}
+        )
+        holder.node_models_to_save.append(parent_node_models[1])
+        holder.node_models_to_save.append(child_node_models[1])
+
+        holder.commit_batched_unique_data_to_database()
+
+        assert (
+            "IntegrityError: Likely trying to insert duplicate data."
+            " Checking and filtering duplicates and trying again."
+        ) in caplog.text
+        for event_id in ["100", "101"]:
+            assert (
+                f"Found 1 duplicate/s for Event ID {event_id}. Only the first "
+                "occurrence "
+                "will be saved."
+            ) in caplog.text
+
+        # Test NodeModels are correctly stored in the database
+        nodes_0 = (
+            holder.session.query(NodeModel).filter_by(event_id="100").all()
+        )
+        nodes_1 = (
+            holder.session.query(NodeModel).filter_by(event_id="101").all()
+        )
+        assert len(nodes_0) == 1
+        assert len(nodes_1) == 1
+        node_0 = nodes_0.pop()
+        node_1 = nodes_1.pop()
+
+        assert isinstance(node_0, NodeModel)
+        assert not node_0.parent_event_id
+
+        assert isinstance(node_1, NodeModel)
+        assert node_1 in node_0.children
+        assert node_1.parent_event_id == "100"
+
+        # Test attributes between parent and child are the same
+        for attr in [
+            "job_name",
+            "job_id",
+            "application_name",
+            "event_type",
+            "start_timestamp",
+            "end_timestamp",
+        ]:
+            assert getattr(node_0, attr) == getattr(node_1, attr)
+
+        # Test node relationships are correctly stored
+        node_relationship = holder.session.query(NODE_ASSOCIATION).all()
+
+        assert len(node_relationship) == 1
+        assert node_relationship[0].parent_id == "100"
+        assert node_relationship[0].child_id == "101"
+
+    @staticmethod
     def test_check_and_filter_non_unique_nodes_and_associations(
         sql_data_holder_with_otel_jobs: SQLDataHolder,
         otel_jobs: dict[str, list[OTelEvent]],
@@ -435,7 +539,8 @@ class TestSQLDataHolder:
 
     @staticmethod
     def test_sql_data_holder_exit_method(
-        mock_sql_config: SQLDataHolderConfig, mock_otel_event: OTelEvent
+        mock_sql_config: SQLDataHolderConfig, mock_otel_event: OTelEvent,
+        caplog: LogCaptureFixture
     ) -> None:
         """Tests the __exit__ method using a context manager."""
 
@@ -451,6 +556,20 @@ class TestSQLDataHolder:
         )
         assert isinstance(node, NodeModel)
         assert node.job_name == "test_job"
+        caplog.clear()
+        caplog.set_level(logging.WARNING)
+        with holder:
+            holder.save_data(mock_otel_event)
+            assert len(holder.session.query(NodeModel).all()) == 1
+        assert (
+            "IntegrityError: Likely trying to insert duplicate data."
+            " Checking and filtering duplicates and trying again."
+        ) in caplog.text
+        assert (
+            "Found 1 duplicate/s for Event ID 456. Only the first occurrence "
+            "will be saved."
+        ) in caplog.text
+        assert len(holder.session.query(NodeModel).all()) == 1
 
     @staticmethod
     def test_integration_save_and_retrieve(
