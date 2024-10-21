@@ -50,7 +50,7 @@ The synchronous sequencing algorithm is as follows:
 4. For each child, sequence the child and its children
 5. Return the sequence of the root event and its children
 
-An example of synchronous sequencing is shown below using the tree of events shown in [OTel Tree](#figure-1-oteltree) that are then sequenced into a causal order:
+An example of synchronous sequencing is shown below using the tree of events shown in [OTel Tree](#figure-1-oteltree) that are then sequenced into a causal order (see [DataTypes](/docs/user/DataTypes.md) for info on the PVEvent datatype used):
 
 ![](/docs/images/user/pv_sequence_from_otel.svg)
 

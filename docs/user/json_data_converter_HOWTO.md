@@ -29,7 +29,7 @@
 
 
 ## 1. Introduction
-This document is a guide to the configuration used to correctly parse JSON telemetry data and map it to the application schema used internally. The internal schema is detailed below for context:
+This document is a guide to the configuration used to correctly parse JSON telemetry data and map it to the application schema used internally. The internal schema is detailed below for context (see [Data Types](/docs/user/DataTypes.md) for more information):
 
 ```python
 class OTelEvent(NamedTuple):
