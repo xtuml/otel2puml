@@ -15,6 +15,7 @@ This project converts [OpenTelemetry (OTel)](https://opentelemetry.io/) data int
     </li>
     <li><a href="#example-input">Example Input</a></li>
     <li><a href="#example-output">Example Output</a></li>
+    <li><a href="#e2e-example">E2E Example</a></li>
     <li><a href="#installation">Installation</a>
       <ol>
         <li><a href="#manual-installation">Manual Installation</a></li>
@@ -115,7 +116,12 @@ The following command will generate a PlantUML activity diagram from the above J
 python -m tel2puml pv2puml example_above.json -jn "Example Sequence"
 ```
 
+
 ![](docs/images/example_sequence_for_readme.svg)
+
+## E2E Example
+
+A full end to end example and walkthrough can be found [here](/docs/user/e2e_walkthrough.md). Example files are provided.
 
 ## Using Docker Image
 
