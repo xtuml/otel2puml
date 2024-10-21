@@ -57,7 +57,7 @@ A directory located at `pv_event_json/Users_Service` will have been created with
 To generate the PUML from the newly created job JSON files, run the following command:
 
 ```bash
-python -m tel2puml -o puml_output pv2puml -fp pv_event_json/Users_Service -jn "Users_Service"
+python -m tel2puml -o puml_output pv2puml -fp pv_event_json/Users_Service -jn "Users_Service_pv2puml"
 ```
 
 The output should be the same as Step 4.
