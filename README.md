@@ -109,6 +109,7 @@ A full example follows using the command above.
     }
 ]
 ```
+See [Data Types](docs/user/DataTypes.md) for more information on the Protocol Verifier Event structure.
 #### Example Output
 The following command will generate a PlantUML activity diagram from the above JSON file (using the -jn flag to specify the output diagram name):
 ```sh
@@ -323,7 +324,7 @@ python -m tel2puml -o /output/path/ otel2pv -c /path/to/config.yaml -se
 
 #### `pv2puml`
 
-Converts PV data into PlantUML sequence diagrams.
+Converts PV Event data (see [Data Types](/docs/user/DataTypes.md) for more information on the Protocol Verifier data) into PlantUML sequence diagrams.
 
 **Usage:**
 
@@ -333,8 +334,8 @@ python -m tel2puml pv2puml [options] [FILE_PATHS...]
 
 **Options:**
 
-- `-fp`, `--folder-path`: Path to a folder containing job JSON files. Cannot be used with `FILE_PATHS`.
-- `FILE_PATHS`: One or more files containing job data. Cannot be used with `-fp`.
+- `-fp`, `--folder-path`: Path to a folder containing job JSON files (PV Event JSONs in array's). Cannot be used with `FILE_PATHS`.
+- `FILE_PATHS`: One or more files containing job JSON (PV Event JSON arrays) array data. Cannot be used with `-fp`.
 - `-jn`, `--job-name`: Name for the PlantUML sequence diagram and output file prefix (default is `"default_name"`).
 - `-group-by-job`: Group events by job ID.
 - `-mc`, `--mapping-config`: Path to the mapping configuration file. [Usage](docs/user/mapping_config.md)
