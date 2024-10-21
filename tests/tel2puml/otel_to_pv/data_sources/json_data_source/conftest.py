@@ -295,7 +295,7 @@ def jq_field_mapping_for_fixture_data() -> dict[str, JQFieldSpec]:
                     ".key",
                 ),
             ],
-            key_values=[("coral.operation",), ("http.status_code",)],
+            key_values=[("app.operation",), ("http.status_code",)],
             value_paths=[
                 ("value.Value.StringValue",),
                 ("value.Value.IntValue",),
