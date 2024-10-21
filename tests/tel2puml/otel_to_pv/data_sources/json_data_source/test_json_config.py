@@ -396,7 +396,7 @@ class TestJSONDataSourceConfig:
             config_dict = dict(
                 field_mapping=case_2[0],
                 filepath="filepath",
-                dirpath="dirpath",
+                dirpath=None,
                 json_per_line=False,
                 jq_query=case_2[1],
             )
@@ -411,7 +411,7 @@ class TestJSONDataSourceConfig:
             assert config.jq_query == case_2[1]
             assert not config.json_per_line
             assert config.filepath == "filepath"
-            assert config.dirpath == "dirpath"
+            assert config.dirpath is None
         # test case negative cases of incorrect types
         for case_3 in [
             "field_mapping",
@@ -423,7 +423,7 @@ class TestJSONDataSourceConfig:
             input_dict: dict[str, Any] = dict(
                 field_mapping=field_mapping,
                 filepath="filepath",
-                dirpath="dirpath",
+                dirpath=None,
                 json_per_line=True,
                 jq_query=None,
             )
@@ -435,7 +435,7 @@ class TestJSONDataSourceConfig:
             JSONDataSourceConfig(
                 field_mapping=None,
                 filepath="filepath",
-                dirpath="dirpath",
+                dirpath=None,
                 json_per_line=True,
                 jq_query=None,
             )
@@ -444,7 +444,7 @@ class TestJSONDataSourceConfig:
             config_dict = dict(
                 field_mapping=field_mapping,
                 filepath="filepath",
-                dirpath="dirpath",
+                dirpath=None,
                 json_per_line=True,
                 jq_query="jq_query",
             )
@@ -457,6 +457,18 @@ class TestJSONDataSourceConfig:
                 field_mapping=field_mapping,
                 filepath=None,
                 dirpath=None,
+                json_per_line=True,
+                jq_query=None,
+            )
+            JSONDataSourceConfig(
+                **config_dict
+            )
+        # test case where both file path and dir path are provided
+        with pytest.raises(ValidationError):
+            config_dict = dict(
+                field_mapping=field_mapping,
+                filepath="filepath",
+                dirpath="dirpath",
                 json_per_line=True,
                 jq_query=None,
             )

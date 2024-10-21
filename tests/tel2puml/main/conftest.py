@@ -21,7 +21,7 @@ def mock_yaml_config_file(tmp_path: Path) -> Path:
         "data_sources": {
             "json": {
                 "dirpath": "/path/to/json/directory",
-                "filepath": "/path/to/json/file.json",
+                "filepath": None,
                 "json_per_line": False,
                 "field_mapping": {
                     "job_name": {
