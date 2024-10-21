@@ -71,7 +71,7 @@
                                     }
                                 },
                                 {
-                                    "key": "coral.operation",
+                                    "key": "app.operation",
                                     "value": {
                                         "Value": {
                                             "StringValue": "FMjK5vu8DTOperation"
@@ -79,7 +79,7 @@
                                     }
                                 },
                                 {
-                                    "key": "coral.service",
+                                    "key": "app.service",
                                     "value": {
                                         "Value": {
                                             "StringValue": "Service"
@@ -87,7 +87,7 @@
                                     }
                                 },
                                 {
-                                    "key": "coral.namespace",
+                                    "key": "app.namespace",
                                     "value": {
                                         "Value": {
                                             "StringValue": "com.test"
@@ -180,7 +180,7 @@
                                     }
                                 },
                                 {
-                                    "key": "coral.operation",
+                                    "key": "app.operation",
                                     "value": {
                                         "Value": {
                                             "StringValue": "LUO0bdFWv4Operation"
@@ -188,7 +188,7 @@
                                     }
                                 },
                                 {
-                                    "key": "coral.service",
+                                    "key": "app.service",
                                     "value": {
                                         "Value": {
                                             "StringValue": "Service"
@@ -196,7 +196,7 @@
                                     }
                                 },
                                 {
-                                    "key": "coral.namespace",
+                                    "key": "app.namespace",
                                     "value": {
                                         "Value": {
                                             "StringValue": "com.example"
@@ -289,7 +289,7 @@
                                     }
                                 },
                                 {
-                                    "key": "coral.operation",
+                                    "key": "app.operation",
                                     "value": {
                                         "Value": {
                                             "StringValue": "CeQy28zdRvOperation"
@@ -297,7 +297,7 @@
                                     }
                                 },
                                 {
-                                    "key": "coral.service",
+                                    "key": "app.service",
                                     "value": {
                                         "Value": {
                                             "StringValue": "Processor"
@@ -305,7 +305,7 @@
                                     }
                                 },
                                 {
-                                    "key": "coral.namespace",
+                                    "key": "app.namespace",
                                     "value": {
                                         "Value": {
                                             "StringValue": "com.test"
@@ -398,7 +398,7 @@
                                     }
                                 },
                                 {
-                                    "key": "coral.operation",
+                                    "key": "app.operation",
                                     "value": {
                                         "Value": {
                                             "StringValue": "l2MF15SD8VOperation"
@@ -406,7 +406,7 @@
                                     }
                                 },
                                 {
-                                    "key": "coral.service",
+                                    "key": "app.service",
                                     "value": {
                                         "Value": {
                                             "StringValue": "Service"
@@ -414,7 +414,7 @@
                                     }
                                 },
                                 {
-                                    "key": "coral.namespace",
+                                    "key": "app.namespace",
                                     "value": {
                                         "Value": {
                                             "StringValue": "com.example"
@@ -507,7 +507,7 @@
                                     }
                                 },
                                 {
-                                    "key": "coral.operation",
+                                    "key": "app.operation",
                                     "value": {
                                         "Value": {
                                             "StringValue": "gj0E5BkTfnOperation"
@@ -515,7 +515,7 @@
                                     }
                                 },
                                 {
-                                    "key": "coral.service",
+                                    "key": "app.service",
                                     "value": {
                                         "Value": {
                                             "StringValue": "Service"
@@ -523,7 +523,7 @@
                                     }
                                 },
                                 {
-                                    "key": "coral.namespace",
+                                    "key": "app.namespace",
                                     "value": {
                                         "Value": {
                                             "StringValue": "com.example"

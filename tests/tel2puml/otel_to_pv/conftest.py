@@ -59,7 +59,7 @@ def mock_yaml_config_string() -> str:
                             key_paths: [
                             "resource_spans.[].scope_spans.[].spans.[].attributes.[].key",
                             "resource_spans.[].scope_spans.[].spans.[].attributes.[].key"]
-                            key_value: [coral.namespace, http.status_code]
+                            key_value: [app.namespace, http.status_code]
                             value_paths: [
                             value.Value.StringValue,
                             value.Value.IntValue]
@@ -81,7 +81,7 @@ def mock_yaml_config_string() -> str:
                             key_paths: [
                             "resource_spans.[].scope_spans.[].spans.[].attributes.[].key",
                             "resource_spans.[].resource.attributes.[].key"]
-                            key_value: [coral.service, service.version]
+                            key_value: [app.service, service.version]
                             value_paths: [
                             value.Value.StringValue,
                             value.Value.StringValue]
@@ -232,7 +232,7 @@ def mock_json_data() -> dict[str, Any]:
                                         },
                                     },
                                     {
-                                        "key": "coral.operation",
+                                        "key": "app.operation",
                                         "value": {
                                             "Value": {
                                                 "StringValue": "jCWhAvRzcM"
@@ -240,7 +240,7 @@ def mock_json_data() -> dict[str, Any]:
                                         },
                                     },
                                     {
-                                        "key": "coral.service",
+                                        "key": "app.service",
                                         "value": {
                                             "Value": {
                                                 "StringValue": "Processor"
@@ -248,7 +248,7 @@ def mock_json_data() -> dict[str, Any]:
                                         },
                                     },
                                     {
-                                        "key": "coral.namespace",
+                                        "key": "app.namespace",
                                         "value": {
                                             "Value": {
                                                 "StringValue": "com.T2h.366Yx"
@@ -322,7 +322,7 @@ def mock_json_data() -> dict[str, Any]:
                                         },
                                     },
                                     {
-                                        "key": "coral.operation",
+                                        "key": "app.operation",
                                         "value": {
                                             "Value": {
                                                 "StringValue": "cVh8nOperation"
@@ -330,13 +330,13 @@ def mock_json_data() -> dict[str, Any]:
                                         },
                                     },
                                     {
-                                        "key": "coral.service",
+                                        "key": "app.service",
                                         "value": {
                                             "Value": {"StringValue": "Handler"}
                                         },
                                     },
                                     {
-                                        "key": "coral.namespace",
+                                        "key": "app.namespace",
                                         "value": {
                                             "Value": {
                                                 "StringValue": "com.C36.9ETRp"
@@ -431,7 +431,7 @@ def mock_json_data() -> dict[str, Any]:
                                         },
                                     },
                                     {
-                                        "key": "coral.operation",
+                                        "key": "app.operation",
                                         "value": {
                                             "Value": {
                                                 "StringValue": "2lAmnOperation"
@@ -439,7 +439,7 @@ def mock_json_data() -> dict[str, Any]:
                                         },
                                     },
                                     {
-                                        "key": "coral.service",
+                                        "key": "app.service",
                                         "value": {
                                             "Value": {
                                                 "StringValue": "Processor"
@@ -447,7 +447,7 @@ def mock_json_data() -> dict[str, Any]:
                                         },
                                     },
                                     {
-                                        "key": "coral.namespace",
+                                        "key": "app.namespace",
                                         "value": {
                                             "Value": {
                                                 "StringValue": "com.a58.GFkzZ"
@@ -520,7 +520,7 @@ def mock_json_data() -> dict[str, Any]:
                                         },
                                     },
                                     {
-                                        "key": "coral.operation",
+                                        "key": "app.operation",
                                         "value": {
                                             "Value": {
                                                 "StringValue": "81DznOperation"
@@ -528,7 +528,7 @@ def mock_json_data() -> dict[str, Any]:
                                         },
                                     },
                                     {
-                                        "key": "coral.service",
+                                        "key": "app.service",
                                         "value": {
                                             "Value": {
                                                 "StringValue": "Processor"
@@ -536,7 +536,7 @@ def mock_json_data() -> dict[str, Any]:
                                         },
                                     },
                                     {
-                                        "key": "coral.namespace",
+                                        "key": "app.namespace",
                                         "value": {
                                             "Value": {
                                                 "StringValue": "com.67Q.AS8pJ"
@@ -637,7 +637,7 @@ def mock_json_data_without_list() -> dict[str, Any]:
                                     },
                                 },
                                 {
-                                    "key": "coral.operation",
+                                    "key": "app.operation",
                                     "value": {
                                         "Value": {
                                             "StringValue": "jCWhcMOperation"
@@ -645,13 +645,13 @@ def mock_json_data_without_list() -> dict[str, Any]:
                                     },
                                 },
                                 {
-                                    "key": "coral.service",
+                                    "key": "app.service",
                                     "value": {
                                         "Value": {"StringValue": "Processor"}
                                     },
                                 },
                                 {
-                                    "key": "coral.namespace",
+                                    "key": "app.namespace",
                                     "value": {
                                         "Value": {
                                             "StringValue": "com.T2h.366Yx"
@@ -723,7 +723,7 @@ def mock_json_data_without_list() -> dict[str, Any]:
                                     },
                                 },
                                 {
-                                    "key": "coral.operation",
+                                    "key": "app.operation",
                                     "value": {
                                         "Value": {
                                             "StringValue": "cVh8f6JOperation"
@@ -731,13 +731,13 @@ def mock_json_data_without_list() -> dict[str, Any]:
                                     },
                                 },
                                 {
-                                    "key": "coral.service",
+                                    "key": "app.service",
                                     "value": {
                                         "Value": {"StringValue": "Handler"}
                                     },
                                 },
                                 {
-                                    "key": "coral.namespace",
+                                    "key": "app.namespace",
                                     "value": {
                                         "Value": {
                                             "StringValue": "com.C36.9ETRp"
@@ -911,15 +911,15 @@ def _create_span(
                 "value": {"Value": {"StringValue": f"host_{i}_{j}"}},
             },
             {
-                "key": "coral.operation",
+                "key": "app.operation",
                 "value": {"Value": {"StringValue": f"operation_{i}_{j}"}},
             },
             {
-                "key": "coral.service",
+                "key": "app.service",
                 "value": {"Value": {"StringValue": f"service_{i}_{j}"}},
             },
             {
-                "key": "coral.namespace",
+                "key": "app.namespace",
                 "value": {"Value": {"StringValue": f"namespace_{i}_{j}"}},
             },
             {"key": "http.status_code", "value": {"Value": {"IntValue": 200}}},

@@ -51,7 +51,7 @@ def mock_yaml_config_file(tmp_path: Path) -> Path:
                             "resource_spans.[].scope_spans.[].spans.[]."
                             "attributes.[].key",
                         ],
-                        "key_value": ["coral.namespace", "http.status_code"],
+                        "key_value": ["app.namespace", "http.status_code"],
                         "value_paths": [
                             "value.Value.StringValue",
                             "value.Value.IntValue",
@@ -84,7 +84,7 @@ def mock_yaml_config_file(tmp_path: Path) -> Path:
                             "attributes.[].key",
                             "resource_spans.[].resource.attributes.[].key",
                         ],
-                        "key_value": ["coral.service", "service.version"],
+                        "key_value": ["app.service", "service.version"],
                         "value_paths": [
                             "value.Value.StringValue",
                             "value.Value.StringValue",

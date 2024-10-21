@@ -45,7 +45,7 @@ expected_otel_span_1 = OtelSpan(
     end_time_unix_nano=1695639486119918080,
     attributes=[
         {
-            "key": "coral.operation",
+            "key": "app.operation",
             "value": {"Value": {"StringValue": "A"}},
         }
     ],
@@ -60,7 +60,7 @@ expected_otel_span_2 = OtelSpan(
     end_time_unix_nano=1695639486119986176,
     attributes=[
         {
-            "key": "coral.operation",
+            "key": "app.operation",
             "value": {"Value": {"StringValue": "B"}},
         }
     ],
@@ -75,7 +75,7 @@ expected_otel_span_3 = OtelSpan(
     end_time_unix_nano=1695639486120044032,
     attributes=[
         {
-            "key": "coral.operation",
+            "key": "app.operation",
             "value": {"Value": {"StringValue": "C"}},
         }
     ],
@@ -127,7 +127,7 @@ def expected_otel_json_output_sample_test_1(
                                 end_time_unix_nano=1695639486119918080,
                                 attributes=[
                                     {
-                                        "key": "coral.operation",
+                                        "key": "app.operation",
                                         "value": {
                                             "Value": {"StringValue": "A"}
                                         },

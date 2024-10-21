@@ -52,7 +52,7 @@ def pv_event_to_otel(event: PVEvent) -> OtelSpan:
         attributes=(
             [
                 {
-                    "key": "coral.operation",
+                    "key": "app.operation",
                     "value": {
                         "Value": {"StringValue": event["eventType"]}
                     },

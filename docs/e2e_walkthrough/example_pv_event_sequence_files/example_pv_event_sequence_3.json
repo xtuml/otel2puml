@@ -1,0 +1,77 @@
+[
+    {
+        "jobId": "trace_003",
+        "eventId": "span_0210",
+        "eventType": "return_response_200",
+        "timestamp": "2023-11-14T22:13:20.000000Z",
+        "previousEventIds": [
+            "span_0220"
+        ],
+        "applicationName": "Service_1.0",
+        "jobName": "Users_Service"
+    },
+    {
+        "jobId": "trace_003",
+        "eventId": "span_0220",
+        "eventType": "request_data_200",
+        "timestamp": "2023-11-14T22:13:20.000000Z",
+        "previousEventIds": [
+            "span_0230"
+        ],
+        "applicationName": "Service_1.0",
+        "jobName": "Users_Service"
+    },
+    {
+        "jobId": "trace_003",
+        "eventId": "span_0230",
+        "eventType": "session_expired_200",
+        "timestamp": "2023-11-14T22:13:20.000000Z",
+        "previousEventIds": [
+            "span_0240"
+        ],
+        "applicationName": "Processor_1.0",
+        "jobName": "Users_Service"
+    },
+    {
+        "jobId": "trace_003",
+        "eventId": "span_0240",
+        "eventType": "authenticate_credentials_200",
+        "timestamp": "2023-11-14T22:13:20.000000Z",
+        "previousEventIds": [
+            "span_0250"
+        ],
+        "applicationName": "Service_1.0",
+        "jobName": "Users_Service"
+    },
+    {
+        "jobId": "trace_003",
+        "eventId": "span_0250",
+        "eventType": "validate_session_200",
+        "timestamp": "2023-11-14T22:13:20.000000Z",
+        "previousEventIds": [
+            "span_0260"
+        ],
+        "applicationName": "Service_1.0",
+        "jobName": "Users_Service"
+    },
+    {
+        "jobId": "trace_003",
+        "eventId": "span_0260",
+        "eventType": "authenticate_credentials_200",
+        "timestamp": "2023-11-14T22:13:20.000000Z",
+        "previousEventIds": [
+            "span_0270"
+        ],
+        "applicationName": "Service_1.0",
+        "jobName": "Users_Service"
+    },
+    {
+        "jobId": "trace_003",
+        "eventId": "span_0270",
+        "eventType": "user_login_200",
+        "timestamp": "2023-11-14T22:13:20.000000Z",
+        "previousEventIds": [],
+        "applicationName": "Service_1.0",
+        "jobName": "Users_Service"
+    }
+]

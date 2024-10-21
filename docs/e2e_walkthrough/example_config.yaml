@@ -38,7 +38,7 @@ data_sources:
         value_type: string
       application_name:
         key_paths: ["resource_spans.[].scope_spans.[].spans.[].attributes.[].key","resource_spans.[].resource.attributes.[].key"]
-        key_value: [coral.service, service.version]
+        key_value: [app.service, service.version]
         value_paths: [value.Value.StringValue,value.Value.StringValue]
         value_type: string
       parent_event_id:

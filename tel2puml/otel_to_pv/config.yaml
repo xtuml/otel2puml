@@ -33,7 +33,7 @@ data_sources:
             "resource_spans.[].scope_spans.[].spans.[].kind"
           ],
         ]
-        key_value: [[coral.operation, null], [http.status_code, null]]
+        key_value: [[app.operation, null], [http.status_code, null]]
         value_paths: [[value:Value:StringValue, null], [value:Value:IntValue, null]]
         value_type: string
       event_id:

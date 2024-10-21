@@ -51,13 +51,19 @@ To generate and save job JSON files, run the following command:
 python -m tel2puml -o pv_event_json otel2pv -c docs/e2e_walkthrough/example_config.yaml -se
 ```
 
-A directory located at `pv_event_json/Users_Service` will have been created with 3 JSON files.
+A directory located at `pv_event_json/Users_Service` will have been created with 3 JSON files. These should match the files located [here](/docs/e2e_walkthrough/example_pv_event_sequence_files/)
 
 #### pv2puml
 To generate the PUML from the newly created job JSON files, run the following command:
 
 ```bash
 python -m tel2puml -o puml_output pv2puml -fp pv_event_json/Users_Service -jn "Users_Service_pv2puml"
+```
+
+Alternatively, the example files can be used:
+
+```bash
+python -m tel2puml -o puml_output pv2puml -fp docs/e2e_walkthrough/example_pv_event_sequence_files -jn "Users_Service_pv2puml"
 ```
 
 The output should be the same as Step 4.
