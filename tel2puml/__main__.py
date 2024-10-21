@@ -106,7 +106,7 @@ otel_to_pv_parser = subparsers.add_parser(
 otel_to_pv_parser.add_argument(
     "-se",
     "--save-events",
-    help="Flag indicating whther to save events to the output directory",
+    help="Flag indicating whether to save events to the output directory",
     action="store_true",
     dest="save_events",
 )
