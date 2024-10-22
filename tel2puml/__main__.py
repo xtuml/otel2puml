@@ -125,7 +125,10 @@ pv_exclusive_group.add_argument(
     "-fp",
     "--folder-path",
     metavar="dir",
-    help="Path to folder containing job json files",
+    help=(
+        "Path to folder containing job json files. Cannot be used with option "
+        "file_paths"
+    ),
     dest="folder_path",
     required=False,
 )
@@ -133,7 +136,10 @@ pv_exclusive_group.add_argument(
 pv_exclusive_group.add_argument(
     "file_paths",
     nargs="*",
-    help="Input files containing job data in json format",
+    help=(
+        "Input files containing job data in json format. Cannot be used with "
+        "option --folder-path"
+    ),
     default=[],
 )
 
@@ -151,7 +157,10 @@ pv_to_puml_parser.add_argument(
 
 pv_to_puml_parser.add_argument(
     "-group-by-job",
-    help="Group events by job ID",
+    help=(
+        "Group events by job ID. Can only be used if there are single events "
+        "in each input file otherwise an error will be raised"
+    ),
     action="store_true",
     dest="group_by_job",
 )
