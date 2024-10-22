@@ -62,7 +62,7 @@ By converting OpenTelemetry data to PlantUML diagrams, this tool bridges the gap
 * Produce clear and comprehensive PlantUML activity diagrams that accurately depict the system.
 
 ## How it Works
-End to end the **otel2puml** ingests Open Telemetry data in JSON files and outputs activity diagrams in PlantUML format that represent the causal possibilities learnt from the data. The tool is split into two main components that can be used independently or together:
+End to end the **otel2puml** tool ingests Open Telemetry data in JSON files and outputs activity diagrams in PlantUML format that represent the causal possibilities learnt from the data. The tool is split into two main components that can be used independently or together as **otel2puml**:
 
 - **otel2pv** - Ingests OpenTelemetry Data (currently from JSON Files only) extracting the specific data from the OpenTelemetry [Spans](https://opentelemetry.io/docs/concepts/signals/traces/#spans) that make up [Traces](https://opentelemetry.io/docs/concepts/signals/traces/) that form call trees. These are then sequenced (see [Sequencing](/docs/user/sequencer_HOWTO.md)) and converted to Protocol Verifier (PV) Event Sequences (see [Data Types]()). These are then output as:
     - JSON files containing PV Event Sequences
