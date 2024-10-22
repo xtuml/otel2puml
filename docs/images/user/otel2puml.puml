@@ -1,0 +1,31 @@
+@startuml
+' left to right direction
+folder "Folder of PV Events" as FolderOfPVEvents {
+    file "PV Event\n[Sequence,Single]\nFiles" as PVEventFiles
+}
+folder "OTel Data" as SpanData {
+    file "OTel JSON\nFiles" as OTElJSON1
+}
+folder "Output PV Event Sequences" as OutputPVEventFiles {
+    folder "Job Name n" as JobNameN {
+        file "PV Event\nSequence\nFiles" as PVEventN_N
+    }
+    folder "Job Name 1" as JobName1 {
+        file "PV Event\nSequence\nFiles" as PVEvent1_1
+    }
+    JobName1 -down[hidden]- JobNameN
+}
+folder "Output PUML Files" as OutputPUMLFiles {
+    file "Job Name n\nPUML File" as JobNameNPUML
+    file "Job Name 1\nPUML File" as JobName1PUML
+}
+component "otel2puml" as oteltopuml {
+    component "pv2puml" as pvtopuml
+    component "otel2pv" as oteltopv
+    oteltopv -down-> pvtopuml : Input\nPV Events\nsequences\nconverted\nfrom\nOTel Data
+}
+pvtopuml -down-> OutputPUMLFiles : Output PUML Files converted from PV Event sequences
+SpanData -down-> oteltopv : Ingest OTel Data From Files
+FolderOfPVEvents -left-> pvtopuml : Input\nPV Events\nfrom files
+oteltopv -right-> OutputPVEventFiles : Output PV Event\nSequences converted\nfrom OTel Data to Files
+@enduml
