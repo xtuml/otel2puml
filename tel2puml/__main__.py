@@ -157,7 +157,10 @@ pv_to_puml_parser.add_argument(
 
 pv_to_puml_parser.add_argument(
     "-group-by-job",
-    help="Group events by job ID",
+    help=(
+        "Group events by job ID. Can only be used if there are single events "
+        "in each input file otherwise an error will be raised"
+    ),
     action="store_true",
     dest="group_by_job",
 )

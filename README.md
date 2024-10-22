@@ -343,13 +343,13 @@ python -m tel2puml pv2puml [options] [FILE_PATHS...]
 - `-fp`, `--folder-path`: Path to a folder containing job JSON files (PV Event JSONs in array's). Cannot be used with `FILE_PATHS`.
 - `FILE_PATHS`: One or more files containing job JSON (PV Event JSON arrays) array data. Cannot be used with `-fp`.
 - `-jn`, `--job-name`: Name for the PlantUML sequence diagram and output file prefix (default is `"default_name"`).
-- `-group-by-job`: Group events by job ID.
+- `-group-by-job`: Group events by job ID. Can only be used if there are single events in each input file otherwise an error will be raised.
 - `-mc`, `--mapping-config`: Path to the mapping configuration file. [Usage](docs/user/mapping_config.md)
 
 **Notes:**
 
 - You must provide either `-fp` or `FILE_PATHS`, but not both.
-- The `-group-by-job` option is useful when you have events from multiple jobs and want to separate them in the diagram.
+- The `-group-by-job` option is used when you have single events in files and you need to group them by `job_id` (into event sequences).
 
 **Examples:**
 
