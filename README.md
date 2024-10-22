@@ -1,4 +1,4 @@
-# TEL2PUML
+# OTEL2PUML
 This project converts [OpenTelemetry (OTel)](https://opentelemetry.io/) data into [PlantUML activity diagrams](https://plantuml.com/activity-diagram-beta). These diagrams are subsequently ingested by [plus2json](https://github.com/xtuml/plus2json), a tool that transforms them into JSON format. The resulting JSON 'job definitions' are specifically tailored for use with the [Protocol Verifier](https://github.com/xtuml/munin) (PV), a tool that monitors and verifies the behaviour of another system, to ensure that it is behaving as expected.
 
 <!-- TABLE OF CONTENTS -->
@@ -7,6 +7,7 @@ This project converts [OpenTelemetry (OTel)](https://opentelemetry.io/) data int
   <ol>
     <li><a href="#why-use-this-tool">Why Use This Tool?</a></li>
     <li><a href="#features">Features</a></li>
+    <li><a href="#how-it-works">How it Works</a></li>
     <li><a href="#quick-start">Quick Start</a>
       <ol>
         <li><a href="#using-docker-image">Using Docker Image</a></li>
@@ -57,9 +58,23 @@ By converting OpenTelemetry data to PlantUML diagrams, this tool bridges the gap
 ## Features
 * Convert OpenTelemetry (OTel) JSON data into detailed PlantUML activity diagrams with flexible output options and multiple subcommands for various processing needs.
 * Easily customize and extend the tool to support new data formats or processing requirements through a modular design.
-* Identify and extract unique event sequences from OTel data
+* Identify and extract unique causal event sequences from OTel data
 * Produce clear and comprehensive PlantUML activity diagrams that accurately depict the system.
 
+## How it Works
+End to end the **otel2puml** ingests Open Telemetry data in JSON files and outputs activity diagrams in PlantUML format that represent the causal possibilities learnt from the data. The tool is split into two main components that can be used independently or together:
+
+- **otel2pv** - Ingests OpenTelemetry Data (currently from JSON Files only) extracting the specific data from the OpenTelemetry [Spans](https://opentelemetry.io/docs/concepts/signals/traces/#spans) that make up [Traces](https://opentelemetry.io/docs/concepts/signals/traces/) that form call trees. These are then sequenced (see [Sequencing](/docs/user/sequencer_HOWTO.md)) and converted to Protocol Verifier (PV) Event Sequences (see [Data Types]()). These are then output as:
+    - JSON files containing PV Event Sequences
+    - Ingested by **pv2puml** to create PlantUML Activity Diagrams
+
+- **pv2puml** - Converts PV Event Sequences into PlantUML Activity Diagrams. These diagrams are then output as PlantUML files that can be viewed in a PlantUML viewer. Can take as input:
+    - PV Event Sequence JSON files
+    - The output PV Event sequence streams from **otel2pv**.
+
+The diagram below shows the componentes and their specific inputs and outputs. Usage of the CLI is detailed in the [CLI Documentation](#tel2puml-cli-documentation).
+
+![](/docs/images/user/otel2puml.svg)
 ## Quick Start
 
 To quickly convert a PV event sequence JSON to a PlantUML activity diagram:
