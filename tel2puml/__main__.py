@@ -125,7 +125,10 @@ pv_exclusive_group.add_argument(
     "-fp",
     "--folder-path",
     metavar="dir",
-    help="Path to folder containing job json files",
+    help=(
+        "Path to folder containing job json files. Cannot be used with option "
+        "file_paths"
+    ),
     dest="folder_path",
     required=False,
 )
@@ -133,7 +136,10 @@ pv_exclusive_group.add_argument(
 pv_exclusive_group.add_argument(
     "file_paths",
     nargs="*",
-    help="Input files containing job data in json format",
+    help=(
+        "Input files containing job data in json format. Cannot be used with "
+        "option --folder-path"
+    ),
     default=[],
 )
 
