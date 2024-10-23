@@ -38,6 +38,8 @@ Please refer to the [Using Docker Image](https://github.com/xtuml/otel2puml/blob
 
 For manual installation, if run successfully, a `Users_Service.puml` file can now be found in the newly created directory `/puml_output`. The svg output should resemble the example below. For use with docker, the output will be found in the output directory specified.
 
+**NB. Due to the how the application works, the layout of the PUML may differ, however the structure and flow should remain consistent.**
+
 ![](/docs/images/example_Users_Service.svg)
 
 ### Step 5: Exploring other commands
