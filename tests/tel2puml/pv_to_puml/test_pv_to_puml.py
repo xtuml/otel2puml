@@ -137,21 +137,23 @@ def test_pv_streams_to_puml_files(
     pv_streams_to_puml_files(pv_streams, output_file_directory=temp_dir)
     # Check that the expected files are created in temp_dir
     expected_files = ["Job_A.puml", "Job_B.puml"]
-    for expected_file in expected_files:
+    for idx, expected_file in enumerate(expected_files):
         file_path = os.path.join(temp_dir, expected_file)
         assert os.path.exists(file_path)
 
+        expected_job_name = expected_files[idx].split(".")[0]
+
         expected_content = (
-            "@startuml\n"
-            '    partition "default_name" {\n'
-            '        group "default_name"\n'
-            "            :A;\n"
-            "            :B;\n"
-            "            :C;\n"
-            "            :D;\n"
-            "        end group\n"
-            "    }\n"
-            "@enduml"
+            f"@startuml\n"
+            f'    partition "{expected_job_name}" {{\n'
+            f'        group "{expected_job_name}"\n'
+            f"            :A;\n"
+            f"            :B;\n"
+            f"            :C;\n"
+            f"            :D;\n"
+            f"        end group\n"
+            f"    }}\n"
+            f"@enduml"
         )
         with open(file_path, "r") as f:
             content = f.read()

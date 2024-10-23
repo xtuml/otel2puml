@@ -262,15 +262,16 @@ def pv_streams_to_puml_files(
     """
     for job_name, job_event_gen in pv_streams:
         tqdm.write(f"Converting {job_name} to PUML...")
-        job_name = job_name.replace(" ", "_")
+        file_name = job_name.replace(" ", "_")
         puml_file_path = os.path.join(
-            output_file_directory, f"{job_name}.puml"
+            output_file_directory, f"{file_name}.puml"
         )
         pv_to_puml_file(
             job_event_gen,
             puml_file_path=puml_file_path,
+            puml_name=job_name
         )
-        tqdm.write(f"{job_name} successfully converted to PUML!")
+        tqdm.write(f"{file_name} successfully converted to PUML!")
 
 
 def pv_files_to_pv_streams(

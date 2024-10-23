@@ -146,8 +146,8 @@ class TestOtelToPuml:
         puml_file_path = output_dir / "Frontend_TestJob.puml"
         expected_content = (
             "@startuml\n"
-            '    partition "default_name" {\n'
-            '        group "default_name"\n'
+            '    partition "Frontend_TestJob" {\n'
+            '        group "Frontend_TestJob"\n'
             "            :com.C36.9ETRp_401;\n"
             "            :com.T2h.366Yx_500;\n"
             "        end group\n"
@@ -266,8 +266,8 @@ class TestOtelToPuml:
 
         expected_content = (
             "@startuml\n"
-            '    partition "default_name" {\n'
-            '        group "default_name"\n'
+            '    partition "TestName" {\n'
+            '        group "TestName"\n'
             "            :START;\n"
             "            :A;\n"
             "            :END;\n"
@@ -406,8 +406,8 @@ class TestOtelToPuml:
         puml_file_path = output_dir / "test_name.puml"
         expected_content = (
             "@startuml\n"
-            '    partition "default_name" {\n'
-            '        group "default_name"\n'
+            '    partition "test_name" {\n'
+            '        group "test_name"\n'
             "            :event_type_1;\n"
             "            :event_type_0;\n"
             "        end group\n"
