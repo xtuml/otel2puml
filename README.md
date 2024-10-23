@@ -14,7 +14,7 @@ This project converts [OpenTelemetry (OTel)](https://opentelemetry.io/) data int
         <li><a href="#using-python-executable">Using Python Executable</a></li>
       </ol>
     </li>
-    <li><a href="#example-input">Example Input</a></li>
+    <li><a href="#example-input-json-pv-event-sequence">Example Input</a></li>
     <li><a href="#example-output">Example Output</a></li>
     <li><a href="#e2e-example">E2E Example</a></li>
     <li><a href="#installation">Installation</a>
