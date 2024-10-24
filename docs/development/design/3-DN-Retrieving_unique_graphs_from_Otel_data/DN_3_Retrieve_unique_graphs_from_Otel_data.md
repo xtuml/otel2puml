@@ -43,8 +43,8 @@ class OTelEvent(NamedTuple):
     job_id: str
     event_type: str
     event_id: str
-    start_timestamp: str
-    end_timestamp: str
+    start_timestamp: int
+    end_timestamp: int
     application_name: str
     parent_event_id: Optional[str, None]
     child_event_ids: Optional[list[str], None]
