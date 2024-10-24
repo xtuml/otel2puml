@@ -351,7 +351,7 @@ As can be seen above the `key_paths` are given in concatenation order. Then for 
     * `resource_spans.[].scope_spans.[].spans.[].not_here` the `key_value` is `null` and the `value_paths` is `null`.
     * `resource_spans.[].scope_spans.[].spans.[].attributes.[].key` the `key_value` is `http.response` and the `value_paths` is `value.Value.IntValue`.
 
-### 3.6 value_type attribute
+### 3.3 value_type attribute
 Currently the following single value type is supported:
 
 * string
