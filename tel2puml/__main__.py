@@ -22,7 +22,10 @@ import os
 import argparse
 import yaml
 import warnings
+import traceback
 from typing import Any, Literal
+
+from pydantic import ValidationError
 
 from tel2puml.otel_to_puml import otel_to_puml
 from tel2puml.tel2puml_types import (
@@ -30,7 +33,7 @@ from tel2puml.tel2puml_types import (
     PvToPumlArgs,
     OtelPVOptions,
     PVPumlOptions,
-    PVEventMappingConfig
+    PVEventMappingConfig,
 )
 from tel2puml.otel_to_pv.config import IngestDataConfig
 
@@ -57,6 +60,17 @@ mapping_config_parent_parser.add_argument(
     help="Path to mapping configuration file",
     dest="mapping_config_file",
     required=False,
+)
+
+# debug config, shared between all subparsers
+debug_parent_parser = argparse.ArgumentParser(add_help=False)
+
+debug_parent_parser.add_argument(
+    "-d",
+    "--debug",
+    help="Flag to enable debug mode",
+    action="store_true",
+    dest="debug",
 )
 
 # otel subparsers and shared arguments
@@ -93,13 +107,17 @@ otel_parent_parser.add_argument(
 otel_to_puml_parser = subparsers.add_parser(
     "otel2puml",
     help="otel to puml help",
-    parents=[otel_parent_parser],
+    parents=[otel_parent_parser, debug_parent_parser],
 )
 
 otel_to_pv_parser = subparsers.add_parser(
     "otel2pv",
     help="otel to pv help",
-    parents=[otel_parent_parser, mapping_config_parent_parser],
+    parents=[
+        otel_parent_parser,
+        mapping_config_parent_parser,
+        debug_parent_parser,
+    ],
 )
 
 # otel to pv args
@@ -113,7 +131,9 @@ otel_to_pv_parser.add_argument(
 
 # pv to puml subparser
 pv_to_puml_parser = subparsers.add_parser(
-    "pv2puml", help="pv to puml help", parents=[mapping_config_parent_parser]
+    "pv2puml",
+    help="pv to puml help",
+    parents=[mapping_config_parent_parser, debug_parent_parser],
 )
 pv_input_paths = pv_to_puml_parser.add_argument_group(
     "Input paths",
@@ -252,17 +272,37 @@ def generate_component_options(
     return otel_pv_options, pv_puml_options
 
 
+def handle_exception(e, debug, user_error=False) -> None:
+    if debug:
+        traceback.print_exc()
+    else:
+        if user_error:
+            print(f"User error: {e}")
+        else:
+            print(e)
+    exit(1)
+
+
 if __name__ == "__main__":
     warnings.filterwarnings("ignore")
 
     args: argparse.Namespace = parser.parse_args()
     args_dict = vars(args)
-    otel_pv_options, pv_puml_options = generate_component_options(
-        args.command, args_dict
-    )
-    otel_to_puml(
-        otel_pv_options,
-        pv_puml_options,
-        args_dict["output_file_directory"],
-        args.command,
-    )
+    debug= args_dict.get("debug", False)
+    del args_dict["debug"]
+    try:
+        otel_pv_options, pv_puml_options = generate_component_options(
+            args.command, args_dict
+        )
+        otel_to_puml(
+            otel_pv_options,
+            pv_puml_options,
+            args_dict["output_file_directory"],
+            args.command,
+        )
+    except ValidationError as e:
+        handle_exception(e, debug, user_error=True)
+    except ValueError as e:
+        print("ValueError: ", e)
+    except Exception as e:
+        handle_exception(e, debug)

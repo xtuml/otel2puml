@@ -276,8 +276,10 @@ def transform_dict_into_pv_event(
         if key != "previousEventIds"
     }
     if not mandatory_fields.issubset(pv_dict.keys()):
+        missing_fields = mandatory_fields - pv_dict.keys()
         raise ValueError(
             "The dictionary does not contain all the mandatory fields."
+            f" Missing fields: {', '.join(missing_fields)}"
         )
     pv_event = PVEvent(
         eventId=(pv_dict[mapping_config.eventId]),
