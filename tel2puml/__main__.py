@@ -278,25 +278,32 @@ def handle_exception(
     debug: bool,
     user_error: bool = False,
     custom_message: str = "",
+    exit_code: int = 1,
 ) -> None:
-    """Handle exceptions.
+    """Handle exceptions with custom messaging and exit codes.
 
     :param e: The exception instance to handle.
-    :type e: :classL:`Exception`
+    :type e: :class:`Exception`
     :param debug: Flag to indicate if debug information should be printed.
     :type debug: `bool`
     :param user_error: Flag to indicate if the error is a user error,
     defaults to False.
     :type user_error: `bool`, optional
+    :param custom_message: Custom error message for user, defaults to "".
+    :type custom_message: `str`, optional
+    :param exit_code: Exit code for the program, defaults to 1.
+    :type exit_code: `int`, optional
     """
     if debug:
-        traceback.print_exc()
+        print(f"DEBUG: {traceback.format_exc()}")
     else:
-        print("\nERROR: Use the -d flag for more information.")
+        print("\nERROR: Use the -d flag for more detailed information.")
         if user_error:
             print(f"User error: {custom_message} {e}")
         else:
-            print(f"{custom_message} {e}")
+            print(f"An unexpected error occurred. {custom_message} {e}")
+
+    exit(exit_code)
 
 
 if __name__ == "__main__":
@@ -317,14 +324,22 @@ if __name__ == "__main__":
             args.command,
         )
     except ValidationError as e:
-        handle_exception(e, debug, user_error=True)
+        handle_exception(
+            e,
+            debug,
+            user_error=True,
+            custom_message="Input validation failed. Please check the"
+            " input data.",
+            exit_code=2,
+        )
     except JSONDecodeError as e:
         handle_exception(
             e,
             debug,
             user_error=True,
-            custom_message="Invalid JSON format detected. Please check"
-            " your JSON files for errors -",
+            custom_message="Invalid JSON format detected. Please check your"
+            " JSON files.",
+            exit_code=3,
         )
     except Exception as e:
         handle_exception(e, debug)
