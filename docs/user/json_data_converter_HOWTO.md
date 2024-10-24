@@ -22,7 +22,7 @@
         <li><a href="#example-4-example-for-obtaining-the-full-otelevent-schema-wihtout-child_event_ids">Example for obtaining the full OTelEvent schema (wihtout child_event_ids)</a></li>
       </ol>
     </li>
-    <li><a href="#5-troubleshooting">5.0 Troubleshooting</a></li>
+    <li><a href="#5-troubleshooting">Troubleshooting</a></li>
   </ol>
 </details>
 
