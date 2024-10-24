@@ -10,6 +10,7 @@ from tel2puml.tel2puml_types import (
     PVEvent,
     DUMMY_EVENT,
     PVEventMappingConfig,
+    PVEventModel
 )
 
 
@@ -281,27 +282,24 @@ def transform_dict_into_pv_event(
             "The dictionary does not contain all the mandatory fields."
             f" Missing fields: {', '.join(missing_fields)}"
         )
-    pv_event = PVEvent(
+    pv_event_model = PVEventModel(
         eventId=(pv_dict[mapping_config.eventId]),
         eventType=(pv_dict[mapping_config.eventType]),
         jobId=(pv_dict[mapping_config.jobId]),
         timestamp=(pv_dict[mapping_config.timestamp]),
         applicationName=(pv_dict[mapping_config.applicationName]),
         jobName=(pv_dict[mapping_config.jobName]),
+        previousEventIds=(pv_dict[mapping_config.previousEventIds]),
     )
-
-    if mapping_config.previousEventIds in pv_dict:
-        prev_event_id: str | list[str] = pv_dict[
-            mapping_config.previousEventIds
-        ]
-        if isinstance(prev_event_id, str):
-            pv_event["previousEventIds"] = [prev_event_id]
-        elif isinstance(prev_event_id, list):
-            pv_event["previousEventIds"] = prev_event_id
-        else:
-            raise ValueError(
-                "The previousEventIds field is not a string or a list."
-            )
+    pv_event = PVEvent(
+        eventId=pv_event_model.eventId,
+        eventType=pv_event_model.eventType,
+        jobId=pv_event_model.jobId,
+        timestamp=pv_event_model.timestamp,
+        applicationName=pv_event_model.applicationName,
+        jobName=pv_event_model.jobName,
+        previousEventIds=pv_event_model.previousEventIds,
+    )
     return pv_event
 
 
