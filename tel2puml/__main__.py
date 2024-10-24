@@ -37,6 +37,10 @@ from tel2puml.tel2puml_types import (
     PVEventMappingConfig,
 )
 from tel2puml.otel_to_pv.config import IngestDataConfig
+from tel2puml.otel_to_pv. \
+    data_sources.json_data_source.json_jq_converter import (
+    JQCompileError, JQExtractionError
+    )
 
 
 parser = argparse.ArgumentParser(prog="otel2puml")
@@ -301,7 +305,8 @@ def handle_exception(
         if user_error:
             print(f"User error: {custom_message} {e}")
         else:
-            print(f"An unexpected error occurred. {custom_message} {e}")
+            print(f"An unexpected error occurred. {custom_message} {e}. Please
+                  contact smartDCSIT support for assistance.")
 
     exit(exit_code)
 
@@ -340,6 +345,14 @@ if __name__ == "__main__":
             custom_message="Invalid JSON format detected. Please check your"
             " JSON files.",
             exit_code=3,
+        )
+    except (JQCompileError, JQExtractionError) as e:
+        handle_exception(
+            e,
+            debug,
+            user_error=True,
+            custom_message="Error occurred during JQ processing.",
+            exit_code=4,
         )
     except Exception as e:
         handle_exception(e, debug)
