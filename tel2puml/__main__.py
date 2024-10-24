@@ -24,6 +24,7 @@ import yaml
 import warnings
 import traceback
 from typing import Any, Literal
+from json import JSONDecodeError
 
 from pydantic import ValidationError
 
@@ -273,7 +274,10 @@ def generate_component_options(
 
 
 def handle_exception(
-    e: Exception, debug: bool, user_error: bool = False
+    e: Exception,
+    debug: bool,
+    user_error: bool = False,
+    custom_message: str = "",
 ) -> None:
     """Handle exceptions.
 
@@ -288,11 +292,11 @@ def handle_exception(
     if debug:
         traceback.print_exc()
     else:
+        print("\nERROR: Use the -d flag for more information.")
         if user_error:
-            print(f"User error: {e}")
+            print(f"User error: {custom_message} {e}")
         else:
-            print(e)
-    exit(1)
+            print(f"{custom_message} {e}")
 
 
 if __name__ == "__main__":
@@ -314,7 +318,13 @@ if __name__ == "__main__":
         )
     except ValidationError as e:
         handle_exception(e, debug, user_error=True)
-    except ValueError as e:
-        print("ValueError: ", e)
+    except JSONDecodeError as e:
+        handle_exception(
+            e,
+            debug,
+            user_error=True,
+            custom_message="Invalid JSON format detected. Please check"
+            " your JSON files for errors -",
+        )
     except Exception as e:
         handle_exception(e, debug)
