@@ -1,0 +1,26 @@
+@startuml
+    partition "Users_Service" {
+        group "Users_Service"
+            :user_login_200;
+            switch (XOR)
+                case ("")
+                    repeat
+                        :authorization_check_200;
+                    repeat while
+                    :fetch_user_data_200;
+                case ("")
+                    repeat
+                        :authenticate_credentials_200;
+                        switch (XOR)
+                            case ("")
+                                :session_expired_200;
+                            case ("")
+                                :validate_session_200;
+                        endswitch
+                    repeat while
+                    :request_data_200;
+            endswitch
+            :return_response_200;
+        end group
+    }
+@enduml
