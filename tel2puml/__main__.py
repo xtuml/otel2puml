@@ -38,9 +38,8 @@ from tel2puml.tel2puml_types import (
 )
 from tel2puml.otel_to_pv.config import IngestDataConfig
 from tel2puml.otel_to_pv. \
-    data_sources.json_data_source.json_jq_converter import (
-    JQCompileError, JQExtractionError
-    )
+    data_sources.json_data_source.json_jq_converter \
+    import JQCompileError, JQExtractionError
 
 
 parser = argparse.ArgumentParser(prog="otel2puml")
@@ -305,8 +304,8 @@ def handle_exception(
         if user_error:
             print(f"User error: {custom_message} {e}")
         else:
-            print(f"An unexpected error occurred. {custom_message} {e}. Please
-                  contact smartDCSIT support for assistance.")
+            print(f"An unexpected error occurred. {custom_message} {e}. Please"
+                  " contact smartDCSIT support for assistance.")
 
     exit(exit_code)
 
