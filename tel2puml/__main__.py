@@ -272,7 +272,19 @@ def generate_component_options(
     return otel_pv_options, pv_puml_options
 
 
-def handle_exception(e, debug, user_error=False) -> None:
+def handle_exception(
+    e: Exception, debug: bool, user_error: bool = False
+) -> None:
+    """Handle exceptions.
+
+    :param e: The exception instance to handle.
+    :type e: :classL:`Exception`
+    :param debug: Flag to indicate if debug information should be printed.
+    :type debug: `bool`
+    :param user_error: Flag to indicate if the error is a user error,
+    defaults to False.
+    :type user_error: `bool`, optional
+    """
     if debug:
         traceback.print_exc()
     else:
@@ -288,7 +300,7 @@ if __name__ == "__main__":
 
     args: argparse.Namespace = parser.parse_args()
     args_dict = vars(args)
-    debug= args_dict.get("debug", False)
+    debug = args_dict.get("debug", False)
     del args_dict["debug"]
     try:
         otel_pv_options, pv_puml_options = generate_component_options(

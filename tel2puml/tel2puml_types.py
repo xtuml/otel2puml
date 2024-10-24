@@ -41,12 +41,12 @@ class PVEvent(TypedDict):
 
 
 class PVEventModel(BaseModel):
-    """A PV event"""
+    """Pydantic model for PVEvent"""
 
     jobId: str
     eventId: str
     timestamp: str
-    previousEventIds: Optional[list[str] | str] = Field([])
+    previousEventIds: Optional[list[str] | str] = Field(None)
     applicationName: str
     jobName: str
     eventType: str

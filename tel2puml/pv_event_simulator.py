@@ -10,7 +10,7 @@ from tel2puml.tel2puml_types import (
     PVEvent,
     DUMMY_EVENT,
     PVEventMappingConfig,
-    PVEventModel
+    PVEventModel,
 )
 
 
@@ -289,7 +289,7 @@ def transform_dict_into_pv_event(
         timestamp=(pv_dict[mapping_config.timestamp]),
         applicationName=(pv_dict[mapping_config.applicationName]),
         jobName=(pv_dict[mapping_config.jobName]),
-        previousEventIds=(pv_dict[mapping_config.previousEventIds]),
+        previousEventIds=(pv_dict.get(mapping_config.previousEventIds, None)),
     )
     pv_event = PVEvent(
         eventId=pv_event_model.eventId,
@@ -298,8 +298,13 @@ def transform_dict_into_pv_event(
         timestamp=pv_event_model.timestamp,
         applicationName=pv_event_model.applicationName,
         jobName=pv_event_model.jobName,
-        previousEventIds=pv_event_model.previousEventIds,
     )
+    if pv_event_model.previousEventIds is not None:
+        prev_event_ids = pv_event_model.previousEventIds
+        if isinstance(prev_event_ids, str):
+            pv_event["previousEventIds"] = [prev_event_ids]
+        else:
+            pv_event["previousEventIds"] = prev_event_ids
     return pv_event
 
 
