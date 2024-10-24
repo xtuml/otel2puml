@@ -76,7 +76,7 @@ An example of this for one event is shown below whereby the three events in Asyn
 ###### Figure 2 OTel Sequence Async
 ![](/docs/images/user/otel_sequence_async.svg)
 
-The full example as in figure [OTel Tree](#oteltree) would be sequenced the following way using the procession method:
+The full example as in figure [OTel Tree](#figure-1-oteltree) would be sequenced the following way using the procession method:
 
 ![](/docs/images/user/pv_sequence_from_otel_procession.svg)
 
