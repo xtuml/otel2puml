@@ -40,6 +40,18 @@ class PVEvent(TypedDict):
     eventType: str
 
 
+class PVEventModel(BaseModel):
+    """Pydantic model for PVEvent"""
+
+    jobId: str
+    eventId: str
+    timestamp: str
+    previousEventIds: Optional[list[str] | str] = Field(None)
+    applicationName: str
+    jobName: str
+    eventType: str
+
+
 class NestedEvent(TypedDict):
     """A nested event"""
 
