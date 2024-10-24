@@ -90,7 +90,7 @@ The user can provide prior information in the configuration file to indicate tha
 
 In this example, the user has provided prior information that the events `A`, `B` and `C` should be grouped together and sequenced asynchronously. The sequencer will then group these events together and sequence them asynchronously. The sequencer will then sequence the events into `D`.
 
-Using the full example in figure [OTel Tree](#oteltree) and setting the extra information that `child1` and `child2` should be sequenced asynchronously if they are called by `root` - but no other asynchronous sequencing other than this - the following sequence is produced:
+Using the full example in figure [OTel Tree](#figure-1-oteltree) and setting the extra information that `child1` and `child2` should be sequenced asynchronously if they are called by `root` - but no other asynchronous sequencing other than this - the following sequence is produced:
 
 ![](/docs/images/user/pv_sequence_from_otel_extra_info.svg)
 
