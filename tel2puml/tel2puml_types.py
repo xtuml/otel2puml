@@ -46,7 +46,7 @@ class PVEventModel(BaseModel):
     jobId: str
     eventId: str
     timestamp: str
-    previousEventIds: Optional[list[str]] = Field([])
+    previousEventIds: list[str] = Field([])
     applicationName: str
     jobName: str
     eventType: str
