@@ -40,6 +40,28 @@ class PVEvent(TypedDict):
     eventType: str
 
 
+class PVEventModel(BaseModel):
+    """Pydantic model for PVEvent"""
+
+    jobId: str
+    eventId: str
+    timestamp: str
+    previousEventIds: list[str] = Field([])
+    applicationName: str
+    jobName: str
+    eventType: str
+
+    @field_validator("previousEventIds", mode="before")
+    def check_prev_event_ids(
+        cls: Type["PVEventModel"], value: Any
+    ) -> Any:
+        """Check if previousEventIds is a string and convert it to a list
+        of strings."""
+        if value and isinstance(value, str):
+            return [value]
+        return value
+
+
 class NestedEvent(TypedDict):
     """A nested event"""
 

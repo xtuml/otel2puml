@@ -22,7 +22,11 @@ import os
 import argparse
 import yaml
 import warnings
-from typing import Any, Literal
+import traceback
+from typing import Any, Literal, Type
+from json import JSONDecodeError
+
+from pydantic import ValidationError
 
 from tel2puml.otel_to_puml import otel_to_puml
 from tel2puml.tel2puml_types import (
@@ -30,9 +34,20 @@ from tel2puml.tel2puml_types import (
     PvToPumlArgs,
     OtelPVOptions,
     PVPumlOptions,
-    PVEventMappingConfig
+    PVEventMappingConfig,
 )
 from tel2puml.otel_to_pv.config import IngestDataConfig
+from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter \
+    import JQCompileError, JQExtractionError
+
+
+ERROR_MESSAGES = {
+    ValidationError: "Input validation failed. Please check the input data.",
+    JSONDecodeError: "Invalid JSON format detected. Please check your JSON "
+    "files.",
+    JQCompileError: "Error occurred during JQ compiling.",
+    JQExtractionError: "Error occurred during JQ extraction.",
+}
 
 
 parser = argparse.ArgumentParser(prog="otel2puml")
@@ -57,6 +72,17 @@ mapping_config_parent_parser.add_argument(
     help="Path to mapping configuration file",
     dest="mapping_config_file",
     required=False,
+)
+
+# debug config, shared between all subparsers
+debug_parent_parser = argparse.ArgumentParser(add_help=False)
+
+debug_parent_parser.add_argument(
+    "-d",
+    "--debug",
+    help="Flag to enable debug mode",
+    action="store_true",
+    dest="debug",
 )
 
 # otel subparsers and shared arguments
@@ -93,13 +119,17 @@ otel_parent_parser.add_argument(
 otel_to_puml_parser = subparsers.add_parser(
     "otel2puml",
     help="otel to puml help",
-    parents=[otel_parent_parser],
+    parents=[otel_parent_parser, debug_parent_parser],
 )
 
 otel_to_pv_parser = subparsers.add_parser(
     "otel2pv",
     help="otel to pv help",
-    parents=[otel_parent_parser, mapping_config_parent_parser],
+    parents=[
+        otel_parent_parser,
+        mapping_config_parent_parser,
+        debug_parent_parser,
+    ],
 )
 
 # otel to pv args
@@ -113,7 +143,9 @@ otel_to_pv_parser.add_argument(
 
 # pv to puml subparser
 pv_to_puml_parser = subparsers.add_parser(
-    "pv2puml", help="pv to puml help", parents=[mapping_config_parent_parser]
+    "pv2puml",
+    help="pv to puml help",
+    parents=[mapping_config_parent_parser, debug_parent_parser],
 )
 pv_input_paths = pv_to_puml_parser.add_argument_group(
     "Input paths",
@@ -252,17 +284,80 @@ def generate_component_options(
     return otel_pv_options, pv_puml_options
 
 
+def handle_exception(
+    e: Exception,
+    debug: bool,
+    user_error: bool = False,
+    custom_message: str = "",
+) -> None:
+    """Handle exceptions with custom messaging.
+
+    :param e: The exception instance to handle.
+    :type e: :class:`Exception`
+    :param debug: Flag to indicate if debug information should be printed.
+    :type debug: `bool`
+    :param user_error: Flag to indicate if the error is a user error,
+    defaults to False.
+    :type user_error: `bool`, optional
+    :param custom_message: Custom error message for user, defaults to "".
+    :type custom_message: `str`, optional
+    """
+    if debug:
+        print(f"DEBUG: {traceback.format_exc()}")
+    else:
+        print("\nERROR: Use the -d flag for more detailed information.")
+        if user_error:
+            print(f"\nUser error: {custom_message}")
+            print(f"\n{e}")
+        else:
+            print("\nAn unexpected error occurred")
+            print(f"\n{e}")
+            print(
+                "\nPlease raise an issue at "
+                "https://github.com/xtuml/otel2puml."
+            )
+    exit(1)
+
+
+def main(
+    args_dict: dict[str, Any],
+    errors_lookup: dict[Type[Exception], str],
+) -> None:
+    """Main function to execute the tel2puml command.
+
+    :param args_dict: Dictionary of command-line arguments.
+    :type args_dict: `dict`[`str`, `Any`]
+    :param errors_lookup: Dictionary mapping exceptions to error messages.
+    :type errors_lookup: `dict`[`Type`[:class:`Exception`], `str`]
+    """
+    debug = args_dict.get("debug", False)
+    if "debug" in args_dict:
+        del args_dict["debug"]
+    try:
+        command: Literal["otel2puml", "otel2pv", "pv2puml"] = args_dict[
+            "command"
+        ]
+        otel_pv_options, pv_puml_options = generate_component_options(
+            command, args_dict
+        )
+        otel_to_puml(
+            otel_pv_options,
+            pv_puml_options,
+            args_dict["output_file_directory"],
+            args_dict["command"],
+        )
+    except tuple(errors_lookup.keys()) as e:
+        error_message = errors_lookup[type(e)]
+        handle_exception(
+            e, debug, user_error=True, custom_message=error_message
+        )
+    except Exception as e:
+        handle_exception(e, debug)
+
+
 if __name__ == "__main__":
     warnings.filterwarnings("ignore")
 
     args: argparse.Namespace = parser.parse_args()
     args_dict = vars(args)
-    otel_pv_options, pv_puml_options = generate_component_options(
-        args.command, args_dict
-    )
-    otel_to_puml(
-        otel_pv_options,
-        pv_puml_options,
-        args_dict["output_file_directory"],
-        args.command,
-    )
+    main(args_dict, ERROR_MESSAGES)

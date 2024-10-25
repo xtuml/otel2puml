@@ -82,6 +82,7 @@ def mock_job_json_file() -> list[dict[str, Any]]:
             "timestamp": "2024-09-01T07:45:00Z",
             "applicationName": "BackupService",
             "jobName": "TempFilesCleanup",
+            "previousEventIds": [],
         },
         {
             "eventId": "evt_002",

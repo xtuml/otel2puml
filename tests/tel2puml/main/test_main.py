@@ -5,15 +5,22 @@ import os
 import tempfile
 from pathlib import Path
 from typing import Literal
+from unittest.mock import Mock, patch
+from json import JSONDecodeError
 
 import pytest
 from pydantic import ValidationError
+from pytest import MonkeyPatch, CaptureFixture
 
 from tel2puml.__main__ import (
     generate_config,
     find_files,
     generate_component_options,
+    handle_exception,
+    main,
 )
+from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter \
+    import JQCompileError, JQExtractionError
 
 
 def test_generate_config(tmp_path: Path) -> None:
@@ -168,3 +175,170 @@ def test_generate_components_options(
         otel_pv_options, pv_puml_options = generate_component_options(
             command, args_dict
         )
+
+
+def test_handle_exception(
+    monkeypatch: MonkeyPatch,
+    capfd: CaptureFixture[str],
+) -> None:
+    """Tests the function handle_exception."""
+    # Mock the exit function so that the test does not exit the test suite
+    monkeypatch.setattr("builtins.exit", Mock())
+
+    # Test 1: debug = True
+    # Raises an exception with traceback
+    try:
+        raise Exception("Test exception")
+    except Exception as e:
+        handle_exception(e, debug=True)
+
+    captured = capfd.readouterr()
+    assert "DEBUG:" in captured.out
+    assert "Traceback" in captured.out
+
+    # Test 2: user error, debug = False
+    try:
+        raise Exception("User test error")
+    except Exception as e:
+        handle_exception(
+            e, debug=False, user_error=True, custom_message="Custom error."
+        )
+
+    captured = capfd.readouterr()
+    assert (
+        "ERROR: Use the -d flag for more detailed information." in captured.out
+    )
+    assert "User error: Custom error." in captured.out
+
+    # Test 3: no user error, debug = False
+    try:
+        raise Exception("Unexpected test error")
+    except Exception as e:
+        handle_exception(
+            e,
+            debug=False,
+            user_error=False,
+        )
+
+    captured = capfd.readouterr()
+    assert (
+        "ERROR: Use the -d flag for more detailed information." in captured.out
+    )
+    assert (
+        "Please raise an issue at https://github.com/xtuml/otel2puml"
+        in captured.out
+    )
+
+
+def test_main_error_handling(
+    monkeypatch: MonkeyPatch,
+    capfd: CaptureFixture[str],
+) -> None:
+    """Tests the main function"""
+    # Mock the exit function so that the test does not exit the test suite
+    monkeypatch.setattr("builtins.exit", Mock())
+    args_dict = {
+        "command": "otel2puml",
+        "config_file": "invalid_config.yaml",
+        "ingest_data": True,
+        "find_unique_graphs": False,
+        "output_file_directory": ".",
+        "debug": False,
+    }
+
+    errors_lookup = {
+        JQCompileError: "Error occurred during JQ compiling.",
+        JQExtractionError: "Error occurred during JQ extraction.",
+        JSONDecodeError: "Invalid JSON format detected. Please check your"
+        " JSON files.",
+        ValidationError: "Input validation failed. Please check the input"
+        " data."
+    }
+
+    # Test 1: JQCompileError
+    with patch(
+        "tel2puml.__main__.generate_component_options"
+    ) as mock_generate_options:
+        mock_generate_options.side_effect = JQCompileError("Test error")
+
+        main(args_dict, errors_lookup)
+        captured = capfd.readouterr()
+        # Check if the correct error message was printed
+        assert (
+            "\nERROR: Use the -d flag for more detailed information."
+        ) in captured.out
+        assert (
+            "User error: Error occurred during JQ compiling."
+        ) in captured.out
+
+    # Test 2: JQExtractionError
+    with patch(
+        "tel2puml.__main__.generate_component_options"
+    ) as mock_generate_options:
+        mock_generate_options.side_effect = JQExtractionError("Test error")
+
+        main(args_dict, errors_lookup)
+        captured = capfd.readouterr()
+        # Check if the correct error message was printed
+        assert (
+            "\nERROR: Use the -d flag for more detailed information."
+        ) in captured.out
+        assert (
+            "User error: Error occurred during JQ extraction."
+        ) in captured.out
+
+    # Test 3: JSONDecodeError
+    with patch(
+        "tel2puml.__main__.generate_component_options"
+    ) as mock_generate_options:
+        mock_generate_options.side_effect = JSONDecodeError(
+            "JSONDecodeError", "", 0
+        )
+
+        main(args_dict, errors_lookup)
+        captured = capfd.readouterr()
+        # Check if the correct error message was printed
+        assert (
+            "\nERROR: Use the -d flag for more detailed information."
+        ) in captured.out
+        assert (
+            "User error: Invalid JSON format detected. Please check your"
+            " JSON files."
+        ) in captured.out
+
+    # Test 4: ValidationError
+    with patch(
+        "tel2puml.__main__.generate_component_options"
+    ) as mock_generate_options:
+        # Written like this as ValidationError in pydantic does not have a
+        # constructor
+        mock_generate_options.side_effect = (
+            ValidationError.from_exception_data("Invalid data", line_errors=[])
+        )
+
+        main(args_dict, errors_lookup)
+        captured = capfd.readouterr()
+        # Check if the correct error message was printed
+        assert (
+            "\nERROR: Use the -d flag for more detailed information."
+        ) in captured.out
+        assert (
+            "User error: Input validation failed. Please check the input"
+            " data."
+        ) in captured.out
+
+    # Test 5: Unexpected Exception
+    with patch(
+        "tel2puml.__main__.generate_component_options"
+    ) as mock_generate_options:
+        mock_generate_options.side_effect = Exception("Unexpected error")
+
+        main(args_dict, errors_lookup)
+        captured = capfd.readouterr()
+        # Check if the correct error message was printed
+        assert (
+            "\nERROR: Use the -d flag for more detailed information."
+        ) in captured.out
+        assert (
+            "Please raise an issue at https://github.com/xtuml/otel2puml."
+        ) in captured.out
