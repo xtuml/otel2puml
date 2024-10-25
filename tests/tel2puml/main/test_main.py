@@ -180,7 +180,6 @@ def test_handle_exception(
     """Tests the function handle_exception."""
     # Mock the exit function so that the test does not exit the test suite
     monkeypatch.setattr("builtins.exit", Mock())
-    e = Exception("Test exception")
 
     # Test 1: debug = True
     # Raises an exception with traceback
@@ -223,6 +222,5 @@ def test_handle_exception(
     )
     assert (
         "An unexpected error occurred. Unexpected test error. Please"
-        " contact smartDCSIT support for assistance."
-        in captured.out
+        " contact smartDCSIT support for assistance." in captured.out
     )
