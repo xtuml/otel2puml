@@ -184,7 +184,7 @@ This dependency is automatically managed when using the devcontainer setup or wh
 
 ## Installation
 
-There are two ways to set up this project: manual installation or using a devcontainer (recommended).
+There are two ways to set up this project: manual installation (both for usage and development) or using a devcontainer (development).
 
 ### Manual Installation
 
@@ -273,6 +273,8 @@ Alternatively, you can use the provided devcontainer, which manages all dependen
 * When prompted, click "Reopen in Container" or use the command palette (F1) and select "Remote-Containers: Reopen in Container"
 
 The devcontainer will automatically set up the environment with all necessary dependencies.
+
+It is recommended to only use this for development purposes as files/directories on the users system will not be reachable from the container without specifically mounting volumes.
 
 ## tel2puml CLI Documentation
 
