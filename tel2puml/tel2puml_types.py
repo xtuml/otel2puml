@@ -46,10 +46,19 @@ class PVEventModel(BaseModel):
     jobId: str
     eventId: str
     timestamp: str
-    previousEventIds: Optional[list[str] | str] = Field(None)
+    previousEventIds: Optional[list[str]] = Field([])
     applicationName: str
     jobName: str
     eventType: str
+
+    @model_validator(mode="before")
+    def check_prev_event_ids(cls, values) -> Any:
+        """Check if previousEventIds is a string and convert it to a list
+        of strings."""
+        previous_event_ids = values.get("previousEventIds")
+        if previous_event_ids and isinstance(previous_event_ids, str):
+            values["previousEventIds"] = [previous_event_ids]
+        return values
 
 
 class NestedEvent(TypedDict):

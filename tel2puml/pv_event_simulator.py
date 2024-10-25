@@ -299,12 +299,8 @@ def transform_dict_into_pv_event(
         applicationName=pv_event_model.applicationName,
         jobName=pv_event_model.jobName,
     )
-    if pv_event_model.previousEventIds is not None:
-        prev_event_ids = pv_event_model.previousEventIds
-        if isinstance(prev_event_ids, str):
-            pv_event["previousEventIds"] = [prev_event_ids]
-        else:
-            pv_event["previousEventIds"] = prev_event_ids
+    if len(pv_event_model.previousEventIds) > 0:
+        pv_event["previousEventIds"] = pv_event_model.previousEventIds
     return pv_event
 
 
