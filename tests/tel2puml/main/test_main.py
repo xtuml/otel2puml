@@ -19,10 +19,8 @@ from tel2puml.__main__ import (
     handle_exception,
     main,
 )
-from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter import (
-    JQCompileError,
-    JQExtractionError,
-)
+from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter \
+    import JQCompileError, JQExtractionError
 
 
 def test_generate_config(tmp_path: Path) -> None:

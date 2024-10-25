@@ -344,7 +344,7 @@ def main(
             args_dict["command"],
         )
     except tuple(errors_lookup.keys()) as e:
-        error_message = errors_lookup.get(type(e))
+        error_message = errors_lookup[type(e)]
         handle_exception(
             e, debug, user_error=True, custom_message=error_message
         )
