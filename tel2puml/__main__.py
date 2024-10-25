@@ -296,7 +296,7 @@ def handle_exception(
     user_error: bool = False,
     custom_message: str = "",
 ) -> None:
-    """Handle exceptions with custom messaging and exit codes.
+    """Handle exceptions with custom messaging.
 
     :param e: The exception instance to handle.
     :type e: :class:`Exception`
@@ -307,8 +307,6 @@ def handle_exception(
     :type user_error: `bool`, optional
     :param custom_message: Custom error message for user, defaults to "".
     :type custom_message: `str`, optional
-    :param exit_code: Exit code for the program, defaults to 1.
-    :type exit_code: `int`, optional
     """
     if debug:
         print(f"DEBUG: {traceback.format_exc()}")
