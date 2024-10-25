@@ -312,7 +312,10 @@ def handle_exception(
         else:
             print("\nAn unexpected error occurred")
             print(f"\n{e}")
-            print("\nPlease contact smartDCSIT support for assistance.")
+            print(
+                "\nPlease raise an issue at "
+                "https://github.com/xtuml/otel2puml."
+            )
     exit(1)
 
 

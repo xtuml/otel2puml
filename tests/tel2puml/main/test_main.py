@@ -224,7 +224,10 @@ def test_handle_exception(
     assert (
         "ERROR: Use the -d flag for more detailed information." in captured.out
     )
-    assert "Please contact smartDCSIT support for assistance." in captured.out
+    assert (
+        "Please raise an issue at https://github.com/xtuml/otel2puml"
+        in captured.out
+    )
 
 
 def test_main_error_handling(
@@ -337,5 +340,5 @@ def test_main_error_handling(
             "\nERROR: Use the -d flag for more detailed information."
         ) in captured.out
         assert (
-            "Please contact smartDCSIT support for assistance."
+            "Please raise an issue at https://github.com/xtuml/otel2puml."
         ) in captured.out
