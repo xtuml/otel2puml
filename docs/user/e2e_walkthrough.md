@@ -40,7 +40,7 @@ For manual installation, if run successfully, a `Users_Service.puml` file can no
 
 **NB. Due to the how the application works, the layout of the PUML may differ, however the structure and flow should remain consistent.**
 
-![](/docs/images/example_Users_Service.svg)
+![](/docs/images/user/example_Users_Service.svg)
 
 ### Step 5: Exploring other commands
 
@@ -68,4 +68,4 @@ Alternatively, the example files can be used:
 python -m tel2puml -o puml_output pv2puml -fp docs/e2e_walkthrough/example_pv_event_sequence_files -jn "Users_Service_pv2puml"
 ```
 
-The output should be the same as Step 4.
+The output should be the same as Step 4 (note that the two labels at the top and the output file name will use the value of `-jn` (`--job-name`) argument).
