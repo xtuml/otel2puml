@@ -289,7 +289,7 @@ def transform_dict_into_pv_event(
         timestamp=(pv_dict[mapping_config.timestamp]),
         applicationName=(pv_dict[mapping_config.applicationName]),
         jobName=(pv_dict[mapping_config.jobName]),
-        previousEventIds=(pv_dict.get(mapping_config.previousEventIds, None)),
+        previousEventIds=(pv_dict.get(mapping_config.previousEventIds, [])),
     )
     pv_event = PVEvent(
         eventId=pv_event_model.eventId,
