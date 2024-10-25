@@ -37,9 +37,24 @@ from tel2puml.tel2puml_types import (
     PVEventMappingConfig,
 )
 from tel2puml.otel_to_pv.config import IngestDataConfig
-from tel2puml.otel_to_pv. \
-    data_sources.json_data_source.json_jq_converter \
-    import JQCompileError, JQExtractionError
+from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter import (
+    JQCompileError,
+    JQExtractionError,
+)
+
+EXCEPTION_CLASSES = (
+    ValidationError,
+    JSONDecodeError,
+    JQCompileError,
+    JQExtractionError,
+)
+
+ERROR_MESSAGES = {
+    ValidationError: "Input validation failed. Please check the input data.",
+    JSONDecodeError: "Invalid JSON format detected. Please check your JSON files.",
+    JQCompileError: "Error occurred during JQ compiling.",
+    JQExtractionError: "Error occurred during JQ extraction.",
+}
 
 
 parser = argparse.ArgumentParser(prog="otel2puml")
@@ -281,7 +296,6 @@ def handle_exception(
     debug: bool,
     user_error: bool = False,
     custom_message: str = "",
-    exit_code: int = 1,
 ) -> None:
     """Handle exceptions with custom messaging and exit codes.
 
@@ -302,12 +316,13 @@ def handle_exception(
     else:
         print("\nERROR: Use the -d flag for more detailed information.")
         if user_error:
-            print(f"User error: {custom_message} {e}")
+            print(f"\nUser error: {custom_message}")
+            print(f"\n{e}")
         else:
-            print(f"An unexpected error occurred. {e}. Please"
-                  " contact smartDCSIT support for assistance.")
-
-    exit(exit_code)
+            print(f"\nAn unexpected error occurred")
+            print(f"\n{e}")
+            print("\nPlease contact smartDCSIT support for assistance.")
+    exit(1)
 
 
 if __name__ == "__main__":
@@ -327,31 +342,10 @@ if __name__ == "__main__":
             args_dict["output_file_directory"],
             args.command,
         )
-    except ValidationError as e:
+    except EXCEPTION_CLASSES as e:
+        error_message = ERROR_MESSAGES.get(type(e), str(e))
         handle_exception(
-            e,
-            debug,
-            user_error=True,
-            custom_message="Input validation failed. Please check the"
-            " input data.",
-            exit_code=2,
-        )
-    except JSONDecodeError as e:
-        handle_exception(
-            e,
-            debug,
-            user_error=True,
-            custom_message="Invalid JSON format detected. Please check your"
-            " JSON files.",
-            exit_code=3,
-        )
-    except (JQCompileError, JQExtractionError) as e:
-        handle_exception(
-            e,
-            debug,
-            user_error=True,
-            custom_message="Error occurred during JQ processing.",
-            exit_code=4,
+            e, debug, user_error=True, custom_message=error_message
         )
     except Exception as e:
         handle_exception(e, debug)
