@@ -5,14 +5,17 @@ import os
 import tempfile
 from pathlib import Path
 from typing import Literal
+from unittest.mock import Mock
 
 import pytest
 from pydantic import ValidationError
+from pytest import MonkeyPatch, CaptureFixture
 
 from tel2puml.__main__ import (
     generate_config,
     find_files,
     generate_component_options,
+    handle_exception,
 )
 
 
@@ -168,3 +171,58 @@ def test_generate_components_options(
         otel_pv_options, pv_puml_options = generate_component_options(
             command, args_dict
         )
+
+
+def test_handle_exception(
+    monkeypatch: MonkeyPatch,
+    capfd: CaptureFixture[str],
+) -> None:
+    """Tests the function handle_exception."""
+    # Mock the exit function so that the test does not exit the test suite
+    monkeypatch.setattr("builtins.exit", Mock())
+    e = Exception("Test exception")
+
+    # Test 1: debug = True
+    # Raises an exception with traceback
+    try:
+        raise Exception("Test exception")
+    except Exception as e:
+        handle_exception(e, debug=True)
+
+    captured = capfd.readouterr()
+    assert "DEBUG:" in captured.out
+    assert "Traceback" in captured.out
+
+    # Test 2: user error, debug = False
+    try:
+        raise Exception("User test error")
+    except Exception as e:
+        handle_exception(
+            e, debug=False, user_error=True, custom_message="Custom error."
+        )
+
+    captured = capfd.readouterr()
+    assert (
+        "ERROR: Use the -d flag for more detailed information." in captured.out
+    )
+    assert "User error: Custom error. User test error" in captured.out
+
+    # Test 3: no user error, debug = False
+    try:
+        raise Exception("Unexpected test error")
+    except Exception as e:
+        handle_exception(
+            e,
+            debug=False,
+            user_error=False,
+        )
+
+    captured = capfd.readouterr()
+    assert (
+        "ERROR: Use the -d flag for more detailed information." in captured.out
+    )
+    assert (
+        "An unexpected error occurred. Unexpected test error. Please"
+        " contact smartDCSIT support for assistance."
+        in captured.out
+    )

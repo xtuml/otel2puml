@@ -304,7 +304,7 @@ def handle_exception(
         if user_error:
             print(f"User error: {custom_message} {e}")
         else:
-            print(f"An unexpected error occurred. {custom_message} {e}. Please"
+            print(f"An unexpected error occurred. {e}. Please"
                   " contact smartDCSIT support for assistance.")
 
     exit(exit_code)
