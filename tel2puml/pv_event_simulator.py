@@ -299,7 +299,7 @@ def transform_dict_into_pv_event(
         applicationName=pv_event_model.applicationName,
         jobName=pv_event_model.jobName,
     )
-    if len(pv_event_model.previousEventIds) > 0:
+    if mapping_config.previousEventIds in pv_dict:
         pv_event["previousEventIds"] = pv_event_model.previousEventIds
     return pv_event
 

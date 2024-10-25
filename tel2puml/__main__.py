@@ -23,7 +23,7 @@ import argparse
 import yaml
 import warnings
 import traceback
-from typing import Any, Literal
+from typing import Any, Literal, Type
 from json import JSONDecodeError
 
 from pydantic import ValidationError
@@ -37,10 +37,8 @@ from tel2puml.tel2puml_types import (
     PVEventMappingConfig,
 )
 from tel2puml.otel_to_pv.config import IngestDataConfig
-from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter import (
-    JQCompileError,
-    JQExtractionError,
-)
+from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter \
+    import JQCompileError, JQExtractionError
 
 EXCEPTION_CLASSES = (
     ValidationError,
@@ -51,7 +49,8 @@ EXCEPTION_CLASSES = (
 
 ERROR_MESSAGES = {
     ValidationError: "Input validation failed. Please check the input data.",
-    JSONDecodeError: "Invalid JSON format detected. Please check your JSON files.",
+    JSONDecodeError: "Invalid JSON format detected. Please check your JSON "
+    "files.",
     JQCompileError: "Error occurred during JQ compiling.",
     JQExtractionError: "Error occurred during JQ extraction.",
 }
@@ -319,10 +318,46 @@ def handle_exception(
             print(f"\nUser error: {custom_message}")
             print(f"\n{e}")
         else:
-            print(f"\nAn unexpected error occurred")
+            print("\nAn unexpected error occurred")
             print(f"\n{e}")
             print("\nPlease contact smartDCSIT support for assistance.")
     exit(1)
+
+
+def main(
+    args_dict: dict[str, Any],
+    errors_lookup: dict[Type[Exception], str],
+) -> None:
+    """Main function to execute the tel2puml command.
+
+    :param args_dict: Dictionary of command-line arguments.
+    :type args_dict: `dict`[`str`, `Any`]
+    :param errors_lookup: Dictionary mapping exceptions to error messages.
+    :type errors_lookup: `dict`[`Type`[:class:`Exception`], `str`]
+    """
+    debug = args_dict.get("debug", False)
+    if "debug" in args_dict:
+        del args_dict["debug"]
+    try:
+        command: Literal["otel2puml", "otel2pv", "pv2puml"] = args_dict[
+            "command"
+        ]
+        otel_pv_options, pv_puml_options = generate_component_options(
+            command, args_dict
+        )
+        otel_to_puml(
+            otel_pv_options,
+            pv_puml_options,
+            args_dict["output_file_directory"],
+            args_dict["command"],
+        )
+    except tuple(errors_lookup.keys()) as e:
+        error_message = errors_lookup.get(type(e), str(e))
+        handle_exception(
+            e, debug, user_error=True, custom_message=error_message
+        )
+    except Exception as e:
+        handle_exception(e, debug)
 
 
 if __name__ == "__main__":
@@ -330,22 +365,4 @@ if __name__ == "__main__":
 
     args: argparse.Namespace = parser.parse_args()
     args_dict = vars(args)
-    debug = args_dict.get("debug", False)
-    del args_dict["debug"]
-    try:
-        otel_pv_options, pv_puml_options = generate_component_options(
-            args.command, args_dict
-        )
-        otel_to_puml(
-            otel_pv_options,
-            pv_puml_options,
-            args_dict["output_file_directory"],
-            args.command,
-        )
-    except EXCEPTION_CLASSES as e:
-        error_message = ERROR_MESSAGES.get(type(e), str(e))
-        handle_exception(
-            e, debug, user_error=True, custom_message=error_message
-        )
-    except Exception as e:
-        handle_exception(e, debug)
+    main(args_dict, ERROR_MESSAGES)

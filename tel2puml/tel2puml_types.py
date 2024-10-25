@@ -52,7 +52,9 @@ class PVEventModel(BaseModel):
     eventType: str
 
     @model_validator(mode="before")
-    def check_prev_event_ids(cls, values) -> Any:
+    def check_prev_event_ids(
+        cls: Type["PVEventModel"], values: dict[str, Any]
+    ) -> dict[str, Any]:
         """Check if previousEventIds is a string and convert it to a list
         of strings."""
         previous_event_ids = values.get("previousEventIds")

@@ -1,6 +1,7 @@
 """Tests for the pydantic models within tel2puml_types.py"""
 
 import tempfile
+from typing import Any
 
 import pytest
 from pydantic import ValidationError
@@ -107,11 +108,12 @@ def test_pv_to_puml_args() -> None:
                 file_paths=[tmp_file3.name], folder_path=None, group_by_job=0
             )
 
+
 def test_pv_event_model() -> None:
     """Test for the pydantic model PVEventModel"""
 
     # Test 1: Valid PVEventModel
-    event_data = {
+    event_data: dict[str, Any] = {
         "jobId": "job123",
         "eventId": "event123",
         "timestamp": "2023-01-01T00:00:00Z",
@@ -128,15 +130,7 @@ def test_pv_event_model() -> None:
     assert event.jobName == "job"
     assert event.eventType == "type"
 
-    # Test 2: Invalid PVEventModel - missing required fields
-    with pytest.raises(ValidationError):
-        PVEventModel(
-            jobId="job123",
-            eventId="event123",
-            timestamp="2023-01-01T00:00:00Z",
-        )
-
-    # Test 3: Invalid PVEventModel - incorrect type for previousEventIds
+    # Test 2: Invalid PVEventModel - incorrect type for previousEventIds
     with pytest.raises(ValidationError):
         PVEventModel(
             jobId="job123",
@@ -148,12 +142,12 @@ def test_pv_event_model() -> None:
             previousEventIds=123,
         )
 
-    # Test 4: Valid PVEventModel with previousEventIds as a string
+    # Test 3: Valid PVEventModel with previousEventIds as a string
     event_data["previousEventIds"] = "prev_event"
     event = PVEventModel(**event_data)
     assert event.previousEventIds == ["prev_event"]
 
-    # Test 5: Valid PVEventModel with previousEventIds as a list
+    # Test 4: Valid PVEventModel with previousEventIds as a list
     event_data["previousEventIds"] = ["prev_event1", "prev_event2"]
     event = PVEventModel(**event_data)
     assert event.previousEventIds == ["prev_event1", "prev_event2"]

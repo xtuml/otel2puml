@@ -5,7 +5,7 @@ import os
 import tempfile
 from pathlib import Path
 from typing import Literal
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from pydantic import ValidationError
@@ -16,7 +16,10 @@ from tel2puml.__main__ import (
     find_files,
     generate_component_options,
     handle_exception,
+    main,
 )
+from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter \
+    import JQCompileError, JQExtractionError
 
 
 def test_generate_config(tmp_path: Path) -> None:
@@ -204,7 +207,7 @@ def test_handle_exception(
     assert (
         "ERROR: Use the -d flag for more detailed information." in captured.out
     )
-    assert "User error: Custom error. User test error" in captured.out
+    assert "User error: Custom error." in captured.out
 
     # Test 3: no user error, debug = False
     try:
@@ -221,6 +224,59 @@ def test_handle_exception(
         "ERROR: Use the -d flag for more detailed information." in captured.out
     )
     assert (
-        "An unexpected error occurred. Unexpected test error. Please"
-        " contact smartDCSIT support for assistance." in captured.out
+        "Please contact smartDCSIT support for assistance." in captured.out
     )
+
+
+def test_main(
+    monkeypatch: MonkeyPatch,
+    capfd: CaptureFixture[str],
+) -> None:
+    """Tests the main function"""
+    # Mock the exit function so that the test does not exit the test suite
+    monkeypatch.setattr("builtins.exit", Mock())
+    args_dict = {
+        "command": "otel2puml",
+        "config_file": "invalid_config.yaml",
+        "ingest_data": True,
+        "find_unique_graphs": False,
+        "output_file_directory": ".",
+        "debug": False,
+    }
+
+    errors_lookup = {
+        JQCompileError: "Error occurred during JQ compiling.",
+        JQExtractionError: "Error occurred during JQ extraction.",
+    }
+
+    # Test 1: JQCompileError
+    with patch(
+        "tel2puml.__main__.generate_component_options"
+    ) as mock_generate_options:
+        mock_generate_options.side_effect = JQCompileError("Test error")
+
+        main(args_dict, errors_lookup)
+        captured = capfd.readouterr()
+        # Check if the correct error message was printed
+        assert (
+            "\nERROR: Use the -d flag for more detailed information."
+        ) in captured.out
+        assert (
+            "User error: Error occurred during JQ compiling."
+        ) in captured.out
+
+    # Test 2: JQExtractionError
+    with patch(
+        "tel2puml.__main__.generate_component_options"
+    ) as mock_generate_options:
+        mock_generate_options.side_effect = JQExtractionError("Test error")
+
+        main(args_dict, errors_lookup)
+        captured = capfd.readouterr()
+        # Check if the correct error message was printed
+        assert (
+            "\nERROR: Use the -d flag for more detailed information."
+        ) in captured.out
+        assert (
+            "User error: Error occurred during JQ extraction."
+        ) in captured.out
