@@ -34,7 +34,7 @@ jobs:
     if: |
       github.repository == 'xtuml/otel2puml'
           && github.actor != 'dependabot[bot]'
-    runs-on: macos-latest
+    runs-on: macos-14-arm64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
