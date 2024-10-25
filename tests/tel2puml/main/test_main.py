@@ -6,6 +6,7 @@ import tempfile
 from pathlib import Path
 from typing import Literal
 from unittest.mock import Mock, patch
+from json import JSONDecodeError
 
 import pytest
 from pydantic import ValidationError
@@ -18,8 +19,10 @@ from tel2puml.__main__ import (
     handle_exception,
     main,
 )
-from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter \
-    import JQCompileError, JQExtractionError
+from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter import (
+    JQCompileError,
+    JQExtractionError,
+)
 
 
 def test_generate_config(tmp_path: Path) -> None:
@@ -223,12 +226,10 @@ def test_handle_exception(
     assert (
         "ERROR: Use the -d flag for more detailed information." in captured.out
     )
-    assert (
-        "Please contact smartDCSIT support for assistance." in captured.out
-    )
+    assert "Please contact smartDCSIT support for assistance." in captured.out
 
 
-def test_main(
+def test_main_error_handling(
     monkeypatch: MonkeyPatch,
     capfd: CaptureFixture[str],
 ) -> None:
@@ -247,6 +248,10 @@ def test_main(
     errors_lookup = {
         JQCompileError: "Error occurred during JQ compiling.",
         JQExtractionError: "Error occurred during JQ extraction.",
+        JSONDecodeError: "Invalid JSON format detected. Please check your"
+        " JSON files.",
+        ValidationError: "Input validation failed. Please check the input"
+        " data."
     }
 
     # Test 1: JQCompileError
@@ -279,4 +284,60 @@ def test_main(
         ) in captured.out
         assert (
             "User error: Error occurred during JQ extraction."
+        ) in captured.out
+
+    # Test 3: JSONDecodeError
+    with patch(
+        "tel2puml.__main__.generate_component_options"
+    ) as mock_generate_options:
+        mock_generate_options.side_effect = JSONDecodeError(
+            "JSONDecodeError", "", 0
+        )
+
+        main(args_dict, errors_lookup)
+        captured = capfd.readouterr()
+        # Check if the correct error message was printed
+        assert (
+            "\nERROR: Use the -d flag for more detailed information."
+        ) in captured.out
+        assert (
+            "User error: Invalid JSON format detected. Please check your"
+            " JSON files."
+        ) in captured.out
+
+    # Test 4: ValidationError
+    with patch(
+        "tel2puml.__main__.generate_component_options"
+    ) as mock_generate_options:
+        # Written like this as ValidationError in pydantic does not have a
+        # constructor
+        mock_generate_options.side_effect = (
+            ValidationError.from_exception_data("Invalid data", line_errors=[])
+        )
+
+        main(args_dict, errors_lookup)
+        captured = capfd.readouterr()
+        # Check if the correct error message was printed
+        assert (
+            "\nERROR: Use the -d flag for more detailed information."
+        ) in captured.out
+        assert (
+            "User error: Input validation failed. Please check the input"
+            " data."
+        ) in captured.out
+
+    # Test 5: Unexpected Exception
+    with patch(
+        "tel2puml.__main__.generate_component_options"
+    ) as mock_generate_options:
+        mock_generate_options.side_effect = Exception("Unexpected error")
+
+        main(args_dict, errors_lookup)
+        captured = capfd.readouterr()
+        # Check if the correct error message was printed
+        assert (
+            "\nERROR: Use the -d flag for more detailed information."
+        ) in captured.out
+        assert (
+            "Please contact smartDCSIT support for assistance."
         ) in captured.out

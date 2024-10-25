@@ -298,9 +298,10 @@ def transform_dict_into_pv_event(
         timestamp=pv_event_model.timestamp,
         applicationName=pv_event_model.applicationName,
         jobName=pv_event_model.jobName,
+        previousEventIds=pv_event_model.previousEventIds,
     )
-    if mapping_config.previousEventIds in pv_dict:
-        pv_event["previousEventIds"] = pv_event_model.previousEventIds
+    # if mapping_config.previousEventIds in pv_dict:
+    #     pv_event["previousEventIds"] = pv_event_model.previousEventIds
     return pv_event
 
 

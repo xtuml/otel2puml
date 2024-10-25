@@ -51,16 +51,15 @@ class PVEventModel(BaseModel):
     jobName: str
     eventType: str
 
-    @model_validator(mode="before")
+    @field_validator("previousEventIds", mode="before")
     def check_prev_event_ids(
-        cls: Type["PVEventModel"], values: dict[str, Any]
-    ) -> dict[str, Any]:
+        cls: Type["PVEventModel"], value: Any
+    ) -> Any:
         """Check if previousEventIds is a string and convert it to a list
         of strings."""
-        previous_event_ids = values.get("previousEventIds")
-        if previous_event_ids and isinstance(previous_event_ids, str):
-            values["previousEventIds"] = [previous_event_ids]
-        return values
+        if value and isinstance(value, str):
+            return [value]
+        return value
 
 
 class NestedEvent(TypedDict):

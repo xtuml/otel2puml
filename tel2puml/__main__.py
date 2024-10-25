@@ -40,12 +40,6 @@ from tel2puml.otel_to_pv.config import IngestDataConfig
 from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter \
     import JQCompileError, JQExtractionError
 
-EXCEPTION_CLASSES = (
-    ValidationError,
-    JSONDecodeError,
-    JQCompileError,
-    JQExtractionError,
-)
 
 ERROR_MESSAGES = {
     ValidationError: "Input validation failed. Please check the input data.",
@@ -350,7 +344,7 @@ def main(
             args_dict["command"],
         )
     except tuple(errors_lookup.keys()) as e:
-        error_message = errors_lookup.get(type(e), str(e))
+        error_message = errors_lookup.get(type(e))
         handle_exception(
             e, debug, user_error=True, custom_message=error_message
         )
