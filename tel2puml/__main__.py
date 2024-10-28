@@ -40,6 +40,7 @@ from tel2puml.otel_to_pv.config import IngestDataConfig
 from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter \
     import JQCompileError, JQExtractionError
 
+warnings.filterwarnings("ignore")
 
 ERROR_MESSAGES = {
     ValidationError: "Input validation failed. Please check the input data.",
@@ -319,7 +320,7 @@ def handle_exception(
     exit(1)
 
 
-def main(
+def main_handler(
     args_dict: dict[str, Any],
     errors_lookup: dict[Type[Exception], str],
 ) -> None:
@@ -355,9 +356,11 @@ def main(
         handle_exception(e, debug)
 
 
-if __name__ == "__main__":
-    warnings.filterwarnings("ignore")
-
+def main() -> None:
     args: argparse.Namespace = parser.parse_args()
     args_dict = vars(args)
-    main(args_dict, ERROR_MESSAGES)
+    main_handler(args_dict, ERROR_MESSAGES)
+
+
+if __name__ == "__main__":
+    main()
