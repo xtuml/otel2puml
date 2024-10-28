@@ -17,18 +17,15 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      
-      - name: install requirements
-        run: python -m pip install -r requirements.txt --target tel2puml
 
-      - name: Create tel2puml-amd.pyz
-        run: python -m zipapp tel2puml -o tel2puml-amd.pyz
+      - name: Create tel2puml_x86_64.pyz
+        run: ./scripts/build_zipapp.sh tel2puml_x86_64.pyz
       
       - name: Upload to GitHub Releases
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: tel2puml-amd.pyz
+          files: tel2puml_x86_64.pyz
 
   zipapp-arm-build-and-push:
     if: |
@@ -43,15 +40,12 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      
-      - name: install requirements
-        run: python -m pip install -r requirements.txt --target tel2puml --platform manylinux2014_aarch64 --only-binary=:all:
 
-      - name: Create tel2puml-arm.pyz
-        run: python -m zipapp tel2puml -o tel2puml-arm.pyz
+      - name: Create tel2puml_arm64.pyz
+        run: ./scripts/build_zipapp.sh tel2puml_arm64.pyz
 
       - name: Upload to GitHub Releases
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: tel2puml-arm.pyz
+          files: tel2puml_arm64.pyz
