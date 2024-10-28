@@ -9,6 +9,7 @@ cd janus
 git fetch --all --tags
 git checkout tags/v1.0.0 -b latest
 cd ..
+cp -r janus/test_event_generator test_event_generator
 
 # install zipapps
 pip install zipapps
