@@ -4,8 +4,6 @@ from itertools import permutations
 from typing import Optional, Generator, Any, TypeVar, Iterable, Hashable
 
 import networkx as nx
-import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
 from tqdm import tqdm
 
 T = TypeVar("T")
@@ -73,37 +71,6 @@ def convert_nested_generator_to_generator_of_list(
     """
     for item in nested_generator:
         yield list(item)
-
-
-def get_graphviz_plot(
-    nx_graph: "nx.DiGraph[Any]", figsize: tuple[int, int] | None = (10, 10)
-) -> Figure:
-    """Creates a :class:`plt.Figure` object containing the plot of the
-    input graph
-
-    :param nx_graph: the networkx Directed Graph to plot
-    :type nx_graph: :class:`nx.DiGraph`[`Any`]
-    :return: Returns a :class:`Figure` objects containing the plot
-    :rtype: :class:`Figure`
-    """
-    pos = nx.nx_agraph.graphviz_layout(nx_graph, prog="dot")
-    fig, axis = plt.subplots(figsize=figsize)
-    nx.draw(
-        nx_graph,
-        pos,
-        ax=axis,
-        with_labels=True,
-        arrows=True,
-        node_size=1500,
-        font_size=22,
-        font_weight="bold",
-        font_color="k",
-        node_color="C1",
-        width=5.0,
-        style="dotted",
-        edge_color="C0",
-    )
-    return fig
 
 
 def check_has_path_not_through_nodes(
