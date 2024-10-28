@@ -16,5 +16,5 @@ cp -r janus/test_event_generator ./test_event_generator
 pip install zipapps
 
 # create zipapp
-python -m zipapps -c -u AUTO -a tel2puml -a test_event_generator \
-    -m tel2puml.__main__ -o tel2puml_arm.pyz -r requirements.txt -r janus/requirements.txt
+python -m zipapps -c -u AUTO -a tel2puml,test_event_generator \
+    -m tel2puml.main -o tel2puml_arm.pyz -r requirements.txt -r janus/requirements.txt
