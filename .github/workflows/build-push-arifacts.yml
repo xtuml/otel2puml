@@ -19,7 +19,7 @@ jobs:
           python-version: '3.11'
       
       - name: install requirements
-        run: python -m pip install -r requirements.txt --target tel2puml
+        run: python -m pip install -r requirements.txt --target tel2puml --platform manylinux2014_x86_64
 
       - name: Create tel2puml-amd.pyz
         run: python -m zipapp tel2puml -o tel2puml-amd.pyz
@@ -34,7 +34,7 @@ jobs:
     if: |
       github.repository == 'xtuml/otel2puml'
           && github.actor != 'dependabot[bot]'
-    runs-on: macos-14-arm64
+    runs-on: macos-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -45,7 +45,7 @@ jobs:
           python-version: '3.11'
       
       - name: install requirements
-        run: python -m pip install -r requirements.txt --target tel2puml
+        run: python -m pip install -r requirements.txt --target tel2puml --platform manylinux2014_aarch64
 
       - name: Create tel2puml-arm.pyz
         run: python -m zipapp tel2puml -o tel2puml-arm.pyz
