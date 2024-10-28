@@ -19,7 +19,7 @@ jobs:
           python-version: '3.11'
 
       - name: Create tel2puml_x86_64.pyz
-        run: ./scripts/build_zipapp.sh tel2puml_x86_64.pyz
+        run: ./scripts/build_zip_app.sh tel2puml_x86_64.pyz
       
       - name: Upload to GitHub Releases
         uses: softprops/action-gh-release@v2
@@ -42,7 +42,7 @@ jobs:
           python-version: '3.11'
 
       - name: Create tel2puml_arm64.pyz
-        run: ./scripts/build_zipapp.sh tel2puml_arm64.pyz
+        run: ./scripts/build_zip_app.sh tel2puml_arm64.pyz
 
       - name: Upload to GitHub Releases
         uses: softprops/action-gh-release@v2
