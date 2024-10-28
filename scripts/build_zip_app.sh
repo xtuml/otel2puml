@@ -17,4 +17,4 @@ pip install zipapps
 
 # create zipapp
 python -m zipapps -c -u AUTO -a tel2puml -a test_event_generator \
-    -o tel2puml_arm.pyz -r requirements.txt -r janus/requirements.txt
+    -m tel2puml.__main__ -o tel2puml_arm.pyz -r requirements.txt -r janus/requirements.txt
