@@ -357,6 +357,7 @@ def main_handler(
 
 
 def main() -> None:
+    """Main function to execute the tel2puml command."""
     args: argparse.Namespace = parser.parse_args()
     args_dict = vars(args)
     main_handler(args_dict, ERROR_MESSAGES)
