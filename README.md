@@ -165,12 +165,16 @@ Explanation:
 Replace `/path/to/` with the actual paths on your local machine.
 
 ## Using Python Executable
-On each new [release](https://github.com/xtuml/otel2puml/releases) of otel2puml, both an amd and arm python executable are attached as artifacts.
-These are downloadable and can be run from the terminal (assuming python is installed). Below is an example of usage using the arm version:
+On each new [release](https://github.com/xtuml/otel2puml/releases) of otel2puml, a python executable, `tel2puml.pyz` will be built and distributed with the release.
+This is downloadable and can be run from the terminal (assuming python and pip are installed). Below is an example of usage:
 
 ```bash
-python tel2puml-arm.pyz otel2puml -o /path/to/output -c /path/to/config.yaml
+python tel2puml.pyz otel2puml -o /path/to/output -c /path/to/config.yaml
 ```
+
+Note that: 
+- an internet connection will be required to download the dependencies for the first time.
+- pip must be resolvable in the terminal as `pip` for the dependencies to be installed.
 
 ## Dependencies
 
