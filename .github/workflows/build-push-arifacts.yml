@@ -18,34 +18,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Create tel2puml-amd.pyz
-        run: python -m zipapp tel2puml -o tel2puml-amd.pyz
+      - name: Create tel2puml.pyz
+        run: ./scripts/build_zip_app.sh
       
       - name: Upload to GitHub Releases
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: tel2puml-amd.pyz
-
-  zipapp-arm-build-and-push:
-    if: |
-      github.repository == 'xtuml/otel2puml'
-          && github.actor != 'dependabot[bot]'
-    runs-on: macos-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Create tel2puml-arm.pyz
-        run: python -m zipapp tel2puml -o tel2puml-arm.pyz
-
-      - name: Upload to GitHub Releases
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: tel2puml-arm.pyz
+          files: dist/tel2puml.pyz

@@ -17,7 +17,7 @@ from tel2puml.__main__ import (
     find_files,
     generate_component_options,
     handle_exception,
-    main,
+    main_handler,
 )
 from tel2puml.otel_to_pv.data_sources.json_data_source.json_jq_converter \
     import JQCompileError, JQExtractionError
@@ -230,7 +230,7 @@ def test_handle_exception(
     )
 
 
-def test_main_error_handling(
+def test_main_handler_error_handling(
     monkeypatch: MonkeyPatch,
     capfd: CaptureFixture[str],
 ) -> None:
@@ -261,7 +261,7 @@ def test_main_error_handling(
     ) as mock_generate_options:
         mock_generate_options.side_effect = JQCompileError("Test error")
 
-        main(args_dict, errors_lookup)
+        main_handler(args_dict, errors_lookup)
         captured = capfd.readouterr()
         # Check if the correct error message was printed
         assert (
@@ -277,7 +277,7 @@ def test_main_error_handling(
     ) as mock_generate_options:
         mock_generate_options.side_effect = JQExtractionError("Test error")
 
-        main(args_dict, errors_lookup)
+        main_handler(args_dict, errors_lookup)
         captured = capfd.readouterr()
         # Check if the correct error message was printed
         assert (
@@ -295,7 +295,7 @@ def test_main_error_handling(
             "JSONDecodeError", "", 0
         )
 
-        main(args_dict, errors_lookup)
+        main_handler(args_dict, errors_lookup)
         captured = capfd.readouterr()
         # Check if the correct error message was printed
         assert (
@@ -316,7 +316,7 @@ def test_main_error_handling(
             ValidationError.from_exception_data("Invalid data", line_errors=[])
         )
 
-        main(args_dict, errors_lookup)
+        main_handler(args_dict, errors_lookup)
         captured = capfd.readouterr()
         # Check if the correct error message was printed
         assert (
@@ -333,7 +333,7 @@ def test_main_error_handling(
     ) as mock_generate_options:
         mock_generate_options.side_effect = Exception("Unexpected error")
 
-        main(args_dict, errors_lookup)
+        main_handler(args_dict, errors_lookup)
         captured = capfd.readouterr()
         # Check if the correct error message was printed
         assert (
