@@ -158,6 +158,8 @@ Explanation:
 * `-v /path/to/job_json_files:/job_json_files`: Mounts a local folder containing your OTel data in JSON format to the Docker container's /job_json_files directory. Note `/job_json_files` should then be added to the `dirpath` field in the `config.yaml` file.
 * `-v /path/to/config.yaml:/config.yaml`: Mounts the configuration file for `otel2puml` to the Docker container's /config.yaml.
 * `-v /path/to/puml_output:/puml_output`: Mounts a local folder where the output PlantUML diagrams will be saved.
+
+    **NOTE**: If this folder does not exist, docker will likely create it with root permissions and an error will occur when saving output files. Ensure the folder exists before running the command.
 * `ghcr.io/xtuml/otel2puml`:latest: Specifies the Docker image to run.
 * `-o /puml_output`: Tells `otel2puml` where to save the generated PlantUML files inside the container (linked to the local `puml_output` folder).
 * `otel2puml -c /config.yaml`: Runs the `otel2puml` command using the provided configuration file.
