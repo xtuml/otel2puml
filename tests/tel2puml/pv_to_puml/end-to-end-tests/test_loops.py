@@ -129,7 +129,7 @@ class TestBreakPoints:
                 "loop_nested_break_point_equiv.puml",
             ],
         )
-    
+
     @staticmethod
     def test_loop_with_2_breaks_one_leads_to_other(
         end_to_end_test: Callable[..., None],

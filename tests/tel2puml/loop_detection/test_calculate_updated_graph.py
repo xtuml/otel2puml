@@ -278,6 +278,7 @@ def test_update_graph_for_break_events_with_path_to_root_event(
         EventSet(["H"])
     }
 
+
 class TestCalculateUpdatedGraphWithLoopEvent:
     """Tests for the `calculate_updated_graph_with_loop_event` method."""
     @staticmethod
@@ -325,7 +326,7 @@ class TestCalculateUpdatedGraphWithLoopEvent:
             event.event_type: event
             for event in graph.nodes
         }
-    
+
     @staticmethod
     def loop(events: dict[str, "Event"]) -> Loop:
         """Returns a Loop object for the graph."""
@@ -338,9 +339,12 @@ class TestCalculateUpdatedGraphWithLoopEvent:
                 EventEdge(events["C"], events["B"]),
             },
         )
-    
+
     @staticmethod
-    def graph_with_path_back_to_root(graph: "DiGraph[Event]", events: dict[str, "Event"]) -> "DiGraph[Event]":
+    def graph_with_path_back_to_root(
+        graph: "DiGraph[Event]",
+        events: dict[str, "Event"]
+    ) -> "DiGraph[Event]":
         """Returns a graph with a path back to the root event."""
         graph.add_edge(events["A"], events["E"])
         return graph
@@ -398,9 +402,9 @@ class TestCalculateUpdatedGraphWithLoopEvent:
         assert events["N"].in_event_sets == {
             EventSet(["L"]),
         }
-    
+
     def test_calculate_updated_graph_with_loop_event_without_path_back_to_root(
-       self 
+       self
     ) -> None:
         """Test for the `calculate_updated_graph_with_loop_event` method.
         The break events do not have a path back to the root event."""
@@ -409,7 +413,8 @@ class TestCalculateUpdatedGraphWithLoopEvent:
         loop = self.loop(events)
         loop_event = LoopEvent("LOOP", graph)
         events_with_loop_event_replaced = (
-            set(graph.nodes) - loop.loop_events - set([events["E"]]) | {loop_event}
+            set(graph.nodes) - loop.loop_events
+            - set([events["E"]]) | {loop_event}
         )
         graph = calculate_updated_graph_with_loop_event(
             loop=loop, loop_event=loop_event, graph=graph
