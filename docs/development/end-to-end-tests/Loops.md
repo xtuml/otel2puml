@@ -69,13 +69,16 @@ Tests a case where two break points exist in a loop
 Tests a case where a break point is within a nested loop[]
 
 ![](/end-to-end-pumls/loops/break_points/loop_nested_break_point.svg)
+#### Two Break Points In Loop One Leads To The Other
+Tests a case where two break points exist in a loop and one leads to the other
+
+![](/end-to-end-pumls/loops/break_points/loop_with_2_breaks_one_leads_to_other.svg)
 ### Nested Branch Counts
 Tests cases where branch counts are nested within loops
 #### Nested Branch Count At Start Of Loop
 Tests a case where a branch count is nested in a loop, starts the loop and then its children loop back to it again
 
 ![](/end-to-end-pumls/loops/nested_branch_counts/loop_nested_branch_counts.svg)
-
 #### Nested Branch Count At End Of Loop
 Tests a case where a branch count is nested in a loop, ends the loop and then its children loop back to it again
 
