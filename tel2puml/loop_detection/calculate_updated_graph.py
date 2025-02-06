@@ -57,25 +57,33 @@ def calculate_updated_graph_with_loop_event(
     )
     # remove all loop events
     graph.remove_nodes_from(loop.loop_events)
-    # handle break events without path back to root event
+    # handle break events without path back to root event or other break events
     break_events_without_path_back_to_root = {
         event for event in loop.break_events if not has_path(
             graph, root_event, event
         )
     }
+    break_events_without_path_back_to_root_and_other_break_events = {
+        break_event_1
+        for break_event_1 in break_events_without_path_back_to_root
+        for break_event_2 in loop.break_events
+        if not has_path(graph, break_event_2, break_event_1)
+        and break_event_1 != break_event_2
+    }
     update_graph_for_loop_end_events(
-        break_events_without_path_back_to_root,
-        loop.loop_events | loop.break_events,
+        break_events_without_path_back_to_root_and_other_break_events,
+        loop.loop_events,
         loop_event,
         graph,
     )
     # handle break events with path back to root event
     break_events_with_path_back_to_root = (
-        loop.break_events - break_events_without_path_back_to_root
+        loop.break_events
+        - break_events_without_path_back_to_root_and_other_break_events
     )
     update_graph_for_break_events_with_path_to_root_event(
         break_events_with_path_back_to_root,
-        loop.loop_events | loop.break_events,
+        loop.loop_events,
         loop_event,
         graph,
     )

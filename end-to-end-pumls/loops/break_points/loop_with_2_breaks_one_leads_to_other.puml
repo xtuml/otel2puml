@@ -1,0 +1,23 @@
+@startuml
+partition "loop_with_2_breaks_one_leads_to_other" {
+    group "loop_with_2_breaks_one_leads_to_other"
+        #green:A;
+        repeat
+            :B;
+            switch (XOR)
+                case ("")
+                    :E;
+                    :F;
+                    :G;
+                    break
+                case ("")
+                    :F;
+                    :G; 
+                    break
+                case ("")
+                :C;
+            endswitch
+        repeat while
+    end group
+}
+@enduml

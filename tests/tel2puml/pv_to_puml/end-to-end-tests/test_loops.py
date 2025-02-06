@@ -130,6 +130,20 @@ class TestBreakPoints:
             ],
         )
 
+    @staticmethod
+    def test_loop_with_2_breaks_one_leads_to_other(
+        end_to_end_test: Callable[..., None],
+    ) -> None:
+        """Test loop with 2 breaks where one leads to the other."""
+        end_to_end_test(
+            "end-to-end-pumls/loops/break_points/"
+            "loop_with_2_breaks_one_leads_to_other.puml",
+            equivalent_pumls=[
+                "end-to-end-pumls/loops/break_points/"
+                "loop_with_2_breaks_one_leads_to_other_equiv.puml",
+            ],
+        )
+
 
 class TestEdgeCases:
     """End to end tests for edge cases of loops."""
