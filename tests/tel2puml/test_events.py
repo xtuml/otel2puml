@@ -1,10 +1,23 @@
 """Tests for the tel2puml.events module."""
 
+from typing import Any
+
+import pytest
+from pydantic import ValidationError
+
 from tel2puml.events import (
     Event,
     EventSet,
     has_event_set_as_subset,
     get_reduced_event_set,
+    raw_event_input_to_event_input,
+    event_input_to_raw_event_input,
+    event_inputs_to_events,
+    events_to_event_inputs,
+    raw_input_to_events,
+    events_to_raw_input,
+    EventInput,
+    EventSetCountInput,
 )
 
 
@@ -251,3 +264,154 @@ def test_get_reduced_event_set() -> None:
         frozenset(["A"]),
         frozenset(["B"]),
     }
+
+
+class TestEventInputIngestAndOutput:
+    """Tests for the functions that convert between raw and processed event
+    inputs."""
+    @staticmethod
+    def raw_event_input() -> list[dict[str, Any]]:
+        """Return a list of raw event inputs."""
+        return [
+            {
+                "eventType": "A",
+                "outgoingEventSets": [
+                    [{"eventType": "A", "count": 1}],
+                    [{"eventType": "B", "count": 2}],
+                ],
+                "incomingEventSets": [
+                    [{"eventType": "A", "count": 1}],
+                ],
+            },
+            {
+                "eventType": "B",
+                "outgoingEventSets": [
+                    [{"eventType": "C", "count": 2}],
+                ],
+                "incomingEventSets": [
+                    [{"eventType": "A", "count": 1}],
+                ],
+            },
+            {
+                "eventType": "C",
+                "outgoingEventSets": [],
+                "incomingEventSets": [
+                    [{"eventType": "B", "count": 1}],
+                ],
+            },
+        ]
+
+    @staticmethod
+    def event_input() -> list[EventInput]:
+        """Return a list of event inputs."""
+        return [
+            EventInput(
+                eventType="A",
+                outgoingEventSets=[
+                    [EventSetCountInput(eventType="A", count=1)],
+                    [EventSetCountInput(eventType="B", count=2)],
+                ],
+                incomingEventSets=[
+                    [EventSetCountInput(eventType="A", count=1)]
+                ],
+            ),
+            EventInput(
+                eventType="B",
+                outgoingEventSets=[
+                    [EventSetCountInput(eventType="C", count=2)]
+                ],
+                incomingEventSets=[
+                    [EventSetCountInput(eventType="A", count=1)]
+                ],
+            ),
+            EventInput(
+                eventType="C",
+                outgoingEventSets=[],
+                incomingEventSets=[
+                    [EventSetCountInput(eventType="B", count=1)]
+                ],
+            ),
+        ]
+
+    def events(self) -> dict[str, Event]:
+        """Return a dictionary of events."""
+        events_dict = {
+            "A": Event("A"),
+            "B": Event("B"),
+            "C": Event("C"),
+        }
+        events_dict["A"].update_event_sets(["A"])
+        events_dict["A"].update_event_sets(["B", "B"])
+        events_dict["A"].update_in_event_sets(["A"])
+        events_dict["B"].update_event_sets(["C", "C"])
+        events_dict["B"].update_in_event_sets(["A"])
+        events_dict["C"].update_in_event_sets(["B"])
+        return events_dict
+
+    def test_raw_event_input_to_event_input(self) -> None:
+        """Test for function raw_event_input_to_event_input"""
+        raw_event_input = self.raw_event_input()
+        event_inputs = raw_event_input_to_event_input(raw_event_input)
+        assert event_inputs == self.event_input()
+        # Test when there is an incorrect input
+        raw_event_input = [
+            {
+                "eventTip": "A",
+            }
+        ]
+        with pytest.raises(ValidationError):
+            raw_event_input_to_event_input(raw_event_input)
+
+    def test_event_input_to_raw_event_input(self) -> None:
+        """Test for function event_input_to_raw_event_input"""
+        event_inputs = self.event_input()
+        raw_event_input = event_input_to_raw_event_input(event_inputs)
+        assert raw_event_input == self.raw_event_input()
+
+    def test_event_inputs_to_events(self) -> None:
+        """Test for function event_input_to_events"""
+        event_inputs = self.event_input()
+        events = event_inputs_to_events(event_inputs)
+        for event_id, expected_event in self.events().items():
+            assert event_id in events
+            out_event = events[event_id]
+            assert out_event.event_type == expected_event.event_type
+            assert out_event.event_sets == expected_event.event_sets
+            assert out_event.in_event_sets == expected_event.in_event_sets
+        assert set(events.keys()) == set(self.events().keys())
+        # Tests error case when there is a duplicate event
+        event_inputs.append(event_inputs[0])
+        with pytest.raises(ValueError):
+            event_inputs_to_events(event_inputs)
+
+    def test_events_to_event_inputs(self) -> None:
+        """Test for function events_to_event_inputs"""
+        events = self.events()
+        event_inputs = sorted(
+            events_to_event_inputs(events), key=lambda x: x.eventType
+        )
+        assert event_inputs == self.event_input()
+
+    def test_raw_input_to_events(self) -> None:
+        """Test for function raw_input_to_events"""
+        raw_event_input = self.raw_event_input()
+        events = raw_input_to_events(raw_event_input)
+        for event_id, expected_event in self.events().items():
+            assert event_id in events
+            out_event = events[event_id]
+            assert out_event.event_type == expected_event.event_type
+            assert out_event.event_sets == expected_event.event_sets
+            assert out_event.in_event_sets == expected_event.in_event_sets
+        assert set(events.keys()) == set(self.events().keys())
+        # Tests error case when there is a duplicate event
+        raw_event_input.append(raw_event_input[0])
+        with pytest.raises(ValueError):
+            raw_input_to_events(raw_event_input)
+
+    def test_events_to_raw_input(self) -> None:
+        """Test for function events_to_raw_input"""
+        events = self.events()
+        raw_event_input = sorted(
+            events_to_raw_input(events), key=lambda x: x["eventType"]
+        )
+        assert raw_event_input == self.raw_event_input()

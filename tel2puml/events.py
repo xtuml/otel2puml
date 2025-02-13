@@ -2,10 +2,13 @@
 events. It also contains functions to convert these classes to a Markov graph.
 """
 
-from typing import Iterable
+from typing import Iterable, Any
 from copy import deepcopy
 from uuid import uuid4
+import os
+import json
 
+from pydantic import BaseModel, TypeAdapter, Field
 from pm4py import (  # type: ignore[import-untyped]
     ProcessTree,
 )
@@ -114,6 +117,17 @@ class EventSet(dict[str, int]):
             event_type: (self[event_type] if event_type in self else 0)
             for event_type in event_types
         }
+
+    def to_event_set_count_input_list(self) -> list["EventSetCountInput"]:
+        """Method to convert the event set to a list of event set count inputs.
+
+        :return: The event set count inputs.
+        :rtype: `list`[:class:`EventSetCountInput`]
+        """
+        return [
+            EventSetCountInput(eventType=event, count=count)
+            for event, count in self.items()
+        ]
 
 
 class Event:
@@ -327,6 +341,24 @@ class Event:
             if event_type not in event_set
         }
 
+    def to_event_input(self) -> "EventInput":
+        """Method to convert the event to an event input.
+
+        :return: The event input.
+        :rtype: :class:`EventInput`
+        """
+        return EventInput(
+            eventType=self.event_type,
+            outgoingEventSets=[
+                event_set.to_event_set_count_input_list()
+                for event_set in self.event_sets
+            ],
+            incomingEventSets=[
+                event_set.to_event_set_count_input_list()
+                for event_set in self.in_event_sets
+            ],
+        )
+
 
 def events_to_markov_graph(
     events: Iterable[Event],
@@ -479,9 +511,7 @@ def get_overlapping_events_from_event_and_graph(
     :rtype: `set`[`frozenset`[`str`]]
     """
     return get_overlapping_events_from_event_sets_and_connected_events(
-        event.event_sets, set(
-            edge[1] for edge in graph.out_edges(event)
-        )
+        event.event_sets, set(edge[1] for edge in graph.out_edges(event))
     )
 
 
@@ -504,3 +534,179 @@ def get_event_to_over_lapping_events_map(
         if over_lapping_events:
             event_to_overlapping_events_map[event] = over_lapping_events
     return event_to_overlapping_events_map
+
+
+class EventSetCountInput(BaseModel):
+    """Class to store the count of an event.
+
+    :param eventType: The type of event.
+    :type eventType: `str`
+    :param count: The count of the event.
+    :type count: `int`
+    """
+
+    eventType: str
+    count: int
+
+
+class EventInput(BaseModel):
+    """Class to store the input for an event.
+
+    :param eventType: The type of event.
+    :type eventType: `str`
+    :param eventSets: The event sets.
+    :type eventSets: `list`[:class:`EventSetCountInput`]
+    """
+
+    eventType: str
+    outgoingEventSets: list[list[EventSetCountInput]] = Field(
+        default_factory=list
+    )
+    incomingEventSets: list[list[EventSetCountInput]] = Field(
+        default_factory=list
+    )
+
+
+class EventInputsFile(BaseModel):
+    job_name: str
+    events: list[EventInput]
+
+
+def raw_event_input_to_event_input(raw_input_list: Any) -> list[EventInput]:
+    """This function converts a raw input, validating it and then
+    to a list of event inputs.
+
+    :param raw_input_list: The raw input list.
+    :type raw_input_list: `Any`
+    :return: The event inputs.
+    :rtype: `list`[:class:`EventInput`]"""
+    return TypeAdapter(list[EventInput]).validate_python(raw_input_list)
+
+
+def event_input_to_raw_event_input(event_input_list: list[EventInput]) -> Any:
+    """This function converts a list of event inputs to a raw input that can be
+    serialised to JSON
+
+    :param event_input_list: The event input list.
+    :type event_input_list: `list`[:class:`EventInput`]
+    :return: The raw input.
+    :rtype: `Any`
+    """
+    return TypeAdapter(list[EventInput]).dump_python(event_input_list)
+
+
+def event_inputs_to_events(
+    eventInputs: list[EventInput],
+) -> dict[str, Event]:
+    """This function converts a list of event inputs to a dictionary of events.
+
+    :param eventInputs: The event inputs.
+    :type eventInputs: `list`[:class:`EventInput`]
+    :return: The events.
+    :rtype: `dict`[`str`, :class:`Event`]
+    """
+    events: dict[str, Event] = {}
+    for eventInput in eventInputs:
+        if eventInput.eventType in events:
+            raise ValueError(
+                f"Event type {eventInput.eventType} already exists. "
+                "Make sure the input array only contains unique event types."
+            )
+        event = Event(eventInput.eventType)
+        for eventSetList in eventInput.outgoingEventSets:
+            event.event_sets.add(
+                EventSet(
+                    [
+                        eventSet.eventType
+                        for eventSet in eventSetList
+                        for _ in range(eventSet.count)
+                    ]
+                )
+            )
+        for eventSetList in eventInput.incomingEventSets:
+            event.in_event_sets.add(
+                EventSet(
+                    [
+                        eventSet.eventType
+                        for eventSet in eventSetList
+                        for _ in range(eventSet.count)
+                    ]
+                )
+            )
+        events[eventInput.eventType] = event
+    return events
+
+
+def events_to_event_inputs(
+    events: dict[str, Event],
+) -> list[EventInput]:
+    """This function converts a dictionary of events to a list of event inputs.
+
+    :param events: The events.
+    :type events: `dict`[`str`, :class:`Event`]
+    :return: The event inputs.
+    :rtype: `list`[:class:`EventInput`]
+    """
+    eventInputs: list[EventInput] = []
+    for event in events.values():
+        eventInputs.append(event.to_event_input())
+    return eventInputs
+
+
+def raw_input_to_events(raw_input: Any) -> dict[str, Event]:
+    """This function converts a raw input to a dictionary of events.
+
+    :param raw_input: The raw input.
+    :type raw_input: `Any`
+    :return: The events.
+    :rtype: `dict`[`str`, :class:`Event`]
+    """
+    return event_inputs_to_events(raw_event_input_to_event_input(raw_input))
+
+
+def events_to_raw_input(events: dict[str, Event]) -> Any:
+    """This function converts a dictionary of events to a raw input.
+
+    :param events: The events.
+    :type events: `dict`[`str`, :class:`Event`]
+    :return: The raw input.
+    :rtype: `Any`
+    """
+    return event_input_to_raw_event_input(events_to_event_inputs(events))
+
+
+def load_events_from_file(file_path: str) -> tuple[str, dict[str, Event]]:
+    """This function loads events from a file.
+
+    :param file_path: The file path.
+    :type file_path: `str`
+    :return: The job name and the events.
+    :rtype: `tuple`[`str`, `dict`[`str`, :class:`Event`]]
+    """
+    if not os.path.isfile(file_path):
+        raise FileNotFoundError(f"Input events file not found: {file_path}")
+    with open(file_path, "r") as file:
+        raw_input = json.load(file)
+        events_input_file_model = EventInputsFile.model_validate(raw_input)
+        return events_input_file_model.job_name, event_inputs_to_events(
+            events_input_file_model.events
+        )
+
+
+def save_events_to_file(
+    job_name: str, events: dict[str, Event], file_path: str
+) -> None:
+    """This function saves events to a file.
+
+    :param job_name: The job name.
+    :type job_name: `str`
+    :param events: The events.
+    :type events: `dict`[`str`, :class:`Event`]
+    :param file_path: The file path.
+    :type file_path: `str`
+    """
+    events_input_file_model = EventInputsFile(
+        job_name=job_name, events=events_to_event_inputs(events)
+    )
+    with open(file_path, "w") as file:
+        json.dump(events_input_file_model.model_dump(), file, indent=4)
