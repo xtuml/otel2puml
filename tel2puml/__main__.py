@@ -70,17 +70,18 @@ parser.add_argument(
 input_output_parent_parser = argparse.ArgumentParser(add_help=False)
 
 input_output_parent_parser.add_argument(
-    "-i",
+    "-im",
     "--input-puml-models",
     metavar="input_puml_models",
-    help="Input puml models",
+    help="Input puml models file paths. Can be used multiple times",
     action="append",
     dest="input_puml_models",
     required=False,
+    default=[],
 )
 
 input_output_parent_parser.add_argument(
-    "-o",
+    "-om",
     "--output-puml-models",
     help="Flag to indicate whether to save puml models",
     action="store_true",
