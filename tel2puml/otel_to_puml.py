@@ -60,7 +60,7 @@ def otel_to_puml(
     if global_options is not None:
         input_puml_models = global_options["input_puml_models"]
         for input_puml_model in input_puml_models:
-            job_name, events = load_events_from_file(input_puml_model)
+            job_name, events = load_events_from_file(str(input_puml_model))
             events_to_jobs_map[job_name] = events
     else:
         global_options = GlobalOptions(

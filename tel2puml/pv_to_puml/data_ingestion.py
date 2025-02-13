@@ -232,7 +232,7 @@ def update_and_create_events_from_graph_solutions(
     :rtype: `dict`[`str`, :class:`Event`]
     """
     if events is None:
-        events: dict[str, Event] = {}
+        events = {}
     for graph_solution in graph_solutions:
         update_and_create_events_from_graph_solution(graph_solution, events)
     return events

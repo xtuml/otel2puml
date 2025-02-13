@@ -435,6 +435,7 @@ def mock_event_model() -> dict[str, Any]:
 
 @pytest.fixture
 def mock_job_json_file_for_event_model() -> list[dict[str, Any]]:
+    """Fixture to mock job json file for event model."""
     return [
         {
             "eventId": "evt_001",
@@ -458,6 +459,7 @@ def mock_job_json_file_for_event_model() -> list[dict[str, Any]]:
 
 @pytest.fixture
 def expected_model_output() -> list[dict[str, Any]]:
+    """Fixture for expected model output."""
     return sorted([
         {
             "eventType": "|||START|||",

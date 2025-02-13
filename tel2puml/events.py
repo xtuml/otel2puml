@@ -568,6 +568,7 @@ class EventInput(BaseModel):
 
 
 class EventInputsFile(BaseModel):
+    """Class to store the input for a file of events."""
     job_name: str
     events: list[EventInput]
 

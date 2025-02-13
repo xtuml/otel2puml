@@ -4,7 +4,7 @@ import yaml
 import os
 import tempfile
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Any
 from unittest.mock import Mock, patch
 from json import JSONDecodeError
 
@@ -131,7 +131,7 @@ def test_generate_components_options(
         "group_by_job": False,
     }
     with pytest.raises(ValidationError):
-        otel_pv_options, pv_puml_options = generate_component_options(
+        generate_component_options(
             command, args_dict
         )
 
@@ -173,36 +173,48 @@ def test_generate_components_options(
         "group_by_job": True,
     }
     with pytest.raises(FileNotFoundError):
-        otel_pv_options, pv_puml_options = generate_component_options(
+        generate_component_options(
             command, args_dict
         )
 
     # Test 7: pv2puml, otel2puml, otel2pv command, with input_puml_models and
     # output_puml_models provided
-    commands = ["pv2puml", "otel2puml", "otel2pv"]
-    tmp_file = tmp_path / "file1.puml"
-    tmp_file.write_text("")
-    global_options_combinations = [
-        {"input_puml_models": [tmp_file], "output_puml_models": True},
-        {"input_puml_models": [tmp_file]},
+    commands: list[Literal["pv2puml", "otel2puml", "otel2pv"]] = [
+        "pv2puml",
+        "otel2puml",
+        "otel2pv",
+    ]
+    tmp_model_path = tmp_path / "file1.puml"
+    tmp_model_path.write_text("")
+    global_options_combinations: list[dict[str, Any]] = [
+        {"input_puml_models": [tmp_model_path], "output_puml_models": True},
+        {"input_puml_models": [tmp_model_path]},
         {"output_puml_models": True},
     ]
-    for command in commands:
-        for global_options in global_options_combinations:
+    for command_out in commands:
+        for global_options_combo in global_options_combinations:
             args_dict = {
-                "command": command,
+                "command": command_out,
                 "folder_path": nested_dir_1,
                 "config_file": str(mock_yaml_config_file),
-                **global_options,
+                **global_options_combo,
             }
-            if command == "otel2pv":
+            if command_out == "otel2pv":
                 with pytest.raises(ValidationError):
-                    _ = generate_component_options(command, args_dict)
+                    _ = generate_component_options(command_out, args_dict)
             else:
                 otel_pv_options, pv_puml_options, global_options = (
-                    generate_component_options(command, args_dict)
+                    generate_component_options(command_out, args_dict)
                 )
-                assert global_options == GlobalOptions(**global_options)
+                assert global_options is not None
+                assert global_options == GlobalOptions(
+                    input_puml_models=global_options_combo.get(
+                        "input_puml_models", []
+                    ),
+                    output_puml_models=global_options_combo.get(
+                        "output_puml_models", False
+                    ),
+                )
 
 
 def test_handle_exception(

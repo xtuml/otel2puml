@@ -461,7 +461,7 @@ class TestOtelToPuml:
         input_puml_models_file = tmp_path / "input_puml_models.json"
         input_puml_models_file.write_text(json.dumps(mock_event_model))
         global_options: GlobalOptions = {
-            "input_puml_models": [str(input_puml_models_file)],
+            "input_puml_models": [input_puml_models_file],
             "output_puml_models": output_puml_models,
         }
 
@@ -533,14 +533,15 @@ class TestOtelToPuml:
         data_file.write_text(json.dumps(mock_job_json_file_for_event_model))
         data_files = [str(data_file)]
 
-        pv_to_puml_options: PVPumlOptions = {
-            "file_list": data_files,
-            "job_name": "Frontend_TestJob",
-        }
+        pv_to_puml_options: PVPumlOptions = PVPumlOptions(
+            file_list=data_files,
+            job_name="Frontend_TestJob",
+            group_by_job_id=False,
+        )
         input_puml_models_file = tmp_path / "input_puml_models.json"
         input_puml_models_file.write_text(json.dumps(mock_event_model))
         global_options: GlobalOptions = {
-            "input_puml_models": [str(input_puml_models_file)],
+            "input_puml_models": [input_puml_models_file],
             "output_puml_models": output_puml_models,
         }
 

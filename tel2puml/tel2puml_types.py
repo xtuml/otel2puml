@@ -175,7 +175,7 @@ class OtelSpan(TypedDict):
 class GlobalOptions(TypedDict):
     """Typed dict for global options"""
 
-    input_puml_models: list[str]
+    input_puml_models: list[FilePath]
     output_puml_models: bool
 
 
@@ -302,7 +302,8 @@ class PvToPumlArgs(BaseModel):
 
 
 class GlobalArgs(BaseModel):
-
+    """Pydantic model for shared CLI arguments for otel2puml, otel2pv, and
+    pv2puml."""
     command: Literal["otel2puml", "otel2pv", "pv2puml"] = Field(
         ..., description="Command used within CLI"
     )

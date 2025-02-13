@@ -272,7 +272,7 @@ class TestEventInputIngestAndOutput:
     @staticmethod
     def raw_event_input() -> list[dict[str, Any]]:
         """Return a list of raw event inputs."""
-        return [
+        return sorted([
             {
                 "eventType": "A",
                 "outgoingEventSets": [
@@ -299,12 +299,12 @@ class TestEventInputIngestAndOutput:
                     [{"eventType": "B", "count": 1}],
                 ],
             },
-        ]
+        ], key=lambda x: x["eventType"])
 
     @staticmethod
     def event_input() -> list[EventInput]:
         """Return a list of event inputs."""
-        return [
+        return sorted([
             EventInput(
                 eventType="A",
                 outgoingEventSets=[
@@ -331,7 +331,7 @@ class TestEventInputIngestAndOutput:
                     [EventSetCountInput(eventType="B", count=1)]
                 ],
             ),
-        ]
+        ], key=lambda x: x.eventType)
 
     def events(self) -> dict[str, Event]:
         """Return a dictionary of events."""
@@ -390,6 +390,13 @@ class TestEventInputIngestAndOutput:
         event_inputs = sorted(
             events_to_event_inputs(events), key=lambda x: x.eventType
         )
+        for event_input in event_inputs:
+            event_input.outgoingEventSets = sorted(
+                event_input.outgoingEventSets, key=lambda x: x[0].eventType
+            )
+            event_input.incomingEventSets = sorted(
+                event_input.incomingEventSets, key=lambda x: x[0].eventType
+            )
         assert event_inputs == self.event_input()
 
     def test_raw_input_to_events(self) -> None:
@@ -414,4 +421,13 @@ class TestEventInputIngestAndOutput:
         raw_event_input = sorted(
             events_to_raw_input(events), key=lambda x: x["eventType"]
         )
+        for event_input in raw_event_input:
+            event_input["outgoingEventSets"] = sorted(
+                event_input["outgoingEventSets"],
+                key=lambda x: x[0]["eventType"]
+            )
+            event_input["incomingEventSets"] = sorted(
+                event_input["incomingEventSets"],
+                key=lambda x: x[0]["eventType"]
+            )
         assert raw_event_input == self.raw_event_input()

@@ -142,12 +142,7 @@ def test_pv_streams_to_puml_files(
     )
     # Check that the expected files are created in temp_dir
     expected_files = ["Job_A.puml", "Job_B.puml"]
-    expected_output_model = sorted([
-        {
-            "eventType": "|||START|||",
-            "incomingEventSets": [],
-            "outgoingEventSets": [[{"eventType": "A", "count": 1}]],
-        },
+    expected_output_model = [
         {
             "eventType": "A",
             "incomingEventSets": [[{"eventType": "|||START|||", "count": 1}]],
@@ -168,7 +163,12 @@ def test_pv_streams_to_puml_files(
             "incomingEventSets": [[{"eventType": "C", "count": 1}]],
             "outgoingEventSets": [],
         },
-    ], key=lambda x: x["eventType"])
+        {
+            "eventType": "|||START|||",
+            "incomingEventSets": [],
+            "outgoingEventSets": [[{"eventType": "A", "count": 1}]],
+        },
+    ]
     for idx, expected_file in enumerate(expected_files):
         file_path = os.path.join(temp_dir, expected_file)
         assert os.path.exists(file_path)
