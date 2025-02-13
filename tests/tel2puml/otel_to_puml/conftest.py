@@ -407,3 +407,88 @@ def mock_job_json_file() -> list[dict[str, Any]]:
             "previousEventIds": ["evt_002"],
         },
     ]
+
+
+@pytest.fixture
+def mock_event_model() -> dict[str, Any]:
+    """Fixture to mock event model."""
+    return {
+        "job_name": "Frontend_TestJob",
+        "events": [
+            {
+                "eventType": "TestEvent",
+                "outgoingEventSets": [],
+                "incomingEventSets": [
+                    [{"eventType": "com.T2h.366Yx_500", "count": 1}]
+                ],
+            },
+            {
+                "eventType": "com.T2h.366Yx_500",
+                "outgoingEventSets": [
+                    [{"eventType": "TestEvent", "count": 1}]
+                ],
+                "incomingEventSets": [],
+            },
+        ],
+    }
+
+
+@pytest.fixture
+def mock_job_json_file_for_event_model() -> list[dict[str, Any]]:
+    return [
+        {
+            "eventId": "evt_001",
+            "eventType": "com.C36.9ETRp_401",
+            "jobId": "job_id_001",
+            "timestamp": "2024-09-01T07:45:00Z",
+            "applicationName": "BackupService",
+            "jobName": "Frontend_TestJob",
+        },
+        {
+            "eventId": "evt_002",
+            "eventType": "com.T2h.366Yx_500",
+            "jobId": "job_id_001",
+            "timestamp": "2024-09-01T08:15:00Z",
+            "applicationName": "BackupService",
+            "jobName": "Frontend_TestJob",
+            "previousEventIds": ["evt_001"],
+        },
+    ]
+
+
+@pytest.fixture
+def expected_model_output() -> list[dict[str, Any]]:
+    return sorted([
+        {
+            "eventType": "|||START|||",
+            "outgoingEventSets": [
+                [{"eventType": "com.C36.9ETRp_401", "count": 1}]
+            ],
+            "incomingEventSets": [],
+        },
+        {
+            "eventType": "com.C36.9ETRp_401",
+            "outgoingEventSets": [
+                [{"eventType": "com.T2h.366Yx_500", "count": 1}]
+            ],
+            "incomingEventSets": [
+                [{"eventType": "|||START|||", "count": 1}]
+            ],
+        },
+        {
+            "eventType": "com.T2h.366Yx_500",
+            "outgoingEventSets": [
+                [{"eventType": "TestEvent", "count": 1}]
+            ],
+            "incomingEventSets": [
+                [{"eventType": "com.C36.9ETRp_401", "count": 1}]
+            ],
+        },
+        {
+            "eventType": "TestEvent",
+            "outgoingEventSets": [],
+            "incomingEventSets": [
+                [{"eventType": "com.T2h.366Yx_500", "count": 1}]
+            ],
+        },
+    ], key=lambda x: x["eventType"])

@@ -32,8 +32,11 @@ from tel2puml.otel_to_puml import otel_to_puml
 from tel2puml.tel2puml_types import (
     OtelToPVArgs,
     PvToPumlArgs,
+    GlobalArgs,
     OtelPVOptions,
     PVPumlOptions,
+    GlobalOptions,
+    Options,
     PVEventMappingConfig,
 )
 from tel2puml.otel_to_pv.config import IngestDataConfig
@@ -62,6 +65,28 @@ parser.add_argument(
     default=".",
     dest="output_file_directory",
 )
+
+# load and save model options, shared between otel2puml and pv2puml
+input_output_parent_parser = argparse.ArgumentParser(add_help=False)
+
+input_output_parent_parser.add_argument(
+    "-i",
+    "--input-puml-models",
+    metavar="input_puml_models",
+    help="Input puml models",
+    action="append",
+    dest="input_puml_models",
+    required=False,
+)
+
+input_output_parent_parser.add_argument(
+    "-o",
+    "--output-puml-models",
+    help="Flag to indicate whether to save puml models",
+    action="store_true",
+    dest="output_puml_models",
+)
+
 
 # mapping config, shared between otel2pv and pv2puml
 mapping_config_parent_parser = argparse.ArgumentParser(add_help=False)
@@ -120,7 +145,9 @@ otel_parent_parser.add_argument(
 otel_to_puml_parser = subparsers.add_parser(
     "otel2puml",
     help="otel to puml help",
-    parents=[otel_parent_parser, debug_parent_parser],
+    parents=[
+        otel_parent_parser, debug_parent_parser, input_output_parent_parser
+    ],
 )
 
 otel_to_pv_parser = subparsers.add_parser(
@@ -146,7 +173,10 @@ otel_to_pv_parser.add_argument(
 pv_to_puml_parser = subparsers.add_parser(
     "pv2puml",
     help="pv to puml help",
-    parents=[mapping_config_parent_parser, debug_parent_parser],
+    parents=[
+        mapping_config_parent_parser, debug_parent_parser,
+        input_output_parent_parser
+    ],
 )
 pv_input_paths = pv_to_puml_parser.add_argument_group(
     "Input paths",
@@ -236,14 +266,13 @@ def find_files(directory: str) -> list[str]:
 def generate_component_options(
     command: Literal["otel2puml", "otel2pv", "pv2puml"],
     args_dict: dict[str, Any],
-) -> tuple[OtelPVOptions | None, PVPumlOptions | None]:
+) -> Options:
     """Generate puml options objects based on CLI arguments.
 
     :param command: The CLI command
     :type command: `Literal`["otel2puml", "otel2pv", "pv2puml"]
-    :return: A tuple containing component options
-    :rtype: `tuple`[:class:`OtelPVOptions` | `None`, :class:`PVPumlOptions`
-    | `None`]
+    :return: A tuple containing options
+    :rtype: :class:`Options`
     """
 
     otel_pv_options, pv_puml_options = None, None
@@ -281,8 +310,17 @@ def generate_component_options(
                 **generate_config(str(pv_to_puml_obj.mapping_config_file))
             )
             pv_puml_options["mapping_config"] = mapping_config
+    global_obj = GlobalArgs(**args_dict)
+    global_options = GlobalOptions(
+        input_puml_models=global_obj.input_puml_models,
+        output_puml_models=global_obj.output_puml_models,
+    )
 
-    return otel_pv_options, pv_puml_options
+    return Options(
+        otel_pv_options=otel_pv_options,
+        pv_puml_options=pv_puml_options,
+        global_options=global_options,
+    )
 
 
 def handle_exception(
@@ -338,12 +376,13 @@ def main_handler(
         command: Literal["otel2puml", "otel2pv", "pv2puml"] = args_dict[
             "command"
         ]
-        otel_pv_options, pv_puml_options = generate_component_options(
+        options = generate_component_options(
             command, args_dict
         )
         otel_to_puml(
-            otel_pv_options,
-            pv_puml_options,
+            options.otel_pv_options,
+            options.pv_puml_options,
+            options.global_options,
             args_dict["output_file_directory"],
             args_dict["command"],
         )
