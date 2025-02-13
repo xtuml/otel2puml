@@ -219,16 +219,20 @@ def update_and_create_events_from_graph_solution(
 
 def update_and_create_events_from_graph_solutions(
     graph_solutions: Iterable[GraphSolution],
+    events: dict[str, Event] | None = None,
 ) -> dict[str, Event]:
     """This function updates and creates events from an iterable of graph
     solutions.
 
     :param graph_solutions: An iterable of graph solutions.
     :type graph_solutions: `Iterable`[:class:`GraphSolution`]
+    :param events: The dictionary of events, defaults to None.
+    :type events: `dict`[`str`, :class:`Event`] | `None`, optional
     :return: A dictionary of events.
     :rtype: `dict`[`str`, :class:`Event`]
     """
-    events: dict[str, Event] = {}
+    if events is None:
+        events: dict[str, Event] = {}
     for graph_solution in graph_solutions:
         update_and_create_events_from_graph_solution(graph_solution, events)
     return events
@@ -237,6 +241,7 @@ def update_and_create_events_from_graph_solutions(
 def update_and_create_events_from_clustered_pvevents(
     clustered_events: Iterable[Iterable[PVEvent]],
     add_dummy_start: bool = False,
+    events: dict[str, Event] | None = None,
 ) -> dict[str, Event]:
     """This function updates and creates events from a sequence of clustered PV
     events.
@@ -245,6 +250,8 @@ def update_and_create_events_from_clustered_pvevents(
     :type clustered_events: `Iterable`[`Iterable`[:class:`PVEvent`]]
     :param add_dummy_start: Whether to add a dummy start event.
     :type add_dummy_start: `bool`
+    :param events: The dictionary of events, defaults to None.
+    :type events: `dict`[`str`, :class:`Event`] | `None`, optional
     :return: A dictionary of events.
     :rtype: `dict`[`str`, :class:`Event`]
     """
@@ -252,4 +259,7 @@ def update_and_create_events_from_clustered_pvevents(
         clustered_events,
         add_dummy_start=add_dummy_start,
     )
-    return update_and_create_events_from_graph_solutions(graph_solutions)
+    return update_and_create_events_from_graph_solutions(
+        graph_solutions,
+        events
+    )
