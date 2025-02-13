@@ -14,7 +14,11 @@ from tel2puml.pv_to_puml.data_ingestion import (
     update_and_create_events_from_clustered_pvevents,
 )
 from tel2puml.pv_event_simulator import transform_dict_into_pv_event
-from tel2puml.events import create_graph_from_events
+from tel2puml.events import (
+    create_graph_from_events,
+    Event,
+    save_events_to_file,
+)
 from tel2puml.pv_to_puml.walk_puml_graph.walk_puml_logic_graph import (
     walk_nested_graph,
 )
@@ -22,9 +26,10 @@ from tel2puml.pv_to_puml.walk_puml_graph.node_update import (
     update_nested_node_graph_with_break_points,
 )
 from tel2puml.loop_detection.detect_loops import detect_loops
-from tel2puml.pv_to_puml.walk_puml_graph. \
-    create_node_graph_from_event_graph \
-    import create_node_graph_from_event_graph
+from tel2puml.pv_to_puml.walk_puml_graph.create_node_graph_from_event_graph \
+    import (
+        create_node_graph_from_event_graph,
+    )
 from tel2puml.pv_to_puml.walk_puml_graph.find_and_add_loop_kill_paths import (
     find_and_add_loop_kill_paths_to_nested_graphs,
 )
@@ -38,6 +43,7 @@ def pv_to_puml_string(
     pv_stream: Iterable[Iterable[PVEvent]],
     puml_name: str = "default_name",
     keep_dummy_events: bool = False,
+    events: dict[str, Event] | None = None,
 ) -> str:
     """Converts a stream of PV event sequences to a PlantUML sequence diagram,
     inferring the logic from the PV event sequences and the structure from the
@@ -49,12 +55,15 @@ def pv_to_puml_string(
     :type puml_name: `str`
     :param keep_dummy_events: Boolean to keep dummy events in the PlantUML
     :type keep_dummy_events: `bool`
+    :param events: A dictionary of events to update with the new events,
+    defaults to None
+    :type events: `dict`[`str`, :class:`Event`], optional
     :return: The PlantUML string
     :rtype: `str`
     """
     # ingest events and create graph
     events = update_and_create_events_from_clustered_pvevents(
-        pv_stream, add_dummy_start=True
+        pv_stream, add_dummy_start=True, events=events
     )
     initial_events_graph = create_graph_from_events(events.values())
     # detect loops
@@ -79,6 +88,7 @@ def pv_to_puml_file(
     puml_file_path: str = "default.puml",
     puml_name: str = "default_name",
     keep_dummy_events: bool = False,
+    events: dict[str, Event] | None = None,
 ) -> None:
     """Converts a stream of PV event sequences to a PlantUML sequence diagram,
     inferring the logic from the PV event sequences and the structure from the
@@ -92,8 +102,13 @@ def pv_to_puml_file(
     :type puml_name: `str`
     :param keep_dummy_events: Boolean to keep dummy events in the PlantUML
     :type keep_dummy_events: `bool`
+    :param events: A dictionary of events to update with the new events,
+    defaults to None
+    :type events: `dict`[`str`, :class:`Event`], optional
     """
-    puml_string = pv_to_puml_string(pv_stream, puml_name, keep_dummy_events)
+    puml_string = pv_to_puml_string(
+        pv_stream, puml_name, keep_dummy_events, events
+    )
     with open(puml_file_path, "w") as puml_file:
         puml_file.write(puml_string)
 
@@ -248,6 +263,8 @@ def pv_event_files_to_job_id_streams(
 def pv_streams_to_puml_files(
     pv_streams: Iterable[tuple[str, Iterable[Iterable[PVEvent]]]],
     output_file_directory: str = ".",
+    events_to_jobs_map: dict[str, dict[str, Event]] | None = None,
+    save_models: bool = False,
 ) -> None:
     """
     Function to convert and save a stream of PVEvents to puml files.
@@ -258,19 +275,37 @@ def pv_streams_to_puml_files(
     [:class:`PVEvent`]]]]
     :param output_file_directory: The file directory to store puml files.
     Defaults to "."
-    :type output_file_directory: `str`
+    :type output_file_directory: `str`, optional
+    :param events_to_jobs_map: A dictionary of job names maped to events to
+    update with the new events, defaults to None
+    :type events_to_jobs_map: `dict`[`str`, `dict`[`str`, :class:`Event`]],
+    optional
+    :param save_models: Flag to save the models to a file, defaults to False
+    :type save_models: `bool`
     """
+    if events_to_jobs_map is None:
+        events_to_jobs_map = {}
     for job_name, job_event_gen in pv_streams:
         tqdm.write(f"Converting {job_name} to PUML...")
         file_name = job_name.replace(" ", "_")
         puml_file_path = os.path.join(
             output_file_directory, f"{file_name}.puml"
         )
+        model_file_path = os.path.join(
+            output_file_directory, f"{file_name}_model.json"
+        )
+        events: dict[str, Event] = {}
+        if job_name in events_to_jobs_map:
+            events = events_to_jobs_map[job_name]
         pv_to_puml_file(
             job_event_gen,
             puml_file_path=puml_file_path,
-            puml_name=job_name
+            puml_name=job_name,
+            events=events,
         )
+        if save_models:
+            save_events_to_file(job_name, events, model_file_path)
+            tqdm.write(f"{file_name} model saved to {model_file_path}")
         tqdm.write(f"{file_name} successfully converted to PUML!")
 
 
