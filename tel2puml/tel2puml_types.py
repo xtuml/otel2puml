@@ -1,6 +1,15 @@
 """TypedDicts for tel2puml"""
 
-from typing import TypedDict, NotRequired, Any, Optional, Type, Literal, Self
+from typing import (
+    TypedDict,
+    NotRequired,
+    Any,
+    Optional,
+    Type,
+    Literal,
+    Self,
+    NamedTuple,
+)
 from enum import Enum
 
 from pydantic import (
@@ -163,6 +172,13 @@ class OtelSpan(TypedDict):
     kind: NotRequired[int]
 
 
+class GlobalOptions(TypedDict):
+    """Typed dict for global options"""
+
+    input_puml_models: list[str]
+    output_puml_models: bool
+
+
 class OtelPVOptions(TypedDict):
     """Typed dict for options for otel_to_pv"""
 
@@ -180,6 +196,14 @@ class PVPumlOptions(TypedDict):
     job_name: str
     group_by_job_id: bool
     mapping_config: NotRequired[PVEventMappingConfig]
+
+
+class Options(NamedTuple):
+    """Typed dict for options for otel_to_puml"""
+
+    otel_pv_options: Optional[OtelPVOptions]
+    pv_puml_options: Optional[PVPumlOptions]
+    global_options: Optional[GlobalOptions]
 
 
 class OtelToPVArgs(BaseModel):
@@ -274,4 +298,36 @@ class PvToPumlArgs(BaseModel):
             )
         if not folder_path and not file_paths:
             raise ValueError("Either folder path or file paths is required.")
+        return self
+
+
+class GlobalArgs(BaseModel):
+
+    command: Literal["otel2puml", "otel2pv", "pv2puml"] = Field(
+        ..., description="Command used within CLI"
+    )
+
+    input_puml_models: list[FilePath] = Field(
+        default_factory=list,
+        description="List of input puml models to be used for global"
+    )
+    output_puml_models: StrictBool = Field(
+        default=False,
+        description="Flag to indicate whether to save the output puml models"
+    )
+
+    @model_validator(mode="after")
+    def check_fields_not_used_with_otel2pv(self) -> Self:
+        """Check that input_puml_models and output_puml_models are not set
+        when otel2pv is selected."""
+        if self.command == "otel2pv":
+            if self.input_puml_models:
+                raise ValueError(
+                    "input_puml_models must not be set if otel2pv is selected."
+                )
+            if self.output_puml_models:
+                raise ValueError(
+                    "output_puml_models must not be set if otel2pv is selected"
+                    "."
+                )
         return self
