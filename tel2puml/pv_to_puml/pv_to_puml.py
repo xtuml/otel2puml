@@ -5,6 +5,7 @@ diagram, inferring the logic from the PV event sequences.
 from typing import Generator, Iterable, Any, Optional
 import json
 import os
+from copy import deepcopy
 
 from tqdm import tqdm
 
@@ -65,7 +66,10 @@ def pv_to_puml_string(
     events = update_and_create_events_from_clustered_pvevents(
         pv_stream, add_dummy_start=True, events=events
     )
-    initial_events_graph = create_graph_from_events(events.values())
+    events_for_calculations = deepcopy(events)
+    initial_events_graph = create_graph_from_events(
+        events_for_calculations.values()
+    )
     # detect loops
     nested_loop_event_graph = detect_loops(initial_events_graph)
     # convert graph to Node graph
