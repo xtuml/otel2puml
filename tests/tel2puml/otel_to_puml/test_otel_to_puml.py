@@ -9,7 +9,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 
 from tel2puml.otel_to_puml import otel_to_puml
-from tel2puml.tel2puml_types import OtelPVOptions, PVPumlOptions
+from tel2puml.tel2puml_types import OtelPVOptions, PVPumlOptions, GlobalOptions
 from tel2puml.otel_to_pv.config import load_config_from_dict
 from tel2puml.otel_to_pv.data_holders.sql_data_holder.data_model import (
     NodeModel,
@@ -420,3 +420,168 @@ class TestOtelToPuml:
             print(content)
             expected_content = expected_content.strip()
             assert content == expected_content
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "output_puml_models", [True, False]
+    )
+    def test_otel2puml_input_puml_models(
+        tmp_path: Path,
+        mock_yaml_config_dict: dict[str, Any],
+        mock_json_data: dict[str, Any],
+        mock_event_model: dict[str, Any],
+        output_puml_models: bool,
+        expected_model_output: list[dict[str, Any]],
+    ) -> None:
+        """Test successful execution when components='otel2puml'."""
+
+        output_dir = tmp_path / "puml_output"
+        input_dir = tmp_path / "json_input"
+
+        # Create the input directory
+        input_dir.mkdir(parents=True, exist_ok=True)
+
+        # Write mock_json_data to data.json in input_dir
+        data_file = input_dir / "data.json"
+        data_file.write_text(json.dumps(mock_json_data))
+
+        # Configure config
+        mock_yaml_config_dict["data_sources"]["json"]["dirpath"] = str(
+            input_dir
+        )
+        mock_yaml_config_dict["data_sources"]["json"]["filepath"] = None
+        config = load_config_from_dict(mock_yaml_config_dict)
+
+        otel_options: OtelPVOptions = {
+            "config": config,
+            "ingest_data": True,
+            "save_events": False,
+            "find_unique_graphs": False,
+        }
+        input_puml_models_file = tmp_path / "input_puml_models.json"
+        input_puml_models_file.write_text(json.dumps(mock_event_model))
+        global_options: GlobalOptions = {
+            "input_puml_models": [str(input_puml_models_file)],
+            "output_puml_models": output_puml_models,
+        }
+
+        otel_to_puml(
+            otel_to_pv_options=otel_options,
+            global_options=global_options,
+            components="otel2puml",
+            output_file_directory=str(output_dir),
+        )
+
+        assert output_dir.exists()
+
+        assert data_file.exists()
+        with open(data_file, "r") as f:
+            data = json.load(f)
+        assert data == mock_json_data
+
+        assert "Frontend_TestJob.puml" in os.listdir(output_dir)
+        puml_file_path = output_dir / "Frontend_TestJob.puml"
+        expected_content = (
+            "@startuml\n"
+            '    partition "Frontend_TestJob" {\n'
+            '        group "Frontend_TestJob"\n'
+            "            :com.C36.9ETRp_401;\n"
+            "            :com.T2h.366Yx_500;\n"
+            "            :TestEvent;\n"
+            "        end group\n"
+            "    }\n"
+            "@enduml"
+        )
+        with open(puml_file_path, "r") as f:
+            content = f.read()
+            content = content.strip()
+            expected_content = expected_content.strip()
+            assert content == expected_content
+        if output_puml_models:
+            save_model_path = output_dir / "Frontend_TestJob_model.json"
+            assert os.path.exists(save_model_path)
+            with open(save_model_path, "r") as f:
+                model_content = json.load(f)
+                assert "job_name" in model_content
+                assert model_content["job_name"] == "Frontend_TestJob"
+                assert "events" in model_content
+                assert (
+                    sorted(
+                        model_content["events"],
+                        key=lambda x: x["eventType"],
+                    )
+                    == expected_model_output
+                )
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "output_puml_models", [True, False]
+    )
+    def test_pv_to_puml_input_puml_models(
+        mock_job_json_file_for_event_model: list[dict[str, Any]],
+        tmp_path: Path,
+        mock_event_model: dict[str, Any],
+        output_puml_models: bool,
+        expected_model_output: list[dict[str, Any]],
+    ) -> None:
+        """Test successful execution when components='pv2puml'"""
+        output_dir = tmp_path / "puml_output"
+        input_dir = tmp_path / "job_json"
+
+        input_dir.mkdir(parents=True, exist_ok=True)
+        data_file = input_dir / "file1.json"
+        data_file.write_text(json.dumps(mock_job_json_file_for_event_model))
+        data_files = [str(data_file)]
+
+        pv_to_puml_options: PVPumlOptions = {
+            "file_list": data_files,
+            "job_name": "Frontend_TestJob",
+        }
+        input_puml_models_file = tmp_path / "input_puml_models.json"
+        input_puml_models_file.write_text(json.dumps(mock_event_model))
+        global_options: GlobalOptions = {
+            "input_puml_models": [str(input_puml_models_file)],
+            "output_puml_models": output_puml_models,
+        }
+
+        otel_to_puml(
+            pv_to_puml_options=pv_to_puml_options,
+            global_options=global_options,
+            components="pv2puml",
+            output_file_directory=str(output_dir),
+        )
+
+        assert output_dir.exists()
+        assert "Frontend_TestJob.puml" in os.listdir(output_dir)
+        puml_file_path = output_dir / "Frontend_TestJob.puml"
+
+        expected_content = (
+            "@startuml\n"
+            '    partition "Frontend_TestJob" {\n'
+            '        group "Frontend_TestJob"\n'
+            "            :com.C36.9ETRp_401;\n"
+            "            :com.T2h.366Yx_500;\n"
+            "            :TestEvent;\n"
+            "        end group\n"
+            "    }\n"
+            "@enduml"
+        )
+        with open(puml_file_path, "r") as f:
+            content = f.read()
+            content = content.strip()
+            expected_content = expected_content.strip()
+            assert content == expected_content
+        if output_puml_models:
+            save_model_path = output_dir / "Frontend_TestJob_model.json"
+            assert os.path.exists(save_model_path)
+            with open(save_model_path, "r") as f:
+                model_content = json.load(f)
+                assert "job_name" in model_content
+                assert model_content["job_name"] == "Frontend_TestJob"
+                assert "events" in model_content
+                assert (
+                    sorted(
+                        model_content["events"], key=lambda x: x["eventType"]
+                    )
+                    == expected_model_output
+                )
