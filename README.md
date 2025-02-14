@@ -24,7 +24,8 @@ This project converts [OpenTelemetry (OTel)](https://opentelemetry.io/) data int
       </ol>
     </li>
     <li><a href="#tel2puml-cli-documentation">TEL2PUML CLI Documentation</a></li>
-    <li><a href="#technical-implementation">Technical Implementtation</a></li>
+    <li><a href="#technical-implementation">Technical Implementation</a></li>
+    <li><a href="#best-practices">Best Practices</a></li>
     <li><a href="#documentation">Documentation</a></li>
     <li><a href="#dependencies">Dependencies</a></li>
     <li><a href="#contributing">Contributing</a></li>
@@ -420,6 +421,13 @@ python -m tel2puml [subcommand] -h
 ```bash
 python -m tel2puml pv2puml -h
 ```
+
+## Best Practices
+
+- The tool was initially designed to work with OpenTelemetry data, but can in principle be used for any data that is a call tree with information of parents links and timestamps. Ensure that your data is in the correct format before running the tool.
+- When ingesting data using the `otel2pv` or `otel2puml` subcommands, the data is stored in a SQL database provided by the user. There are some SQL functions that are used to map data from the root node to the leaf nodes. For large sizes of data, this can take a long time and may require a large amount of memory. The best way to avoid this is to chunk the data into smaller sizes (making sure that the min and max timestamps of the chunks do not overlap) and ingest it in smaller parts either:
+    - For `otel2puml` command by using the `-om` and `-im` args to save models and then load the models to the next chunk.
+    - For `otel2pv` by using the `-ug` flag to find the unique event sequences and then `-se` to save the event sequences. Once this is done all of the event sequences can be loaded used with the `pv2puml` command to find the PUML's.
 
 ## Technical Implementation
 
