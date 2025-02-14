@@ -321,8 +321,8 @@ python -m tel2puml -o OUTPUT_DIR otel2puml -c CONFIG_FILE [options]
 - `-ni`, `--no-ingest`: Do not load data into the data holder.
 - `-ug`, `--unique-graphs`: Find unique graphs within the data holder.
 - `-d`, `--debug`: Enable debug mode to view full error stack trace.
-- `-im`, `--input-puml-models`: Path to an input puml model. Can be used multiple times for each model the user wishes to input.
-- `-om`, `--output-puml-models`: Flag to indicate whether to output the puml models. If this flag is not set, the puml models will not be output.
+- `-im`, `--input-puml-models`: Path to an input puml model. Can be used multiple times for each model the user wishes to input. [Usage](/docs/user/PUML_models.md)
+- `-om`, `--output-puml-models`: Flag to indicate whether to output the puml models. If this flag is not set, the puml models will not be output. [Usage](/docs/user/PUML_models.md)
 
 **Example:**
 
@@ -373,8 +373,8 @@ python -m tel2puml pv2puml [options] [FILE_PATHS...]
 - `-group-by-job`: Group events by job ID. Can only be used if there are single events in each input file otherwise an error will be raised.
 - `-mc`, `--mapping-config`: Path to the mapping configuration file. [Usage](docs/user/mapping_config.md)
 - `-d`, `--debug`: Enable debug mode to view full error stack trace.
-- `-im`, `--input-puml-models`: Path to an input puml model. Can be used multiple times for each model the user wishes to input.
-- `-om`, `--output-puml-models`: Flag to indicate whether to output the puml models. If this flag is not set, the puml models will not be output.
+- `-im`, `--input-puml-models`: Path to an input puml model. Can be used multiple times for each model the user wishes to input. [Usage](/docs/user/PUML_models.md)
+- `-om`, `--output-puml-models`: Flag to indicate whether to output the puml models. If this flag is not set, the puml models will not be output. [Usage](/docs/user/PUML_models.md)
 
 **Notes:**
 
