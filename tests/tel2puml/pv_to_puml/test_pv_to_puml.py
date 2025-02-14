@@ -122,6 +122,7 @@ def test_pv_event_files_to_job_id_streams(
     ) == sorted(mock_job_json_file, key=lambda x: x["eventId"])
 
 
+@pytest.mark.parametrize("save_models", [True, False])
 def test_pv_streams_to_puml_files(
     pv_streams: Generator[
         tuple[str, Generator[Generator[PVEvent, Any, None], Any, None]],
@@ -129,14 +130,45 @@ def test_pv_streams_to_puml_files(
         None,
     ],
     tmp_path: Path,
+    save_models: bool,
 ) -> None:
     """Tests the function pv_streams_to_puml_files"""
     # Create temp directory for puml files
     temp_dir = os.path.join(str(tmp_path), "temp_dir")
     os.makedirs(temp_dir)
-    pv_streams_to_puml_files(pv_streams, output_file_directory=temp_dir)
+    pv_streams_to_puml_files(
+        pv_streams, output_file_directory=temp_dir,
+        save_models=save_models,
+    )
     # Check that the expected files are created in temp_dir
     expected_files = ["Job_A.puml", "Job_B.puml"]
+    expected_output_model = [
+        {
+            "eventType": "A",
+            "incomingEventSets": [[{"eventType": "|||START|||", "count": 1}]],
+            "outgoingEventSets": [[{"eventType": "B", "count": 1}]],
+        },
+        {
+            "eventType": "B",
+            "incomingEventSets": [[{"eventType": "A", "count": 1}]],
+            "outgoingEventSets": [[{"eventType": "C", "count": 1}]],
+        },
+        {
+            "eventType": "C",
+            "incomingEventSets": [[{"eventType": "B", "count": 1}]],
+            "outgoingEventSets": [[{"eventType": "D", "count": 1}]],
+        },
+        {
+            "eventType": "D",
+            "incomingEventSets": [[{"eventType": "C", "count": 1}]],
+            "outgoingEventSets": [],
+        },
+        {
+            "eventType": "|||START|||",
+            "incomingEventSets": [],
+            "outgoingEventSets": [[{"eventType": "A", "count": 1}]],
+        },
+    ]
     for idx, expected_file in enumerate(expected_files):
         file_path = os.path.join(temp_dir, expected_file)
         assert os.path.exists(file_path)
@@ -160,6 +192,22 @@ def test_pv_streams_to_puml_files(
             content = content.strip()
             expected_content = expected_content.strip()
             assert content == expected_content
+        if save_models:
+            expected_model_file = os.path.join(
+                temp_dir, f"{expected_job_name}_model.json"
+            )
+            assert os.path.exists(expected_model_file)
+            with open(expected_model_file, "r") as f:
+                model_content = json.load(f)
+                assert "job_name" in model_content
+                assert model_content["job_name"] == expected_job_name
+                assert "events" in model_content
+                assert (
+                    sorted(
+                        model_content["events"], key=lambda x: x["eventType"]
+                    )
+                    == expected_output_model
+                )
 
 
 @pytest.mark.parametrize("group_by_job_id", [True, False])
