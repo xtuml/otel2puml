@@ -7,18 +7,25 @@ from typing import Generator, Optional, Literal, Any, Union
 
 from tqdm import tqdm
 
-from tel2puml.tel2puml_types import OtelPVOptions, PVEvent, PVPumlOptions
+from tel2puml.tel2puml_types import (
+    OtelPVOptions,
+    PVEvent,
+    PVPumlOptions,
+    GlobalOptions,
+)
 from tel2puml.otel_to_pv.otel_to_pv import otel_to_pv
 from tel2puml.pv_to_puml.pv_to_puml import (
     pv_streams_to_puml_files,
     pv_files_to_pv_streams,
 )
 from tel2puml.utils import wrap_generator_with_tqdm_start_and_end_messages
+from tel2puml.events import Event, load_events_from_file
 
 
 def otel_to_puml(
     otel_to_pv_options: Optional[OtelPVOptions] = None,
     pv_to_puml_options: Optional[PVPumlOptions] = None,
+    global_options: Optional[GlobalOptions] = None,
     output_file_directory: str = "puml_output",
     components: Literal["otel2puml", "otel2pv", "pv2puml"] = "otel2puml",
 ) -> None:
@@ -48,6 +55,18 @@ def otel_to_puml(
         except OSError as e:
             getLogger(__name__).error(f"Error creating directory.{e}")
             return
+    # check global options for input events file
+    events_to_jobs_map: dict[str, dict[str, Event]] = {}
+    if global_options is not None:
+        input_puml_models = global_options["input_puml_models"]
+        for input_puml_model in input_puml_models:
+            job_name, events = load_events_from_file(str(input_puml_model))
+            events_to_jobs_map[job_name] = events
+    else:
+        global_options = GlobalOptions(
+            input_puml_models=[],
+            output_puml_models=False,
+        )
 
     tqdm.write(f"Processing command: {components}...")
 
@@ -84,7 +103,7 @@ def otel_to_puml(
                 (
                     "All ingested OpenTelemetry data converted to PVEvents "
                     "and streamed."
-                )
+                ),
             )
             if components == "otel2pv":
                 tqdm.write(
@@ -110,5 +129,10 @@ def otel_to_puml(
             )
     # Convert streams to puml files
     tqdm.write(f"Saving PUML files to '{output_file_directory}'...")
-    pv_streams_to_puml_files(pv_streams, output_file_directory)
+    pv_streams_to_puml_files(
+        pv_streams,
+        output_file_directory,
+        events_to_jobs_map,
+        global_options.get("output_puml_models", False),
+    )
     tqdm.write("PUML files successfully generated!")
