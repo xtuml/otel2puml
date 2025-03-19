@@ -1,9 +1,10 @@
 """Module containing DataSource sub class responsible for JSON ingestion."""
 
 import os
-from typing import Iterator
+from typing import Generator, Iterator, Any
 import json
 from logging import getLogger
+from io import TextIOWrapper
 
 from tqdm import tqdm
 from pydantic import ValidationError
@@ -13,10 +14,9 @@ from ..base import OTELDataSource
 from .json_jq_converter import (
     generate_records_from_compiled_jq,
     compile_jq_query,
-    get_jq_query_from_config
+    get_jq_query_from_config,
 )
 from .json_config import JSONDataSourceConfig
-
 
 LOGGER = getLogger(__name__)
 
@@ -40,9 +40,7 @@ class JSONDataSource(OTELDataSource):
             )
         self.file_list = self.get_file_list()
         self.jq_query = get_jq_query_from_config(self.config)
-        self.compiled_jq = compile_jq_query(
-            self.jq_query
-        )
+        self.compiled_jq = compile_jq_query(self.jq_query)
         self.file_pbar = tqdm(
             total=len(self.file_list),
             desc="Ingesting JSON files",
@@ -117,10 +115,9 @@ class JSONDataSource(OTELDataSource):
         :rtype: `Iterator`[:class:`OTelEvent`]
         """
         with open(filepath, "r", encoding="utf-8") as file:
-            if self.config.json_per_line:
-                jsons = (json.loads(line, strict=False) for line in file)
-            else:
-                jsons = (data for data in [json.load(file, strict=False)])
+            jsons = get_jsons_from_file(
+                file, filepath, self.config.json_per_line
+            )
             for data in jsons:
                 for record in generate_records_from_compiled_jq(
                     data, self.compiled_jq
@@ -160,3 +157,38 @@ class JSONDataSource(OTELDataSource):
         self.events_pbar.close()
         self.event_error_pbar.close()
         raise StopIteration
+
+
+def get_jsons_from_file(
+    file_io: TextIOWrapper, filepath: str, json_per_line: bool = False
+) -> Generator[Any, Any, None]:
+    """Generator function to yield JSON data from a file.
+
+    :param file_io: The file object to read from
+    :type file_io: :class:`TextIOWrapper`
+    :param filepath: The path to the file
+    :type filepath: `str`
+    :param json_per_line: Whether the JSON data is formatted with one JSON
+    object per line. Defaults to `False`.
+    :type json_per_line: `bool`
+    :return: A generator yielding JSON objects
+    :rtype: `Generator`[:class:`Any`, `Any`, `None`]
+    """
+    counter = 0
+    if json_per_line:
+        try:
+            for line in file_io:
+                yield json.loads(line, strict=False)
+                counter += 1
+            return
+        except json.JSONDecodeError:
+            pass
+    try:
+        yield json.load(file_io, strict=False)
+    except json.JSONDecodeError:
+        LOGGER.error(
+            f"Error decoding JSON data in file: {filepath}\n"
+            "However, if the current line counter for the file is"
+            "greater than 0 then that number of lines was able to"
+            f" be decoded: {counter} lines."
+        )
