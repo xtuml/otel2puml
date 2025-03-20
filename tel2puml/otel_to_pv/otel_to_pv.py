@@ -57,20 +57,26 @@ def otel_to_pv(
         tqdm.write("Data ingested.")
     else:
         data_holder = fetch_data_holder(config)
+    tqdm.write("Cleaning data...")
     # validate spans
+    tqdm.write("Removing inconsistent jobs...")
     data_holder.remove_inconsistent_jobs()
     # remove jobs totally within time buffer zones
+    tqdm.write("Removing jobs outside of time window...")
     data_holder.remove_jobs_outside_of_time_window()
     # make sure job names are consistent in traces
+    tqdm.write("Updating job names by root span...")
     data_holder.update_job_names_by_root_span()
+    tqdm.write("Finished performing data cleaning operations.")
     # find unique graphs if required
     if find_unique_graphs:
+        tqdm.write("Finding unique graphs within the data holder...")
         job_name_to_job_ids_map: dict[str, set[str]] | None = (
             data_holder.find_unique_graphs()
         )
+        tqdm.write("Finished finding unique graphs.")
     else:
         job_name_to_job_ids_map = None
-
     job_name_group_streams = data_holder.stream_data(job_name_to_job_ids_map)
     # get the async event groups from the config
     sequencer_config = config.sequencer

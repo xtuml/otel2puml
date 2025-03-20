@@ -482,7 +482,10 @@ class PUMLGraph(DiGraph):  # type: ignore[type-arg]
         :rtype: `list[str]`
         """
         # get the head node of the graph
-        head_node = list(topological_sort(self))[0]
+        top_sort = list(topological_sort(self))
+        if len(top_sort) == 0:
+            return []
+        head_node = top_sort[0]
         # get the ordered nodes from the depth-first search successors
         sorted_nodes = self._order_nodes_from_dfs_successors_dict(
             head_node, dfs_successors(self, head_node)
